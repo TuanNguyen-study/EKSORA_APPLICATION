@@ -1,7 +1,7 @@
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import React from 'react';
-// import BodyloginPhone from './Component/Phone/bodyloginPhone';
-// import BottomloginPhone from './Component/Phone/bottomloginPhone';  
+import BodyloginPhone from './Component/Phone/bodyloginPhone';
+import BottomloginPhone from './Component/Phone/bottomloginPhone';  
 // import BodyloginEmail from './Component/Email/bodyloginEmail';
 // import BottomloginEmail from './Component/Email/bottomloginEmail';
 
@@ -10,10 +10,10 @@ export default function index() {
     <SafeAreaView style={styles.container}>
       <View style={styles.container1}>
               <Text style={styles.header}>Đăng nhập</Text>
-        {/* <BodyloginPhone />
-        <BottomloginPhone /> */}
-        <BodyloginEmail />
-        <BottomloginEmail />
+        <BodyloginPhone />
+        <BottomloginPhone />
+        {/* <BodyloginEmail />
+        <BottomloginEmail /> */}
             </View>
     </SafeAreaView>
 
