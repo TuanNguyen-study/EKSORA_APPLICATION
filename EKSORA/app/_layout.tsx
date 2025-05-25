@@ -13,8 +13,9 @@ export default function Layout() {
           headerTitleStyle: { fontWeight: 'bold' },
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(stack)" options={{ headerShown: false }} />
         <Stack.Screen name="trip-detail" options={{ title: 'Trip Details' }} />
+
       </Stack>
     </Provider>
   );
