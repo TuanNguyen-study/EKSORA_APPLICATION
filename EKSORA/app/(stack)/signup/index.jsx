@@ -2,9 +2,13 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView, StatusBar } from 'react-native';
 import { ScrollView } from 'react-native';
-import SignupHeader from './Component/Email/SignupHeader';
-import SignupBottom from './Component/Email/SignupBottom';
-import SignupBody from './Component/Email/SignupBody';
+// import SignupHeader from './Component/Email/SignupHeader';
+// import SignupBottom from './Component/Email/SignupBottom';
+// import SignupBody from './Component/Email/SignupBody';
+import BodyPhone from './Component/Phone/bodyPhone';
+import BottomPhone from './Component/Phone/bottomPhone';
+import HeaderPhone from './Component/Phone/hearderPhone';
+
 
 export default function index() {
   const onsubmit = (data) => {
@@ -14,12 +18,16 @@ export default function index() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.container1}>
-        <SignupHeader />
-        <SignupBody onSubmit={onsubmit} />
+        <HeaderPhone />
+        <BodyPhone onsubmit={onsubmit} />
+        <BottomPhone />
+        {/* <SignupHeader />
+        <SignupBody onsubmit={onsubmit} />
         <SignupBottom />
+         */}
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 }
 
 

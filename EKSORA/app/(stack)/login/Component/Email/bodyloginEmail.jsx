@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native'
+import React, { useState } from 'react'
+import { FontAwesome} from '@expo/vector-icons';
 
-export default function bodyLoginEmail() {
+const bodyloginEmail = () => {
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    return (
-        <View style={{ paddingHorizontal: 20 }}>
+
+  return (
+       <View style={{ paddingHorizontal: 20 }}>
             <View style={styles.inputContainer}>
                 <FontAwesome name="envelope" size={18} style={styles.icon} />
                 <TextInput
@@ -42,12 +44,12 @@ export default function bodyLoginEmail() {
                 </Text>
             </TouchableOpacity>
         </View>
-    )
+  )
 }
 
+export default bodyloginEmail
 
 const styles = StyleSheet.create({
-
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -71,4 +73,5 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 10
     }
+
 })
