@@ -18,7 +18,7 @@ export default function FavoriteItem({ title, location, description, price, imag
 
         <View style={styles.bottomRow}>
           <Text style={styles.location}>{location}</Text>
-          <Text style={styles.price}>Từ đ {price}</Text>
+          <Text style={styles.price}>Từ {price} đ</Text>
         </View>
       </View>
     </View>
