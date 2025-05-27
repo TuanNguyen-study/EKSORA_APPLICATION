@@ -3,7 +3,7 @@ import Feather from '@expo/vector-icons/Feather';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { StyleSheet, Text, TouchableOpacity, View, onPress } from 'react-native';
 
-export default function BodyLogin() {
+export default function    BodyLogin() {
     return (
         <View style={styles.container}>
             <View>
