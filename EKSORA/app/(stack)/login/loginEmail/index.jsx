@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import BodyloginEmail from '../Component/Email/bodyloginEmail'
 import BottomloginEmail from '../Component/Email/bottomloginEmail'
 
+
 const index = () => {
     return (
         <View style={styles.container1}>

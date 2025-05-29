@@ -1,12 +1,14 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
+import { useRouter } from 'expo-router';
 
 const bodyloginPhone = () => {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const router = useRouter();
+
 
     // Hàm xử lý đăng nhập 
     const handleLogin = () => {
@@ -30,6 +32,9 @@ const bodyloginPhone = () => {
         setPassword('');    
         setShowPassword(false);
         console.log('Đăng nhập thành công');
+
+        // Chuyển hướng hoặc hiển thị thông báo thành công
+       router.push('../(stack)/home'); // Giả sử bạn có
     };
 
     return (

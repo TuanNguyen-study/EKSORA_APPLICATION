@@ -1,43 +1,39 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, CheckBox } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-
+import CheckBox from '../../../../../components/CheckBox';
 
 export default function SignupBottom() {
-  const [agree, setAgree] = React.useState(false);
-  const [isChecked, setChecked] = React.useState(false);
-
+  const [isChecked, setChecked] = useState(false);
 
   return (
     <View style={styles.bottom}>
       <Text style={styles.separator}>Hoặc đăng nhập bằng</Text>
+
       <View style={styles.iconRow}>
         <TouchableOpacity style={styles.iconButton}>
-          <FontAwesome name="google" size={24} color="white" style={styles.icon} />
+          <FontAwesome name="google" size={24} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButtonGreen}>
-          <FontAwesome name="phone" size={24} color="white" style={styles.icon} />
+          <FontAwesome name="phone" size={24} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButtonBlue}>
-          <FontAwesome name="facebook" size={24} color="white" style={styles.icon} />
-        </TouchableOpacity> 
+          <FontAwesome name="facebook" size={24} color="white" />
+        </TouchableOpacity>
       </View>
 
-
-      <Text style={styles.otherOption}>Lựa chọn khác</Text> 
-
+      <Text style={styles.otherOption}>Lựa chọn khác</Text>
 
       <View style={styles.checkboxRow}>
-       <CheckBox value={isChecked} onValueChange={setChecked} />
-      <Text style={styles.terms}>
-        Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA
-      </Text>
+        <CheckBox
+          checked={isChecked}
+          onChange={setChecked}
+          label="Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA"
+        />
       </View>
     </View>
-  )
+  );
 }
-
-
 
 const styles = StyleSheet.create({
   bottom: {
@@ -75,30 +71,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: 10,
     fontWeight: 'bold',
-    color: "black",
+    color: 'black',
     textDecorationLine: 'underline',
     marginTop: 20,
   },
-
-  icon: {
-    width: 60,
-    height: 24,
-    textAlign: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-   checkboxRow: { 
+  checkboxRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 10,
     marginTop: 20,
-   },
-
+  },
   terms: {
     fontSize: 10,
     color: '#444',
-    textAlign: 'center',
+    marginLeft: 8,
+    flex: 1,
+    flexWrap: 'wrap',
   },
-
-})
+});
