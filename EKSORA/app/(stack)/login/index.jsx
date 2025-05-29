@@ -11,10 +11,6 @@ export default function index() {
                 <Text style={styles.header}>Đăng nhập</Text>
         <BodyLogin />
         <BottonLogin />
-        {/* <BodyloginPhone />
-        <BottomloginPhone /> */}
-        {/* <BodyloginEmail />
-        <BottomloginEmail /> */}
             </View>
     </SafeAreaView>
 

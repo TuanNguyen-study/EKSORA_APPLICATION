@@ -1,12 +1,39 @@
 import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
 import { FontAwesome} from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 const bodyloginEmail = () => {
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    
+    const handleLogin = () => { 
+        if (!email || !password) {
+            console.log('Vui lòng nhập địa chỉ email và mật khẩu');
+            return;
+        }
+        // Kiểm tra định dạng email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            console.log('Địa chỉ email không hợp lệ');
+            return;
+        }
+        if (password.length < 6) {
+            console.log('Mật khẩu phải có ít nhất 6 ký tự');
+            return;
+        }
+        // reset form
+        setEmail('');
+        setPassword('');
+        setShowPassword(false);
+        console.log('Đăng nhập thành công');
+        // Chuyển hướng hoặc hiển thị thông báo thành công
+         router.push('../(tabs)/home'); 
+        
+
+    }
 
   return (
        <View style={{ paddingHorizontal: 20 }}>
@@ -34,7 +61,7 @@ const bodyloginEmail = () => {
                 </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.button}>
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
                 <Text style={{ color: '#fff', fontWeight: 'bold' }}>Đăng nhập</Text>
             </TouchableOpacity>
 

@@ -35,8 +35,8 @@ const bottomloginEmail = () => {
         <CheckBox
           checked={isChecked}
           onChange={setChecked}
-          label="Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA"
         />
+        <Text style={styles.terms}> Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA</Text>
       </View>
     </View>
   )
@@ -106,6 +106,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 10,
     marginTop: 20,
+      flexWrap: 'wrap',
   },
   terms: {
     fontSize: 10,
