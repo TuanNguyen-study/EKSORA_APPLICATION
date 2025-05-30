@@ -20,16 +20,16 @@ const PromoBanner = () => (
 
 const styles = StyleSheet.create({
   bannerOuterContainer: {
-    paddingHorizontal: 15, // Để tạo khoảng cách cho banner bo góc
+    paddingHorizontal: 15, 
   },
   bannerInnerContainer: {
-    backgroundColor: COLORS.white, // Nền trắng
+    backgroundColor: COLORS.white, 
     paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderRadius: 10, // Bo góc
+    borderRadius: 10, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -37,8 +37,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   bannerText: {
-    color: COLORS.text, // Chữ màu tối
-    fontWeight: '600', // Đậm hơn chút
+    color: COLORS.text,
+    fontWeight: '600',
     fontSize: 15,
   },
   pointsContainer: {
@@ -46,20 +46,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   pointsAmountText: {
-    color: COLORS.danger, // Số lượng màu đỏ
+    color: COLORS.danger,
     fontSize: 15,
     fontWeight: 'bold',
     marginLeft: 5,
   },
   pointsDetailText: {
-    color: COLORS.text, // Chữ "điểm" màu tối
+    color: COLORS.text, 
     fontSize: 15,
     fontWeight: '500',
     marginLeft: 4,
   },
   separatorDot: {
     marginHorizontal: 8,
-    color: COLORS.danger, // Dấu chấm màu đỏ
+    color: COLORS.danger, 
   }
 });
 

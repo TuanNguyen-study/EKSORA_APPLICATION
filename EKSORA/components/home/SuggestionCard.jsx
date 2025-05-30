@@ -1,4 +1,3 @@
-// components/home/SuggestionCard.jsx
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,19 +30,18 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardBackground,
     borderRadius: 12,
     marginBottom: 20,
-    marginHorizontal: 5, // Cho trường hợp numColumns={2}
+    marginHorizontal: 5, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    overflow: 'hidden', // Quan trọng để discount badge không tràn
-    // width: '100%', // Nếu là 1 cột
-    flex: 1, // Cho trường hợp numColumns={2}
+    overflow: 'hidden', 
+    flex: 1, 
   },
   cardImage: {
     width: '100%',
-    height: 150, // Điều chỉnh chiều cao ảnh
+    height: 150,
   },
   discountBadge: {
     position: 'absolute',

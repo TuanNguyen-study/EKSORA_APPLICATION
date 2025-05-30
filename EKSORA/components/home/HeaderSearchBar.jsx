@@ -10,18 +10,15 @@ const HeaderSearchBar = () => (
       <Ionicons name="search" size={20} color={COLORS.white} style={styles.searchIcon} />
       <TextInput
         placeholder="Search something..."
-        placeholderTextColor={COLORS.whiteAlpha50 || '#A0DFFF'} // Màu trắng mờ
+        placeholderTextColor={COLORS.whiteAlpha50 || '#A0DFFF'} 
         style={styles.searchInput}
-        // selectionColor={COLORS.white} // Màu con trỏ khi nhập
       />
     </View>
     <TouchableOpacity style={styles.iconButton}>
       <Ionicons name="cart-outline" size={26} color={COLORS.white} />
-      {/* Badge nếu có */}
     </TouchableOpacity>
     <TouchableOpacity style={styles.iconButton}>
       <Ionicons name="notifications-outline" size={26} color={COLORS.white} />
-      {/* Badge nếu có */}
     </TouchableOpacity>
   </View>
 );
@@ -36,13 +33,13 @@ const styles = StyleSheet.create({
   searchContainer: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: COLORS.primary, // Cùng màu nền header
-    borderRadius: 25, // Bo tròn nhiều hơn
+    backgroundColor: COLORS.primary, 
+    borderRadius: 25, 
     paddingHorizontal: 15,
     alignItems: 'center',
     height: 42,
-    borderWidth: 0.5, // Viền
-    borderColor: COLORS.white, // Màu trắng
+    borderWidth: 0.5, 
+    borderColor: COLORS.white, 
   },
   searchIcon: {
     marginRight: 10,
@@ -54,7 +51,7 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     marginLeft: 15,
-    padding: 5, // Tăng vùng chạm
+    padding: 5,
   },
 });
 
