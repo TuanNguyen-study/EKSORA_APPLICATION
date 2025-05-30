@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   priceText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.danger, // Hoặc COLORS.primary
+    color: COLORS.danger, 
   },
   priceUnit: {
     fontSize: 12,
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    flex: 1.2, // Cho nút nhiều không gian hơn
+    flex: 1.2, 
   },
   button: {
     flex: 1,

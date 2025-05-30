@@ -14,7 +14,7 @@ export default function Layout() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="trip-detail" options={{ title: 'Trip Details' }} />
+        <Stack.Screen name="trip-detail" options={{ headerShown: false }} />
       </Stack>
     </Provider>
   );
