@@ -25,16 +25,13 @@ const bodyloginPhone = () => {
             console.log('Mật khẩu phải có ít nhất 6 ký tự');
             return;
         }
-       
-        // Thực hiện đăng nhập ở đây, ví dụ gọi API
-        // reset form
+               // reset form
         setPhone('');
         setPassword('');    
         setShowPassword(false);
         console.log('Đăng nhập thành công');
 
-        // Chuyển hướng hoặc hiển thị thông báo thành công
-       router.push('../(stack)/home'); // Giả sử bạn có
+       router.push('/(tabs)/home');
     };
 
     return (
