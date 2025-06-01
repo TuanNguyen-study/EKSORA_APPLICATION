@@ -8,6 +8,7 @@ const bodyloginEmail = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const router = useRouter();
     
     const handleLogin = () => { 
         if (!email || !password) {
@@ -30,7 +31,7 @@ const bodyloginEmail = () => {
         setShowPassword(false);
         console.log('Đăng nhập thành công');
         // Chuyển hướng hoặc hiển thị thông báo thành công
-         router.push('../(tabs)/home'); 
+         router.push('/(tabs)/home'); 
         
 
     }
