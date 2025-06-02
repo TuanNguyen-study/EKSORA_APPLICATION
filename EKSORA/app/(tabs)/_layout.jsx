@@ -73,7 +73,7 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1, backgroundColor: COLORS.primary },
   tabBar: {
     backgroundColor: COLORS.white,
     paddingBottom: Platform.OS === 'ios' ? 10 : 5,
