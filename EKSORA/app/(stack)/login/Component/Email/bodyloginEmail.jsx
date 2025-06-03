@@ -1,43 +1,44 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
-import { FontAwesome} from '@expo/vector-icons';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-const bodyloginEmail = () => {
-
+const BodyLoginEmail = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
-    
-    const handleLogin = () => { 
+
+    const handleLogin = () => {
         if (!email || !password) {
             console.log('Vui lòng nhập địa chỉ email và mật khẩu');
             return;
         }
-        // Kiểm tra định dạng email
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             console.log('Địa chỉ email không hợp lệ');
             return;
         }
+
         if (password.length < 6) {
             console.log('Mật khẩu phải có ít nhất 6 ký tự');
             return;
         }
-        // reset form
+
+        // Reset form
         setEmail('');
         setPassword('');
         setShowPassword(false);
         console.log('Đăng nhập thành công');
-        // Chuyển hướng hoặc hiển thị thông báo thành công
-         router.push('/(tabs)/home'); 
-        
 
-    }
+        // Chuyển sang trang chính
+        router.push('/(tabs)/home');
+    };
 
-  return (
-       <View style={{ paddingHorizontal: 20 }}>
+    return (
+        <View style={styles.container}>
+            {/* Email input */}
             <View style={styles.inputContainer}>
                 <FontAwesome name="envelope" size={18} style={styles.icon} />
                 <TextInput
@@ -45,9 +46,11 @@ const bodyloginEmail = () => {
                     value={email}
                     onChangeText={setEmail}
                     style={styles.input}
+                    keyboardType="email-address"
                 />
             </View>
 
+            {/* Password input */}
             <View style={styles.inputContainer}>
                 <FontAwesome name="lock" size={18} style={styles.icon} />
                 <TextInput
@@ -62,44 +65,76 @@ const bodyloginEmail = () => {
                 </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Đăng nhập</Text>
+            {/* Login button */}
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                <Text style={styles.loginButtonText}>Đăng nhập</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity>
-                <Text style={{ color: 'black', textDecorationLine: 'underline', marginTop: 10 }}>
-                    Quên mật khẩu
-                </Text>
-            </TouchableOpacity>
+            {/* Quên mật khẩu / Đăng ký */}
+            <View style={styles.row}>
+                <TouchableOpacity onPress={() => router.push('/(stack)/signup/Repassword')}>
+                    <Text style={styles.bold}>Quên mật khẩu</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/(stack)/signup')}>
+                    <Text style={styles.link}>Chưa có tài khoản? <Text style={styles.bold}>Đăng ký</Text></Text>
+                </TouchableOpacity>
+            </View>
         </View>
-  )
-}
+    );
+};
 
-export default bodyloginEmail
+export default BodyLoginEmail;
 
 const styles = StyleSheet.create({
+    container: {
+        paddingHorizontal: 20,
+        paddingTop: 10,
+    },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
         borderColor: '#ccc',
-        borderRadius: 10,
-        marginVertical: 10,
-        paddingHorizontal: 10
+        borderRadius: 100,
+        paddingHorizontal: 15,
+        paddingVertical: 12,
+        marginBottom: 15,
     },
     icon: {
-        marginRight: 10
+        marginRight: 10,
+        color: '#666',
     },
     input: {
         flex: 1,
-        height: 45
+        fontSize: 16,
     },
-    button: {
-        backgroundColor: '#0079C1',
-        paddingVertical: 12,
-        borderRadius: 10,
+    loginButton: {
+        backgroundColor: '#009DFF',
+        paddingVertical: 14,
+        borderRadius: 100,
         alignItems: 'center',
-        marginTop: 10
-    }
+        marginTop: 10,
+    },
+    loginButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 15,
+        paddingHorizontal: 4,
+    },
+    link: {
+        color: '#000',
+        fontSize: 14,
+        textDecorationLine: 'underline'
 
-})
+    },
+    bold: {
+        fontWeight: 'bold',
+        textDecorationLine: 'underline'
+
+    },
+});
