@@ -1,11 +1,8 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-
 export default function FavoriteItem({ title, location, description, price, image }) {
   return (
-
     <View style={styles.container}>
-
       <Image source={{ uri: image }} style={styles.image} />
 
       <View style={styles.content}>
@@ -14,7 +11,9 @@ export default function FavoriteItem({ title, location, description, price, imag
           <Text style={styles.heart}>❤️</Text>
         </View>
 
-        <Text style={styles.description} numberOfLines={1} ellipsizeMode="tail">{description}</Text>
+        <Text style={styles.description} numberOfLines={1} ellipsizeMode="tail">
+          {description}
+        </Text>
 
         <View style={styles.bottomRow}>
           <Text style={styles.location}>{location}</Text>
@@ -22,10 +21,8 @@ export default function FavoriteItem({ title, location, description, price, imag
         </View>
       </View>
     </View>
-
-  )
+  );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -63,7 +60,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#555',
     marginTop: 4,
-
   },
   bottomRow: {
     flexDirection: 'row',
