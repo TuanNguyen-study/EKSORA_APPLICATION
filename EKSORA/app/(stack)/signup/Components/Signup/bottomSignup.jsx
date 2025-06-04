@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-const bottomSignup = () => {
+const BottomSignup = () => {
 
   const router = useRouter();
 
@@ -27,7 +27,7 @@ const bottomSignup = () => {
 };
 
 
-export default bottomSignup
+export default BottomSignup
 
 const styles = StyleSheet.create({
   socialBtn: {

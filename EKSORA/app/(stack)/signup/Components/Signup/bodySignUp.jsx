@@ -9,7 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 
-const bodySignUp = () => {
+const BodySignUp = () => {
     const [passwordVisible, setPasswordVisible] = useState(false);
 
     return (
@@ -50,7 +50,7 @@ const bodySignUp = () => {
 };
 
 
-export default bodySignUp
+export default BodySignUp
 
 const styles = StyleSheet.create({
   input: {
