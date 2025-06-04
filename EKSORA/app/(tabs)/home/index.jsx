@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 import { COLORS } from '../../../constants/colors';
 import HeaderSearchBar from '../../../components/home/HeaderSearchBar';
@@ -62,9 +62,10 @@ const SNAP_INTERVAL = ITEM_WIDTH_CAROUSEL + ITEM_SPACING_CAROUSEL_HOME;
 const PAGINATION_AREA_HEIGHT = 30;
 
 export default function HomeScreen() {
-  // Nhân bản 3 lần để tạo infinite loop
+  const router = useRouter();
+
   const loopedCarouselImages = [...carouselImages, ...carouselImages, ...carouselImages];
-  const initialIndex = carouselImages.length; // start ở giữa
+  const initialIndex = carouselImages.length;
 
   const [activeTab, setActiveTab] = useState('Đề xuất');
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(initialIndex);
@@ -81,14 +82,12 @@ export default function HomeScreen() {
     }, [])
   );
 
-  // Scroll ngay lập tức đến vị trí giữa khi mount
   useEffect(() => {
     if (carouselRef.current) {
       carouselRef.current.scrollToIndex({ index: initialIndex, animated: false });
     }
   }, []);
 
-  // Auto slide carousel, nhảy về giữa khi đến cuối
   useEffect(() => {
     if (isCarouselManuallyScrolling) return;
 
@@ -110,7 +109,6 @@ export default function HomeScreen() {
     return () => clearInterval(timer);
   }, [currentCarouselIndex, isCarouselManuallyScrolling]);
 
-  // Cập nhật index khi user scroll thủ công
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
     if (viewableItems && viewableItems.length > 0) {
       const visibleIndex = viewableItems[0].index ?? initialIndex;
@@ -130,7 +128,6 @@ export default function HomeScreen() {
     }, 500);
   };
 
-  // Pagination dot dựa trên index modulo số ảnh gốc
   const renderPagination = () => {
     const activeIndex = currentCarouselIndex % carouselImages.length;
     return (
@@ -149,7 +146,8 @@ export default function HomeScreen() {
   };
 
   const handlePressDestination = (item) => console.log('Chọn điểm đến:', item.name);
-  const handlePressSuggestion = (item) => console.log('Chọn gợi ý:', item.title);
+  const handlePressSuggestion = () => router.push('/trip-detail');
+  const handlePressCategory = (item) => console.log('Chọn điểm đến:', item.name);
 
   const HomeHeaderContent = () => (
     <View style={styles.homeHeaderContentContainer}>
@@ -209,7 +207,7 @@ export default function HomeScreen() {
               <ServiceCategoryItem
                 key={item.id}
                 label={item.label}
-                onPress={() => console.log('Selected category:', item.label)}
+                onPress={handlePressCategory}
               />
             ))}
           </View>
@@ -249,7 +247,9 @@ export default function HomeScreen() {
           {activeTab === 'Đề xuất' && (
             <FlatList
               data={suggestedItems}
-              renderItem={({ item }) => <SuggestionCard item={item} onPress={handlePressSuggestion} />}
+              renderItem={({ item }) => (
+                <SuggestionCard item={item} onPress={handlePressSuggestion} />
+              )}
               keyExtractor={(item) => item.id}
               numColumns={2}
               columnWrapperStyle={styles.row}

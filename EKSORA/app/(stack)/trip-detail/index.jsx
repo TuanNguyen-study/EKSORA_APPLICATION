@@ -1,112 +1,155 @@
-// app/(stack)/trip-detail/index.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
-  Text,
+  Text, 
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
+  ActivityIndicator, 
   Alert,
   Platform,
   RefreshControl,
-  Share,
+  Share, 
+  TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
-// Giả sử bạn có service để fetch dữ liệu
-// import { getProductDetailsById } from '@/API/services/productService'; // Đường dẫn ví dụ
 import { COLORS } from '@/constants/colors';
+import { Ionicons } from '@expo/vector-icons'; 
+import ProductImageCarousel from './components/ProductImageCarousel';
+import ProductBasicInfo from './components/ProductBasicInfo';
+import ProductOptionSelector from './components/ProductOptionSelector';
+import ServiceDescriptionSection from './components/ServiceDescriptionSection.'
+import CustomerReviewSection from './components/CustomerReviewSection';
+import PolicyInfoSection from './components/PolicyInfoSection';
+import StickyBookingFooter from './components/StickyBookingFooter';
+//import TripHighlightsSection from './components/TripHighlightsSection';
 
-// Import các components con (sẽ tạo trong thư mục ./components/)
-import ProductImageCarousel from './conponents/ProductImageCarousel';
-import ProductBasicInfo from './conponents/ProductBasicInfo';
-import ProductOptionSelector from './conponents/ProductOptionSelector';
-import ExpandableDescription from './conponents/ExpandableDescription';
-import CustomerReviewSection from './conponents/CustomerReviewSection';
-import TripHighlightsSection from './conponents/TripHighlightsSection';
-import PolicyInfoSection from './conponents/PolicyInfoSection';
-import StickyBookingFooter from './conponents/StickyBookingFooter';
-
-// --- DỮ LIỆU GIẢ (MOCK DATA) ---
-// Thay thế bằng API call thực tế
+// --- DỮ LIỆU GIẢ  ---
 const MOCK_PRODUCT_DATA = {
   id: '123',
-  name: 'Combo Khách Sạn 4 Sao + Vé Máy Bay Đà Nẵng Hội An - 4 Ngày 3 Đêm',
+  name: 'Combo Du Lịch Biển Đảo Sang Chảnh - Khám Phá Vịnh Kỳ Diệu 5 Ngày 4 Đêm',
+  partnerAwards: {
+    image: { uri: 'https://via.placeholder.com/80x100/FFD700/000000?Text=Awards' },
+    line1: 'PARTNER AWARDS',
+    year: '2024',
+    line2: 'Best of Vietnam',
+  },
+  departurePoint: 'Đà Nẵng',
+  bookingCount: '9.1K+',
+  tags: [
+    { label: 'Tiếng Anh/Tiếng Việt' },
+    { label: 'Tour ghép' },
+    { label: 'Tùy chọn đón tại khách sạn', isSpecial: false },
+  ],
+  summaryHighlight: {
+    items: [
+      'Thăm quan những di tích ngoạn mục của cố đô xưa nhà Đinh Lê',
+      'Trải nghiệm ẩm thực địa phương độc đáo',
+    ],
+    logo: { uri: 'https://via.placeholder.com/60x60/0087CA/FFFFFF?Text=E' },
+    logoText: 'EKSORA'
+  },
+  offers: [
+    { label: 'Giảm 5%', icon: 'pricetag-outline', bgColor: '#FFE0B2', textColor: '#E65100' },
+    { label: 'Sale Giảm 25%', icon: 'flash-outline', bgColor: '#C8E6C9', textColor: '#1B5E20' },
+  ],
   supplier: {
-    logoUrl: 'https://via.placeholder.com/60x25.png?text=VNTRAVEL',
-    name: 'VNTRAVEL',
-    tag: 'Đối tác Vàng',
+    logoUrl: 'https://via.placeholder.com/100x30.png?text=EKSORA+Travel',
+    name: 'EKSORA Travel',
+    tag: 'Đối tác Kim Cương',
   },
   images: [
-    { id: 'img1', uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
-    { id: 'img2', uri: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
-    { id: 'img3', uri: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+    { id: 'img1', uri: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop' },
+    { id: 'img2', uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' },
+    { id: 'img3', uri: 'https://images.unsplash.com/photo-1528164344705-47542687000d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=60' },
+    { id: 'img4', uri: 'https://picsum.photos/seed/service_img1/800/480' },
+    { id: 'img5', uri: 'https://picsum.photos/seed/service_img1/800/480' },
   ],
   rating: {
     stars: 4.8,
-    count: 1672,
-    detailsText: "1,6k đánh giá",
+    count: 769,
+    detailsText: "769 Đánh giá",
   },
   price: {
-    original: 3250000,
-    current: 2750000,
-    discountPercentage: Math.round(((3250000 - 2750000) / 3250000) * 100),
+    original: 12800000,
+    current: 9990000,
+    discountPercentage: Math.round(((12800000 - 9990000) / 12800000) * 100),
     currency: 'đ',
-    unit: 'khách',
+    unit: 'người',
   },
-  options: { // Dữ liệu cho ProductOptionSelector
-    departureDates: [{label: '15/08/2024', value: '2024-08-15'}, {label: '20/08/2024', value: '2024-08-20'}],
-    passengerTypes: [
-      { id: 'adult', label: 'Người lớn', count: 1, pricePerUnit: 2750000 },
-      { id: 'child', label: 'Trẻ em (2-11t)', count: 0, pricePerUnit: 1800000 },
-      { id: 'infant', label: 'Em bé (<2t)', count: 0, pricePerUnit: 500000 },
-    ],
-    quickFilters: ['Ngày tốt', 'Giá tốt', 'Gần tôi', 'Top bán chạy'],
-  },
-  description: "Trải nghiệm kỳ nghỉ tuyệt vời tại Đà Nẵng và Hội An với combo khách sạn 4 sao sang trọng và vé máy bay khứ hồi. Gói dịch vụ bao gồm 4 ngày 3 đêm nghỉ dưỡng, đưa đón sân bay và nhiều ưu đãi hấp dẫn khác. Khám phá vẻ đẹp của Cầu Vàng, Phố cổ Hội An và thưởng thức ẩm thực địa phương đặc sắc. Phù hợp cho các cặp đôi, gia đình và nhóm bạn muốn có một chuyến đi đáng nhớ. Dịch vụ chất lượng cao, đội ngũ hỗ trợ nhiệt tình 24/7.",
+  availableServicePackages: [
+    { id: 'pkg_adult_main', name: 'Người lớn', availabilityInfo: 'Đặt từ 11/5', currentPrice: 750000, originalPrice: 800000, currency: 'đ' },
+    { id: 'pkg_child_main', name: 'Trẻ em (Cao 90cm-120cm)', availabilityInfo: 'Đặt từ 11/5', currentPrice: 70000, originalPrice: 100000, currency: 'đ' },
+    { id: 'pkg_senior_main', name: 'Người cao tuổi (Trên 60t)', availabilityInfo: 'Đặt từ 12/5', currentPrice: 600000, originalPrice: 650000, currency: 'đ' }
+  ],
+  availableDateFilters: [
+    { id: 'tomorrow', label: 'Ngày mai', isDefault: true },
+    { id: 'date_11_5', label: '11/5' },
+    { id: 'date_12_5', label: '12/5' },
+    { id: 'all_dates', label: 'Tất cả ngày', icon: 'calendar-outline' },
+  ],
+  descriptionContent: [
+    { type: 'text', content: "Du hành về quá khứ và khám phá thủ đô cổ đại của các triều đại Đinh và Lê, nổi tiếng với những tàn tích lạ thường đã sống sót qua một thiên niên kỷ. Phong cảnh xung quanh cực kỳ ngoạn mục, vì vậy hãy đảm bảo bạn có sẵn chiếc máy ảnh trong tay để chụp lại những cảnh đẹp tuyệt vời bên trong Hoa Lư. Hướng dẫn viên địa phương nhiệt tình sẽ giới thiệu cho bạn một số món ăn đậm chất nhất Ninh Bình vào bữa trưa, trước khi bắt đầu chuyến đi đò thư giãn trên sông Ngô Đồng và tận mắt ngắm mình Tam Cốc hùng vĩ nổi bật giữa vùng. Những ngọn núi đá vôi cao nguyên chọc thẳng trời xanh, những cánh đồng lúa tươi xanh và bạn sẽ biết được tại sao Hoa Lư còn được gọi là “Vịnh Hạ Long trên đất liền”. Hướng dẫn viên sẽ lo liệu hết tất cả việc trung chuyển và di chuyển trong tour, vì vậy bạn chỉ cần ngồi thư giãn và tận hưởng một ngày nghỉ ngơi thư giãn khi khám phá vẻ đẹp tự nhiên ngoạn mục của Việt Nam nhé." },
+    { type: 'image', uri: 'https://picsum.photos/seed/service_img1/800/480', caption: "Take a trip to the ancient capital of the Dinh and Le dynasties when you visit the provincial city of Hoa Lu" },
+    { type: 'text', content: "Khám phá thêm về các di tích lịch sử và kiến trúc độc đáo tại đây. Mỗi góc nhìn đều mang một câu chuyện riêng, chờ bạn khám phá và cảm nhận." },
+    { type: 'image', uri: 'https://picsum.photos/seed/service_img2/800/480', caption: "Another beautiful scenery from the trip." }
+  ],
   reviews: [
-    { id: 'r1', userAvatar: 'https://randomuser.me/api/portraits/women/68.jpg', userName: 'Nguyễn An Nhiên', rating: 5, comment: 'Chuyến đi rất tuyệt vời, dịch vụ tốt, khách sạn đẹp. Hướng dẫn viên nhiệt tình, đồ ăn ngon. Sẽ giới thiệu cho bạn bè và quay lại vào dịp tới!', date: '20/07/2024', images: [{id:'rev_img1', uri: 'https://images.unsplash.com/photo-1568402407999-a26ac911f23d?q=80&w=300&auto=format&fit=crop' }] },
-    { id: 'r2', userAvatar: 'https://randomuser.me/api/portraits/men/75.jpg', userName: 'Trần Minh Long', rating: 4, comment: 'Khách sạn ổn, vị trí thuận tiện. Có một vài điểm nhỏ cần cải thiện nhưng nhìn chung là hài lòng.', date: '15/07/2024', images: [] },
+    { id: 'r1', userAvatar: 'https://i.pravatar.cc/80?u=vo_huynh_tuan_anh', userName: 'Võ Huỳnh Tuấn Anh', rating: 5, comment: 'Mỗi chuyến đi là một hành trình mới, không chỉ để khám phá vùng đất xa lạ, mà còn để hiểu thêm về chính bản thân mình. Và nơi này đã mang lại vô vàn cảm xúc tích cực, dịch vụ tuyệt vời và cảnh quan hùng vĩ. Sẽ giới thiệu cho bạn bè!', date: '09/05/2024', images: [] },
+    { id: 'r2', userAvatar: 'https://i.pravatar.cc/80?u=nguyen_van_b', userName: 'Nguyễn Văn B', rating: 4, comment: 'Khách sạn tốt, view đẹp. Nhân viên thân thiện. Đồ ăn sáng cần đa dạng hơn một chút.', date: '05/05/2024', images: [] },
+    { id: 'r3', userAvatar: 'https://i.pravatar.cc/80?u=tran_thi_c', userName: 'Trần Thị C', rating: 5, comment: 'Chuyến đi tuyệt vời! Highly recommend cho các cặp đôi muốn có không gian riêng tư và lãng mạn.', date: '01/05/2024', images: [] },
   ],
   highlights: [
-    { id: 'h1', image: { uri: 'https://images.unsplash.com/photo-1528164344705-47542687000d?q=80&w=800&auto=format&fit=crop' }, title: 'Tham quan Cầu Vàng - Bà Nà Hills', description: 'Chiêm ngưỡng kiến trúc độc đáo và cảnh quan tuyệt đẹp từ Cầu Vàng nổi tiếng thế giới.' },
-    { id: 'h2', image: { uri: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=800&auto=format&fit=crop' }, title: 'Dạo bước Phố cổ Hội An lung linh', description: 'Khám phá vẻ đẹp cổ kính, lãng mạn của Hội An với những chiếc đèn lồng và kiến trúc độc đáo.' },
-    { id: 'h3', image: { uri: 'https://images.unsplash.com/photo-1504622587143-32811c6f3969?q=80&w=800&auto=format&fit=crop' }, title: 'Thưởng thức ẩm thực địa phương', description: 'Nếm thử các món ăn đặc sản nổi tiếng của Đà Nẵng và Hội An.' },
+    { id: 'h1', image: { uri: 'https://picsum.photos/seed/hl1/400/240' }, title: 'Biệt thự biển sang trọng', description: 'Nghỉ dưỡng tại biệt thự riêng tư với hồ bơi và tầm nhìn hướng biển tuyệt đẹp.' },
+    { id: 'h2', image: { uri: 'https://picsum.photos/seed/hl2/400/240' }, title: 'Ẩm thực đỉnh cao', description: 'Thưởng thức các món ăn tinh tế được chế biến bởi đầu bếp hàng đầu tại nhà hàng Michelin.' },
+    { id: 'h3', image: { uri: 'https://picsum.photos/seed/hl3/400/240' }, title: 'Du thuyền ngắm hoàng hôn', description: 'Trải nghiệm lãng mạn trên du thuyền riêng, ngắm nhìn hoàng hôn buông xuống trên vịnh.' },
   ],
-  policies: [
-    { id: 'p1', title: 'Giá vé & Phụ thu', content: 'Giá vé đã bao gồm thuế VAT và phí dịch vụ. Phụ thu có thể áp dụng cho các ngày lễ, Tết hoặc yêu cầu đặc biệt. Trẻ em dưới 2 tuổi miễn phí nếu không chiếm chỗ riêng.' },
-    { id: 'p2', title: 'Chính sách hoàn hủy', content: 'Hoàn hủy miễn phí trước 15 ngày khởi hành. Hoàn hủy trong vòng 7-14 ngày, phí 50%. Hoàn hủy dưới 7 ngày hoặc không thông báo, không hoàn tiền. Chính sách có thể thay đổi tùy theo nhà cung cấp dịch vụ.' },
-    { id: 'p3', title: 'Lưu ý quan trọng', content: 'Vui lòng mang theo giấy tờ tùy thân hợp lệ. Kiểm tra kỹ thông tin chuyến bay và khách sạn trước ngày đi. Liên hệ hotline để được hỗ trợ nếu có bất kỳ thay đổi nào.' },
-  ],
+  tripNotes: {
+    title: "Những điều cần lưu ý",
+    items: [
+      "#Group size information:",
+      "• Standard bus: a maximum of 30-32 pax",
+      "• Limousine Bus: a maximum of 17-22 pax",
+      "• DCar: a maximum of 9 - 11 pax",
+      "#General Notes:",
+      "- Please bring your personal identification for check-in.",
+      "- Itinerary might be subject to change due to weather or traffic conditions."
+    ]
+  },
+  contactInformation: {
+    title: "Liên hệ với chúng tôi",
+    description: "Bạn thắc mắc về dịch vụ này? Chat với ESORA!",
+    buttonText: "Chat với chúng tôi"
+  }
 };
 // --- KẾT THÚC DỮ LIỆU GIẢ ---
 
 export default function TripDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const productId = params.id || MOCK_PRODUCT_DATA.id; // Lấy id từ params, fallback về mock
+  const productId = params.id || MOCK_PRODUCT_DATA.id;
 
   const [productData, setProductData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isFavorite, setIsFavorite] = useState(false); // State ví dụ cho nút yêu thích
+  const [isFavorite, setIsFavorite] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [currentSelectedPackages, setCurrentSelectedPackages] = useState({});
+  const [currentTotalPrice, setCurrentTotalPrice] = useState(0);
 
   const fetchProductDetails = useCallback(async () => {
-    console.log(`Fetching details for product ID: ${productId}`);
     setLoading(true);
     setError(null);
+    setCurrentSelectedPackages({});
     try {
-      // TODO: Thay thế bằng API call thực tế
-      // const data = await getProductDetailsById(productId);
-      await new Promise(resolve => setTimeout(resolve, 700)); // Giả lập delay
-      if (productId === MOCK_PRODUCT_DATA.id) { // Giả lập thành công
+      await new Promise(resolve => setTimeout(resolve, 700));
+      if (productId === MOCK_PRODUCT_DATA.id) {
         setProductData(MOCK_PRODUCT_DATA);
-      } else { // Giả lập lỗi không tìm thấy
+        setCurrentTotalPrice(MOCK_PRODUCT_DATA.price.current);
+      } else {
         throw new Error('Không tìm thấy thông tin chi tiết sản phẩm.');
       }
     } catch (e) {
       setError(e.message);
-      // Alert.alert("Lỗi tải dữ liệu", e.message);
       console.error("Error fetching product details:", e);
     } finally {
       setLoading(false);
@@ -124,24 +167,44 @@ export default function TripDetailScreen() {
   }, [fetchProductDetails]);
 
   const handleShare = async () => {
+    if (!productData) return;
     try {
-      const result = await Share.share({
-        message: `Xem thử combo tuyệt vời này: ${productData?.name} tại EKSORA!`,
-        url: `yourapp://trip-detail/${productData?.id}` // Link đến app của bạn (cần cấu hình deep linking)
+      await Share.share({
+        message: `Trải nghiệm ${productData.name} cùng EKSORA! Chi tiết: yourapp://trip-detail/${productData.id}`,
+        url: `yourapp://trip-detail/${productData.id}`
       });
-      // ... xử lý kết quả share
-    } catch (error) {
-      Alert.alert(error.message);
+    } catch (e) {
+      Alert.alert("Lỗi chia sẻ", e.message);
     }
   };
 
   const handleFavorite = () => {
     setIsFavorite(prev => !prev);
-    // TODO: Gọi API để lưu trạng thái yêu thích
-    Alert.alert(isFavorite ? "Đã bỏ yêu thích" : "Đã thêm vào yêu thích");
+    Alert.alert(isFavorite ? "Đã bỏ khỏi Yêu thích" : "Đã thêm vào Yêu thích");
   };
 
-  if (loading && !refreshing) {
+  const handleAudioGuide = () => Alert.alert("Audio Guide", "Chức năng đang phát triển.");
+  const handleCart = () => Alert.alert("Giỏ hàng", "Chức năng đang phát triển.");
+  const handleImagePress = (imageId) => Alert.alert("Xem ảnh", `Xem chi tiết ảnh ${imageId}`);
+
+  const handlePackageSelectionUpdate = (selectedPackagesMap, totalPrice) => {
+    setCurrentSelectedPackages(selectedPackagesMap);
+    setCurrentTotalPrice(totalPrice);
+  };
+
+  const handleDateFilterChange = (filterId) => {
+    console.log('TripDetailScreen: Bộ lọc ngày đã đổi:', filterId);
+  };
+
+  const handleViewAllReviews = () => {
+    Alert.alert("Action", "Điều hướng đến trang tất cả đánh giá");
+  };
+
+  const handleChatWithUs = () => {
+    Alert.alert("Action", "Mở màn hình Chat với EKSORA");
+  };
+
+  if (loading && !productData && !refreshing) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={COLORS.primary} />
@@ -150,106 +213,115 @@ export default function TripDetailScreen() {
     );
   }
 
-  if (error && !productData) { // Chỉ hiển thị lỗi toàn màn hình nếu không có dữ liệu nào cả
+  if (error && !productData) {
     return (
       <View style={styles.centered}>
         <Stack.Screen options={{ title: 'Lỗi' }} />
         <Ionicons name="cloud-offline-outline" size={60} color={COLORS.textSecondary} />
         <Text style={styles.errorText}>Lỗi: {error}</Text>
         <TouchableOpacity onPress={fetchProductDetails} style={styles.retryButton}>
-            <Text style={styles.retryButtonText}>Thử lại</Text>
+          <Text style={styles.retryButtonText}>Thử lại</Text>
         </TouchableOpacity>
       </View>
     );
   }
-  
-  if (!productData) { // Trường hợp không loading, không error nhưng cũng không có data
+
+  if (!productData) {
     return (
       <View style={styles.centered}>
         <Stack.Screen options={{ title: 'Không có dữ liệu' }} />
-        <Text>Không có dữ liệu để hiển thị.</Text>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Không có dữ liệu để hiển thị.</Text>
       </View>
     );
   }
 
+  const footerPriceInfo = {
+    ...(productData.price || { currency: 'đ', unit: 'người', current: 0, original: 0, discountPercentage: 0 }), // Đảm bảo price không bao giờ null
+    current: currentTotalPrice > 0 ? currentTotalPrice : (productData.price?.current || 0),
+    unit: Object.keys(currentSelectedPackages).length > 0 ? (Object.keys(currentSelectedPackages).length > 1 ? 'các gói' : 'gói') : (productData.price?.unit || 'người'),
+  };
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: productData?.name?.substring(0, 25) + '...' || 'Chi tiết' }} />
+      <Stack.Screen options={{ headerShown: false }} />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary}/>
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />
         }
       >
         <ProductImageCarousel
           images={productData.images}
           isFavorite={isFavorite}
-          onBackPress={() => router.canGoBack() ? router.back() : null}
+          onBackPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/home')}
           onSharePress={handleShare}
           onFavoritePress={handleFavorite}
+          onAudioGuidePress={handleAudioGuide}
+          onCartPress={handleCart}
+          onImagePress={handleImagePress}
         />
 
         <View style={styles.mainContentContainer}>
           <ProductBasicInfo
-            name={productData.name}
-            supplier={productData.supplier}
-            rating={productData.rating}
-            price={productData.price}
+            productInfo={productData}
+            onSeeAllReviews={handleViewAllReviews}
+            onSeeMoreHighlights={() => Alert.alert("Action", "Xem thêm điểm nổi bật")}
+            onSeeOffers={() => Alert.alert("Action", "Xem tất cả ưu đãi")}
           />
 
           <View style={styles.separator} />
 
           <ProductOptionSelector
-            options={productData.options}
-            currentPrice={productData.price.current} // Để tính toán giá mới
-            onSelectionChange={(newSelection, newTotalPrice) => {
-              console.log('Lựa chọn mới:', newSelection);
-              console.log('Tổng giá mới:', newTotalPrice);
-              // Cập nhật state giá ở đây nếu cần
-            }}
+            servicePackages={productData.availableServicePackages}
+            dateFilters={productData.availableDateFilters}
+            initialTotalPrice={productData.price.current}
+            onSelectionUpdate={handlePackageSelectionUpdate}
+            onDateFilterChange={handleDateFilterChange}
           />
 
-          <View style={styles.separator} />
-
-          <ExpandableDescription
-            title="Mô tả chi tiết"
-            description={productData.description}
-          />
-
-          <View style={styles.separator} />
 
           <CustomerReviewSection
             reviews={productData.reviews}
             averageRating={productData.rating.stars}
             totalReviewsCount={productData.rating.count}
+            onViewAllReviews={handleViewAllReviews}
           />
 
-          <View style={styles.separator} />
-          
-          <TripHighlightsSection
+          <ServiceDescriptionSection
+            title="Về dịch vụ này"
+            descriptionContent={productData.descriptionContent}
+          />
+
+          {/* <View style={styles.separator} /> */}
+
+          {/* <TripHighlightsSection
             title="Điểm nổi bật của chuyến đi"
             highlights={productData.highlights}
-          />
+          /> */}
 
-          <View style={styles.separator} />
+          {/* <View style={styles.separator} /> */}
 
           <PolicyInfoSection
-            title="Thông tin cần biết"
-            policies={productData.policies}
+            noteTitle={productData.tripNotes?.title}
+            notes={productData.tripNotes?.items}
+            contactInfo={productData.contactInformation}
+            onChatPress={handleChatWithUs}
           />
         </View>
-        {/* Khoảng trống để footer không che mất nội dung cuối */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {productData && (
+      {productData && productData.price && (
         <StickyBookingFooter
-          priceInfo={productData.price} // Hoặc giá đã được cập nhật từ ProductOptionSelector
-          onAddToCart={() => Alert.alert("Chức năng","Thêm vào giỏ hàng")}
-          onBookNow={() => Alert.alert("Chức năng", "Đặt ngay")}
+          priceInfo={footerPriceInfo}
+          eksoraPoints={productData.eksoraPointsEarned} 
+          onAddToCart={() => Alert.alert("Chức năng", "Thêm vào giỏ hàng với tổng giá: " + footerPriceInfo.current.toLocaleString('vi-VN') + " " + (footerPriceInfo.currency || 'đ'))}
+          onBookNow={() => Alert.alert("Chức năng", "Đặt ngay với tổng giá: " + footerPriceInfo.current.toLocaleString('vi-VN') + " " + (footerPriceInfo.currency || 'đ'))}
+          onEksoraPointsPress={() => Alert.alert("Action", "Xem chi tiết EKSORA Xu")}
         />
       )}
     </View>
@@ -259,7 +331,7 @@ export default function TripDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white, // Hoặc COLORS.background nếu muốn màu nền khác
+    backgroundColor: COLORS.white,
   },
   scrollView: {
     flex: 1,
@@ -283,7 +355,7 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
     fontSize: 16,
     textAlign: 'center',
-    marginTop:10,
+    marginTop: 10,
   },
   retryButton: {
     marginTop: 20,
@@ -300,11 +372,15 @@ const styles = StyleSheet.create({
   mainContentContainer: {
     paddingHorizontal: 16,
     backgroundColor: COLORS.white,
+    marginTop: -10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 30,
   },
   separator: {
-    height: 10, // Hoặc 1
-    backgroundColor: COLORS.background, // Hoặc COLORS.border
-    marginVertical: 15, // Tạo khoảng cách giữa các section
-    marginHorizontal: -16, // Để separator full width nếu mainContentContainer có padding
+    height: 1,
+    backgroundColor: COLORS.background,
+    marginVertical: 15,
+    marginHorizontal: -16,
   },
 });

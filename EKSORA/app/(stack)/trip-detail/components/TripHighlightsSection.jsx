@@ -1,10 +1,10 @@
-// app/(stack)/trip-detail/components/TripHighlightsSection.jsx
+
 import React from 'react';
 import { View, Text, Image, StyleSheet, FlatList, Dimensions } from 'react-native';
 import { COLORS } from '@/constants/colors';
 
 const {width} = Dimensions.get('window');
-const ITEM_WIDTH = width * 0.8; // 80% chiều rộng màn hình
+const ITEM_WIDTH = width * 0.8; 
 const ITEM_SPACING = 15;
 
 const HighlightCard = ({item}) => {
@@ -21,7 +21,7 @@ const HighlightCard = ({item}) => {
 
 const TripHighlightsSection = ({ title, highlights }) => {
   if (!highlights || highlights.length === 0) {
-    return null; // Không hiển thị gì nếu không có highlights
+    return null; 
   }
 
   return (
@@ -36,7 +36,7 @@ const TripHighlightsSection = ({ title, highlights }) => {
         snapToInterval={ITEM_WIDTH + ITEM_SPACING}
         decelerationRate="fast"
         contentContainerStyle={{
-            paddingHorizontal: (width - ITEM_WIDTH) / 2 - ITEM_SPACING / 2, // Căn giữa item đầu và cuối
+            paddingHorizontal: (width - ITEM_WIDTH) / 2 - ITEM_SPACING / 2, 
             paddingVertical: 10,
         }}
         getItemLayout={(data, index) => (
@@ -50,16 +50,16 @@ const TripHighlightsSection = ({ title, highlights }) => {
 const styles = StyleSheet.create({
   container: {
     paddingVertical: 10,
-    backgroundColor: COLORS.background, // Nền khác để nổi bật
-    marginHorizontal: -16, // Full width nếu parent có padding
-    paddingHorizontal: 0, // Reset padding cho chính nó
+    backgroundColor: COLORS.background, 
+    marginHorizontal: -16, 
+    paddingHorizontal: 0, 
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.text,
     marginBottom: 12,
-    paddingHorizontal: 16, // Đặt lại padding cho title
+    paddingHorizontal: 16, 
   },
   highlightCard: {
     width: ITEM_WIDTH,
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   },
   highlightImage: {
     width: '100%',
-    height: ITEM_WIDTH * 0.6, // Tỷ lệ ảnh
+    height: ITEM_WIDTH * 0.6, 
     backgroundColor: COLORS.border,
   },
   highlightTextContainer: {

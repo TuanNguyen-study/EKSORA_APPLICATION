@@ -10,11 +10,11 @@ export default function Layout() {
           headerStyle: { backgroundColor: '#1e90ff' },
           headerTintColor:"white",
           headerTitleStyle: { fontWeight: 'bold' },
+          headerShown: false
         }}
       >
         <Stack.Screen name="(stack)" options={{ headerShown: false }} />
         <Stack.Screen name="trip-detail" options={{ title: 'Trip Details' }} />
-
       </Stack>
     </Provider>
   );
