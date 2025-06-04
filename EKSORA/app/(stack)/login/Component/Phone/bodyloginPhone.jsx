@@ -6,6 +6,7 @@ import { loginphone } from '../../../../../API/helpers/AxiosInstance';
 import { useDispatch } from 'react-redux';
 
 const BodyLoginPhone = () => {
+
   const [form, setForm] = useState({ phone: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -93,11 +94,13 @@ const BodyLoginPhone = () => {
 export default BodyLoginPhone;
 
 const styles = StyleSheet.create({
+
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ccc',
+
     borderRadius: 30,
     marginVertical: 10,
     paddingHorizontal: 10,
@@ -115,5 +118,34 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     marginTop: 10,
+   
+  loginButton: {
+    backgroundColor: '#009DFF',
+    paddingVertical: 14,
+    borderRadius: 100,
+    alignItems: 'center',
+    marginTop: 10, },
+
+  loginButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 15,
+    paddingHorizontal: 4,
+  },
+  link: {
+    color: '#000',
+    fontSize: 14,
+    textDecorationLine:'underline'
+
+  },
+  bold: {
+    fontWeight: 'bold',
+    textDecorationLine:'underline'
+  },
+  }
 });

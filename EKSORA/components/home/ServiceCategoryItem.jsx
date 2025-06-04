@@ -1,4 +1,3 @@
-// components/home/ServiceCategoryItem.jsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,15 +27,15 @@ const styles = StyleSheet.create({
     width: (Dimensions.get('window').width - 30 - 40) / 5, 
   },
   iconContainer: {
-    width: 48, // Kích thước icon container
+    width: 48, 
     height: 48,
-    borderRadius: 24, // Bo tròn
+    borderRadius: 24, 
     backgroundColor: COLORS.primaryUltraLight, 
     justifyContent: 'center',
     alignItems: 'center',
   },
   label: {
-    fontSize: 11, // Chữ nhỏ hơn
+    fontSize: 11, 
     color: COLORS.textSecondary,
     textAlign: 'center',
   },

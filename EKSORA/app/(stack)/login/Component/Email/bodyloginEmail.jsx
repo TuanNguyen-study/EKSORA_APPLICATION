@@ -66,44 +66,77 @@ const [showPassword, setShowPassword] = useState(false);
     </TouchableOpacity>
 </View>
 
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Đăng nhập</Text>
+
+            {/* Login button */}
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                <Text style={styles.loginButtonText}>Đăng nhập</Text>
             </TouchableOpacity>
+
 
             <TouchableOpacity onPress={() => router.replace('/(stack)/login/Component/OTP_Password/SendOTP_Screern')}>
                 <Text style={{ color: 'black', textDecorationLine: 'underline', marginTop: 10 }}>
                     Quên mật khẩu
                 </Text>
             </TouchableOpacity>
+
         </View>
-  )
-}
+    );
+};
+
 
 export default BodyLoginEmail
 
+
 const styles = StyleSheet.create({
+    container: {
+        paddingHorizontal: 20,
+        paddingTop: 10,
+    },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
         borderColor: '#ccc',
-        borderRadius: 10,
-        marginVertical: 10,
-        paddingHorizontal: 10
+        borderRadius: 100,
+        paddingHorizontal: 15,
+        paddingVertical: 12,
+        marginBottom: 15,
     },
     icon: {
-        marginRight: 10
+        marginRight: 10,
+        color: '#666',
     },
     input: {
         flex: 1,
-        height: 45
+        fontSize: 16,
     },
-    button: {
-        backgroundColor: '#0079C1',
-        paddingVertical: 12,
-        borderRadius: 10,
+    loginButton: {
+        backgroundColor: '#009DFF',
+        paddingVertical: 14,
+        borderRadius: 100,
         alignItems: 'center',
-        marginTop: 10
-    }
+        marginTop: 10,
+    },
+    loginButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 15,
+        paddingHorizontal: 4,
+    },
+    link: {
+        color: '#000',
+        fontSize: 14,
+        textDecorationLine: 'underline'
 
-})
+    },
+    bold: {
+        fontWeight: 'bold',
+        textDecorationLine: 'underline'
+
+    },
+});
