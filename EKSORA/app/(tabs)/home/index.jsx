@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,41 +9,143 @@ import {
   Dimensions,
   Platform,
   StatusBar,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from 'expo-router';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect } from "expo-router";
 
-import { COLORS } from '../../../constants/colors';
-import HeaderSearchBar from '../../../components/home/HeaderSearchBar';
-import PromoBanner from '../../../components/home/PromoBanner';
-import ImageCarouselCard from '../../../components/home/ImageCarouselCard';
-import ServiceCategoryItem from '../../../components/home/ServiceCategoryItem';
-import DestinationChip from '../../../components/home/DestinationChip';
-import SuggestionCard from '../../../components/home/SuggestionCard';
+import { COLORS } from "../../../constants/colors";
+import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
+import PromoBanner from "../../../components/home/PromoBanner";
+import ImageCarouselCard from "../../../components/home/ImageCarouselCard";
+import ServiceCategoryItem from "../../../components/home/ServiceCategoryItem";
+import DestinationChip from "../../../components/home/DestinationChip";
+import SuggestionCard from "../../../components/home/SuggestionCard";
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 // --- Mock Data ---
 const carouselImages = [
-  { id: 'c1', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' } },
-  { id: 'c2', image: { uri: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop' } },
-  { id: 'c3', image: { uri: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop' } },
-  { id: 'c4', image: { uri: 'https://images.unsplash.com/photo-1528164344705-47542687000d?q=80&w=1740&auto=format&fit=crop' } },
-  { id: 'c5', image: { uri: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=1740&auto=format&fit=crop' } },
+  {
+    id: "c1",
+    image: {
+      uri: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
+  {
+    id: "c2",
+    image: {
+      uri: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
+  {
+    id: "c3",
+    image: {
+      uri: "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
+  {
+    id: "c4",
+    image: {
+      uri: "https://images.unsplash.com/photo-1528164344705-47542687000d?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
+  {
+    id: "c5",
+    image: {
+      uri: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
 ];
 const serviceCategories = [
-  { id: 's1', label: 'Vui chơi & Trải nghiệm' }, { id: 's2', label: 'Xe khách' }, { id: 's3', label: 'Tự thuê xe' }, { id: 's4', label: 'Khách sạn' }, { id: 's5', label: 'Mục khác' },
+  { id: "s1", label: "Vui chơi & Trải nghiệm" },
+  { id: "s2", label: "Xe khách" },
+  { id: "s3", label: "Tự thuê xe" },
+  { id: "s4", label: "Khách sạn" },
+  { id: "s5", label: "Mục khác" },
 ];
 const popularDestinations = [
-  { id: 'd1', name: 'TP Hồ Chí Minh', image: { uri: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop' } }, { id: 'd2', name: 'TP Nha Trang', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' } }, { id: 'd3', name: 'Đà Nẵng', image: { uri: 'https://images.unsplash.com/photo-1503160865287-b054e0750e03?q=80&w=1804&auto=format&fit=crop' } }, { id: 'd4', name: 'Hà Nội', image: { uri: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop' } },
+  {
+    id: "d1",
+    name: "TP Hồ Chí Minh",
+    image: {
+      uri: "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
+  {
+    id: "d2",
+    name: "TP Nha Trang",
+    image: {
+      uri: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
+  {
+    id: "d3",
+    name: "Đà Nẵng",
+    image: {
+      uri: "https://images.unsplash.com/photo-1503160865287-b054e0750e03?q=80&w=1804&auto=format&fit=crop",
+    },
+  },
+  {
+    id: "d4",
+    name: "Hà Nội",
+    image: {
+      uri: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
 ];
 const suggestedItems = [
-  { id: 'sg1', title: 'Tour Long An 2 ngày 1 đêm - Nghỉ dưỡng và phục hồi sức khỏe ở KDL Cánh Đồng Bất Tận', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' }, rating: 4.8, reviews: '1,600', originalPrice: 1550000, price: 1250000, discount: 25 }, { id: 'sg2', title: 'Combo Khách Sạn 4 Sao + Vé Máy Bay Đà Nẵng Hội An - 4 Ngày 3 Đêm', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' }, rating: 4.8, reviews: '1,600', originalPrice: 2550000, price: 2250000, discount: 25 }, { id: 'sg3', title: 'Kỳ nghỉ dưỡng tại Phú Quốc villa hướng biển, giá siêu ưu đãi', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' }, rating: 4.9, reviews: '2,100', price: 3500000, discount: 15 }, { id: 'sg4', title: 'Khám phá vẻ đẹp Tokyo truyền thống và hiện đại 5N4Đ', image: { uri: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop' }, rating: 4.7, reviews: '980', originalPrice: 22000000, price: 18500000, discount: 20 },
+  {
+    id: "sg1",
+    title:
+      "Tour Long An 2 ngày 1 đêm - Nghỉ dưỡng và phục hồi sức khỏe ở KDL Cánh Đồng Bất Tận",
+    image: {
+      uri: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop",
+    },
+    rating: 4.8,
+    reviews: "1,600",
+    originalPrice: 1550000,
+    price: 1250000,
+    discount: 25,
+  },
+  {
+    id: "sg2",
+    title: "Combo Khách Sạn 4 Sao + Vé Máy Bay Đà Nẵng Hội An - 4 Ngày 3 Đêm",
+    image: {
+      uri: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop",
+    },
+    rating: 4.8,
+    reviews: "1,600",
+    originalPrice: 2550000,
+    price: 2250000,
+    discount: 25,
+  },
+  {
+    id: "sg3",
+    title: "Kỳ nghỉ dưỡng tại Phú Quốc villa hướng biển, giá siêu ưu đãi",
+    image: {
+      uri: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop",
+    },
+    rating: 4.9,
+    reviews: "2,100",
+    price: 3500000,
+    discount: 15,
+  },
+  {
+    id: "sg4",
+    title: "Khám phá vẻ đẹp Tokyo truyền thống và hiện đại 5N4Đ",
+    image: {
+      uri: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop",
+    },
+    rating: 4.7,
+    reviews: "980",
+    originalPrice: 22000000,
+    price: 18500000,
+    discount: 20,
+  },
 ];
 
-
-const ITEM_WIDTH_PERCENTAGE_HOME = 0.60;
+const ITEM_WIDTH_PERCENTAGE_HOME = 0.6;
 const ITEM_HEIGHT_CAROUSEL_TOTAL_HOME = 150;
 const ITEM_SPACING_CAROUSEL_HOME = 15;
 const ITEM_WIDTH_CAROUSEL = screenWidth * ITEM_WIDTH_PERCENTAGE_HOME;
@@ -51,18 +153,18 @@ const SNAP_INTERVAL = ITEM_WIDTH_CAROUSEL + ITEM_SPACING_CAROUSEL_HOME;
 const PAGINATION_AREA_HEIGHT = 30;
 
 export default function HomeScreen() {
-  const [activeTab, setActiveTab] = useState('Đề xuất');
+  const [activeTab, setActiveTab] = useState("Đề xuất");
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const carouselRef = useRef(null);
-  const [isCarouselManuallyScrolling, setIsCarouselManuallyScrolling] = useState(false);
-
+  const [isCarouselManuallyScrolling, setIsCarouselManuallyScrolling] =
+    useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      StatusBar.setBarStyle('light-content');
-      if (Platform.OS === 'android') {
-        StatusBar.setBackgroundColor(COLORS.primary); 
-        StatusBar.setTranslucent(false); 
+      StatusBar.setBarStyle("light-content");
+      if (Platform.OS === "android") {
+        StatusBar.setBackgroundColor(COLORS.primary);
+        StatusBar.setTranslucent(false);
       }
     }, [])
   );
@@ -70,13 +172,20 @@ export default function HomeScreen() {
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
     if (viewableItems && viewableItems.length > 0) {
       const visibleIndex = viewableItems[0].index;
-      if (visibleIndex !== null && visibleIndex !== undefined && visibleIndex < carouselImages.length && visibleIndex !== currentCarouselIndex) {
+      if (
+        visibleIndex !== null &&
+        visibleIndex !== undefined &&
+        visibleIndex < carouselImages.length &&
+        visibleIndex !== currentCarouselIndex
+      ) {
         setCurrentCarouselIndex(visibleIndex);
       }
     }
   }).current;
 
-  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  }).current;
 
   // Tự động chuyển carousel
   useEffect(() => {
@@ -93,11 +202,16 @@ export default function HomeScreen() {
     }, 3000);
 
     return () => clearInterval(timer);
-  }, [currentCarouselIndex, carouselImages.length, isCarouselManuallyScrolling]);
+  }, [
+    currentCarouselIndex,
+    carouselImages.length,
+    isCarouselManuallyScrolling,
+  ]);
 
-
-  const handlePressDestination = (item) => console.log('Chọn điểm đến:', item.name);
-  const handlePressSuggestion = (item) => console.log('Chọn gợi ý:', item.title);
+  const handlePressDestination = (item) =>
+    console.log("Chọn điểm đến:", item.name);
+  const handlePressSuggestion = (item) =>
+    console.log("Chọn gợi ý:", item.title);
 
   const HomeHeaderContent = () => (
     <View style={styles.homeHeaderContentContainer}>
@@ -113,7 +227,9 @@ export default function HomeScreen() {
           key={`dot-${index}`}
           style={[
             styles.paginationDotBase,
-            currentCarouselIndex === index ? styles.paginationDotActive : styles.paginationDotInactive,
+            currentCarouselIndex === index
+              ? styles.paginationDotActive
+              : styles.paginationDotInactive,
           ]}
         />
       ))}
@@ -127,9 +243,8 @@ export default function HomeScreen() {
   const handleCarouselScrollEnd = () => {
     setTimeout(() => {
       setIsCarouselManuallyScrolling(false);
-    }, 500); 
+    }, 500);
   };
-
 
   return (
     <View style={styles.rootContainer}>
@@ -138,8 +253,8 @@ export default function HomeScreen() {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        nestedScrollEnabled={true} 
-        contentInsetAdjustmentBehavior="automatic" 
+        nestedScrollEnabled={true}
+        contentInsetAdjustmentBehavior="automatic"
       >
         <LinearGradient
           colors={[COLORS.primary, COLORS.primary, COLORS.white, COLORS.white]}
@@ -160,7 +275,9 @@ export default function HomeScreen() {
             viewabilityConfig={viewabilityConfig}
             style={styles.carouselFlatListStyle}
             contentContainerStyle={{
-              paddingHorizontal: (screenWidth - ITEM_WIDTH_CAROUSEL) / 2 - (ITEM_SPACING_CAROUSEL_HOME / 2),
+              paddingHorizontal:
+                (screenWidth - ITEM_WIDTH_CAROUSEL) / 2 -
+                ITEM_SPACING_CAROUSEL_HOME / 2,
               paddingTop: 20,
             }}
             getItemLayout={(data, index) => ({
@@ -168,8 +285,8 @@ export default function HomeScreen() {
               offset: SNAP_INTERVAL * index,
               index,
             })}
-            onScrollBeginDrag={handleCarouselScrollBegin} 
-            onMomentumScrollEnd={handleCarouselScrollEnd} 
+            onScrollBeginDrag={handleCarouselScrollBegin}
+            onMomentumScrollEnd={handleCarouselScrollEnd}
           />
           <View style={styles.paginationWrapperInGradient}>
             {renderPagination()}
@@ -182,7 +299,7 @@ export default function HomeScreen() {
               <ServiceCategoryItem
                 key={item.id}
                 label={item.label}
-                onPress={() => console.log('Selected category:', item.label)}
+                onPress={() => console.log("Selected category:", item.label)}
               />
             ))}
           </View>
@@ -205,37 +322,49 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.sectionWrapperWithBorderForSuggestions}>
-            <View style={styles.tabBarContainer}>
-                {['Đề xuất', 'Gần đây'].map((tabName) => (
-                    <TouchableOpacity
-                    key={tabName}
-                    style={[styles.tabItem, activeTab === tabName && styles.activeTabItem]}
-                    onPress={() => setActiveTab(tabName)}
-                    >
-                    <Text style={[styles.tabText, activeTab === tabName && styles.activeTabText]}>
-                        {tabName}
-                    </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
+          <View style={styles.tabBarContainer}>
+            {["Đề xuất", "Gần đây"].map((tabName) => (
+              <TouchableOpacity
+                key={tabName}
+                style={[
+                  styles.tabItem,
+                  activeTab === tabName && styles.activeTabItem,
+                ]}
+                onPress={() => setActiveTab(tabName)}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === tabName && styles.activeTabText,
+                  ]}
+                >
+                  {tabName}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-            {activeTab === 'Đề xuất' && (
+          {activeTab === "Đề xuất" && (
             <FlatList
-                data={suggestedItems}
-                renderItem={({ item }) => <SuggestionCard item={item} onPress={handlePressSuggestion} />}
-                keyExtractor={(item) => item.id}
-                numColumns={2}
-                columnWrapperStyle={styles.row}
-                showsVerticalScrollIndicator={false} 
-                scrollEnabled={false} 
-                contentContainerStyle={styles.suggestionListContent}
+              data={suggestedItems}
+              renderItem={({ item }) => (
+                <SuggestionCard item={item} onPress={handlePressSuggestion} />
+              )}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              columnWrapperStyle={styles.row}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={false}
+              contentContainerStyle={styles.suggestionListContent}
             />
-            )}
-            {activeTab === 'Gần đây' && (
+          )}
+          {activeTab === "Gần đây" && (
             <View style={styles.emptyStateContainer}>
-                <Text style={styles.emptyStateText}>Chưa có mục nào gần đây.</Text>
+              <Text style={styles.emptyStateText}>
+                Chưa có mục nào gần đây.
+              </Text>
             </View>
-            )}
+          )}
         </View>
       </ScrollView>
     </View>
@@ -245,31 +374,31 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: COLORS.primary, 
+    backgroundColor: COLORS.primary,
   },
   homeHeaderContentContainer: {
     backgroundColor: COLORS.primary,
   },
   scrollView: {
-    flex: 1, 
-    backgroundColor: COLORS.white, 
+    flex: 1,
+    backgroundColor: COLORS.white,
   },
   carouselSectionWithGradient: {
-    height: ITEM_HEIGHT_CAROUSEL_TOTAL_HOME + 20 + PAGINATION_AREA_HEIGHT, 
-    justifyContent: 'space-between', 
+    height: ITEM_HEIGHT_CAROUSEL_TOTAL_HOME + 20 + PAGINATION_AREA_HEIGHT,
+    justifyContent: "space-between",
   },
   carouselFlatListStyle: {
-    height: ITEM_HEIGHT_CAROUSEL_TOTAL_HOME, 
+    height: ITEM_HEIGHT_CAROUSEL_TOTAL_HOME,
   },
   paginationWrapperInGradient: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: (PAGINATION_AREA_HEIGHT - 8 - 5) / 2, 
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: (PAGINATION_AREA_HEIGHT - 8 - 5) / 2,
   },
   paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   paginationDotBase: {
     height: 8,
@@ -281,7 +410,7 @@ const styles = StyleSheet.create({
     width: 20,
   },
   paginationDotInactive: {
-    backgroundColor: COLORS.inactiveTabDot || '#D3D3D3',
+    backgroundColor: COLORS.inactiveTabDot || "#D3D3D3",
     width: 8,
   },
   sectionWrapper: {
@@ -289,12 +418,12 @@ const styles = StyleSheet.create({
   },
   serviceCategoriesContainer: {
     backgroundColor: COLORS.white,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.categoryBorder || '#E0E0E0',
+    borderColor: COLORS.categoryBorder || "#E0E0E0",
     marginHorizontal: 15,
     marginTop: 15,
     paddingHorizontal: 10,
@@ -315,13 +444,13 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderRadius: 12,
     borderWidth: 0.8,
-    borderColor: COLORS.lightBorder || '#EAEAEA',
+    borderColor: COLORS.lightBorder || "#EAEAEA",
     paddingBottom: 10,
   },
   tabBarContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 15,
-    paddingTop:15,
+    paddingTop: 15,
   },
   tabItem: {
     paddingHorizontal: 12,
@@ -339,18 +468,18 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: COLORS.primary,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   suggestionListContent: {
-    paddingHorizontal: 5, 
+    paddingHorizontal: 5,
     paddingTop: 15,
   },
   row: {
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   emptyStateContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 40,
     minHeight: 200,
     paddingHorizontal: 15,

@@ -1,43 +1,45 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useState } from 'react';
-import { CheckBox, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CheckBox from '../../../../../components/CheckBox';
 
 
 const bottomloginEmail = () => {
 
-    const [isChecked, setChecked] = useState(false);
+  const [isChecked, setChecked] = useState(false);
 
-    return (
-       <View style={styles.bottom}>
-             {/* Dòng kẻ với chữ ở giữa */}
-             <View style={styles.orContainer}>
-               <View style={styles.line} />
-               <Text style={styles.orText}>Hoặc đăng nhập bằng</Text>
-               <View style={styles.line} />
-             </View>
-       
-             <View style={styles.iconRow}>
-               <TouchableOpacity style={styles.iconButton}>
-                 <FontAwesome name="google" size={24} color="white" style={styles.icon} />
-               </TouchableOpacity>
-               <TouchableOpacity style={styles.iconButtonGreen}>
-                 <FontAwesome name="phone" size={24} color="white" style={styles.icon} />
-               </TouchableOpacity>
-               <TouchableOpacity style={styles.iconButtonBlue}>
-                 <FontAwesome name="facebook" size={24} color="white" style={styles.icon} />
-               </TouchableOpacity>
-             </View>
-       
-             <Text style={styles.otherOption}>Lựa chọn khác</Text>
-       
-             <View style={styles.checkboxRow}>
-               <CheckBox value={isChecked} onValueChange={setChecked} />
-               <Text style={styles.terms}>
-                 Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA
-               </Text>
-             </View>
-           </View>
-    )
+  return (
+    <View style={styles.bottom}>
+      {/* Dòng kẻ với chữ ở giữa */}
+      <View style={styles.orContainer}>
+        <View style={styles.line} />
+        <Text style={styles.orText}>Hoặc đăng nhập bằng</Text>
+        <View style={styles.line} />
+      </View>
+
+      <View style={styles.iconRow}>
+        <TouchableOpacity style={styles.iconButton}>
+          <FontAwesome name="google" size={24} color="white" style={styles.icon} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconButtonGreen}>
+          <FontAwesome name="phone" size={24} color="white" style={styles.icon} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconButtonBlue}>
+          <FontAwesome name="facebook" size={24} color="white" style={styles.icon} />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.otherOption}>Lựa chọn khác</Text>
+
+      <View style={styles.checkboxRow}>
+        <CheckBox
+          checked={isChecked}
+          onChange={setChecked}
+        />
+        <Text style={styles.terms}> Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA</Text>
+      </View>
+    </View>
+  )
 }
 
 
@@ -104,6 +106,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 10,
     marginTop: 20,
+      flexWrap: 'wrap',
   },
   terms: {
     fontSize: 10,

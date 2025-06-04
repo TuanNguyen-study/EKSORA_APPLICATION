@@ -49,6 +49,7 @@ export default function TabsLayout() {
             ),
           }}
         />
+        
         <Tabs.Screen
           name="trips/index"
           options={{
