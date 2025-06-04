@@ -1,4 +1,3 @@
-// components/home/DestinationChip.jsx
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS } from '../../constants/colors';
@@ -14,12 +13,12 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white, // Hoặc COLORS.primaryLight
+    backgroundColor: COLORS.white,
     borderRadius: 25,
     marginRight: 10,
     paddingRight: 10,
     borderWidth: 1,
-    borderColor: COLORS.border, // Viền nhẹ
+    borderColor: COLORS.border, 
     shadowColor: "#000",
     shadowOffset: {
         width: 0,

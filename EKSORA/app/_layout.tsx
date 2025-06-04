@@ -8,8 +8,9 @@ export default function Layout() {
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: '#1e90ff' },
-          headerTintColor: "white",
+          headerTintColor:"white",
           headerTitleStyle: { fontWeight: 'bold' },
+          headerShown: false
         }}
       >
         <Stack.Screen name="(stack)" options={{ headerShown: false }} />
