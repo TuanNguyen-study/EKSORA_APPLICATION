@@ -1,27 +1,20 @@
-import React from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { COLORS } from '../../../constants/colors';
-import OfferCard from '../../../components/offers/OfferCard';
+import { StyleSheet, Text, View, ScrollView } from 'react-native'
+import React from 'react'
+import Header from '../../../components/offers/header'
+import Offer from '../../../components/offers/Offer'
+import Promotions from '../../../components/offers/Promotion'
 
-const offers = [
-  { id: '1', title: 'Giảm 20% vé máy bay', description: 'Áp dụng cho các chuyến đi trong tháng 6' },
-  { id: '2', title: 'Tour Đà Lạt chỉ 2 triệu', description: 'Khởi hành hàng tuần' },
-];
 
-export default function OffersScreen() {
+const index = () => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Ưu đãi đặc biệt</Text>
-      <FlatList
-        data={offers}
-        renderItem={({ item }) => <OfferCard offer={item} />}
-        keyExtractor={(item) => item.id}
-      />
-    </View>
-  );
+    <ScrollView style={{ backgroundColor: '#F5F5F5' }}>
+      <Header />
+      <Offer/>
+      <Promotions/>
+    </ScrollView>
+  )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: COLORS.background },
-  title: { fontSize: 28, fontWeight: 'bold', color: COLORS.text, marginBottom: 20 },
-});
+export default index
+
+const styles = StyleSheet.create({})

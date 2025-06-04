@@ -1,37 +1,42 @@
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { router } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View, onPress } from 'react-native';
 
 export default function BodyLogin() {
+
+
+
+
     return (
         <View style={styles.container}>
             <View>
                 <TouchableOpacity style={styles.button}>
-                    <Text style={{ color: 'white', fontSize: 20, fontStyle: 'normal', fontWeight: 'bold' }}>Số điện thoại</Text>
-                   
+                    <Text style={styles.text} onPress={ ()=> router.push('/(stack)/login/loginPhone') }>Số điện thoại</Text>
+
                     <Feather name="phone" size={24} color="white" style={styles.image} />
 
                 </TouchableOpacity>
             </View>
-            
+
             <View>
                 <TouchableOpacity style={styles.button1}>
                     <Text style={styles.text}>Facebook</Text>
-                   <FontAwesome name="facebook" size={24} color="white" style={styles.image} />
+                    <FontAwesome name="facebook" size={24} color="white" style={styles.image} />
                 </TouchableOpacity>
             </View>
 
-              <View>
+            <View>
                 <TouchableOpacity style={styles.button3}>
                     <Text style={styles.text}>Google</Text>
-                     <AntDesign name="googleplus" size={24} color="white" style={styles.image} />
+                    <AntDesign name="googleplus" size={24} color="white" style={styles.image} />
                 </TouchableOpacity>
             </View>
 
             <View>
                 <TouchableOpacity style={styles.button2}>
-                    <Text style={styles.text}>Email</Text>
+                    <Text style={styles.text}  onPress={ ()=> router.push('/(stack)/login/loginEmail')}>Email</Text>
                     <Feather name="mail" size={24} color="white" style={styles.image} />
                 </TouchableOpacity>
             </View>

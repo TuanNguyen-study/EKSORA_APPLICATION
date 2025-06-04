@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, CheckBox } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import CheckBox from '../../../../../components/CheckBox';
 
 
 export default function bottomPhone() {
   const [agree, setAgree] = React.useState(false);
-  const [isChecked, setChecked] = React.useState(false);
+  const [isChecked, setIsChecked] = React.useState(false);
 
   return (
     <View style={styles.bottom}>
@@ -19,18 +20,23 @@ export default function bottomPhone() {
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButtonBlue}>
           <FontAwesome name="facebook" size={24} color="white" style={styles.icon} />
-        </TouchableOpacity> 
+        </TouchableOpacity>
       </View>
 
-      
-      <Text style={styles.otherOption}>Lựa chọn khác</Text> 
+
+      <Text style={styles.otherOption}>Lựa chọn khác</Text>
 
 
       <View style={styles.checkboxRow}>
-       <CheckBox value={isChecked} onValueChange={setChecked} style={styles.checkboxRow} />
-      <Text style={styles.terms}>
-        Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA
-      </Text>
+        <CheckBox
+          checked={isChecked}
+          onChange={() => setIsChecked(!isChecked)}
+          style={styles.checkbox}
+        />
+
+        <Text style={styles.terms}>
+          Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA
+        </Text>
       </View>
     </View>
   )
@@ -87,12 +93,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-   checkboxRow: { 
+  checkboxRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 10,
     marginTop: 20,
-   },
+  },
 
   terms: {
     fontSize: 10,

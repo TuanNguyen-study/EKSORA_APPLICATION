@@ -1,9 +1,10 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useState } from 'react';
-import { CheckBox, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CheckBox from '../../../../../components/CheckBox'; 
 
-const bottomloginPhone = () => {
-  const [isChecked, setChecked] = useState(false);
+const BottomLoginPhone = () => {
+  const [isChecked, setChecked] = useState(false); 
 
   return (
     <View style={styles.bottom}>
@@ -16,29 +17,30 @@ const bottomloginPhone = () => {
 
       <View style={styles.iconRow}>
         <TouchableOpacity style={styles.iconButton}>
-          <FontAwesome name="google" size={24} color="white" style={styles.icon} />
+          <FontAwesome name="google" size={24} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButtonGreen}>
-          <FontAwesome name="phone" size={24} color="white" style={styles.icon} />
+          <FontAwesome name="phone" size={24} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButtonBlue}>
-          <FontAwesome name="facebook" size={24} color="white" style={styles.icon} />
+          <FontAwesome name="facebook" size={24} color="white" />
         </TouchableOpacity>
       </View>
 
       <Text style={styles.otherOption}>Lựa chọn khác</Text>
 
       <View style={styles.checkboxRow}>
-        <CheckBox value={isChecked} onValueChange={setChecked} />
-        <Text style={styles.terms}>
-          Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA
-        </Text>
+        <CheckBox
+          checked={isChecked}
+          onChange={setChecked}
+        />
+         <Text style={styles.terms}> Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA</Text>
       </View>
     </View>
   );
 };
 
-export default bottomloginPhone;
+export default BottomLoginPhone;
 
 const styles = StyleSheet.create({
   bottom: {
@@ -88,22 +90,17 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     marginTop: 20,
   },
-  icon: {
-    width: 60,
-    height: 24,
-    textAlign: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 10,
     marginTop: 20,
+    flexWrap: 'wrap',  // Cho phép text xuống dòng
   },
   terms: {
     fontSize: 10,
     color: '#444',
-    textAlign: 'center',
+    marginLeft: 8,
+    flex: 1,
   },
 });

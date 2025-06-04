@@ -7,15 +7,16 @@ import UserInfo from '../../../components/account/UserInfo';
 export default function AccountScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tài khoản</Text>
-      <UserInfo /> 
+      <UserInfo />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1,
-     padding: 16, 
-     backgroundColor: COLORS.background},
-  title: { fontSize: 28, fontWeight: 'bold', color: COLORS.text, marginBottom: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 16,
+  },
+
 });
