@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, StyleSheet, Text, TextInput } from 'react-native';
 import { useState } from 'react';
 import Entypo from '@expo/vector-icons/Entypo';
-import React from 'react'
+
 
 export default function SignupBody({ onSubmit }) {
     const [email, setEmail] = useState('');
@@ -62,7 +62,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#0066A2',
         borderRadius: 8,
         paddingVertical: 12,
-        borderRadius: 30,
         width: 367,
         height: 52,
     },

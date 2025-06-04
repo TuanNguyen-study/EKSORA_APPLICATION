@@ -1,103 +1,119 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { loginphone } from '../../../../../API/helpers/AxiosInstance';
+import { useDispatch } from 'react-redux';
 
-const bodyloginPhone = () => {
-    const [phone, setPhone] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const router = useRouter();
+const BodyLoginPhone = () => {
+  const [form, setForm] = useState({ phone: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const dispatch = useDispatch();
+  const router = useRouter();
 
+  const handleLogin = async () => {
+    const { phone, password } = form;
 
-    // Hàm xử lý đăng nhập 
-    const handleLogin = () => {
-        // Xử lý đăng nhập
-        if (!phone || !password) {
-            console.log('Vui lòng nhập số điện thoại và mật khẩu');
-            return;
-        }
-        if (phone.length < 10) {
-            console.log('Số điện thoại không hợp lệ');
-            return;
-        }
-        if (password.length < 6) {
-            console.log('Mật khẩu phải có ít nhất 6 ký tự');
-            return;
-        }
-               // reset form
-        setPhone('');
-        setPassword('');    
+    if (!phone || !password) {
+      Alert.alert('Lỗi', 'vui lòng nhập  đày đủ số điện thoại và mật khẩu');
+      return;
+    }
+    if (phone.length < 10) {
+      Alert.alert('Lỗi', 'số điện thoại không hợp lệ');
+      return;
+    }
+
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      Alert.alert('Lỗi', 'đật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa và 1 ký tự đặc biệt');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const resultAction = await dispatch(loginphone({ phone, password }));
+      if (loginphone.fulfilled.match(resultAction)) {
+        Alert.alert('Thành công', 'đăng nhập thành công!');
+        setForm({ phone: '', password: '' });
         setShowPassword(false);
-        console.log('Đăng nhập thành công');
+        router.push('/(tabs)/home');
+      } else {
+        Alert.alert('thất bại', resultAction.payload || 'đăng nhập thất bại');
+      }
+    } catch (err) {
+      Alert.alert('lỗi hệ thống', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-       router.push('/(tabs)/home');
-    };
+  return (
+    <View style={{ paddingHorizontal: 20 }}>
+      <View style={styles.inputContainer}>
+        <FontAwesome name="phone" size={18} style={styles.icon} />
+        <TextInput
+          placeholder="+84  Nhập số điện thoại"
+          value={form.phone}
+          onChangeText={text => setForm({ ...form, phone: text })}
+          keyboardType="phone-pad"
+          style={styles.input}
+        />
+      </View>
 
-    return (
-        <View style={{ paddingHorizontal: 20 }}>
-            <View style={styles.inputContainer}>
-                <FontAwesome name="phone" size={18} style={styles.icon} />
-                <TextInput
-                    placeholder="+84  Nhập số điện thoại"
-                    value={phone}
-                    onChangeText={setPhone}
-                    keyboardType="phone-pad"
-                    style={styles.input}
-                />
-            </View>
+      <View style={styles.inputContainer}>
+        <FontAwesome name="lock" size={18} style={styles.icon} />
+        <TextInput
+          placeholder="Mật khẩu"
+          secureTextEntry={!showPassword}
+          value={form.password}
+          onChangeText={text => setForm({ ...form, password: text })}
+          style={styles.input}
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={18} />
+        </TouchableOpacity>
+      </View>
 
-            <View style={styles.inputContainer}>
-                <FontAwesome name="lock" size={18} style={styles.icon} />
-                <TextInput
-                    placeholder="Mật khẩu"
-                    secureTextEntry={!showPassword}
-                    value={password}
-                    onChangeText={setPassword}
-                    style={styles.input}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={18} />
-                </TouchableOpacity>
-            </View>
+      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+        <Text style={{ color: '#fff', fontWeight: 'bold' }}>
+          {loading ? 'Đang xử lý...' : 'Đăng nhập'}
+        </Text>
+      </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Đăng nhập</Text>
-            </TouchableOpacity>
+      <TouchableOpacity>
+        <Text style={{ color: 'black', textDecorationLine: 'underline', marginTop: 10 }}>
+          Quên mật khẩu
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
-            <TouchableOpacity>
-                <Text style={{ color: 'black', textDecorationLine: 'underline', marginTop: 10 }}>
-                    Quên mật khẩu
-                </Text>
-            </TouchableOpacity>
-        </View>
-    )
-}
-
-export default bodyloginPhone
+export default BodyLoginPhone;
 
 const styles = StyleSheet.create({
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 30,
-        marginVertical: 10,
-        paddingHorizontal: 10
-    },
-    icon: {
-        marginRight: 10
-    },
-    input: {
-        flex: 1,
-        height: 45
-    },
-    button: {
-        backgroundColor: '#0079C1',
-        paddingVertical: 12,
-        borderRadius: 30,
-        alignItems: 'center',
-        marginTop: 10
-    }
-})
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 30,
+    marginVertical: 10,
+    paddingHorizontal: 10,
+  },
+  icon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    height: 45,
+  },
+  button: {
+    backgroundColor: '#0079C1',
+    paddingVertical: 12,
+    borderRadius: 30,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+});

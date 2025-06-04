@@ -1,7 +1,8 @@
-import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { router } from 'expo-router';
+import { loginWithFacebook } from '../facebooklogin/FacebookLoginButton';
+import GoogleLoginButton from '../googleLogin/GoogleLoginButton';
 import { StyleSheet, Text, TouchableOpacity, View, onPress } from 'react-native';
 
 export default function BodyLogin() {
@@ -20,19 +21,16 @@ export default function BodyLogin() {
                 </TouchableOpacity>
             </View>
 
-            <View>
-                <TouchableOpacity style={styles.button1}>
-                    <Text style={styles.text}>Facebook</Text>
-                    <FontAwesome name="facebook" size={24} color="white" style={styles.image} />
-                </TouchableOpacity>
-            </View>
+            <TouchableOpacity style={styles.button1} onPress={loginWithFacebook}>
+          <Text style={styles.text}>Facebook</Text>
+           <FontAwesome name="facebook" size={24} color="white" style={styles.image} />
+          </TouchableOpacity>
+ 
 
-            <View>
-                <TouchableOpacity style={styles.button3}>
-                    <Text style={styles.text}>Google</Text>
-                    <AntDesign name="googleplus" size={24} color="white" style={styles.image} />
-                </TouchableOpacity>
-            </View>
+        <View>
+          <GoogleLoginButton style={styles.button3} textStyle={styles.text} iconStyle={styles.image} />
+        </View>
+
 
             <View>
                 <TouchableOpacity style={styles.button2}>

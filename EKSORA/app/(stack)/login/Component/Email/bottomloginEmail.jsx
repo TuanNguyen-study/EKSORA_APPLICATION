@@ -4,8 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CheckBox from '../../../../../components/CheckBox';
 
 
-const bottomloginEmail = () => {
-
+const BottomLoginEmail = () => {
   const [isChecked, setChecked] = useState(false);
 
   return (
@@ -36,14 +35,15 @@ const bottomloginEmail = () => {
           checked={isChecked}
           onChange={setChecked}
         />
-        <Text style={styles.terms}> Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA</Text>
+        <Text style={styles.terms}>
+          Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA
+        </Text>
       </View>
     </View>
-  )
-}
+  );
+};
 
-
-export default bottomloginEmail
+export default BottomLoginEmail;
 
 const styles = StyleSheet.create({
 

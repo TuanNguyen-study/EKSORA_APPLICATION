@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View, Image } from 'react-native'
-import React, { useEffect } from 'react'
+import { StyleSheet, View, Image } from 'react-native'
+import React, { useEffect } from 'react';
 import { COLORS } from '../../../constants/colors';
 import { router } from 'expo-router';
 
 
-const index = () => {
+
+const  Index = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -27,7 +28,7 @@ const index = () => {
   )
 }
 
-export default index
+export default  Index
 
 const styles = StyleSheet.create({
   logoContainer: {
