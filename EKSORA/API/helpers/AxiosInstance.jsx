@@ -55,7 +55,7 @@ export const loginphone = createAsyncThunk(
 export const sendotp = createAsyncThunk('auth/send-otp',
   async (email, { rejectWithValue }) => {
     try {
-      const res = await API.post('/api/send-otp', {input: email });
+      const res = await API.post('/api/password/send-otp', {input: email });
       if (res.status !== 200) {
         throw new Error('Gửi OTP thất bại');
       }
@@ -70,7 +70,7 @@ export const sendotp = createAsyncThunk('auth/send-otp',
 export const verifyOtp = createAsyncThunk('auth/verify-otp',
   async ({ email, otp }, { rejectWithValue }) => {
     try {
-      const res = await API.post('/api/verify-otp', { email, otp });
+      const res = await API.post('/api/password/verify-otp', { email, otp });
       if (res.status !== 200) {
         throw new Error('Xác thực OTP thất bại');
       }
@@ -84,12 +84,18 @@ export const verifyOtp = createAsyncThunk('auth/verify-otp',
 
 // reset password 
 export const resetPassword = createAsyncThunk('auth/update-password',
-  async ({ input, newPassword }, { rejectWithValue }) => {
+  async ({ newPassword, resetToken }, { rejectWithValue }) => {
     try {
-      const res = await API.post('/api/update-password', { input, newPassword });
-      if (res.status !== 200) {
-        throw new Error('Đặt lại mật khẩu thất bại');
-      }
+      const res = await API.post('/api/password/reset-password',
+        { newPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${resetToken}`,
+            'x-client-id': 'af5b66e1-254c-4934-b883-937882df00f4',
+            'x-api-key': '8d75fba6-789f-4ea4-8a3f-af375140662d',
+          },
+        }
+      );
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Đặt lại mật khẩu thất bại');

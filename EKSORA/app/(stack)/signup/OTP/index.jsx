@@ -1,18 +1,46 @@
-import { router } from 'expo-router';
+import { useRouter,useLocalSearchParams } from 'expo-router';
 import React, { useRef, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Alert, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
-const Otp = () => {
-  const [otp, setOtp] = useState(['', '', '', '']);
-  const inputs = useRef([]);
 
-  const handleChange = (text, index) => {
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-    if (text && index < 3) {
-      inputs.current[index + 1].focus();
+const Otp = () => {
+  const { token } = useLocalSearchParams();
+   const [otp, setOtp] = useState(['', '', '', '']);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const inputs = [useRef(), useRef(), useRef(), useRef()];
+
+  const handleChange = (text, idx) => {
+  if (!/^\d*$/.test(text)) return; // chỉ cho nhập số
+  const newOtp = [...otp];
+  newOtp[idx] = text;
+  setOtp(newOtp);
+  if (text && idx < 3) {
+    inputs[idx + 1].current.focus();
+  }
+  if (!text && idx > 0) {
+    inputs[idx - 1].current.focus();
+  }
+};
+
+  const handleVerify = async () => {
+    const otpValue = otp.join('');
+    if (otpValue.length !== 4) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đủ 4 số OTP');
+      return;
+    }
+    try {
+        setLoading(true);
+      // TODO: Gọi API xác thực OTP, nếu thành công:
+      router.replace({
+        pathname: '/(stack)/signup/ResetPassword',
+        params: { token }, 
+      });
+    } catch (error) {
+      Alert.alert('Lỗi', error?.response?.data?.message || error?.message || 'Xác thực OTP thất bại');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,7 +64,7 @@ const Otp = () => {
         {otp.map((value, index) => (
           <TextInput
             key={index}
-            ref={(ref) => (inputs.current[index] = ref)}
+            ref={inputs[index]} 
             style={styles.otpInput}
             keyboardType="number-pad"
             maxLength={1}
@@ -47,7 +75,7 @@ const Otp = () => {
       </View>
 
       {/* Nút xác thực */}
-      <TouchableOpacity style={styles.button} onPress={() => router.push('/(stack)/signup/ResetPassword')}>
+      <TouchableOpacity style={styles.button}  onPress={handleVerify} disabled={loading}>
         <Text style={styles.buttonText}>Xác thực OTP</Text>
       </TouchableOpacity>
 

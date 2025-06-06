@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+/*mport React, { useEffect } from "react";
 import { Button, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { FacebookAuthProvider,signInWithCredential, signInWithPopup,} from "firebase/auth";
@@ -50,4 +50,4 @@ export default function FacebookLoginButton() {
   };
 
   return <Button title="Đăng nhập bằng Facebook" onPress={handleLogin} />;
-}
+}*/

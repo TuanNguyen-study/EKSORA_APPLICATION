@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 
 function BodyLoginEmail() {
   const [form, setForm] = useState({ email: '', password: '' });
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
 const [showPassword, setShowPassword] = useState(false);
     const dispatch = useDispatch();
     const router = useRouter();
@@ -73,11 +73,17 @@ const [showPassword, setShowPassword] = useState(false);
             </TouchableOpacity>
 
 
-            <TouchableOpacity onPress={() => router.replace('/(stack)/login/Component/OTP_Password/SendOTP_Screern')}>
-                <Text style={{ color: 'black', textDecorationLine: 'underline', marginTop: 10 }}>
-                    Quên mật khẩu
-                </Text>
-            </TouchableOpacity>
+           <View style={styles.row}>
+        <TouchableOpacity onPress={() => router.replace('/(stack)/signup/Repassword')}>
+            <Text style={styles.link}>Quên mật khẩu</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push('/(stack)/signup')}>
+            <Text style={styles.link}>
+                Chưa có tài khoản? <Text style={styles.bold}>Đăng ký</Text>
+            </Text>
+        </TouchableOpacity>
+    </View>
 
         </View>
     );

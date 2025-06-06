@@ -1,9 +1,34 @@
-import { router } from 'expo-router';
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState }  from 'react';
+import { View, Alert, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
+import { useDispatch } from 'react-redux';
+import { sendotp} from '../../.../../../../API/helpers/AxiosInstance'; 
+import { useRouter } from 'expo-router';
 
-const index = () => {
+const Index = () => {
+   const [email, setEmail] = useState('');
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+   const handleSendOTP = async () => {
+    if (!email.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập email hoặc số điện thoại');
+      return;
+    }
+
+    try {
+      setLoading(true);
+    await dispatch(sendotp(email)).unwrap(); 
+      Alert.alert('Thành công', 'Mã OTP đã được gửi!');
+      router.replace('/(stack)/signup/OTP');
+    } catch (error) {
+      console.log('Gửi OTP lỗi:', error, error?.response?.data);
+      Alert.alert('Lỗi', error?.response?.data?.message || 'Gửi OTP thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Đặt lại mật khẩu</Text>
@@ -12,12 +37,16 @@ const index = () => {
         <Feather name="mail" size={18} color="#555" style={styles.icon} />
         <TextInput
           style={styles.input}
-          placeholder="Địa chỉ email"
+           value={email}
+            onChangeText={setEmail}
+          placeholder="email-address"
           placeholderTextColor="#999"
+           autoCapitalize="none"
+          keyboardType="email-address"
         />
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={() => router.push('/(stack)/signup/OTP')}>
+      <TouchableOpacity style={styles.button} onPress={handleSendOTP} disabled={loading}>
         <Text style={styles.buttonText}>Xác Thực</Text>
       </TouchableOpacity>
 
@@ -28,7 +57,7 @@ const index = () => {
   );
 };
 
-export default index;
+export default Index;
 
 const styles = StyleSheet.create({
   container: {

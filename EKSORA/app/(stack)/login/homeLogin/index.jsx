@@ -1,4 +1,4 @@
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+/**import { SafeAreaView, StyleSheet, Text, View } from "react-native";
 import React from "react";
 import BodyLogin from "../Component/homeLogin/BodyLogin";
 import BottonLogin from "../Component/homeLogin/BottonLogin";
@@ -36,4 +36,4 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 30,
   },
-});
+});**/
