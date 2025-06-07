@@ -9,12 +9,19 @@ const ITEM_WIDTH = width * 0.60;
 const ITEM_SPACING = 15; 
 
 const ImageCarouselCard = ({ item }) => (
-  <View style={styles.card}>
-    <Image source={item.image} style={styles.image} resizeMode="cover" />
+  <View style={styles.container}>
+    <View style={styles.card}>
+      <Image source={item.image} style={styles.image} resizeMode="cover" />
+    </View>
   </View>
 );
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center', 
+    alignItems: 'center', 
+  },
   card: {
     width: ITEM_WIDTH,
     height: 150, 
