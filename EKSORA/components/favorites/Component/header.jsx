@@ -53,7 +53,8 @@ export default function Header({ setFilterData }) {
     <View style={styles.header}>
       <TouchableOpacity
         style={styles.editButton}
-        onPress={() => router.push("/(stack)/favorites")}
+        
+        onPress={ () => router.push("/(stack)/favorites/editFavouriScreen")}
       >
         <Ionicons name="create-outline" size={24} color="#005c8b" />
       </TouchableOpacity>
