@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import {  Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS } from '../../constants/colors';
 
 const DestinationChip = ({ destination, onPress }) => (
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 13,
     fontWeight: '500',
-    color: COLORS.primary, // Hoặc COLORS.text
+    color: COLORS.primary, 
   },
 });
 
