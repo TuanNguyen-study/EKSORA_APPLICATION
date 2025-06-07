@@ -1,9 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View, } from 'react-native'
 import React from 'react'
-import BodySignUp from '../signup/Components/Signup/bodySignUp'
-import BottomSignUp from '../signup/Components/Signup/bottomSignup'
+import BodySignUp from './Signup/bodySignUp'
+import BottomSignUp from './Signup/bottomSignup'
+
 
 const index = () => {
+  
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Đăng nhập/Đăng ký</Text>

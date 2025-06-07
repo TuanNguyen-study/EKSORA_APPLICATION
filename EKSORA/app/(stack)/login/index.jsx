@@ -1,14 +1,14 @@
-import { StyleSheet, Text, View, Image } from 'react-native'
-import React, { useEffect } from 'react'
-import { COLORS } from '../../../constants/colors';
 import { router } from 'expo-router';
+import { useEffect } from 'react';
+import { Image, StyleSheet, View } from 'react-native';
+import { COLORS } from '../../../constants/colors';
 
 
 const index = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push('/(stack)/login/homeLogin');
+      router.push('/(stack)/signup')
     }, 3000);
 
     return () => clearTimeout(timer); // Dọn dẹp khi unmount

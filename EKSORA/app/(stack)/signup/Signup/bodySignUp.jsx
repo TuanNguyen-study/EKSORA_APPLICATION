@@ -18,6 +18,7 @@ const bodySignUp = () => {
                 style={styles.input}
                 placeholder="Email"
                 keyboardType="email-address"
+          
             />
 
             <View style={styles.passwordContainer}>

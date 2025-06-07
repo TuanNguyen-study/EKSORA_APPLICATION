@@ -20,7 +20,7 @@ const bottomSignup = () => {
       </TouchableOpacity>
 
       <Text style={styles.loginPrompt}>
-        Bạn đã có tài khoản? <Text style={styles.loginLink} onPress={()=> router.push('/(stack)/login/homeLogin')}>Đăng nhập</Text>
+        Bạn đã có tài khoản? <Text style={styles.loginLink} onPress={()=> router.push('/(stack)/login/loginEmail')}>Đăng nhập</Text>
       </Text>
     </View>
   );

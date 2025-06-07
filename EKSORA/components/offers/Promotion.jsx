@@ -10,6 +10,9 @@ import {
 } from "react-native";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 
+// Dữ liệu ưu đãi
+ 
+
 const data = new Array(8).fill({
   title: "Combo Khách Sạn 4 Sao + Vé Máy Bay Đà Nẵng Hội An 4 Ngày 3 Đêm",
   price: "Từ ₫ 2,250,000",
