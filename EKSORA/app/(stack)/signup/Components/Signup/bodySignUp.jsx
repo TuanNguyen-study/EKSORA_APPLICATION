@@ -48,9 +48,22 @@ const BodySignUp = () => {
      await dispatch(registerUser(form)).unwrap();
       Alert.alert('Thành công', 'Đăng ký thành công!');
       router.replace('/(tabs)/home');
-    } catch (error) {
-      Alert.alert('Đăng ký thất bại', error.toString());
+    }catch (error) {
+  console.log('Error object:', error);
+  let message = 'Đăng ký thất bại';
+
+  if (error?.message) {
+    if (typeof error.message === 'string') {
+      message = error.message;
+    } else if (typeof error.message === 'object') {
+      // Ưu tiên tiếng Việt nếu có
+      message = error.message.vi || JSON.stringify(error.message);
     }
+  }
+
+  Alert.alert('Lỗi', message);
+}
+
   };
 
   return (

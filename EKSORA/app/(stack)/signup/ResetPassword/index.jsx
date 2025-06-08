@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useDispatch } from 'react-redux';
-import { resetPassword } from '../../../../API/helpers/AxiosInstance'; // ⚠️ đổi path đúng thư mục redux của bạn
+import { resetPassword } from '../../../../API/helpers/AxiosInstance'; // Cập nhật đúng đường dẫn nếu cần
 
 const ResetPassword = () => {
   const { token } = useLocalSearchParams();
@@ -11,20 +11,40 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
 
-  const handleResetPassword = async () => {
-    if (!password) {
-      Alert.alert('Lỗi', 'Vui lòng nhập mật khẩu mới');
-      return;
-    }
+const handleResetPassword = async () => {
+  if (!password) {
+    Alert.alert('Lỗi', 'Vui lòng nhập mật khẩu mới');
+    return;
+  }
 
   try {
-  await dispatch(resetPassword({ newPassword: password, resetToken: token })).unwrap();
-  Alert.alert('Thành công', 'Đổi mật khẩu thành công');
-  router.push('/(stack)/login/loginEmail');
-} catch (error) {
-  Alert.alert('Lỗi', error || 'Đổi mật khẩu thất bại');
-}
-  };
+ await dispatch(resetPassword({ newPassword: password, resetToken: token })).unwrap();
+
+    Alert.alert('Thành công', 'Đổi mật khẩu thành công');
+    router.push('/(stack)/login/loginEmail');
+  } catch (error) {
+    console.error('Reset password error:', error);
+
+    let message = 'Đổi mật khẩu thất bại';
+
+    try {
+      if (typeof error === 'string') {
+        message = error;
+      } else if (typeof error?.message === 'string') {
+        message = error.message;
+      } else if (typeof error?.message === 'object') {
+        message = JSON.stringify(error.message);
+      } else if (typeof error === 'object') {
+        message = JSON.stringify(error);
+      }
+    } catch (err) {
+      message = 'Lỗi không xác định';
+    }
+
+    Alert.alert('Lỗi', message);
+  }
+};
+
 
   return (
     <View style={styles.container}>
@@ -39,6 +59,10 @@ const ResetPassword = () => {
           secureTextEntry={!showPassword}
           value={password}
           onChangeText={setPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="newPassword"
+          autoComplete="password"
         />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
           <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color="#555" />

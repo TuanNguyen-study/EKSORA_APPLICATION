@@ -1,28 +1,30 @@
-import { useRouter,useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { View, Alert, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
-
+import { useDispatch } from 'react-redux';
+import { verifyOtp } from '../../../../API/helpers/AxiosInstance';
 
 const Otp = () => {
-  const { token } = useLocalSearchParams();
-   const [otp, setOtp] = useState(['', '', '', '']);
+  const { email } = useLocalSearchParams(); // ✅ lấy email từ params
+  const [otp, setOtp] = useState(['', '', '', '']);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const inputs = [useRef(), useRef(), useRef(), useRef()];
+  const dispatch = useDispatch();
+  const inputs = [React.useRef(), React.useRef(), React.useRef(), React.useRef()];
 
   const handleChange = (text, idx) => {
-  if (!/^\d*$/.test(text)) return; // chỉ cho nhập số
-  const newOtp = [...otp];
-  newOtp[idx] = text;
-  setOtp(newOtp);
-  if (text && idx < 3) {
-    inputs[idx + 1].current.focus();
-  }
-  if (!text && idx > 0) {
-    inputs[idx - 1].current.focus();
-  }
-};
+    if (!/^\d*$/.test(text)) return; // chỉ cho nhập số
+    const newOtp = [...otp];
+    newOtp[idx] = text;
+    setOtp(newOtp);
+    if (text && idx < 3) {
+      inputs[idx + 1].current.focus();
+    }
+    if (!text && idx > 0) {
+      inputs[idx - 1].current.focus();
+    }
+  };
 
   const handleVerify = async () => {
     const otpValue = otp.join('');
@@ -30,15 +32,16 @@ const Otp = () => {
       Alert.alert('Lỗi', 'Vui lòng nhập đủ 4 số OTP');
       return;
     }
+
     try {
-        setLoading(true);
-      // TODO: Gọi API xác thực OTP, nếu thành công:
+      setLoading(true);
+      await dispatch(verifyOtp({ email, otp: otpValue })).unwrap();
+
       router.replace({
         pathname: '/(stack)/signup/ResetPassword',
-        params: { token }, 
       });
     } catch (error) {
-      Alert.alert('Lỗi', error?.response?.data?.message || error?.message || 'Xác thực OTP thất bại');
+      Alert.alert('Lỗi', error || 'Xác thực OTP thất bại');
     } finally {
       setLoading(false);
     }
@@ -54,9 +57,9 @@ const Otp = () => {
 
       {/* Thông báo */}
       <Text style={styles.info}>
-        The verification code has been sent.{"\n"}
-        Check the code on your email{"\n"}
-        sent to <Text style={styles.email}>claudiaalves@mail.com</Text>
+        Mã xác thực đã được gửi.{"\n"}
+        Vui lòng kiểm tra email:{"\n"}
+        <Text style={styles.email}>{email}</Text>
       </Text>
 
       {/* Ô nhập OTP */}
@@ -64,7 +67,7 @@ const Otp = () => {
         {otp.map((value, index) => (
           <TextInput
             key={index}
-            ref={inputs[index]} 
+            ref={inputs[index]}
             style={styles.otpInput}
             keyboardType="number-pad"
             maxLength={1}
@@ -75,8 +78,8 @@ const Otp = () => {
       </View>
 
       {/* Nút xác thực */}
-      <TouchableOpacity style={styles.button}  onPress={handleVerify} disabled={loading}>
-        <Text style={styles.buttonText}>Xác thực OTP</Text>
+      <TouchableOpacity style={styles.button} onPress={handleVerify} disabled={loading}>
+        <Text style={styles.buttonText}>{loading ? 'Đang xử lý...' : 'Xác thực OTP'}</Text>
       </TouchableOpacity>
 
       {/* Hỗ trợ */}

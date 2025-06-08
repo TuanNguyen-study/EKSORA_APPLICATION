@@ -12,23 +12,26 @@ const Index = () => {
   const router = useRouter();
 
    const handleSendOTP = async () => {
-    if (!email.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập email hoặc số điện thoại');
-      return;
-    }
+  if (!email.trim()) {
+    Alert.alert('Lỗi', 'Vui lòng nhập email hoặc số điện thoại');
+    return;
+  }
 
-    try {
-      setLoading(true);
-    await dispatch(sendotp(email)).unwrap(); 
-      Alert.alert('Thành công', 'Mã OTP đã được gửi!');
-      router.replace('/(stack)/signup/OTP');
-    } catch (error) {
-      console.log('Gửi OTP lỗi:', error, error?.response?.data);
-      Alert.alert('Lỗi', error?.response?.data?.message || 'Gửi OTP thất bại');
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    await dispatch(sendotp(email)).unwrap();
+    Alert.alert('Thành công', 'Mã OTP đã được gửi!');
+    router.replace({
+      pathname: '/(stack)/signup/OTP',
+      params: { email }, 
+    });
+  } catch (error) {
+    console.log('Gửi OTP lỗi:', error, error?.response?.data);
+    Alert.alert('Lỗi', error?.response?.data?.message || 'Gửi OTP thất bại');
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Đặt lại mật khẩu</Text>
