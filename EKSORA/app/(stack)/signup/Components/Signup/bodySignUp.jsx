@@ -19,66 +19,73 @@ const BodySignUp = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
+  const [errors, setErrors] = useState({});
 
-  const handleRegister = async () => {
-    if (Object.values(form).some(value => value.trim() === '')) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin');
-      return;
-    }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) {
-      Alert.alert('Lỗi', 'Email không hợp lệ');
-      return;
-    }
+ const handleRegister = async () => {
+  let newErrors = {};
 
-    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
-    if (!passwordRegex.test(form.password)) {
-      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa và 1 ký tự đặc biệt');
-      return;
-    }
-
-    const phoneRegex = /^0\d{9}$/;
-    if (!phoneRegex.test(form.phone)) {
-      Alert.alert('Lỗi', 'Số điện thoại phải bắt đầu bằng số 0 và đủ 10 số');
-      return;
-    }
-
-    try {
-     await dispatch(registerUser(form)).unwrap();
-      Alert.alert('Thành công', 'Đăng ký thành công!');
-      router.replace('/(tabs)/home');
-    }catch (error) {
-  console.log('Error object:', error);
-  let message = 'Đăng ký thất bại';
-
-  if (error?.message) {
-    if (typeof error.message === 'string') {
-      message = error.message;
-    } else if (typeof error.message === 'object') {
-      // Ưu tiên tiếng Việt nếu có
-      message = error.message.vi || JSON.stringify(error.message);
-    }
+  if (!form.email.trim()) newErrors.email = 'Email không được để trống';
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (form.email && !emailRegex.test(form.email)) {
+    newErrors.email = 'Email không hợp lệ';
   }
 
-  Alert.alert('Lỗi', message);
-}
+  if (!form.password.trim()) newErrors.password = 'Mật khẩu không được để trống';
+  const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+  if (form.password && !passwordRegex.test(form.password)) {
+    newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa và 1 ký tự đặc biệt';
+  }
 
-  };
+  if (!form.first_name.trim()) newErrors.first_name = 'Vui lòng nhập tên';
+  if (!form.last_name.trim()) newErrors.last_name = 'Vui lòng nhập họ';
+  if (!form.address.trim()) newErrors.address = 'Vui lòng nhập địa chỉ';
 
+  const phoneRegex = /^0\d{9}$/;
+  if (!form.phone.trim()) {
+    newErrors.phone = 'Số điện thoại không được để trống';
+  } else if (!phoneRegex.test(form.phone)) {
+    newErrors.phone = 'Số điện thoại phải bắt đầu bằng 0 và đủ 10 số';
+  }
+
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
+
+  setErrors({}); 
+
+  try {
+    await dispatch(registerUser(form)).unwrap();
+    Alert.alert('Thành công', 'Đăng ký thành công!');
+    router.replace('/(tabs)/home');
+  } catch (error) {
+    let message = 'Đăng ký thất bại';
+    if (error?.message) {
+      message = typeof error.message === 'string'
+        ? error.message
+        : error.message.vi || JSON.stringify(error.message);
+    }
+    Alert.alert('Lỗi', message);
+  }
+};
+
+
+  
   return (
     <View>
       <TextInput
-        style={styles.input}
+         style={[styles.input, errors.email && styles.errorBorder]}
         placeholder="Email"
         keyboardType="email-address"
         value={form.email}
         onChangeText={text => setForm(prev => ({ ...prev, email: text }))}
       />
 
-      <View style={styles.passwordContainer}>
+
+      <View style={styles.passwordContainer }>
         <TextInput
-          style={[styles.input, { flex: 1, marginBottom: 0 }]}
+          style={[styles.input, { flex: 1, marginBottom: 0 }, errors.password&& styles.errorBorder]}
           placeholder="Password"
           secureTextEntry={!passwordVisible}
           value={form.password}
@@ -96,27 +103,28 @@ const BodySignUp = () => {
         </TouchableOpacity>
       </View>
 
+
       <TextInput
-        style={styles.input}
+        style={[styles.input, errors.first_name && styles.errorBorder]}
         placeholder="First Name"
         value={form.first_name}
         onChangeText={text => setForm(prev => ({ ...prev, first_name: text }))}
       />
       <TextInput
-        style={styles.input}
+      style={[styles.input, errors.last_name && styles.errorBorder]}
         placeholder="Last Name"
         value={form.last_name}
         onChangeText={text => setForm(prev => ({ ...prev, last_name: text }))}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, errors.phone && styles.errorBorder]}
         placeholder="Phone"
         keyboardType="phone-pad"
         value={form.phone}
         onChangeText={text => setForm(prev => ({ ...prev, phone: text }))}
       />
       <TextInput
-        style={styles.input}
+          style={[styles.input, errors.address && styles.errorBorder]}
         placeholder="Address"
         value={form.address}
         onChangeText={text => setForm(prev => ({ ...prev, address: text }))}
@@ -162,4 +170,9 @@ const styles = StyleSheet.create({
     right: 20,
     top: 12,
   },
+
+  errorBorder: {
+  borderColor: 'red',
+},
+
 });

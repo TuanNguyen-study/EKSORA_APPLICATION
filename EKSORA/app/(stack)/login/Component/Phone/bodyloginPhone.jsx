@@ -10,18 +10,34 @@ const BodyLoginPhone = () => {
   const [form, setForm] = useState({ phone: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [phoneError, setPhoneError] = useState(false);
+  const [passwordError, setPasswordError] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
 
   const handleLogin = async () => {
     const { phone, password } = form;
+    let hasError = false;
 
-    if (!phone || !password) {
-      Alert.alert('Lỗi', 'vui lòng nhập  đày đủ số điện thoại và mật khẩu');
-      return;
+    if (!phone) {
+      setPhoneError(true);
+      hasError = true;
+    } else if (phone.length < 10) {
+      setPhoneError(true);
+      hasError = true;
+    } else {
+      setPhoneError(false);
     }
-    if (phone.length < 10) {
-      Alert.alert('Lỗi', 'số điện thoại không hợp lệ');
+
+    if (!password) {
+      setPasswordError(true);
+      hasError = true;
+    } else {
+      setPasswordError(false);
+    }
+
+    if (hasError) {
+      Alert.alert('Lỗi', 'vui lòng nhập đầy đủ số điện thoại và mật khẩu hợp lệ');
       return;
     }
 
@@ -51,24 +67,30 @@ const BodyLoginPhone = () => {
 
   return (
     <View style={{ paddingHorizontal: 20 }}>
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, phoneError && styles.errorBorder]}>
         <FontAwesome name="phone" size={18} style={styles.icon} />
         <TextInput
           placeholder="+84  Nhập số điện thoại"
           value={form.phone}
-          onChangeText={text => setForm({ ...form, phone: text })}
+          onChangeText={text => {
+            setForm({ ...form, phone: text });
+            if (phoneError) setPhoneError(false);
+          }}
           keyboardType="phone-pad"
           style={styles.input}
         />
       </View>
 
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, passwordError && styles.errorBorder]}>
         <FontAwesome name="lock" size={18} style={styles.icon} />
         <TextInput
           placeholder="Mật khẩu"
           secureTextEntry={!showPassword}
           value={form.password}
-          onChangeText={text => setForm({ ...form, password: text })}
+          onChangeText={text => {
+            setForm({ ...form, password: text });
+            if (passwordError) setPasswordError(false);
+          }}
           style={styles.input}
         />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -152,4 +174,9 @@ const styles = StyleSheet.create({
         textDecorationLine: 'underline'
 
     },
+
+    errorBorder: {
+  borderColor: 'red',
+},
+
 });
