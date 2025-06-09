@@ -21,7 +21,7 @@ import ServiceDescriptionSection from './components/ServiceDescriptionSection.'
 import CustomerReviewSection from './components/CustomerReviewSection';
 import PolicyInfoSection from './components/PolicyInfoSection';
 import StickyBookingFooter from './components/StickyBookingFooter';
-//import TripHighlightsSection from './components/TripHighlightsSection';
+
 
 // --- DỮ LIỆU GIẢ  ---
 const MOCK_PRODUCT_DATA = {
