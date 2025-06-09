@@ -22,27 +22,20 @@ export const getTours = async () => {
   }
 };
 
-// API lấy danh sách các tour theo tỉnh
-export const getToursByLocation = async (province) => {
-    try {
-        const response = await AxiosInstance().get(`/api/categories/tours-by-location?province=${encodeURIComponent(province)}`);
-        return response; 
-    } catch (error) {
-        console.error('Lỗi khi lấy danh sách tour:', error);
-        throw error; 
-    }
-};
-
-// API lấy thông tin chi tiết của một tour
-export const getTourDetails = async (tourId) => {
+// API lấy danh sách các tour theo category ID
+export const getToursByLocation = async (cateID) => {
   try {
-    const response = await AxiosInstance().get(`/api/tours/${tourId}`);
-    return response; // Trả về dữ liệu chi tiết của tour
+    console.log('Gọi API với cateID:', cateID);
+    const response = await AxiosInstance().get('/api/categories/tours-by-location', {
+      params: {
+        cateID: cateID,
+      },
+    });
+    console.log('Response đầy đủ:', response);
+    console.log('Data từ API:', response);
+    return response; // Trả về response trực tiếp vì AxiosInstance đã xử lý trả về data
   } catch (error) {
-    console.error('Lỗi khi lấy thông tin chi tiết tour:', error);
+    console.error('Lỗi khi lấy danh sách tour theo cateID:', error);
     throw error;
   }
 };
-
-
-
