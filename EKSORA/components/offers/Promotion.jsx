@@ -9,19 +9,39 @@ import {
   ImageBackground,
 } from "react-native";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
+import { useEffect } from "react";
+import { getPromotion } from "../../API/services/servicesPromotion";
 
 // Dữ liệu ưu đãi
- 
 
-const data = new Array(8).fill({
-  title: "Combo Khách Sạn 4 Sao + Vé Máy Bay Đà Nẵng Hội An 4 Ngày 3 Đêm",
-  price: "Từ ₫ 2,250,000",
-  discount: "15%",
-  image: require("../../assets/images/uudai.png"),
-});
+
+// const data = new Array(8).fill({
+//   title: "Combo Khách Sạn 4 Sao + Vé Máy Bay Đà Nẵng Hội An 4 Ngày 3 Đêm",
+//   price: "Từ ₫ 2,250,000",
+//   discount: "15%",
+//   image: require("../../assets/images/uudai.png"),
+// });
+
 
 export default function Promotions() {
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [promotion, setPromotion] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  //api 
+  useEffect(() => {
+    const fetchPromotion = async () => {
+      try {
+        const response = await getPromotion();  
+        setPromotion(response);  
+        setLoading(false);  
+      } catch (err) {
+        setError('Lỗi khi lấy danh sách categories');
+        setLoading(false);
+      }
+    };
+
+    fetchPromotion();
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
@@ -37,7 +57,7 @@ export default function Promotions() {
 
         {/* Danh sách ưu đãi */}
         <FlatList
-          data={data}
+          data={promotion}
           numColumns={2}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
           renderItem={({ item }) => (
