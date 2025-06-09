@@ -4,7 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CheckBox from '../../../../../components/CheckBox';
 
 
-const bottomloginEmail = () => {
+const BottomloginEmail = () => {
 
   const [isChecked, setChecked] = useState(false);
 
@@ -43,7 +43,7 @@ const bottomloginEmail = () => {
 }
 
 
-export default bottomloginEmail
+export default BottomloginEmail
 
 const styles = StyleSheet.create({
 
