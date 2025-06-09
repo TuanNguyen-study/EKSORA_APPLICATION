@@ -1,6 +1,6 @@
 // authSlice.js
 import { createSlice } from '@reduxjs/toolkit';
-import { verifyOtp } from '../server/AxiosInstance'; // chỗ bạn define verifyOtp
+import { verifyOtp } from '../services/AxiosInstance'; // chỗ bạn define verifyOtp
 
 const authSlice = createSlice({
   name: 'auth',

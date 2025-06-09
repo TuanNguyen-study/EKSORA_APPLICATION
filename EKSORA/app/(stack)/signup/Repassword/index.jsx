@@ -2,7 +2,7 @@ import React, { useState }  from 'react';
 import { View, Alert, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useDispatch } from 'react-redux';
-import { sendotp} from '../../.../../../../API/server/AxiosInstance'; 
+import { sendotp} from '../../.../../../../API/services/AxiosInstance'; 
 import { useRouter } from 'expo-router';
 
 const Index = () => {

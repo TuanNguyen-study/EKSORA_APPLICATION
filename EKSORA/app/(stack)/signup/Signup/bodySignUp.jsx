@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
-import { registerUser  } from '../../../../../API/server/AxiosInstance';
+import { registerUser  } from '../../../../API/services/AxiosInstance';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'expo-router';
@@ -16,10 +16,13 @@ const BodySignUp = () => {
     address: '',
   });
 
+
   const [passwordVisible, setPasswordVisible] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
   const [errors, setErrors] = useState({});
+
+  
 
 
  const handleRegister = async () => {

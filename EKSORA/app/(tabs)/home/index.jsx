@@ -20,7 +20,7 @@ import ImageCarouselCard from '../../../components/home/ImageCarouselCard';
 import ServiceCategoryItem from '../../../components/home/ServiceCategoryItem';
 import DestinationChip from '../../../components/home/DestinationChip';
 import SuggestionCard from '../../../components/home/SuggestionCard';
-import { getCategories, getTours  } from '../../../API/server/serverCategories';
+import { getCategories, getTours  } from '../../../API/services/serverCategories';
 
 import LoadingScreen from '../../../components/LoadingScreen'; 
 

@@ -3,9 +3,9 @@ import { useEffect } from 'react';
 import { View,Alert, Text, Platform, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { auth } from '../../../login/Component/facebooklogin/firebaseConfig';
+import { auth } from '../../login/Component/facebooklogin/firebaseConfig';
 import * as Facebook from 'expo-auth-session/providers/facebook';
-import useGoogleLogin from '../../../login/Component/googleLogin/GoogleLoginButton';
+import useGoogleLogin from '../../login/Component/googleLogin/GoogleLoginButton';
 
 const BottomSignup = () => {
 

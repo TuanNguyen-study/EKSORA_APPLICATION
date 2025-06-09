@@ -2,7 +2,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { loginphone } from '../../../../../API/server/AxiosInstance';
+import { loginphone } from '../../../../../API/services/AxiosInstance';
 import { useDispatch } from 'react-redux';
 
 const BodyLoginPhone = () => {

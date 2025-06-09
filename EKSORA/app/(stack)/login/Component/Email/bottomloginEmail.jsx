@@ -9,7 +9,9 @@ import { useRouter } from 'expo-router';
 import useGoogleLogin from '../../../login/Component/googleLogin/GoogleLoginButton';
 
 
+
 const BottomLoginEmail = () => {
+
   const [isChecked, setChecked] = useState(false);
   const router = useRouter();
     // Thiết lập Google Auth Request
@@ -104,20 +106,24 @@ const BottomLoginEmail = () => {
 
       <Text style={styles.otherOption}>Lựa chọn khác</Text>
 
-      <View style={styles.checkboxRow}>
+       <View style={styles.checkboxRow}>
         <CheckBox
           checked={isChecked}
           onChange={setChecked}
         />
+
         <Text style={styles.terms}>
           Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA
         </Text>
+
+     
       </View>
     </View>
   );
 };
 
 export default BottomLoginEmail;
+
 
 const styles = StyleSheet.create({
 
@@ -180,11 +186,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 10,
     marginTop: 20,
-      flexWrap: 'wrap',
+    flexWrap: 'wrap',  // Cho phép text xuống dòng
   },
   terms: {
     fontSize: 10,
     color: '#444',
-    textAlign: 'center',
+    marginLeft: 8,
+    flex: 1,
   },
 })

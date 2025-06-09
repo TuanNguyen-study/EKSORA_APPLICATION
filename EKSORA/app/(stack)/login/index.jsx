@@ -1,3 +1,4 @@
+
 import { StyleSheet, View, Image } from 'react-native'
 import React, { useEffect } from 'react';
 import { COLORS } from '../../../constants/colors';
@@ -6,11 +7,14 @@ import { auth } from '../login/Component/facebooklogin/firebaseConfig';
 
 
 
+
 const  Index = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
+
       router.push('/(stack)/signup');
+
     }, 3000);
 
     return () => clearTimeout(timer); // Dọn dẹp khi unmount
