@@ -4,12 +4,12 @@ import FavoriteItem from '../FavoriteItem';
 import { getFavorites } from '../../../API/services/servicesFavorite';
 
 export default function Body({ filterData }) {
-  const { userId, selectedDestination, selectedCategory, selectedTime } = filterData;
+  const { user_id, selectedDestination, selectedCategory, selectedTime } = filterData;
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) {
+    if (!user_id) {
       console.warn('Chưa có userId để lấy danh sách favorites');
       setLoading(false);
       return;
@@ -17,8 +17,8 @@ export default function Body({ filterData }) {
 
     const fetchTours = async () => {
       try {
-        const data = await getFavorites(userId); // SỬ DỤNG userId ở đây
-        setTours(data);
+        const data = await getFavorites(user_id); // SỬ DỤNG userId ở đây
+        setTours(data);z
       } catch (error) {
         console.error('Lỗi khi tải tour:', error);
       } finally {
@@ -27,7 +27,7 @@ export default function Body({ filterData }) {
     };
 
     fetchTours();
-  }, [userId]);
+  }, []);
 
   const filteredTours = tours.filter((tour) => {
     if (!tour.id) return false;
