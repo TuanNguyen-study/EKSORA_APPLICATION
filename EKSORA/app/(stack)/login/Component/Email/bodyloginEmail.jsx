@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux';
-import { loginUser } from '../../../../../API/helpers/AxiosInstance';
+import { loginUser } from '../../../../../API/server/AxiosInstance';
 import { FontAwesome} from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 

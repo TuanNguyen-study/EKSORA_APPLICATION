@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useDispatch } from 'react-redux';
-import { resetPassword } from '../../../../API/helpers/AxiosInstance'; // Cập nhật đúng đường dẫn nếu cần
+import { resetPassword } from '../../../../API/server/AxiosInstance'; // Cập nhật đúng đường dẫn nếu cần
 
 const ResetPassword = () => {
   const { token } = useLocalSearchParams();

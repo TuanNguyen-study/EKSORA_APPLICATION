@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
-import { registerUser  } from '../../../../../API/helpers/AxiosInstance';
+import { registerUser  } from '../../../../../API/server/AxiosInstance';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'expo-router';
