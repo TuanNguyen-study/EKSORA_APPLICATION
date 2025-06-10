@@ -21,6 +21,7 @@ import SuggestionCard from "../../home/SuggestionCard";
 export default function Body({ filterData }) {
   const { user_id, selectedDestination, selectedCategory, selectedTime } =
     filterData || {};
+
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [suggestionTours, setSuggestionTours] = useState([]);
@@ -31,6 +32,7 @@ export default function Body({ filterData }) {
   useEffect(() => {
     if (!user_id) {
       console.warn("Chưa có user_id để lấy danh sách favorites");
+
       setLoading(false);
       return;
     }
@@ -91,50 +93,48 @@ export default function Body({ filterData }) {
   });
 
   const handleStartPress = async () => {
-  setSuggestionLoading(true);
-  setError(null);
+    setSuggestionLoading(true);
+    setError(null);
 
-  try {
-    const data = await getTours();
-    console.log("Dữ liệu từ getTours:", data);
+    try {
+      const data = await getTours();
+      console.log("Dữ liệu từ getTours:", data);
 
-    const processedData = Array.isArray(data)
-      ? data.map((tour) => ({
-          ...tour,
-          image:
-            Array.isArray(tour.image) && tour.image.length > 0
-              ? tour.image[0]
-              : tour.image || "https://via.placeholder.com/300",
-        }))
-      : [];
+      const processedData = Array.isArray(data)
+        ? data.map((tour) => ({
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : tour.image || "https://via.placeholder.com/300",
+          }))
+        : [];
 
-    setSuggestionTours(processedData);
-    setModalVisible(true);
-  } catch (error) {
-    console.error("Lỗi khi tải gợi ý tour:", error);
-    setError("Không thể tải gợi ý tour");
-  } finally {
-    setSuggestionLoading(false);
-  }
-};
-
+      setSuggestionTours(processedData);
+      setModalVisible(true);
+    } catch (error) {
+      console.error("Lỗi khi tải gợi ý tour:", error);
+      setError("Không thể tải gợi ý tour");
+    } finally {
+      setSuggestionLoading(false);
+    }
+  };
 
   const handlePressSuggestion = async (item) => {
-  if (!user_id || !item?._id) {
-    console.warn("Thiếu user_id hoặc tour_id");
-    return;
-  }
+    if (!user_id || !item?._id) {
+      console.warn("Thiếu user_id hoặc tour_id");
+      return;
+    }
 
-  try {
-    await addFavorites(user_id, item._id);
-    console.log("Đã thêm tour vào yêu thích:", item.title);
-    setModalVisible(false);
-  } catch (error) {
-    console.error("Lỗi khi thêm tour vào yêu thích:", error);
-    setError("Không thể thêm tour vào yêu thích");
-  }
-};
-
+    try {
+      await addFavorites(user_id, item._id);
+      console.log("Đã thêm tour vào yêu thích:", item.title);
+      setModalVisible(false);
+    } catch (error) {
+      console.error("Lỗi khi thêm tour vào yêu thích:", error);
+      setError("Không thể thêm tour vào yêu thích");
+    }
+  };
 
   if (loading) {
     return (

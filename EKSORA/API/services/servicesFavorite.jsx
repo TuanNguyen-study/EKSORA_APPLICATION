@@ -1,9 +1,9 @@
 import AxiosInstance from '../AxiosInstance';
 
 //API lấy danh sách yêu thích
-export const getFavorites = async (userId) => {
+export const getFavorites = async (user_id) => {
   try {
-    const response = await AxiosInstance().get(`/api/favorites/${userId}`);
+    const response = await AxiosInstance().get(`/api/favorites/${user_id}`);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách favorites:', error);
@@ -23,6 +23,7 @@ export const deleteFavorites = async ( ids) => {
   }
 };
 
+<<<<<<< HEAD
 
 const addFavorites = async (userId, tourId) => {
   try {
@@ -38,3 +39,5 @@ const addFavorites = async (userId, tourId) => {
     console.error("Lỗi khi thêm vào yêu thích:", error?.response?.data || error.message);
   }
 };
+=======
+>>>>>>> 11be711c1e22029b3748e5f400e98475d513fc1b
