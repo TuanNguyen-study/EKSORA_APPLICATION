@@ -1,12 +1,14 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API = axios.create({
+const AxiosInstance = axios.create({
   baseURL: 'https://api-eksora-app.onrender.com',
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
 
 // helpers/errorUtils.js
 export const extractErrorMessage = (err, defaultMessage = 'Có lỗi xảy ra') => {
@@ -24,7 +26,7 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData, { rejectWithValue }) => {
     try {
-      const res = await API.post('/api/Register', userData);
+      const res = await AxiosInstance.post('/api/Register', userData);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Đăng ký thất bại');
@@ -37,12 +39,13 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (userData, { rejectWithValue }) => {
     try {
-      console.log('Dữ liệu gửi lên API:', userData); // Log dữ liệu gửi đi
-      const res = await API.post('/api/login-email', userData);
-      console.log('Kết quả trả về:', res.data); // Log kết quả trả về
+      const res = await AxiosInstance.post('/api/login-email', userData);
+      const token = res.data?.token;
+      if (token) {
+        await AsyncStorage.setItem('ACCESS_TOKEN', token); // ✅ Lưu token
+      }
       return res.data;
     } catch (err) {
-      console.log('Lỗi khi gọi API:', err, err?.response); // Log lỗi chi tiết
       return rejectWithValue(err.response?.data?.message || 'Đăng nhập thất bại');
     }
   }
@@ -54,7 +57,7 @@ export const loginphone = createAsyncThunk(
   'auth/phone-login',
   async (userData, { rejectWithValue }) => {
     try {
-      const res = await API.post('/api/login-phone', userData);
+      const res = await AxiosInstance.post('/api/login-phone', userData);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Đăng nhập thất bại');
@@ -67,7 +70,7 @@ export const loginphone = createAsyncThunk(
 export const sendotp = createAsyncThunk('auth/send-otp',
   async (email, { rejectWithValue }) => {
     try {
-    const res = await API.post('/api/password/send-otp', { email });
+    const res = await AxiosInstance.post('/api/password/send-otp', { email });
       if (res.status !== 200) {
         throw new Error('Gửi OTP thất bại');
       }
@@ -82,7 +85,7 @@ export const sendotp = createAsyncThunk('auth/send-otp',
 export const verifyOtp = createAsyncThunk('auth/verify-otp',
   async ({ email, otp }, { rejectWithValue }) => {
     try {
-      const res = await API.post('/api/password/verify-otp', { email, otp });
+      const res = await AxiosInstance.post('/api/password/verify-otp', { email, otp });
       return res.data; // ✅ res.data = { resetToken, ... }
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Xác thực OTP thất bại');
@@ -102,7 +105,7 @@ export const resetPassword = createAsyncThunk(
     if (!resetToken) return rejectWithValue('Không có token để reset mật khẩu');
 
     try {
-      const res = await API.post(
+      const res = await AxiosInstance.post(
         '/api/password/reset-password',
         { newPassword },
         {
@@ -119,3 +122,16 @@ export const resetPassword = createAsyncThunk(
     }
   }
 );
+
+AxiosInstance.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+export default AxiosInstance;
