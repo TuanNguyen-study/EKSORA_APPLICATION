@@ -13,7 +13,8 @@ const IMAGE_HEIGHT = CARD_WIDTH * (3 / 4);
 const SuggestionCard = ({ item, onPress }) => (
   <TouchableOpacity style={styles.card} onPress={() => onPress(item)}>
     {/* Chỉ hiển thị hình ảnh đầu tiên trong mảng */}
-    <Image source={{ uri: item.image[0] }} style={styles.cardImage} />
+    <Image source={{ uri: item.image }} style={styles.cardImage} />
+
     {item.discount && (
       <View style={styles.discountBadge}>
         <Text style={styles.discountText}>{item.discount}%</Text>

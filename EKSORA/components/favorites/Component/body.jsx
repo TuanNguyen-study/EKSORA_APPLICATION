@@ -10,12 +10,16 @@ import {
 } from "react-native";
 import Modal from "react-native-modal";
 import FavoriteItem from "../FavoriteItem";
-import { getFavorites } from "../../../API/services/servicesFavorite";
+import {
+  getFavorites,
+  addFavorites,
+  deleteFavorites,
+} from "../../../API/services/servicesFavorite";
 import { getTours } from "../../../API/services/serverCategories";
-import SuggestionCard from "../../home/SuggestionCard"; 
+import SuggestionCard from "../../home/SuggestionCard";
 
 export default function Body({ filterData }) {
-  const { userId, selectedDestination, selectedCategory, selectedTime } =
+  const { user_id, selectedDestination, selectedCategory, selectedTime } =
     filterData || {};
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,15 +29,15 @@ export default function Body({ filterData }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!userId) {
-      console.warn("Chưa có userId để lấy danh sách favorites");
+    if (!user_id) {
+      console.warn("Chưa có user_id để lấy danh sách favorites");
       setLoading(false);
       return;
     }
 
     const fetchTours = async () => {
       try {
-        const data = await getFavorites(userId);
+        const data = await getFavorites(user_id);
         setTours(data || []);
       } catch (error) {
         console.error("Lỗi khi tải tour:", error);
@@ -44,7 +48,7 @@ export default function Body({ filterData }) {
     };
 
     fetchTours();
-  }, [userId]);
+  }, [user_id]);
 
   const filteredTours = tours.filter((tour) => {
     if (!tour?.id) return false;
@@ -87,29 +91,50 @@ export default function Body({ filterData }) {
   });
 
   const handleStartPress = async () => {
-    setSuggestionLoading(true);
-    setError(null);
-    try {
-      const data = await getTours();
-      console.log("Dữ liệu từ getTours:", data); // Debug dữ liệu
-      const processedData = data.map((tour) => ({
-        ...tour,
-        image: Array.isArray(tour.image) ? tour.image[0] : (tour.image || "https://via.placeholder.com/300"), // Fallback ảnh
-      }));
-      setSuggestionTours(processedData || []);
-      setModalVisible(true);
-    } catch (error) {
-      console.error("Lỗi khi tải gợi ý tour:", error);
-      setError("Không thể tải gợi ý tour");
-    } finally {
-      setSuggestionLoading(false);
-    }
-  };
+  setSuggestionLoading(true);
+  setError(null);
 
-  const handleCardPress = (item) => {
-    console.log("Đã chọn tour:", item.title);
-    // Thêm logic điều hướng nếu cần (ví dụ: router.push('/trip-detail'))
-  };
+  try {
+    const data = await getTours();
+    console.log("Dữ liệu từ getTours:", data);
+
+    const processedData = Array.isArray(data)
+      ? data.map((tour) => ({
+          ...tour,
+          image:
+            Array.isArray(tour.image) && tour.image.length > 0
+              ? tour.image[0]
+              : tour.image || "https://via.placeholder.com/300",
+        }))
+      : [];
+
+    setSuggestionTours(processedData);
+    setModalVisible(true);
+  } catch (error) {
+    console.error("Lỗi khi tải gợi ý tour:", error);
+    setError("Không thể tải gợi ý tour");
+  } finally {
+    setSuggestionLoading(false);
+  }
+};
+
+
+  const handlePressSuggestion = async (item) => {
+  if (!user_id || !item?._id) {
+    console.warn("Thiếu user_id hoặc tour_id");
+    return;
+  }
+
+  try {
+    await addFavorites(user_id, item._id);
+    console.log("Đã thêm tour vào yêu thích:", item.title);
+    setModalVisible(false);
+  } catch (error) {
+    console.error("Lỗi khi thêm tour vào yêu thích:", error);
+    setError("Không thể thêm tour vào yêu thích");
+  }
+};
+
 
   if (loading) {
     return (
@@ -140,7 +165,9 @@ export default function Body({ filterData }) {
         renderItem={({ item }) => <FavoriteItem {...item} />}
         keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
         contentContainerStyle={
-          filteredTours.length === 0 ? styles.noResultsContainer : { padding: 16 }
+          filteredTours.length === 0
+            ? styles.noResultsContainer
+            : { padding: 16 }
         }
         ListEmptyComponent={
           <View style={styles.noResultsContent}>
@@ -159,7 +186,6 @@ export default function Body({ filterData }) {
             >
               <Text style={styles.exploreButton}>Bắt đầu</Text>
             </TouchableOpacity>
-           
           </View>
         }
       />
@@ -200,25 +226,33 @@ export default function Body({ filterData }) {
           ) : (
             <FlatList
               data={suggestionTours}
-              renderItem={({ item }) => (
-                <SuggestionCard
-                  item={item}
-                  onPress={handleCardPress}
-                  source={{ uri: item.image[0] }} style={styles.cardImage} 
-                />
-              )}
-              keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+              renderItem={({ item }) => {
+                return (
+                  <SuggestionCard
+                    item={item}
+                    onPress={() => handlePressSuggestion(item)}
+                  />
+                );
+              }}
+              keyExtractor={(item) =>
+                item._id?.toString() || Math.random().toString()
+              }
               contentContainerStyle={styles.suggestionList}
               numColumns={2}
               columnWrapperStyle={styles.columnWrapper}
             />
           )}
-           <TouchableOpacity
-              onPress={() => console.log("Xem danh sách yêu thích")} 
-              style={[styles.exploreButton, { marginTop: 8 }]}
+          <TouchableOpacity
+            onPress={() => console.log("Xem danh sách yêu thích")}
+            style={[styles.exploreButton, { marginTop: 8 }]}
+          >
+            <Text
+              style={styles.exploreButtonText}
+              onPress={() => setModalVisible(false)}
             >
-              <Text style={styles.exploreButtonText}>Xem danh sách yêu thích</Text>
-            </TouchableOpacity>
+              Xem danh sách yêu thích
+            </Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -299,6 +333,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     flex: 1,
   },
+
   closeButton: {
     padding: 8,
   },
