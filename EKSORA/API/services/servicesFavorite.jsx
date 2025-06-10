@@ -10,3 +10,15 @@ export const getFavorites = async (userId) => {
     throw error;
   }
 };
+
+export const deleteFavorites = async (userId, ids) => {
+  try {
+    const response = await AxiosInstance().delete(`/api/favorites/${userId}`, {
+      data: { ids },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi xoá favorites:', error);
+    throw error;
+  }
+};
