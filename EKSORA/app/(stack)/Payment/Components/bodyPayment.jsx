@@ -1,6 +1,17 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    Platform,
+    TextInput,
+    Modal,
+    Pressable,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+
 
 const cardShadow = Platform.select({
     ios: {
@@ -15,8 +26,64 @@ const cardShadow = Platform.select({
 });
 
 export default function Body() {
+
+    const [showModal, setShowModal] = useState(false);
+    const [ho, setHo] = useState('');
+    const [ten, setTen] = useState('');
+    const [sdt, setSdt] = useState('');
+    const [email, setEmail] = useState('');
     return (
         <>
+            <Modal
+                visible={showModal}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setShowModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Thêm thông tin liên lạc</Text>
+
+                        <TextInput
+                            placeholder="Họ"
+                            value={ho}
+                            onChangeText={setHo}
+                            style={styles.input}
+                        />
+                        <TextInput
+                            placeholder="Tên"
+                            value={ten}
+                            onChangeText={setTen}
+                            style={styles.input}
+                        />
+                        <TextInput
+                            placeholder="Số điện thoại"
+                            value={sdt}
+                            onChangeText={setSdt}
+                            keyboardType="phone-pad"
+                            style={styles.input}
+                        />
+                        <TextInput
+                            placeholder="Email"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            style={styles.input}
+                        />
+
+                        <Text style={styles.noteText}>
+                            Thông tin này sẽ được sử dụng để liên hệ và gửi mã vé cho bạn.
+                        </Text>
+
+                        <Pressable style={styles.saveButton} onPress={() => setShowModal(false)}>
+                            <Text style={styles.saveButtonText}>Lưu</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
+
+
+
             {/* Tour Info Card */}
             <View style={styles.card}>
                 <Text style={styles.tourTitle}>
@@ -37,7 +104,7 @@ export default function Body() {
                 <Text style={styles.subText}>
                     Chúng tôi sẽ thông báo mọi thay đổi về đơn hàng cho bạn
                 </Text>
-                <TouchableOpacity style={styles.addBtn}>
+                <TouchableOpacity style={styles.addBtn} onPress={() => setShowModal(true)}>
                     <Text style={styles.addBtnText}>+ Thêm</Text>
                 </TouchableOpacity>
 
@@ -82,7 +149,7 @@ export default function Body() {
                     <Text style={styles.totalText}>₫ 747,000</Text>
                     <Text style={styles.discountText}>Giảm 64,000₫</Text>
                 </View>
-                <TouchableOpacity style={styles.payBtn}>
+                <TouchableOpacity style={styles.payBtn} onPress={() => router.push('/(stack)/PaymentMenthod')}>
                     <Text style={styles.payBtnText}>Thanh toán</Text>
                 </TouchableOpacity>
             </View>
@@ -209,4 +276,42 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 16,
     },
+      modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: '#00000066',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  noteText: {
+    fontSize: 12,
+    color: '#555',
+    marginBottom: 12,
+  },
+  saveButton: {
+    backgroundColor: '#2196F3',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });

@@ -10,29 +10,22 @@ import {
 } from "react-native";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 import { useEffect } from "react";
-import { getPromotion } from "../../API/services/servicesPromotion";
-
-// Dữ liệu ưu đãi
-
-
-// const data = new Array(8).fill({
-//   title: "Combo Khách Sạn 4 Sao + Vé Máy Bay Đà Nẵng Hội An 4 Ngày 3 Đêm",
-//   price: "Từ ₫ 2,250,000",
-//   discount: "15%",
-//   image: require("../../assets/images/uudai.png"),
-// });
+import { getTours } from "../../API/services/serverCategories";
 
 
 export default function Promotions() {
-  const [promotion, setPromotion] = useState([]);
+  // const [promotion, setPromotion] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tour, setTours] = useState([]);
 
-  //api 
+
+
+    //api tour
   useEffect(() => {
-    const fetchPromotion = async () => {
+    const fetchTours = async () => {
       try {
-        const response = await getPromotion();  
-        setPromotion(response);  
+        const response = await getTours();  
+        setTours(response);  
         setLoading(false);  
       } catch (err) {
         setError('Lỗi khi lấy danh sách categories');
@@ -40,8 +33,10 @@ export default function Promotions() {
       }
     };
 
-    fetchPromotion();
+    fetchTours();
   }, []);
+
+
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
@@ -57,18 +52,18 @@ export default function Promotions() {
 
         {/* Danh sách ưu đãi */}
         <FlatList
-          data={promotion}
+          data={tour}
           numColumns={2}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              <ImageBackground source={item.image} style={styles.image}>
+              <ImageBackground source={{uri: item.image[0]}} style={styles.image}>
                 <TouchableOpacity style={styles.heartIcon}>
                   <EvilIcons name="heart" size={24} color="black" />
                 </TouchableOpacity>
               </ImageBackground>
 
-              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Text style={styles.cardTitle}>{item.name}</Text>
 
               <View style={styles.priceRow}>
                 <View style={styles.saleBox}>
