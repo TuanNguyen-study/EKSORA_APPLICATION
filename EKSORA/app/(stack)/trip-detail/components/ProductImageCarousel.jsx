@@ -1,16 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { COLORS } from '@/constants/colors';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useRef, useState } from 'react';
 import {
-  View,
+  Dimensions,
+  FlatList,
   Image,
+  Platform,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
-  Dimensions,
-  Platform,
-
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '@/constants/colors';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -74,7 +73,11 @@ const ProductImageCarousel = ({
 
   const renderItem = ({ item }) => (
     <TouchableOpacity activeOpacity={0.9} onPress={() => onImagePress && onImagePress(item.id)}>
-      <Image source={{ uri: item.uri }} style={styles.image} resizeMode="cover" />
+      {item.uri ? (
+        <Image source={{ uri: item.uri }} style={styles.image} resizeMode="cover" />
+      ) : (
+        <View style={[styles.image, { backgroundColor: COLORS.border }]} />
+      )}
     </TouchableOpacity>
   );
 
@@ -111,7 +114,7 @@ const ProductImageCarousel = ({
       <FlatList
         ref={flatListRef}
         data={loopedImages}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
+        keyExtractor={(item, index) => `${item?.id || 'image'}-${index}`}
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={SNAP_INTERVAL}
@@ -166,9 +169,9 @@ const ProductImageCarousel = ({
 const styles = StyleSheet.create({
   carouselContainer: {
     width: screenWidth,
-    height: screenWidth * 0.8, 
+    height: screenWidth * 0.8,
     backgroundColor: COLORS.border,
-    overflow: 'visible', 
+    overflow: 'visible',
   },
   noImageContainer: {
     justifyContent: 'center',
@@ -177,7 +180,7 @@ const styles = StyleSheet.create({
   image: {
     width: ITEM_WIDTH,
     height: '100%',
-    borderRadius: 0, 
+    borderRadius: 0,
   },
   headerActionsContainer: {
     position: 'absolute',
