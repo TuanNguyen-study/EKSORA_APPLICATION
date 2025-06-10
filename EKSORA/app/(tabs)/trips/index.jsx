@@ -1,32 +1,32 @@
-import React from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { COLORS } from '../../../constants/colors';
-import TripItem from '../../../components/trips/TripItem';
-
-const trips = [
-  { id: '1', destination: 'Paris', date: '20/06/2025' },
-  { id: '2', destination: 'Tokyo', date: '25/06/2025' },
-];
+import React from "react";
+import { View, StyleSheet, Animated } from "react-native";
+import { COLORS } from "../../../constants/colors";
+import TripItem from "../../../components/trips/TripItem";
+import Header from "../../../components/trips/Component/header";
+import Body from "../../../components/trips/Component/body";
 
 export default function TripsScreen() {
+  const scrollY = new Animated.Value(0);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Chuyến đi</Text>
-      {trips.length === 0 ? (
-        <Text style={styles.subtitle}>Chưa có chuyến đi nào.</Text>
-      ) : (
-        <FlatList
-          data={trips}
-          renderItem={({ item }) => <TripItem trip={item} />}
-          keyExtractor={(item) => item.id}
-        />
-      )}
+      <Header scrollY={scrollY} />
+      <Animated.FlatList
+        data={[]}
+        renderItem={({ item }) => <TripItem item={item} />}
+        keyExtractor={(item) => item.id.toString()}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+        ListHeaderComponent={<Body />}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: COLORS.background },
-  title: { fontSize: 28, fontWeight: 'bold', color: COLORS.text, marginBottom: 20 },
-  subtitle: { fontSize: 16, color: COLORS.text },
+  container: { flex: 1, backgroundColor: COLORS.background },
 });

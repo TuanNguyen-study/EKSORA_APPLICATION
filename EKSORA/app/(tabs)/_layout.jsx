@@ -3,7 +3,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Platform, StyleSheet } from 'react-native';
-import { Label } from '@react-navigation/elements';
 
 const TabArr = [
   {route: 'home/index', Label:'Trang chủ', type: Ionicons, activeIcon:'home',inActiveIcon:'home-filled',component: COLORS},

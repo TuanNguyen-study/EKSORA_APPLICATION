@@ -1,60 +1,83 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
+import { useDispatch } from 'react-redux';
+import { resetPassword } from '../../../../API/services/AxiosInstance'; // Cập nhật đúng đường dẫn nếu cần
 
 const ResetPassword = () => {
+  const { token } = useLocalSearchParams();
   const [password, setPassword] = useState('');
-  const [rePassword, setRePassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showRePassword, setShowRePassword] = useState(false);
+  const dispatch = useDispatch();
+
+const handleResetPassword = async () => {
+  if (!password) {
+    Alert.alert('Lỗi', 'Vui lòng nhập mật khẩu mới');
+    return;
+  }
+
+  try {
+ await dispatch(resetPassword({ newPassword: password, resetToken: token })).unwrap();
+
+    Alert.alert('Thành công', 'Đổi mật khẩu thành công');
+    router.push('/(stack)/login/loginEmail');
+  } catch (error) {
+    console.error('Reset password error:', error);
+
+    let message = 'Đổi mật khẩu thất bại';
+
+    try {
+      if (typeof error === 'string') {
+        message = error;
+      } else if (typeof error?.message === 'string') {
+        message = error.message;
+      } else if (typeof error?.message === 'object') {
+        message = JSON.stringify(error.message);
+      } else if (typeof error === 'object') {
+        message = JSON.stringify(error);
+      }
+    } catch (err) {
+      message = 'Lỗi không xác định';
+    }
+
+    Alert.alert('Lỗi', message);
+  }
+};
+
 
   return (
     <View style={styles.container}>
-      {/* Title */}
       <Text style={styles.title}>Nhập lại mật khẩu</Text>
 
-      {/* Mật khẩu */}
       <View style={styles.inputContainer}>
         <Feather name="lock" size={18} color="#555" style={styles.icon} />
         <TextInput
           style={styles.input}
-          placeholder="Mật khẩu"
+          placeholder="Mật khẩu mới"
           placeholderTextColor="#999"
           secureTextEntry={!showPassword}
           value={password}
           onChangeText={setPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="newPassword"
+          autoComplete="password"
         />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
           <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color="#555" />
         </TouchableOpacity>
       </View>
 
-      {/* Nhập lại mật khẩu */}
-      <View style={styles.inputContainer}>
-        <Feather name="lock" size={18} color="#555" style={styles.icon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Nhập lại mật khẩu"
-          placeholderTextColor="#999"
-          secureTextEntry={!showRePassword}
-          value={rePassword}
-          onChangeText={setRePassword}
-        />
-        <TouchableOpacity onPress={() => setShowRePassword(!showRePassword)}>
-          <Feather name={showRePassword ? 'eye-off' : 'eye'} size={18} color="#555" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Nút đổi mật khẩu */}
-      <TouchableOpacity style={styles.button} onPress={() => router.push('/(stack)/login/loginEmail')}>
+      <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
         <Text style={styles.buttonText}>Đổi mật khẩu</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-export default ResetPassword
+export default ResetPassword;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

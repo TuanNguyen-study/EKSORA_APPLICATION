@@ -1,18 +1,50 @@
-import { router } from 'expo-router';
-import React, { useRef, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import React, { useState } from 'react';
+import { View, Alert, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
+import { useDispatch } from 'react-redux';
+import { verifyOtp } from '../../../../API/services/AxiosInstance';
+
 
 const Otp = () => {
+  const { email } = useLocalSearchParams(); // ✅ lấy email từ params
   const [otp, setOtp] = useState(['', '', '', '']);
-  const inputs = useRef([]);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const inputs = [React.useRef(), React.useRef(), React.useRef(), React.useRef()];
 
-  const handleChange = (text, index) => {
+  const handleChange = (text, idx) => {
+    if (!/^\d*$/.test(text)) return; // chỉ cho nhập số
     const newOtp = [...otp];
-    newOtp[index] = text;
+    newOtp[idx] = text;
     setOtp(newOtp);
-    if (text && index < 3) {
-      inputs.current[index + 1].focus();
+    if (text && idx < 3) {
+      inputs[idx + 1].current.focus();
+    }
+    if (!text && idx > 0) {
+      inputs[idx - 1].current.focus();
+    }
+  };
+
+  const handleVerify = async () => {
+    const otpValue = otp.join('');
+    if (otpValue.length !== 4) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đủ 4 số OTP');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await dispatch(verifyOtp({ email, otp: otpValue })).unwrap();
+
+      router.replace({
+        pathname: '/(stack)/signup/ResetPassword',
+      });
+    } catch (error) {
+      Alert.alert('Lỗi', error || 'Xác thực OTP thất bại');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -26,9 +58,9 @@ const Otp = () => {
 
       {/* Thông báo */}
       <Text style={styles.info}>
-        The verification code has been sent.{"\n"}
-        Check the code on your email{"\n"}
-        sent to <Text style={styles.email}>claudiaalves@mail.com</Text>
+        Mã xác thực đã được gửi.{"\n"}
+        Vui lòng kiểm tra email:{"\n"}
+        <Text style={styles.email}>{email}</Text>
       </Text>
 
       {/* Ô nhập OTP */}
@@ -36,7 +68,7 @@ const Otp = () => {
         {otp.map((value, index) => (
           <TextInput
             key={index}
-            ref={(ref) => (inputs.current[index] = ref)}
+            ref={inputs[index]}
             style={styles.otpInput}
             keyboardType="number-pad"
             maxLength={1}
@@ -47,8 +79,8 @@ const Otp = () => {
       </View>
 
       {/* Nút xác thực */}
-      <TouchableOpacity style={styles.button} onPress={() => router.push('/(stack)/signup/ResetPassword')}>
-        <Text style={styles.buttonText}>Xác thực OTP</Text>
+      <TouchableOpacity style={styles.button} onPress={handleVerify} disabled={loading}>
+        <Text style={styles.buttonText}>{loading ? 'Đang xử lý...' : 'Xác thực OTP'}</Text>
       </TouchableOpacity>
 
       {/* Hỗ trợ */}
