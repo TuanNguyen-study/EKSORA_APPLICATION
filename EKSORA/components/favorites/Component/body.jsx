@@ -15,8 +15,9 @@ import { getTours } from "../../../API/services/serverCategories";
 import SuggestionCard from "../../home/SuggestionCard"; // Kiểm tra đường dẫn
 
 export default function Body({ filterData }) {
-  const { userId, selectedDestination, selectedCategory, selectedTime } =
-    filterData || {};
+
+  const { user_id, selectedDestination, selectedCategory, selectedTime } = filterData;
+
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [suggestionTours, setSuggestionTours] = useState([]);
@@ -25,16 +26,20 @@ export default function Body({ filterData }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!userId) {
-      console.warn("Chưa có userId để lấy danh sách favorites");
+
+    if (!user_id) {
+      console.warn('Chưa có userId để lấy danh sách favorites');
+
       setLoading(false);
       return;
     }
 
     const fetchTours = async () => {
       try {
-        const data = await getFavorites(userId);
-        setTours(data || []);
+
+        const data = await getFavorites(user_id); // SỬ DỤNG userId ở đây
+        setTours(data);z
+
       } catch (error) {
         console.error("Lỗi khi tải tour:", error);
         setError("Không thể tải danh sách tour yêu thích");
@@ -44,7 +49,7 @@ export default function Body({ filterData }) {
     };
 
     fetchTours();
-  }, [userId]);
+  }, []);
 
   const filteredTours = tours.filter((tour) => {
     if (!tour?.id) return false;

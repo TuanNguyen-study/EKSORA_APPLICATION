@@ -1,9 +1,9 @@
 import AxiosInstance from '../AxiosInstance';
 
 //API lấy danh sách yêu thích
-export const getFavorites = async (userId) => {
+export const getFavorites = async (user_id) => {
   try {
-    const response = await AxiosInstance().get(`/api/favorites/${userId}`);
+    const response = await AxiosInstance().get(`/api/favorites/${user_id}`);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách favorites:', error);
@@ -22,3 +22,4 @@ export const deleteFavorites = async (userId, ids) => {
     throw error;
   }
 };
+
