@@ -11,9 +11,9 @@ export const getFavorites = async (user_id) => {
   }
 };
 
-export const deleteFavorites = async (userId, ids) => {
+export const deleteFavorites = async ( ids) => {
   try {
-    const response = await AxiosInstance().delete(`/api/favorites/${userId}`, {
+    const response = await AxiosInstance().delete(`/api/favorites`, {
       data: { ids },
     });
     return response.data;
@@ -23,3 +23,21 @@ export const deleteFavorites = async (userId, ids) => {
   }
 };
 
+<<<<<<< HEAD
+
+const addFavorites = async (userId, tourId) => {
+  try {
+    const response = await AxiosInstance().post(`/api/favorites`, {
+      user_id: userId,
+      tour_id: tourId,
+    });
+
+    if (response.data.success) {
+      console.log("Đã thêm vào yêu thích:", response.data.data);
+    }
+  } catch (error) {
+    console.error("Lỗi khi thêm vào yêu thích:", error?.response?.data || error.message);
+  }
+};
+=======
+>>>>>>> 11be711c1e22029b3748e5f400e98475d513fc1b

@@ -7,7 +7,7 @@ import UserInfo from '../../../components/account/UserInfo';
 export default function AccountScreen() {
   return (
     <View style={styles.container}>
-      <UserInfo />
+      <UserInfo/>
     </View>
   );
 }
