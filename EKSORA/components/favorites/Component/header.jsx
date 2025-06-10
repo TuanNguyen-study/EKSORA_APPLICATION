@@ -70,7 +70,7 @@ export default function Header({ setFilterData }) {
             size={20}
             style={styles.filterIcon}
           />
-          <Text style={styles.filterText}>Lọc theo điểm đến</Text>
+          <Text style={styles.filterText}>Lọc</Text>
         </TouchableOpacity>
       </View>
 
@@ -191,7 +191,6 @@ export default function Header({ setFilterData }) {
 const styles = StyleSheet.create({
   header: {
     padding: 16,
-    backgroundColor: "#e0f0ff",
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },

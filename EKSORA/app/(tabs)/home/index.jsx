@@ -1,28 +1,28 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  FlatList,
-  TouchableOpacity,
-  Dimensions,
-  Platform,
-  StatusBar,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Dimensions,
+  FlatList,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-import { COLORS } from '../../../constants/colors';
-import HeaderSearchBar from '../../../components/home/HeaderSearchBar';
-import PromoBanner from '../../../components/home/PromoBanner';
-import ImageCarouselCard from '../../../components/home/ImageCarouselCard';
-import ServiceCategoryItem from '../../../components/home/ServiceCategoryItem';
+import { getCategories, getTours } from '../../../API/services/serverCategories';
 import DestinationChip from '../../../components/home/DestinationChip';
+import HeaderSearchBar from '../../../components/home/HeaderSearchBar';
+import ImageCarouselCard from '../../../components/home/ImageCarouselCard';
+import PromoBanner from '../../../components/home/PromoBanner';
+import ServiceCategoryItem from '../../../components/home/ServiceCategoryItem';
 import SuggestionCard from '../../../components/home/SuggestionCard';
-import { getCategories, getTours  } from '../../../API/services/serverCategories';
+import { COLORS } from '../../../constants/colors';
 
-import LoadingScreen from '../../../components/LoadingScreen'; 
+import LoadingScreen from '../../../components/LoadingScreen';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -156,7 +156,19 @@ export default function HomeScreen() {
   };
 
   const handlePressDestination = (item) => console.log('Chọn điểm đến:', item.name);
-  const handlePressSuggestion = () => router.push('/trip-detail');
+ const handlePressSuggestion = (tourId) => {
+  console.log("Điều hướng đến trip-detail với ID:", tourId);
+
+  // Thêm bước kiểm tra để đảm bảo an toàn
+  if (!tourId) {
+    console.error("LỖI: tourId không hợp lệ (undefined) nên không thể điều hướng!");
+    // Có thể hiển thị một thông báo cho người dùng ở đây nếu cần
+    // Alert.alert("Lỗi", "Không thể xem chi tiết tour này.");
+    return;
+  }
+  
+  router.push(`/trip-detail/${tourId}`);
+};
  const handlePressCategory = async (item) => {
   console.log('Chọn danh mục:', item.label);
 };
@@ -300,10 +312,20 @@ export default function HomeScreen() {
           {activeTab === 'Đề xuất' && (
             <FlatList
               data={tours}
-              renderItem={({ item }) => (
-                <SuggestionCard item={item} onPress={handlePressSuggestion} />
-              )}
-              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => {
+                // Lấy ID một cách an toàn và đảm bảo nó là chuỗi
+                const tourId = item._id ? String(item._id) : null;
+                
+                return (
+                  <SuggestionCard
+                    item={item}
+                    // Truyền ID đã được xử lý vào hàm
+                    onPress={() => handlePressSuggestion(tourId)}
+                  />
+                );
+              }}
+              // SỬA LẠI: Luôn dùng `_id` từ MongoDB và chuyển nó thành chuỗi
+              keyExtractor={(item) => String(item._id)}
               numColumns={2}
               columnWrapperStyle={styles.row}
               showsVerticalScrollIndicator={false}

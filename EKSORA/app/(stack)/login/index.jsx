@@ -1,14 +1,20 @@
-import { router } from 'expo-router';
-import { useEffect } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+
+import { StyleSheet, View, Image } from 'react-native'
+import React, { useEffect } from 'react';
 import { COLORS } from '../../../constants/colors';
+import { router } from 'expo-router';
+import { auth } from '../login/Component/facebooklogin/firebaseConfig';
 
 
-const index = () => {
+
+
+const  Index = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push('/(stack)/signup')
+
+      router.push('/(stack)/signup');
+
     }, 3000);
 
     return () => clearTimeout(timer); // Dọn dẹp khi unmount
@@ -27,7 +33,7 @@ const index = () => {
   )
 }
 
-export default index
+export default  Index
 
 const styles = StyleSheet.create({
   logoContainer: {
@@ -41,3 +47,4 @@ const styles = StyleSheet.create({
     height: 200,
   },
 })
+console.log('Firebase Auth ready:', auth);
