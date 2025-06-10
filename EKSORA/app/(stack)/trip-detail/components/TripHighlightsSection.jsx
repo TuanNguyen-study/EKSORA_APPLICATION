@@ -1,7 +1,6 @@
 
-import React from 'react';
-import { View, Text, Image, StyleSheet, FlatList, Dimensions } from 'react-native';
 import { COLORS } from '@/constants/colors';
+import { Dimensions, FlatList, Image, StyleSheet, Text, View } from 'react-native';
 
 const {width} = Dimensions.get('window');
 const ITEM_WIDTH = width * 0.8; 
@@ -10,7 +9,7 @@ const ITEM_SPACING = 15;
 const HighlightCard = ({item}) => {
     return (
         <View style={styles.highlightCard}>
-            <Image source={item.image} style={styles.highlightImage} />
+            <Image source={{ uri: item.image }} style={styles.highlightImage} />
             <View style={styles.highlightTextContainer}>
                 <Text style={styles.highlightTitle} numberOfLines={2}>{item.title}</Text>
                 <Text style={styles.highlightDescription} numberOfLines={3}>{item.description}</Text>
@@ -30,7 +29,7 @@ const TripHighlightsSection = ({ title, highlights }) => {
       <FlatList
         data={highlights}
         renderItem={({item}) => <HighlightCard item={item} />}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={ITEM_WIDTH + ITEM_SPACING}

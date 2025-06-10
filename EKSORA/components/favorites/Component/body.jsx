@@ -12,7 +12,7 @@ import Modal from "react-native-modal";
 import FavoriteItem from "../FavoriteItem";
 import { getFavorites } from "../../../API/services/servicesFavorite";
 import { getTours } from "../../../API/services/serverCategories";
-import SuggestionCard from "../../home/SuggestionCard"; // Kiểm tra đường dẫn
+import SuggestionCard from "../../home/SuggestionCard"; 
 
 export default function Body({ filterData }) {
   const { userId, selectedDestination, selectedCategory, selectedTime } =
