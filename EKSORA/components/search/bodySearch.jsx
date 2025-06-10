@@ -54,7 +54,7 @@ export default function Body() {
 
               <Text style={styles.tourLocation}>{item.location}</Text>
               <Text style={styles.tourProvince}>{item.province}</Text>
-              <Text style={styles.tourPrice}>{item.price}</Text>
+              <Text style={styles.tourPrice}>{item.price}đ</Text>
 
 
             </View>
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   tourPrice: {
     fontSize: 14,
     color: COLORS.black,
-    fontWeight: "bold",
+    fontWeight: "regular",
     marginTop: '15',
   },
 
