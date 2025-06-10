@@ -1,266 +1,184 @@
-
-import React, { useState, } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants/colors';
-
-// Giữ lại MOCK_DATA
-const MOCK_SERVICE_PACKAGES = [
-  {
-    id: 'pkg_adult',
-    name: 'Người lớn',
-    availabilityInfo: 'Đặt từ 11/5', 
-    currentPrice: 750000,
-    originalPrice: 800000,
-    currency: 'đ',
-  },
-  {
-    id: 'pkg_child',
-    name: 'Trẻ em (Cao 90cm-120cm)',
-    availabilityInfo: 'Đặt từ 11/5',
-    currentPrice: 70000,
-    originalPrice: 100000,
-    currency: 'đ',
-  },
-  {
-    id: 'pkg_senior',
-    name: 'Người cao tuổi (Trên 60t)',
-    availabilityInfo: 'Đặt từ 11/5',
-    currentPrice: 600000,
-    originalPrice: 650000,
-    currency: 'đ',
-  }
-];
-
-const MOCK_DATE_FILTERS = [
-    { id: 'today', label: 'Hôm nay' }, 
-    { id: 'tomorrow', label: 'Ngày mai', isDefault: true },
-    { id: 'date_11_5', label: '11/5' },
-    { id: 'date_12_5', label: '12/5' },
-    { id: 'all_dates', label: 'Tất cả ngày', icon: 'calendar-outline' },
-];
-
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const ProductOptionSelector = ({
-  options, 
-  servicePackages = MOCK_SERVICE_PACKAGES, 
-  dateFilters = MOCK_DATE_FILTERS,     
-  onPackageSelect,
-  onDateFilterChange, 
+  servicePackages = [],    // [{ id, title, options: [{id,name,description,price}] }]
+  dateFilters = [],
+  onDateFilterChange,
+  onOptionSelect,          // (packageId, option) => void
 }) => {
-  const defaultDateFilter = dateFilters.find(df => df.isDefault)?.id || (dateFilters.length > 0 ? dateFilters[0].id : null);
-  const [selectedDateFilterId, setSelectedDateFilterId] = useState(defaultDateFilter);
-  const [selectedPackageId, setSelectedPackageId] = useState(null);
-  const handleDateFilterPress = (filterId) => {
-    setSelectedDateFilterId(filterId);
-    if (onDateFilterChange) {
-      onDateFilterChange(filterId);
-    }
+  const defaultDate    = dateFilters.find(df => df.isDefault)?.id || dateFilters[0]?.id;
+  const [selectedDate, setSelectedDate] = useState(defaultDate);
+  const [selectedOptions, setSelectedOptions] = useState({}); // { [packageId]: optionId }
+
+  const handleDatePress = id => {
+    setSelectedDate(id);
+    onDateFilterChange?.(id);
   };
 
-  const handlePackageSelect = (packageItem) => {
-    setSelectedPackageId(packageItem.id); 
-    if (onPackageSelect) {
-      onPackageSelect(packageItem); 
-    }
-    Alert.alert("Đã chọn gói", packageItem.name);
+  const handleOptionPress = (pkgId, opt) => {
+    setSelectedOptions(prev => ({ ...prev, [pkgId]: opt.id }));
+    onOptionSelect?.(pkgId, opt);
+    Alert.alert('Đã chọn', `${opt.name} (${opt.price.toLocaleString('vi-VN')} đ)`);
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.headerIndicator} />
-        <Text style={styles.sectionTitle}>Các gói dịch vụ</Text>
-      </View>
-
+    <ScrollView style={styles.container}>
       {/* Date Filters */}
-      <View style={styles.dateFiltersContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateFiltersScroll}>
-          {dateFilters.map(filter => (
-            <TouchableOpacity
-              key={filter.id}
-              style={[
-                styles.dateChip,
-                selectedDateFilterId === filter.id && styles.dateChipSelected
-              ]}
-              onPress={() => handleDateFilterPress(filter.id)}
-            >
-              {filter.icon && (
-                <Ionicons
-                  name={filter.icon}
-                  size={16}
-                  color={selectedDateFilterId === filter.id ? COLORS.primary : COLORS.textSecondary}
-                  style={styles.dateChipIcon}
-                />
-              )}
-              <Text style={[
-                styles.dateChipText,
-                selectedDateFilterId === filter.id && styles.dateChipTextSelected
-              ]}>
-                {filter.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Service Package Cards */}
-      <View style={styles.packagesContainer}>
-        {servicePackages.map((pkg) => (
-          <View key={pkg.id} style={styles.packageCard}>
-            <View style={styles.packageInfo}>
-              <Text style={styles.packageName}>{pkg.name}</Text>
-              {pkg.availabilityInfo && <Text style={styles.packageAvailability}>{pkg.availabilityInfo}</Text>}
-              <View style={styles.priceContainer}>
-                <Text style={styles.currentPrice}>
-                  {pkg.currency}{pkg.currentPrice.toLocaleString('vi-VN')}
-                </Text>
-                {pkg.originalPrice && pkg.originalPrice > pkg.currentPrice && (
-                  <Text style={styles.originalPrice}>
-                    {pkg.currency}{pkg.originalPrice.toLocaleString('vi-VN')}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <TouchableOpacity
-              style={[styles.selectButton, selectedPackageId === pkg.id && styles.selectButtonSelected]}
-              onPress={() => handlePackageSelect(pkg)}
-            >
-              <Text style={[styles.selectButtonText, selectedPackageId === pkg.id && styles.selectButtonTextSelected]}>
-                {selectedPackageId === pkg.id ? 'Đã chọn' : 'Chọn'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.dateFilters}
+      >
+        {dateFilters.map(df => (
+          <TouchableOpacity
+            key={df.id}
+            style={[styles.dateChip, selectedDate === df.id && styles.dateChipActive]}
+            onPress={() => handleDatePress(df.id)}
+          >
+            {df.icon && (
+              <Ionicons
+                name={df.icon}
+                size={16}
+                color={selectedDate === df.id ? COLORS.primary : COLORS.textSecondary}
+                style={styles.dateIcon}
+              />
+            )}
+            <Text style={[styles.dateText, selectedDate === df.id && styles.dateTextActive]}>
+              {df.label}
+            </Text>
+          </TouchableOpacity>
         ))}
-      </View>
-    </View>
+      </ScrollView>
+
+      {/* Service Packages */}
+      {servicePackages.map(pkg => (
+        <View key={pkg.id} style={styles.groupContainer}>
+          <Text style={styles.groupTitle}>{pkg.title}</Text>
+          {pkg.options.map(opt => {
+            const isSelected = selectedOptions[pkg.id] === opt.id;
+            return (
+              <TouchableOpacity
+                key={opt.id}
+                style={[styles.optionCard, isSelected && styles.optionCardActive]}
+                onPress={() => handleOptionPress(pkg.id, opt)}
+              >
+                <View style={styles.optionInfo}>
+                  <Text style={[styles.optionName, isSelected && styles.optionNameActive]}>
+                    {opt.name}
+                  </Text>
+                  {opt.description ? (
+                    <Text style={styles.optionDesc}>{opt.description}</Text>
+                  ) : null}
+                </View>
+                <View style={styles.optionRight}>
+                  <Text style={[styles.optionPrice, isSelected && styles.optionPriceActive]}>
+                    {opt.price.toLocaleString('vi-VN')} đ
+                  </Text>
+                  <Ionicons
+                    name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                    size={20}
+                    color={isSelected ? COLORS.primary : COLORS.textSecondary}
+                  />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ))}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    //paddingVertical: 16,
-    backgroundColor: COLORS.white, 
+    paddingVertical: 16,
+    backgroundColor: COLORS.white,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  headerIndicator: {
-    width: 6,
-    height: 20,
-    backgroundColor: COLORS.primary,
-    borderRadius: 3,
-    marginRight: 10,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.text,
-  },
-  dateFiltersContainer: {
+  dateFilters: {
+    paddingHorizontal: 16,
     marginBottom: 20,
-  },
-  dateFiltersScroll: {
-    paddingHorizontal: 0, 
   },
   dateChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white, 
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20, 
-    marginRight: 10,
     borderWidth: 1,
-    borderColor: COLORS.border, 
+    borderColor: COLORS.border,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 10,
+    backgroundColor: COLORS.white,
   },
-  dateChipSelected: {
-    backgroundColor: COLORS.primaryLight, 
-    borderColor: COLORS.primary, 
+  dateChipActive: {
+    backgroundColor: COLORS.primaryLight,
+    borderColor: COLORS.primary,
   },
-  dateChipIcon: {
+  dateIcon: {
     marginRight: 6,
   },
-  dateChipText: {
+  dateText: {
     fontSize: 14,
-    color: COLORS.textSecondary, 
-    fontWeight: '500',
+    color: COLORS.textSecondary,
   },
-  dateChipTextSelected: {
-    color: COLORS.primary, 
+  dateTextActive: {
+    color: COLORS.primary,
     fontWeight: 'bold',
   },
-  packagesContainer: {
-
+  groupContainer: {
+    marginBottom: 24,
+    paddingHorizontal: 16,
   },
-  packageCard: {
-    backgroundColor: COLORS.white, 
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  groupTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
     marginBottom: 12,
-    borderWidth: 1, 
+  },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: COLORS.white,
   },
-  packageInfo: {
-    flex: 1, 
-    marginRight: 10,
+  optionCardActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
   },
-  packageName: {
+  optionInfo: {
+    flex: 1,
+  },
+  optionName: {
     fontSize: 16,
-    fontWeight: 'bold',
     color: COLORS.text,
     marginBottom: 4,
   },
-  packageAvailability: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 8,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end', 
-  },
-  currentPrice: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.text, 
-    marginRight: 8,
-  },
-  originalPrice: {
-    fontSize: 13,
-    color: COLORS.textLight,
-    textDecorationLine: 'line-through',
-    marginBottom: 1, 
-  },
-  selectButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  selectButtonSelected: {
-    backgroundColor: COLORS.white,
-    borderColor: COLORS.primary,
-    borderWidth: 1.5,
-  },
-  selectButtonText: {
-    color: COLORS.white,
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-  selectButtonTextSelected: {
+  optionNameActive: {
     color: COLORS.primary,
-  }
+    fontWeight: 'bold',
+  },
+  optionDesc: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+  },
+  optionRight: {
+    alignItems: 'flex-end',
+  },
+  optionPrice: {
+    fontSize: 16,
+    color: COLORS.text,
+    marginBottom: 4,
+  },
+  optionPriceActive: {
+    color: COLORS.primary,
+    fontWeight: 'bold',
+  },
 });
 
 export default ProductOptionSelector;
