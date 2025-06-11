@@ -1,37 +1,57 @@
 import { COLORS } from '@/constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const ProductOptionSelector = ({
-  servicePackages = [],    // [{ id, title, options: [{id,name,description,price}] }]
+  servicePackages = [],
   dateFilters = [],
+  initialTotalPrice = 0,
   onDateFilterChange,
-  onOptionSelect,          // (packageId, option) => void
+  onOptionSelect,
+  onSelectionUpdate,
 }) => {
-  const defaultDate    = dateFilters.find(df => df.isDefault)?.id || dateFilters[0]?.id;
+  const defaultDate = dateFilters.find(df => df.isDefault)?.id || dateFilters[0]?.id;
   const [selectedDate, setSelectedDate] = useState(defaultDate);
-  const [selectedOptions, setSelectedOptions] = useState({}); // { [packageId]: optionId }
+  const [selectedOptions, setSelectedOptions] = useState({});
 
-  const handleDatePress = id => {
+  const calculateTotalPrice = () => {
+    let total = initialTotalPrice;
+    Object.values(selectedOptions).forEach(opt => {
+      total += opt.price || 0;
+    });
+    return total;
+  };
+
+  useEffect(() => {
+    const total = calculateTotalPrice();
+    onSelectionUpdate?.(selectedOptions, total);
+  }, [selectedOptions]);
+
+  const handleDatePress = (id) => {
     setSelectedDate(id);
     onDateFilterChange?.(id);
   };
 
   const handleOptionPress = (pkgId, opt) => {
-    setSelectedOptions(prev => ({ ...prev, [pkgId]: opt.id }));
-    onOptionSelect?.(pkgId, opt);
-    Alert.alert('Đã chọn', `${opt.name} (${opt.price.toLocaleString('vi-VN')} đ)`);
-  };
+  setSelectedOptions(prev => {
+    const isCurrentlySelected = prev[pkgId]?.id === opt.id;
+    const updated = { ...prev };
 
+    if (isCurrentlySelected) {
+      delete updated[pkgId]; // Bỏ chọn nếu đã chọn rồi
+    } else {
+      updated[pkgId] = opt; // Chọn option mới
+    }
+
+    return updated;
+  });
+
+  onOptionSelect?.(pkgId, opt);
+};
   return (
     <ScrollView style={styles.container}>
-      {/* Date Filters */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.dateFilters}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateFilters}>
         {dateFilters.map(df => (
           <TouchableOpacity
             key={df.id}
@@ -53,12 +73,11 @@ const ProductOptionSelector = ({
         ))}
       </ScrollView>
 
-      {/* Service Packages */}
       {servicePackages.map(pkg => (
         <View key={pkg.id} style={styles.groupContainer}>
           <Text style={styles.groupTitle}>{pkg.title}</Text>
           {pkg.options.map(opt => {
-            const isSelected = selectedOptions[pkg.id] === opt.id;
+            const isSelected = selectedOptions[pkg.id]?.id === opt.id;
             return (
               <TouchableOpacity
                 key={opt.id}
@@ -69,9 +88,7 @@ const ProductOptionSelector = ({
                   <Text style={[styles.optionName, isSelected && styles.optionNameActive]}>
                     {opt.name}
                   </Text>
-                  {opt.description ? (
-                    <Text style={styles.optionDesc}>{opt.description}</Text>
-                  ) : null}
+                  {opt.description && <Text style={styles.optionDesc}>{opt.description}</Text>}
                 </View>
                 <View style={styles.optionRight}>
                   <Text style={[styles.optionPrice, isSelected && styles.optionPriceActive]}>
