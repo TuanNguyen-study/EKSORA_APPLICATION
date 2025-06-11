@@ -70,19 +70,6 @@ const serviceCategories = [
   { id: "s5", label: "Mục khác" },
 ];
 
-// const popularDestinations = [
-//   { id: 'd1', name: 'TP Hồ Chí Minh', image: { uri: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop' } },
-//   { id: 'd2', name: 'TP Nha Trang', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' } },
-//   { id: 'd3', name: 'Đà Nẵng', image: { uri: 'https://images.unsplash.com/photo-1503160865287-b054e0750e03?q=80&w=1804&auto=format&fit=crop' } },
-//   { id: 'd4', name: 'Hà Nội', image: { uri: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop' } },
-// ];
-
-// const suggestedItems = [
-//   { id: 'sg1', title: 'Tour Long An 2 ngày 1 đêm - Nghỉ dưỡng và phục hồi sức khỏe ở KDL Cánh Đồng Bất Tận', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' }, rating: 4.8, reviews: '1,600', originalPrice: 1550000, price: 1250000, discount: 25 },
-//   { id: 'sg2', title: 'Combo Khách Sạn 4 Sao + Vé Máy Bay Đà Nẵng Hội An - 4 Ngày 3 Đêm', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' }, rating: 4.8, reviews: '1,600', originalPrice: 2550000, price: 2250000, discount: 25 },
-//   { id: 'sg3', title: 'Kỳ nghỉ dưỡng tại Phú Quốc villa hướng biển, giá siêu ưu đãi', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' }, rating: 4.9, reviews: '2,100', price: 3500000, discount: 15 },
-//   { id: 'sg4', title: 'Khám phá vẻ đẹp Tokyo truyền thống và hiện đại 5N4Đ', image: { uri: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop' }, rating: 4.7, reviews: '980', originalPrice: 22000000, price: 18500000, discount: 20 },
-// ];
 
 const ITEM_WIDTH_PERCENTAGE_HOME = 0.6;
 const ITEM_HEIGHT_CAROUSEL_TOTAL_HOME = 150;
@@ -202,14 +189,10 @@ export default function HomeScreen() {
     console.log("Chọn điểm đến:", item.name);
   const handlePressSuggestion = (tourId) => {
     console.log("Điều hướng đến trip-detail với ID:", tourId);
-
-    // Thêm bước kiểm tra để đảm bảo an toàn
     if (!tourId) {
       console.error(
         "LỖI: tourId không hợp lệ (undefined) nên không thể điều hướng!"
       );
-      // Có thể hiển thị một thông báo cho người dùng ở đây nếu cần
-      // Alert.alert("Lỗi", "Không thể xem chi tiết tour này.");
       return;
     }
 
@@ -241,7 +224,7 @@ export default function HomeScreen() {
 
     fetchCategories();
   }, []);
-
+// gọi API lấy tour
   useEffect(() => {
     const fetchTours = async () => {
       try {
@@ -250,12 +233,12 @@ export default function HomeScreen() {
 
         const processedData = Array.isArray(data)
           ? data.map((tour) => ({
-              ...tour,
-              image:
-                Array.isArray(tour.image) && tour.image.length > 0
-                  ? tour.image[0]
-                  : tour.image || "https://via.placeholder.com/300",
-            }))
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : tour.image || "https://via.placeholder.com/300",
+          }))
           : [];
 
         setTours(processedData);
@@ -397,7 +380,7 @@ export default function HomeScreen() {
               windowSize={5}
               removeClippedSubviews={true}
               getItemLayout={(_, index) => ({
-                length: 260, // Chiều cao ước lượng của SuggestionCard (sửa nếu khác)
+                length: 260,
                 offset: 260 * index,
                 index,
               })}
