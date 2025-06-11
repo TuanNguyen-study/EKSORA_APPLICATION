@@ -12,14 +12,19 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { COLORS } from '../../../constants/colors';
-import HeaderSearchBar from '../../../components/home/HeaderSearchBar';
-import PromoBanner from '../../../components/home/PromoBanner';
-import ImageCarouselCard from '../../../components/home/ImageCarouselCard';
-import ServiceCategoryItem from '../../../components/home/ServiceCategoryItem';
-import DestinationChip from '../../../components/home/DestinationChip';
-import SuggestionCard from '../../../components/home/SuggestionCard';
-import { getCategories, getTours, getToursByLocation } from '../../../API/server/serverCategories';
+
+import {
+  getCategories,
+  getTours,
+  getToursByLocation,
+} from "../../../API/services/serverCategories";
+import DestinationChip from "../../../components/home/DestinationChip";
+import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
+import ImageCarouselCard from "../../../components/home/ImageCarouselCard";
+import PromoBanner from "../../../components/home/PromoBanner";
+import ServiceCategoryItem from "../../../components/home/ServiceCategoryItem";
+import SuggestionCard from "../../../components/home/SuggestionCard";
+import { COLORS } from "../../../constants/colors";
 
 import LoadingScreen from "../../../components/LoadingScreen";
 
@@ -90,14 +95,14 @@ export default function HomeScreen() {
   const [isCarouselManuallyScrolling, setIsCarouselManuallyScrolling] =
     useState(false);
 
-  // State quản lý danh mục và tour
-  const [categories, setCategories] = useState([]);  
+  // State quản lý danh mục
+  const [categories, setCategories] = useState([]);
   const [tours, setTours] = useState([]);
   const [locationTours, setLocationTours] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState(null); 
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const [selectedLocationName, setSelectedLocationName] = useState(null);
-  const [loading, setLoading] = useState(true); 
-  const [error, setError] = useState(null); 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -182,54 +187,87 @@ export default function HomeScreen() {
     );
   };
 
-const handlePressDestination = async (item) => {
+  const handlePressDestination = async (item) => {
     setSelectedLocation(item._id); 
     setSelectedLocationName(item.name); 
     setLoading(true);
+
     try {
-      console.log('Bắt đầu gọi API getToursByLocation với cateID:', item._id);
-      const toursData = await getToursByLocation(item._id); 
-      console.log('Dữ liệu tour trả về từ get Legislative: getToursByLocation(item._id, toursData'); 
-      setLocationTours(Array.isArray(toursData) ? toursData : toursData.data || []); 
-      setActiveTab('Đề xuất'); 
       setError(null); 
+      if (item._id === "682ec34331d8b56270a8af8a") { 
+        console.log('Bắt đầu gọi API getTours để lấy tất cả tour');
+        const toursData = await getTours();
+        const processedTours = Array.isArray(toursData)
+          ? toursData.map((tour) => ({
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : tour.image || "https://via.placeholder.com/300",
+          }))
+          : toursData.data
+            ? toursData.data.map((tour) => ({
+              ...tour,
+              image:
+                Array.isArray(tour.image) && tour.image.length > 0
+                  ? tour.image[0]
+                  : tour.image || "https://via.placeholder.com/300",
+            }))
+            : [];
+        setLocationTours(processedTours); 
+      } else { 
+        console.log('Bắt đầu gọi API getToursByLocation với cateID:', item._id);
+        const toursData = await getToursByLocation(item._id);
+        console.log('Dữ liệu tour trả về từ getToursByLocation:', toursData);
+        const processedTours = Array.isArray(toursData)
+          ? toursData.map((tour) => ({
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : tour.image || "https://via.placeholder.com/300",
+          }))
+          : toursData.data
+            ? toursData.data.map((tour) => ({
+              ...tour,
+              image:
+                Array.isArray(tour.image) && tour.image.length > 0
+                  ? tour.image[0]
+                  : tour.image || "https://via.placeholder.com/300",
+            }))
+            : [];
+        setLocationTours(processedTours); 
+      }
+      setActiveTab('Đề xuất');
     } catch (err) {
-      console.error('Lỗi khi gọi getToursByLocation:', err);
-      setError(`Không tìm thấy tour cho ${item.name}`);
-      setLocationTours([]); 
+      console.error(
+        item._id === "682ec34331d8b56270a8af8a"
+          ? 'Lỗi khi gọi getTours:'
+          : 'Lỗi khi gọi getToursByLocation:',
+        err.response?.data || err.message
+      );
+      setError(item._id === "682ec34331d8b56270a8af8a" ? 'Không tìm thấy tour nào' : `Không tìm thấy tour cho ${item.name}`);
+      setLocationTours([]);
     } finally {
       setLoading(false);
     }
-};
-// =======
-//   const handlePressDestination = (item) =>
-//     console.log("Chọn điểm đến:", item.name);
-//   const handlePressSuggestion = (tourId) => {
-//     console.log("Điều hướng đến trip-detail với ID:", tourId);
-
-//     // Thêm bước kiểm tra để đảm bảo an toàn
-//     if (!tourId) {
-//       console.error(
-//         "LỖI: tourId không hợp lệ (undefined) nên không thể điều hướng!"
-//       );
-//       // Có thể hiển thị một thông báo cho người dùng ở đây nếu cần
-//       // Alert.alert("Lỗi", "Không thể xem chi tiết tour này.");
-//       return;
-//     }
-
-//     router.push(`/trip-detail/${tourId}`);
-//   };
-//   const handlePressCategory = async (item) => {
-//     console.log("Chọn danh mục:", item.label);
-//   };
-// >>>>>>> d4fc4c740f4b38425853ddaed8af8eb8f2dc04dc
-
-  const handlePressSuggestion = (item) => {
-    router.push(`/trip-detail?id=${item.id}`);
   };
 
-  const handlePressCategory = (item) => {
-    console.log('Chọn danh mục:', item.label);
+  const handlePressSuggestion = (tourId) => {
+    console.log("Điều hướng đến trip-detail với ID:", tourId);
+
+    // Thêm bước kiểm tra để đảm bảo an toàn
+    if (!tourId) {
+      console.error(
+        "LỖI: tourId không hợp lệ (undefined) nên không thể điều hướng!"
+      );
+      return;
+    }
+
+    router.push(`/trip-detail/${tourId}`);
+  };
+  const handlePressCategory = async (item) => {
+    console.log("Chọn danh mục:", item.label);
   };
 
   const HomeHeaderContent = () => (
@@ -243,12 +281,11 @@ const handlePressDestination = async (item) => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-
         console.log('Bắt đầu gọi API getCategories');
-        const response = await getCategories();  
+        const response = await getCategories();
         console.log('Dữ liệu categories trả về:', response);
         setCategories(Array.isArray(response) ? response : response.data || []);
-        setLoading(false);  
+        setLoading(false);
       } catch (err) {
         console.error('Lỗi khi gọi getCategories:', err);
         setError('Lỗi khi lấy danh sách categories');
@@ -259,37 +296,27 @@ const handlePressDestination = async (item) => {
     fetchCategories();
   }, []);
 
-
-  // Gọi API lấy danh sách tour mặc định
+  // Gọi API lấy danh sách tour
   useEffect(() => {
     const fetchTours = async () => {
       try {
-        console.log('Bắt đầu gọi API getTours');
         const data = await getTours();
-        console.log('Dữ liệu tours trả về:', data);
-        setTours(Array.isArray(data) ? data : data.data || []);
-        setLoading(false);
+        console.log("Dữ liệu từ getTours:", data);
+
+        const processedData = Array.isArray(data)
+          ? data.map((tour) => ({
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : tour.image || "https://via.placeholder.com/300",
+          }))
+          : [];
+
+        setTours(processedData);
       } catch (error) {
-        console.error('Lỗi khi gọi getTours:', error);
-        setError('Lỗi khi lấy danh sách tour');
-// =======
-//         console.log("Dữ liệu từ getTours:", data);
-
-//         const processedData = Array.isArray(data)
-//           ? data.map((tour) => ({
-//               ...tour,
-//               image:
-//                 Array.isArray(tour.image) && tour.image.length > 0
-//                   ? tour.image[0]
-//                   : tour.image || "https://via.placeholder.com/300",
-//             }))
-//           : [];
-
-//         setTours(processedData);
-//       } catch (error) {
-//         console.error("Lỗi khi lấy dữ liệu tours:", error);
-//       } finally {
-// >>>>>>> d4fc4c740f4b38425853ddaed8af8eb8f2dc04dc
+        console.error("Lỗi khi lấy dữ liệu tours:", error);
+      } finally {
         setLoading(false);
       }
     };
@@ -304,11 +331,7 @@ const handlePressDestination = async (item) => {
 
   // Nếu có lỗi, hiển thị thông báo lỗi
   if (error) {
-    return (
-      <View style={styles.emptyStateContainer}>
-        <Text style={styles.emptyStateText}>{error}</Text>
-      </View>
-    );
+    return <Text>{error}</Text>;
   }
 
   return (
@@ -364,7 +387,7 @@ const handlePressDestination = async (item) => {
               <ServiceCategoryItem
                 key={item.id}
                 label={item.label}
-                onPress={() => handlePressCategory(item)}
+                onPress={handlePressCategory}
               />
             ))}
           </View>
@@ -376,11 +399,10 @@ const handlePressDestination = async (item) => {
             renderItem={({ item }) => (
               <DestinationChip
                 destination={item}
-                onPress={() => handlePressDestination(item)}
-                isSelected={selectedLocation === item._id} 
+                onPress={handlePressDestination}
               />
             )}
-            keyExtractor={(item) => item._id}
+            keyExtractor={(item) => item.id}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalListContentPadding}
@@ -425,26 +447,24 @@ const handlePressDestination = async (item) => {
               showsVerticalScrollIndicator={false}
               scrollEnabled={false}
               contentContainerStyle={styles.suggestionListContent}
-// <<<<<<< HEAD
-//               ListEmptyComponent={() => (
-//                 <View style={styles.emptyStateContainer}>
-//                   <Text style={styles.emptyStateText}>
-//                     {selectedLocation 
-//                       ? `Không có tour nào cho ${selectedLocationName}`
-//                       : 'Không có tour nào để hiển thị'}
-//                   </Text>
-//                 </View>
-//               )}
-// =======
               initialNumToRender={6}
               maxToRenderPerBatch={6}
               windowSize={5}
               removeClippedSubviews={true}
-              getItemLayout={(_, index) => ({
-                length: 260, 
+              getItemLayout={(data, index) => ({
+                length: 260,
                 offset: 260 * index,
                 index,
               })}
+              ListEmptyComponent={() => (
+                <View style={styles.emptyStateContainer}>
+                  <Text style={styles.emptyStateText}>
+                    {selectedLocation
+                      ? `Không có tour nào cho ${selectedLocationName}`
+                      : "Không có tour nào để hiển thị"}
+                  </Text>
+                </View>
+              )}
             />
           )}
           {activeTab === "Gần đây" && (
