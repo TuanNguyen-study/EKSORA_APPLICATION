@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import { COLORS } from '../../constants/colors';
 
 export default function TripItem({ trip }) {
   return (

@@ -5,21 +5,21 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function Offer() {
   const offers = [
     {
-      title: 'WiFi & Thẻ SIM',
+      title: 'Mã giảm giá',
       discount: 'Giảm 10%',
       condition: 'Đơn từ 15.000.000 VNĐ',
       buttonText: 'Lưu mã',
       isSelected: true, // cái box được chọn (viền xanh)
     },
     {
-      title: 'WiFi & Thẻ SIM',
+      title: 'Mã giảm giá',
       discount: 'Giảm 10%',
       condition: 'Đơn từ 3.000.000 VNĐ',
       buttonText: 'Lưu mã',
       isSelected: false,
     },
     {
-      title: 'Sản phẩm được chọn',
+      title: 'Mã giảm giá',
       discount: 'VNĐ 799,086',
       condition: 'Đơn tối thiểu 3.000.000 VNĐ',
       buttonText: 'Sử dụng',

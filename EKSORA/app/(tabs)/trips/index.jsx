@@ -1,9 +1,9 @@
 import React from "react";
 import { View, StyleSheet, Animated } from "react-native";
 import { COLORS } from "../../../constants/colors";
-import TripItem from "../../../components/trips/TripItem";
-import Header from "../../../components/trips/Component/header";
-import Body from "../../../components/trips/Component/body";
+import TripItem from "../../../components/bookings/TripItem";
+import Header from "../../../components/bookings/Component/header";
+import Body from "../../../components/bookings/Component/body";
 
 export default function TripsScreen() {
   const scrollY = new Animated.Value(0);

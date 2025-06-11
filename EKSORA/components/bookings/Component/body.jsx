@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, FlatList, Text, StyleSheet, ActivityIndicator, Image } from 'react-native';
-import { getTrips } from '../../../API/services/servicesTrip'; 
+import { getBooking } from '../../../API/services/servicesBooking'; 
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 export default function Body() {
@@ -12,7 +12,7 @@ export default function Body() {
       try {
         const userId = await AsyncStorage.getItem('userId'); 
         if (userId) {
-          const data = await getTrips(userId);
+          const data = await getBooking(userId);
           setTrips(data);
         } else {
           console.warn('Không tìm thấy userId');
