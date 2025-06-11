@@ -9,16 +9,34 @@ import {
   ImageBackground,
 } from "react-native";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
+import { useEffect } from "react";
+import { getTours } from "../../API/services/serverCategories";
 
-const data = new Array(8).fill({
-  title: "Combo Khách Sạn 4 Sao + Vé Máy Bay Đà Nẵng Hội An 4 Ngày 3 Đêm",
-  price: "Từ ₫ 2,250,000",
-  discount: "15%",
-  image: require("../../assets/images/uudai.png"),
-});
 
 export default function Promotions() {
-  const [selectedTab, setSelectedTab] = useState(0);
+  // const [promotion, setPromotion] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tour, setTours] = useState([]);
+
+
+
+    //api tour
+  useEffect(() => {
+    const fetchTours = async () => {
+      try {
+        const response = await getTours();  
+        setTours(response);  
+        setLoading(false);  
+      } catch (err) {
+        setError('Lỗi khi lấy danh sách categories');
+        setLoading(false);
+      }
+    };
+
+    fetchTours();
+  }, []);
+
+
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
@@ -34,18 +52,18 @@ export default function Promotions() {
 
         {/* Danh sách ưu đãi */}
         <FlatList
-          data={data}
+          data={tour}
           numColumns={2}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              <ImageBackground source={item.image} style={styles.image}>
+              <ImageBackground source={{uri: item.image[0]}} style={styles.image}>
                 <TouchableOpacity style={styles.heartIcon}>
                   <EvilIcons name="heart" size={24} color="black" />
                 </TouchableOpacity>
               </ImageBackground>
 
-              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Text style={styles.cardTitle}>{item.name}</Text>
 
               <View style={styles.priceRow}>
                 <View style={styles.saleBox}>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "462414238701",
+    "project_id": "eksora-a6869",
+    "storage_bucket": "eksora-a6869.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:462414238701:android:0fc7ee1dfed2bfef8acde4",
+        "android_client_info": {
+          "package_name": "com.eksora.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkgaM6qHQGRxR5d7adWKqSqlLj1PCcey4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

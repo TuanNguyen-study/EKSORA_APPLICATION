@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { COLORS } from '../../../constants/colors';
 import UserInfo from '../../../components/account/UserInfo';
 
@@ -7,7 +7,7 @@ import UserInfo from '../../../components/account/UserInfo';
 export default function AccountScreen() {
   return (
     <View style={styles.container}>
-      <UserInfo />
+      <UserInfo/>
     </View>
   );
 }
