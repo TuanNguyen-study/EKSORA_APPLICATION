@@ -7,7 +7,7 @@ import { COLORS } from '../../constants/colors';
 const { width } = Dimensions.get('window');
 
 // Cập nhật CARD_WIDTH và IMAGE_HEIGHT để linh hoạt với kích thước màn hình
-const CARD_WIDTH = width * 0.42;  
+const CARD_WIDTH = width * 0.43;  
 const IMAGE_HEIGHT = CARD_WIDTH * (3 / 4); 
 
 const SuggestionCard = ({ item, onPress }) => (
