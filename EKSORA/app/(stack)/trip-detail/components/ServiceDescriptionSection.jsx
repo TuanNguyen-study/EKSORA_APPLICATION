@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
-import { COLORS } from '@/constants/colors'; 
+import { COLORS } from '../../../../constants/colors';
 
 const { width: screenWidth } = Dimensions.get('window');
 const IMAGE_WIDTH = screenWidth - 32; 

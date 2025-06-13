@@ -1,5 +1,5 @@
 
-import { COLORS } from '@/constants/colors';
+import { COLORS } from '../../../../constants/colors';
 import { Dimensions, FlatList, Image, StyleSheet, Text, View } from 'react-native';
 
 const {width} = Dimensions.get('window');
@@ -30,17 +30,11 @@ const TripHighlightsSection = ({ title, highlights }) => {
         data={highlights}
         renderItem={({item}) => <HighlightCard item={item} />}
         keyExtractor={(item) => item._id}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={ITEM_WIDTH + ITEM_SPACING}
-        decelerationRate="fast"
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-            paddingHorizontal: (width - ITEM_WIDTH) / 2 - ITEM_SPACING / 2, 
+            paddingHorizontal: 16,
             paddingVertical: 10,
         }}
-        getItemLayout={(data, index) => (
-            { length: ITEM_WIDTH + ITEM_SPACING, offset: (ITEM_WIDTH + ITEM_SPACING) * index, index }
-        )}
       />
     </View>
   );
@@ -50,7 +44,7 @@ const styles = StyleSheet.create({
   container: {
     paddingVertical: 10,
     backgroundColor: COLORS.background, 
-    marginHorizontal: -16, 
+    marginHorizontal: 0, 
     paddingHorizontal: 0, 
   },
   sectionTitle: {
@@ -61,8 +55,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, 
   },
   highlightCard: {
-    width: ITEM_WIDTH,
-    marginHorizontal: ITEM_SPACING / 2,
+    width: '100%',
+    marginVertical: 8,
     backgroundColor: COLORS.white,
     borderRadius: 12,
     overflow: 'hidden',

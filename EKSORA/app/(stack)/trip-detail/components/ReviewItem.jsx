@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '@/constants/colors';
+import { COLORS } from '../../../../constants/colors';
 
 const { width: screenWidth } = Dimensions.get('window');
 const REVIEW_CARD_WIDTH = screenWidth * 0.8;

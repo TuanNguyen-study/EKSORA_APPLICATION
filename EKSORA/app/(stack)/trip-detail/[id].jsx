@@ -1,4 +1,3 @@
-import { COLORS } from '@/constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -13,15 +12,32 @@ import {
   View
 } from 'react-native';
 import { fetchTourDetail } from '../../../API/services/tourService';
+import { COLORS } from '../../../constants/colors';
 import CustomerReviewSection from './components/CustomerReviewSection';
 import PolicyInfoSection from './components/PolicyInfoSection';
+import NoteContactSection from './components/NoteContactSection';
 import ProductBasicInfo from './components/ProductBasicInfo';
 import ProductImageCarousel from './components/ProductImageCarousel';
-import ProductOptionSelector from './components/ProductOptionSelector';
+import { default as ProductOptionSelector, default as ProductOptionSelector1 } from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
 
+
+
 export default function TripDetailScreen() {
+const HARDCODED_DATE_FILTERS = [
+  { id: 'tomorrow', label: 'Ngày mai', isDefault: true },
+  { id: '11-5', label: '11/5' },
+  { id: '12-5', label: '12/5' },
+  { id: 'all', label: 'Tất cả ngày', icon: 'calendar-outline' },
+];
+
+const PROMOTIONS = [
+  { id: 'promo-1', label: 'Giảm 5%' },
+  { id: 'promo-2', label: 'Sale' },
+  { id: 'promo-3', label: 'Giảm 25%' },
+];
+
   const router = useRouter();
   const { id: productId } = useLocalSearchParams();
 
@@ -173,6 +189,41 @@ export default function TripDetailScreen() {
             onSeeAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
           />
 
+          <View style={styles.separator} />
+
+          <ProductOptionSelector1
+          servicePackages={productData.availableServicePackages1}
+          dateFilters={HARDCODED_DATE_FILTERS}
+          promotions={PROMOTIONS}
+          onDateFilterChange={(id) => console.log('Ngày đã chọn:', id)}
+          onPromotionChange={(promo) => console.log('Ưu đãi đã chọn:', promo)}
+          onOptionSelect={(pkgId, opt) => console.log('Gói đã chọn:', pkgId, opt)}
+        />
+
+
+          <ProductOptionSelector
+            servicePackages={productData.availableServicePackages}
+            dateFilters={productData.availableDateFilters}
+            initialTotalPrice={productData.price.current}
+            onSelectionUpdate={(map, total) => setCurrentTotalPrice(total)}
+            title=""
+          />
+
+       
+          <CustomerReviewSection
+            reviews={productData.reviews}
+            averageRating={productData.rating.stars}
+            totalReviewsCount={productData.rating.count}
+            onViewAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
+          />
+
+          {/* <PolicyInfoSection
+            noteTitle={productData.tripNotes?.title}
+            notes={productData.tripNotes?.items || []}
+            contactInfo={productData.contactInformation}
+            onChatPress={() => Alert.alert('Chat')}
+          /> */}
+
           <TripHighlightsSection
             title="Địa điểm nổi bật trong tour"
             highlights={productData.highlights.map(h => ({
@@ -183,28 +234,7 @@ export default function TripDetailScreen() {
             }))}
           />
 
-          <View style={styles.separator} />
-
-          <ProductOptionSelector
-            servicePackages={productData.availableServicePackages}
-            dateFilters={productData.availableDateFilters}
-            initialTotalPrice={productData.price.current}
-            onSelectionUpdate={(map, total) => setCurrentTotalPrice(total)}
-          />
-
-          <CustomerReviewSection
-            reviews={productData.reviews}
-            averageRating={productData.rating.stars}
-            totalReviewsCount={productData.rating.count}
-            onViewAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
-          />
-
-          <PolicyInfoSection
-            noteTitle={productData.tripNotes?.title}
-            notes={productData.tripNotes?.items || []}
-            contactInfo={productData.contactInformation}
-            onChatPress={() => Alert.alert('Chat')}
-          />
+          <NoteContactSection />
         </View>
 
         <View style={{ height: 100 }} />
@@ -222,23 +252,46 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
   scrollView: { flex: 1 },
   centered: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center',
     backgroundColor: COLORS.background || '#f5f5f5', padding: 20
   },
-  loadingText: { marginTop: 10, fontSize: 16, color: COLORS.textSecondary },
-  errorText: { fontSize: 16, color: COLORS.danger, textAlign: 'center', marginTop: 10 },
+  
+  loadingText: 
+  { marginTop: 
+    10, fontSize: 
+    16, color: COLORS.textSecondary },
+
+  errorText: {
+     fontSize: 16,
+      color: COLORS.danger,
+       textAlign: 'center',
+        marginTop: 10 },
+
   retryButton: {
-    marginTop: 20, backgroundColor: COLORS.primary,
-    paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8
+    marginTop: 20,
+     backgroundColor: COLORS.primary,
+    paddingHorizontal: 20,
+     paddingVertical: 10, 
+     borderRadius: 8
   },
-  retryButtonText: { color: COLORS.white, fontSize: 16, fontWeight: 'bold' },
+  retryButtonText: { 
+    color: COLORS.white,
+     fontSize: 16, 
+     fontWeight: 'bold' },
+
   mainContentContainer: {
-    paddingHorizontal: 16, backgroundColor: COLORS.white,
-    marginTop: -10, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingHorizontal: 16, 
+    backgroundColor: COLORS.white,
+    marginTop: -10, borderTopLeftRadius: 20, 
+    borderTopRightRadius: 20,
     paddingTop: 30
   },
   separator: {
-    height: 1, backgroundColor: COLORS.background,
-    marginVertical: 15, marginHorizontal: -16
+    height: 1, 
+    backgroundColor: COLORS.background,
+    marginVertical: 15,
+     marginHorizontal: -16
   }
 });
