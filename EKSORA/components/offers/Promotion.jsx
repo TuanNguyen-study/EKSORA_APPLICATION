@@ -36,8 +36,7 @@ export default function Promotions() {
           numColumns={2}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
           renderItem={({ item }) => {
-            // Tính giá sau khi giảm giá
-            const discountPrice = (item.price - (item.price * 15) / 100).toLocaleString('vi-VN'); // Thêm dấu phẩy
+            const discountPrice = (item.price - (item.price * 15) / 100).toLocaleString('vi-VN');
 
             return (
               <View style={styles.card}>
