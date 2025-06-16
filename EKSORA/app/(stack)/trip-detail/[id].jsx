@@ -243,7 +243,9 @@ const PROMOTIONS = [
       <StickyBookingFooter priceInfo={{
         ...productData.price,
         current: currentSelectedPackages.totalPrice || productData.price.current
-      }} />
+      }}
+        tourName={productData.name} // Truyền tên tour vào
+ />
     </View>
   );
 }

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+
 import { useState } from 'react';
 import {
   Alert,
@@ -10,9 +11,11 @@ import {
 } from 'react-native';
 import { COLORS } from '../../../../constants/colors';
 
+
 const ProductOptionSelector = ({
   servicePackages = [],
   dateFilters = [],
+
   promotions = [],
   onDateFilterChange,
   onPromotionChange,
@@ -24,9 +27,23 @@ const ProductOptionSelector = ({
   const defaultDate = dateFilters.find(df => df.isDefault)?.id || dateFilters[0]?.id;
   const [selectedDate, setSelectedDate] = useState(defaultDate);
   const [selectedPromotion, setSelectedPromotion] = useState(promotions[0]?.id || null);
+
   const [selectedOptions, setSelectedOptions] = useState({});
 
-  const handleDatePress = id => {
+  const calculateTotalPrice = () => {
+    let total = initialTotalPrice;
+    Object.values(selectedOptions).forEach(opt => {
+      total += opt.price || 0;
+    });
+    return total;
+  };
+
+  useEffect(() => {
+    const total = calculateTotalPrice();
+    onSelectionUpdate?.(selectedOptions, total);
+  }, [selectedOptions]);
+
+  const handleDatePress = (id) => {
     setSelectedDate(id);
     onDateFilterChange?.(id);
   };
@@ -38,10 +55,10 @@ const ProductOptionSelector = ({
   };
 
   const handleOptionPress = (pkgId, opt) => {
-    setSelectedOptions(prev => ({ ...prev, [pkgId]: opt.id }));
-    onOptionSelect?.(pkgId, opt);
-    Alert.alert('Đã chọn', `${opt.name} (${opt.price.toLocaleString('vi-VN')} đ)`);
-  };
+  setSelectedOptions(prev => {
+    const isCurrentlySelected = prev[pkgId]?.id === opt.id;
+    const updated = { ...prev };
+
 
 return (
   <ScrollView style={styles.container}>
@@ -59,12 +76,14 @@ return (
               ]}
               onPress={() => handlePromotionPress(promo.id)}
             >
+
               <Ionicons
                 name="pricetags-outline"
                 size={14}
                 color={selectedPromotion === promo.id ? COLORS.primary : COLORS.textSecondary}
                 style={styles.chipIcon}
               />
+
               <Text
                 style={[
                   styles.chipTextSmall,
@@ -124,11 +143,12 @@ return (
       )}
 
       {/* Danh sách dịch vụ (thức ăn, phiên dịch, ...) */}
+
       {servicePackages.map(pkg => (
         <View key={pkg.id} style={styles.packageSection}>
           <Text style={styles.packageTitle}>{pkg.title}</Text>
           {pkg.options.map(opt => {
-            const isSelected = selectedOptions[pkg.id] === opt.id;
+            const isSelected = selectedOptions[pkg.id]?.id === opt.id;
             return (
               <TouchableOpacity
                 key={`${pkg.id}-${opt.id}`}
@@ -139,9 +159,11 @@ return (
                   <Text style={[styles.optionName, isSelected && styles.optionNameActive]}>
                     {opt.name}
                   </Text>
+
                   {!!opt.description && (
                     <Text style={styles.optionDesc}>{opt.description}</Text>
                   )}
+
                 </View>
                 <View style={styles.optionRight}>
                   <Text style={[styles.optionPrice, isSelected && styles.optionPriceActive]}>

@@ -1,11 +1,15 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { COLORS } from '../../../../constants/colors';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons'; 
+import { useState } from 'react';
+import BookingModalContent from '../components/Modal'; // Modal content tách riêng
 
-const StickyBookingFooter = ({ priceInfo, eksoraPoints, onAddToCart, onBookNow, onEksoraPointsPress }) => {
+const StickyBookingFooter = ({ priceInfo, eksoraPoints, onAddToCart, onBookNow, tourName}) => {
   const insets = useSafeAreaInsets();
+  const [modalVisible, setModalVisible] = useState(false);
 
   const formatPrice = (price) => {
     if (typeof price !== 'number') return 'N/A';
@@ -13,6 +17,7 @@ const StickyBookingFooter = ({ priceInfo, eksoraPoints, onAddToCart, onBookNow, 
   };
 
   return (
+    <>
     <View style={[
         styles.outerContainer,
         { paddingBottom: insets.bottom > 0 ? insets.bottom : (Platform.OS === 'ios' ? 20 : 16) }
@@ -34,12 +39,21 @@ const StickyBookingFooter = ({ priceInfo, eksoraPoints, onAddToCart, onBookNow, 
           <TouchableOpacity style={[styles.buttonBase, styles.addToCartButton]} onPress={onAddToCart}>
             <Text style={[styles.buttonTextBase, styles.addToCartButtonText]}>Thêm vào giỏ hàng</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.buttonBase, styles.bookNowButton]} onPress={onBookNow}>
-            <Text style={[styles.buttonTextBase, styles.bookNowButtonText]}>Đặt ngay</Text>
+          <TouchableOpacity style={[styles.buttonBase, styles.bookNowButton]} onPress={ () => setModalVisible(true)}>
+            <Text style={[styles.buttonTextBase, styles.bookNowButtonText]} >Đặt ngay</Text>
           </TouchableOpacity>
         </View>
       </View>
+      
     </View>
+
+      <Modal visible={modalVisible} animationType="slide" transparent>
+        <BookingModalContent onClose={() => setModalVisible(false)}
+         priceInfo={priceInfo}
+         tourName={tourName} />
+          
+      </Modal>
+    </>
   );
 };
 
