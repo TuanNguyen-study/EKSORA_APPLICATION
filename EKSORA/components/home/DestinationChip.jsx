@@ -4,7 +4,7 @@ import { COLORS } from '../../constants/colors';
 
 const DestinationChip = ({ destination, onPress }) => (
   <TouchableOpacity style={styles.chip} onPress={() => onPress(destination)}>
-    <Image source={destination.image} style={styles.chipImage} />
+    <Image source={{ uri: destination.image }} style={styles.chipImage} />
     <Text style={styles.chipText}>{destination.name}</Text>
   </TouchableOpacity>
 );
