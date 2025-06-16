@@ -31,6 +31,8 @@ export const COLORS = {
 
   white: '#FFFFFF',
   black: '#000000',
+  gray: '#9E9E9E',
+  lightGray: '#F5F5F5',
 
   inactiveTab: '#B0BEC5',
   activeTabDot: '#0087CA', 
@@ -39,5 +41,4 @@ export const COLORS = {
 
   iconBackground: '#E0F2FE',
   categoryBorder: '#E0E0E0',
-// >>>>>>> 388ca76afe660117a7c569701ae33650d246372a
 }

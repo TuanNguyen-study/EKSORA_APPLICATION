@@ -187,9 +187,11 @@ export default function TripDetailScreen() {
 
           <ProductOptionSelector
             servicePackages={productData.availableServicePackages}
-            dateFilters={productData.availableDateFilters}
             initialTotalPrice={productData.price.current}
-            onSelectionUpdate={(map, total) => setCurrentTotalPrice(total)}
+            onSelectionUpdate={(selectedMap, totalPrice) => {
+              setCurrentSelectedPackages(selectedMap);
+              setCurrentTotalPrice(totalPrice);
+            }}
           />
 
           <CustomerReviewSection
@@ -210,10 +212,14 @@ export default function TripDetailScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <StickyBookingFooter priceInfo={{
-        ...productData.price,
-        current: currentSelectedPackages.totalPrice || productData.price.current
-      }} />
+      <StickyBookingFooter
+        priceInfo={{
+          ...productData.price,
+          current: currentTotalPrice,
+        }}
+        onAddToCart={() => console.log('🛒 Giỏ hàng:', currentSelectedPackages)}
+        onBookNow={() => console.log('✅ Đặt ngay:', currentSelectedPackages)}
+      />
     </View>
   );
 }

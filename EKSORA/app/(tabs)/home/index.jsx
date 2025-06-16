@@ -1,6 +1,6 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -11,81 +11,103 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
-import { getCategories, getTours } from '../../../API/services/serverCategories';
-import DestinationChip from '../../../components/home/DestinationChip';
-import HeaderSearchBar from '../../../components/home/HeaderSearchBar';
-import ImageCarouselCard from '../../../components/home/ImageCarouselCard';
-import PromoBanner from '../../../components/home/PromoBanner';
-import ServiceCategoryItem from '../../../components/home/ServiceCategoryItem';
-import SuggestionCard from '../../../components/home/SuggestionCard';
-import { COLORS } from '../../../constants/colors';
+import {
+  getCategories,
+  getTours,
+  getToursByLocation,
+} from "../../../API/services/serverCategories";
+import DestinationChip from "../../../components/home/DestinationChip";
+import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
+import ImageCarouselCard from "../../../components/home/ImageCarouselCard";
+import PromoBanner from "../../../components/home/PromoBanner";
+import ServiceCategoryItem from "../../../components/home/ServiceCategoryItem";
+import SuggestionCard from "../../../components/home/SuggestionCard";
+import { COLORS } from "../../../constants/colors";
 
-import LoadingScreen from '../../../components/LoadingScreen';
+import LoadingScreen from "../../../components/LoadingScreen";
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get("window");
 
 const carouselImages = [
-  { id: 'c1', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' } },
-  { id: 'c2', image: { uri: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop' } },
-  { id: 'c3', image: { uri: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop' } },
-  { id: 'c4', image: { uri: 'https://images.unsplash.com/photo-1528164344705-47542687000d?q=80&w=1740&auto=format&fit=crop' } },
-  { id: 'c5', image: { uri: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=1740&auto=format&fit=crop' } },
+  {
+    id: "c1",
+    image: {
+      uri: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
+  {
+    id: "c2",
+    image: {
+      uri: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
+  {
+    id: "c3",
+    image: {
+      uri: "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
+  {
+    id: "c4",
+    image: {
+      uri: "https://images.unsplash.com/photo-1528164344705-47542687000d?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
+  {
+    id: "c5",
+    image: {
+      uri: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=1740&auto=format&fit=crop",
+    },
+  },
 ];
 
 const serviceCategories = [
-  { id: 's1', label: 'Vui chơi & Trải nghiệm' }, 
-  { id: 's2', label: 'Xe khách' }, 
-  { id: 's3', label: 'Tự thuê xe' }, 
-  { id: 's4', label: 'Khách sạn' }, 
-  { id: 's5', label: 'Mục khác' },
+  { id: "s1", label: "Vui chơi & Trải nghiệm" },
+  { id: "s2", label: "Xe khách" },
+  { id: "s3", label: "Tự thuê xe" },
+  { id: "s4", label: "Khách sạn" },
+  { id: "s5", label: "Mục khác" },
 ];
 
-// const popularDestinations = [
-//   { id: 'd1', name: 'TP Hồ Chí Minh', image: { uri: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop' } },
-//   { id: 'd2', name: 'TP Nha Trang', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' } },
-//   { id: 'd3', name: 'Đà Nẵng', image: { uri: 'https://images.unsplash.com/photo-1503160865287-b054e0750e03?q=80&w=1804&auto=format&fit=crop' } },
-//   { id: 'd4', name: 'Hà Nội', image: { uri: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop' } },
-// ];
-
-// const suggestedItems = [
-//   { id: 'sg1', title: 'Tour Long An 2 ngày 1 đêm - Nghỉ dưỡng và phục hồi sức khỏe ở KDL Cánh Đồng Bất Tận', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' }, rating: 4.8, reviews: '1,600', originalPrice: 1550000, price: 1250000, discount: 25 },
-//   { id: 'sg2', title: 'Combo Khách Sạn 4 Sao + Vé Máy Bay Đà Nẵng Hội An - 4 Ngày 3 Đêm', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' }, rating: 4.8, reviews: '1,600', originalPrice: 2550000, price: 2250000, discount: 25 },
-//   { id: 'sg3', title: 'Kỳ nghỉ dưỡng tại Phú Quốc villa hướng biển, giá siêu ưu đãi', image: { uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop' }, rating: 4.9, reviews: '2,100', price: 3500000, discount: 15 },
-//   { id: 'sg4', title: 'Khám phá vẻ đẹp Tokyo truyền thống và hiện đại 5N4Đ', image: { uri: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop' }, rating: 4.7, reviews: '980', originalPrice: 22000000, price: 18500000, discount: 20 },
-// ];
-
-const ITEM_WIDTH_PERCENTAGE_HOME = 0.60;
+const ITEM_WIDTH_PERCENTAGE_HOME = 0.6;
 const ITEM_HEIGHT_CAROUSEL_TOTAL_HOME = 150;
 const ITEM_SPACING_CAROUSEL_HOME = 15;
 const ITEM_WIDTH_CAROUSEL = screenWidth * ITEM_WIDTH_PERCENTAGE_HOME;
 const SNAP_INTERVAL = ITEM_WIDTH_CAROUSEL + ITEM_SPACING_CAROUSEL_HOME;
 const PAGINATION_AREA_HEIGHT = 30;
 
-
 export default function HomeScreen() {
   const router = useRouter();
 
-  const loopedCarouselImages = [...carouselImages, ...carouselImages, ...carouselImages];
+  const loopedCarouselImages = [
+    ...carouselImages,
+    ...carouselImages,
+    ...carouselImages,
+  ];
   const initialIndex = carouselImages.length;
 
-  const [activeTab, setActiveTab] = useState('Đề xuất');
-  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(initialIndex);
+  const [activeTab, setActiveTab] = useState("Đề xuất");
+  const [currentCarouselIndex, setCurrentCarouselIndex] =
+    useState(initialIndex);
   const carouselRef = useRef(null);
-  const [isCarouselManuallyScrolling, setIsCarouselManuallyScrolling] = useState(false);
+  const [isCarouselManuallyScrolling, setIsCarouselManuallyScrolling] =
+    useState(false);
 
- // State quản lý danh mục
-  const [categories, setCategories] = useState([]);  
-  const [loading, setLoading] = useState(true); 
-  const [error, setError] = useState(null); 
-  
+  // State quản lý danh mục
+  const [categories, setCategories] = useState([]);
   const [tours, setTours] = useState([]);
-  
+  const [locationTours, setLocationTours] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedLocationName, setSelectedLocationName] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   useFocusEffect(
     useCallback(() => {
-      StatusBar.setBarStyle('light-content');
-      if (Platform.OS === 'android') {
+      StatusBar.setBarStyle("light-content");
+      if (Platform.OS === "android") {
         StatusBar.setBackgroundColor(COLORS.primary);
         StatusBar.setTranslucent(false);
       }
@@ -94,7 +116,10 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (carouselRef.current) {
-      carouselRef.current.scrollToIndex({ index: initialIndex, animated: false });
+      carouselRef.current.scrollToIndex({
+        index: initialIndex,
+        animated: false,
+      });
     }
   }, []);
 
@@ -108,7 +133,10 @@ export default function HomeScreen() {
 
       if (nextIndex >= loopedCarouselImages.length - 1) {
         nextIndex = initialIndex;
-        carouselRef.current.scrollToIndex({ index: nextIndex, animated: false });
+        carouselRef.current.scrollToIndex({
+          index: nextIndex,
+          animated: false,
+        });
       } else {
         carouselRef.current.scrollToIndex({ index: nextIndex, animated: true });
       }
@@ -126,7 +154,9 @@ export default function HomeScreen() {
     }
   }).current;
 
-  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  }).current;
 
   const handleCarouselScrollBegin = () => {
     setIsCarouselManuallyScrolling(true);
@@ -147,7 +177,9 @@ export default function HomeScreen() {
             key={`dot-${index}`}
             style={[
               styles.paginationDotBase,
-              activeIndex === index ? styles.paginationDotActive : styles.paginationDotInactive,
+              activeIndex === index
+                ? styles.paginationDotActive
+                : styles.paginationDotInactive,
             ]}
           />
         ))}
@@ -155,23 +187,88 @@ export default function HomeScreen() {
     );
   };
 
-  const handlePressDestination = (item) => console.log('Chọn điểm đến:', item.name);
- const handlePressSuggestion = (tourId) => {
-  console.log("Điều hướng đến trip-detail với ID:", tourId);
+  const handlePressDestination = async (item) => {
+    setSelectedLocation(item._id); 
+    setSelectedLocationName(item.name); 
+    setLoading(true);
 
-  // Thêm bước kiểm tra để đảm bảo an toàn
-  if (!tourId) {
-    console.error("LỖI: tourId không hợp lệ (undefined) nên không thể điều hướng!");
-    // Có thể hiển thị một thông báo cho người dùng ở đây nếu cần
-    // Alert.alert("Lỗi", "Không thể xem chi tiết tour này.");
-    return;
-  }
-  
-  router.push(`/trip-detail/${tourId}`);
-};
- const handlePressCategory = async (item) => {
-  console.log('Chọn danh mục:', item.label);
-};
+    try {
+      setError(null); 
+      if (item._id === "682f55804374d8e40b36ea8a") { 
+        console.log('Bắt đầu gọi API getTours để lấy tất cả tour');
+        const toursData = await getTours();
+        const processedTours = Array.isArray(toursData)
+          ? toursData.map((tour) => ({
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : tour.image || "https://via.placeholder.com/300",
+          }))
+          : toursData.data
+            ? toursData.data.map((tour) => ({
+              ...tour,
+              image:
+                Array.isArray(tour.image) && tour.image.length > 0
+                  ? tour.image[0]
+                  : tour.image || "https://via.placeholder.com/300",
+            }))
+            : [];
+        setLocationTours(processedTours); 
+      } else { 
+        console.log('Bắt đầu gọi API getToursByLocation với cateID:', item._id);
+        const toursData = await getToursByLocation(item._id);
+        console.log('Dữ liệu tour trả về từ getToursByLocation:', toursData);
+        const processedTours = Array.isArray(toursData)
+          ? toursData.map((tour) => ({
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : tour.image || "https://via.placeholder.com/300",
+          }))
+          : toursData.data
+            ? toursData.data.map((tour) => ({
+              ...tour,
+              image:
+                Array.isArray(tour.image) && tour.image.length > 0
+                  ? tour.image[0]
+                  : tour.image || "https://via.placeholder.com/300",
+            }))
+            : [];
+        setLocationTours(processedTours); 
+      }
+      setActiveTab('Đề xuất');
+    } catch (err) {
+      console.error(
+        item._id === "682ec34331d8b56270a8af8a"
+          ? 'Lỗi khi gọi getTours:'
+          : 'Lỗi khi gọi getToursByLocation:',
+        err.response?.data || err.message
+      );
+      setError(item._id === "682ec34331d8b56270a8af8a" ? 'Không tìm thấy tour nào' : `Không tìm thấy tour cho ${item.name}`);
+      setLocationTours([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePressSuggestion = (tourId) => {
+    console.log("Điều hướng đến trip-detail với ID:", tourId);
+
+    // Thêm bước kiểm tra để đảm bảo an toàn
+    if (!tourId) {
+      console.error(
+        "LỖI: tourId không hợp lệ (undefined) nên không thể điều hướng!"
+      );
+      return;
+    }
+
+    router.push(`/trip-detail/${tourId}`);
+  };
+  const handlePressCategory = async (item) => {
+    console.log("Chọn danh mục:", item.label);
+  };
 
   const HomeHeaderContent = () => (
     <View style={styles.homeHeaderContentContainer}>
@@ -184,10 +281,13 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await getCategories();  
-        setCategories(response);  
-        setLoading(false);  
+        console.log('Bắt đầu gọi API getCategories');
+        const response = await getCategories();
+        console.log('Dữ liệu categories trả về:', response);
+        setCategories(Array.isArray(response) ? response : response.data || []);
+        setLoading(false);
       } catch (err) {
+        console.error('Lỗi khi gọi getCategories:', err);
         setError('Lỗi khi lấy danh sách categories');
         setLoading(false);
       }
@@ -196,18 +296,31 @@ export default function HomeScreen() {
     fetchCategories();
   }, []);
 
-   useEffect(() => {
+  // Gọi API lấy danh sách tour
+  useEffect(() => {
     const fetchTours = async () => {
       try {
         const data = await getTours();
-        setTours(data);  // Gán dữ liệu vào state
-        setLoading(false);
+        console.log("Dữ liệu từ getTours:", data);
+
+        const processedData = Array.isArray(data)
+          ? data.map((tour) => ({
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : tour.image || "https://via.placeholder.com/300",
+          }))
+          : [];
+
+        setTours(processedData);
       } catch (error) {
-        console.error('Lỗi khi lấy dữ liệu tours:', error);
+        console.error("Lỗi khi lấy dữ liệu tours:", error);
+      } finally {
         setLoading(false);
       }
     };
-    
+
     fetchTours();
   }, []);
 
@@ -250,7 +363,9 @@ export default function HomeScreen() {
             viewabilityConfig={viewabilityConfig}
             style={styles.carouselFlatListStyle}
             contentContainerStyle={{
-              paddingHorizontal: (screenWidth - ITEM_WIDTH_CAROUSEL) / 2 - ITEM_SPACING_CAROUSEL_HOME / 2,
+              paddingHorizontal:
+                (screenWidth - ITEM_WIDTH_CAROUSEL) / 2 -
+                ITEM_SPACING_CAROUSEL_HOME / 2,
               paddingTop: 20,
             }}
             getItemLayout={(data, index) => ({
@@ -285,9 +400,10 @@ export default function HomeScreen() {
               <DestinationChip
                 destination={item}
                 onPress={handlePressDestination}
+                isSelected={selectedLocation === item._id}
               />
             )}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item._id}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalListContentPadding}
@@ -296,46 +412,67 @@ export default function HomeScreen() {
 
         <View style={styles.sectionWrapperWithBorderForSuggestions}>
           <View style={styles.tabBarContainer}>
-            {['Đề xuất', 'Gần đây'].map((tabName) => (
+            {["Đề xuất", "Gần đây"].map((tabName) => (
               <TouchableOpacity
                 key={tabName}
-                style={[styles.tabItem, activeTab === tabName && styles.activeTabItem]}
+                style={[
+                  styles.tabItem,
+                  activeTab === tabName && styles.activeTabItem,
+                ]}
                 onPress={() => setActiveTab(tabName)}
               >
-                <Text style={[styles.tabText, activeTab === tabName && styles.activeTabText]}>
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === tabName && styles.activeTabText,
+                  ]}
+                >
                   {tabName}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          {activeTab === 'Đề xuất' && (
+          {activeTab === "Đề xuất" && (
             <FlatList
-              data={tours}
-              renderItem={({ item }) => {
-                // Lấy ID một cách an toàn và đảm bảo nó là chuỗi
-                const tourId = item._id ? String(item._id) : null;
-                
-                return (
-                  <SuggestionCard
-                    item={item}
-                    // Truyền ID đã được xử lý vào hàm
-                    onPress={() => handlePressSuggestion(tourId)}
-                  />
-                );
-              }}
-              // SỬA LẠI: Luôn dùng `_id` từ MongoDB và chuyển nó thành chuỗi
+              data={selectedLocation ? locationTours : tours}
+              renderItem={({ item }) => (
+                <SuggestionCard
+                  item={item}
+                  onPress={() => handlePressSuggestion(String(item._id))}
+                />
+              )}
               keyExtractor={(item) => String(item._id)}
               numColumns={2}
               columnWrapperStyle={styles.row}
               showsVerticalScrollIndicator={false}
               scrollEnabled={false}
               contentContainerStyle={styles.suggestionListContent}
+              initialNumToRender={6}
+              maxToRenderPerBatch={6}
+              windowSize={5}
+              removeClippedSubviews={true}
+              getItemLayout={(data, index) => ({
+                length: 260,
+                offset: 260 * index,
+                index,
+              })}
+              ListEmptyComponent={() => (
+                <View style={styles.emptyStateContainer}>
+                  <Text style={styles.emptyStateText}>
+                    {selectedLocation
+                      ? `Không có tour nào cho ${selectedLocationName}`
+                      : "Không có tour nào để hiển thị"}
+                  </Text>
+                </View>
+              )}
             />
           )}
-          {activeTab === 'Gần đây' && (
+          {activeTab === "Gần đây" && (
             <View style={styles.emptyStateContainer}>
-              <Text style={styles.emptyStateText}>Chưa có mục nào gần đây.</Text>
+              <Text style={styles.emptyStateText}>
+                Chưa có mục nào gần đây.
+              </Text>
             </View>
           )}
         </View>
@@ -358,20 +495,20 @@ const styles = StyleSheet.create({
   },
   carouselSectionWithGradient: {
     height: ITEM_HEIGHT_CAROUSEL_TOTAL_HOME + 20 + PAGINATION_AREA_HEIGHT,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   carouselFlatListStyle: {
     height: ITEM_HEIGHT_CAROUSEL_TOTAL_HOME,
   },
   paginationWrapperInGradient: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: (PAGINATION_AREA_HEIGHT - 8 - 5) / 2,
   },
   paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   paginationDotBase: {
     height: 8,
@@ -383,7 +520,7 @@ const styles = StyleSheet.create({
     width: 20,
   },
   paginationDotInactive: {
-    backgroundColor: COLORS.inactiveTabDot || '#D3D3D3',
+    backgroundColor: COLORS.inactiveTabDot || "#D3D3D3",
     width: 8,
   },
   sectionWrapper: {
@@ -391,12 +528,12 @@ const styles = StyleSheet.create({
   },
   serviceCategoriesContainer: {
     backgroundColor: COLORS.white,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.categoryBorder || '#E0E0E0',
+    borderColor: COLORS.categoryBorder || "#E0E0E0",
     marginHorizontal: 15,
     marginTop: 15,
     paddingHorizontal: 10,
@@ -417,11 +554,11 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderRadius: 12,
     borderWidth: 0.8,
-    borderColor: COLORS.lightBorder || '#EAEAEA',
+    borderColor: COLORS.lightBorder || "#EAEAEA",
     paddingBottom: 10,
   },
   tabBarContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 15,
     paddingTop: 15,
   },
@@ -441,18 +578,18 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: COLORS.primary,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   suggestionListContent: {
     paddingHorizontal: 5,
     paddingTop: 15,
   },
   row: {
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   emptyStateContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 40,
     minHeight: 200,
     paddingHorizontal: 15,

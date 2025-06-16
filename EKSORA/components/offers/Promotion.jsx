@@ -1,51 +1,31 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  FlatList,
-  TouchableOpacity,
-  ImageBackground,
-} from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, ImageBackground } from "react-native";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
-import { useEffect } from "react";
 import { getTours } from "../../API/services/serverCategories";
 
-
 export default function Promotions() {
-  // const [promotion, setPromotion] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tour, setTours] = useState([]);
 
-
-
-    //api tour
   useEffect(() => {
     const fetchTours = async () => {
       try {
-        const response = await getTours();  
-        setTours(response);  
-        setLoading(false);  
-      } catch (err) {
-        setError('Lỗi khi lấy danh sách categories');
+        const response = await getTours();
+        setTours(response);
         setLoading(false);
+      } catch (err) {
+        setLoading(false);
+        console.error("Lỗi khi lấy danh sách tours", err);
       }
     };
 
     fetchTours();
   }, []);
 
-
-
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
-      <Image
-        source={require("../../assets/images/imgOffer.png")}
-        style={styles.headerIcon}
-      />
+      <Image source={require("../../assets/images/imgOffer.png")} style={styles.headerIcon} />
       <View style={styles.container}>
-        {/* Header với nền xanh */}
         <View style={styles.header}>
           <Text style={styles.headerText}>Ưu đãi đang diễn ra</Text>
         </View>
@@ -55,25 +35,30 @@ export default function Promotions() {
           data={tour}
           numColumns={2}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <ImageBackground source={{uri: item.image[0]}} style={styles.image}>
-                <TouchableOpacity style={styles.heartIcon}>
-                  <EvilIcons name="heart" size={24} color="black" />
-                </TouchableOpacity>
-              </ImageBackground>
+          renderItem={({ item }) => {
+            // Tính giá sau khi giảm giá
+            const discountPrice = (item.price - (item.price * 15) / 100).toLocaleString('vi-VN'); // Thêm dấu phẩy
 
-              <Text style={styles.cardTitle}>{item.name}</Text>
+            return (
+              <View style={styles.card}>
+                <ImageBackground source={{ uri: item.image[0] }} style={styles.image}>
+                  <TouchableOpacity style={styles.heartIcon}>
+                    <EvilIcons name="heart" size={24} color="black" />
+                  </TouchableOpacity>
+                </ImageBackground>
 
-              <View style={styles.priceRow}>
-                <View style={styles.saleBox}>
-                  <Text style={styles.saleLabel}>Sale</Text>
-                  <Text style={styles.discount}>-{item.discount}</Text>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+
+                <View style={styles.priceRow}>
+                  <View style={styles.saleBox}>
+                    <Text style={styles.saleLabel}>Sale</Text>
+                    <Text style={styles.discount}> - 15%</Text>
+                  </View>
+                  <Text style={styles.price}>{`${discountPrice} VND`}</Text>
                 </View>
-                <Text style={styles.price}>{item.price}</Text>
               </View>
-            </View>
-          )}
+            );
+          }}
           keyExtractor={(_, index) => index.toString()}
         />
       </View>
@@ -116,28 +101,6 @@ const styles = StyleSheet.create({
     height: 78,
     resizeMode: "contain",
   },
-  tabContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 12,
-  },
-  tabButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 20,
-  },
-  tabButtonActive: {
-    backgroundColor: "#0088dc",
-  },
-  tabText: {
-    color: "#333",
-    fontSize: 14,
-  },
-  tabTextActive: {
-    color: "white",
-    fontWeight: "bold",
-  },
   card: {
     width: "48%",
     backgroundColor: "#fff",
@@ -173,9 +136,9 @@ const styles = StyleSheet.create({
   },
   priceRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     alignItems: "center",
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingBottom: 6,
   },
   saleBox: {
