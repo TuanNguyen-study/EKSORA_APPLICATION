@@ -20,7 +20,6 @@ const DestinationChip = ({ destination, onPress, isSelected }) => {
       )}
       <Text style={[
         styles.chipText,
-        // 3. Thay đổi màu chữ khi được chọn
         isSelected && styles.selectedChipText,
         !hasImage && { marginLeft: 10 }
       ]}>
@@ -41,8 +40,7 @@ const styles = StyleSheet.create({
     paddingRight: 15,
     paddingVertical: 2,
     height: 52,
-    // Màu border mặc định
-    borderWidth: 1.5, // Tăng độ dày một chút cho rõ
+    borderWidth: 1.5, 
     borderColor: COLORS.border || '#EAEAEA',
     shadowColor: "#000",
     shadowOffset: {
@@ -53,10 +51,9 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  // 4. Style mới cho chip KHI được chọn
   selectedChip: {
-    borderColor: COLORS.primary, // Đổi màu border sang màu xanh primary
-    backgroundColor: '#EBF4FF', // Thêm màu nền xanh nhạt cho nổi bật (tùy chọn)
+    //borderColor: COLORS.primary, 
+    backgroundColor: '#EBF4FF', 
   },
   chipImage: {
     width: 48,
@@ -65,13 +62,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   chipText: {
-    fontSize: 14, // Tăng size chữ 1 chút
+    fontSize: 14, 
     fontWeight: '500',
-    color: COLORS.textSecondary || '#555', // Màu chữ mặc định
+    color: COLORS.textSecondary || '#555', 
   },
-  // 5. Style mới cho chữ KHI được chọn
   selectedChipText: {
-    color: COLORS.primary, // Đổi màu chữ sang màu xanh primary
+    color: COLORS.primary, 
     fontWeight: 'bold',
   }
 });

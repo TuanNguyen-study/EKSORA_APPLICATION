@@ -199,7 +199,7 @@ export default function HomeScreen() {
       console.log('Bắt đầu gọi API getTours để lấy tất cả tour');
       toursData = await getTours();
     } else {
-      console.log('Bắt đầu gọi API getToursByLocation với cateID:', item._id);
+      //console.log('Bắt đầu gọi API getToursByLocation với cateID:', item._id);
       toursData = await getToursByLocation(item._id);
     }
 
