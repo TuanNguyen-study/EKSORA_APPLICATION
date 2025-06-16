@@ -8,7 +8,9 @@ import {
   FlatList,
   Image,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { getTours } from "../../API/services/serverCategories";
+import { router } from "expo-router";
 
 export default function HeaderSearch() {
   const keywords = [
@@ -24,8 +26,6 @@ export default function HeaderSearch() {
   const [filteredTours, setFilteredTours] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
 
-
-  // api tìm kiếm tour theo người dùng 
   const fetchTours = async () => {
     try {
       const allTours = await getTours();
@@ -42,31 +42,39 @@ export default function HeaderSearch() {
   const handleSelectTour = (tour) => {
     alert(`Bạn đã chọn tour: ${tour.name}`);
     setSearchText(tour.name);
-    setShowDropdown(false); // Ẩn dropdown khi chọn xong
+    setShowDropdown(false);
   };
 
   return (
     <View style={styles.header}>
-      {/* Ô tìm kiếm */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          placeholder="Núi bà đen"
-          placeholderTextColor="#007AFF"
-          style={styles.searchInput}
-          value={searchText}
-          onChangeText={setSearchText}
-        />
-        <TouchableOpacity style={styles.searchButton} onPress={fetchTours}>
-          <Text style={styles.searchIcon}>🔍</Text>
+      {/* Hàng chứa nút back và thanh tìm kiếm */}
+      <View style={styles.searchRow}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.push("/(tabs)/home")}
+        >
+          <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
+
+        <View style={styles.searchContainer}>
+          <TextInput
+            placeholder="Núi bà đen"
+            placeholderTextColor="#007AFF"
+            style={styles.searchInput}
+            value={searchText}
+            onChangeText={setSearchText}
+          />
+          <TouchableOpacity style={styles.searchButton} onPress={fetchTours}>
+            <Text style={styles.searchIcon}>🔍</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Dropdown danh sách tour */}
       {showDropdown && filteredTours.length > 0 && (
         <View style={styles.dropdownContainer}>
           <FlatList
             data={filteredTours}
-            keyExtractor={(item) => item._id.toString()}
+            keyExtractor={(item, index) => item._id ? item._id.toString() : index.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.dropdownItem}
@@ -88,10 +96,8 @@ export default function HeaderSearch() {
         </View>
       )}
 
-      {/* Tiêu đề */}
       <Text style={styles.sectionTitle}>Được tìm kiếm nhiều nhất</Text>
 
-      {/* Danh sách keyword */}
       <View style={styles.keywordsContainer}>
         {keywords.map((item) => (
           <TouchableOpacity
@@ -118,7 +124,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: "#fff",
   },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 5,
+  },
   searchContainer: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
@@ -164,8 +180,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#111827",
   },
-
-  // Dropdown styles
   dropdownContainer: {
     backgroundColor: "#fff",
     borderWidth: 1,
