@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import BookingModalContent from '../components/Modal'; // Modal content tách riêng
 
-const StickyBookingFooter = ({ priceInfo, eksoraPoints, onAddToCart, onBookNow, onEksoraPointsPress }) => {
+const StickyBookingFooter = ({ priceInfo, eksoraPoints, onAddToCart, onBookNow, tourName}) => {
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -47,7 +47,10 @@ const StickyBookingFooter = ({ priceInfo, eksoraPoints, onAddToCart, onBookNow, 
     </View>
 
       <Modal visible={modalVisible} animationType="slide" transparent>
-        <BookingModalContent onClose={() => setModalVisible(false)} />
+        <BookingModalContent onClose={() => setModalVisible(false)}
+         priceInfo={priceInfo}
+         tourName={tourName} />
+          
       </Modal>
     </>
   );
