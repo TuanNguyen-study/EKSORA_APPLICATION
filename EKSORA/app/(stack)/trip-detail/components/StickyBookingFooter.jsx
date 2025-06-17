@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform,Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Modal } from 'react-native';
 import { COLORS } from '../../../../constants/colors';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import BookingModalContent from '../components/Modal'; // Modal content tách riêng
 
-const StickyBookingFooter = ({ priceInfo, eksoraPoints, onAddToCart, onBookNow, tourName}) => {
+
+const StickyBookingFooter = ({ priceInfo, eksoraPoints, onAddToCart, onBookNow, tourName, onEksoraPointsPress = () => {} }) => {
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
 

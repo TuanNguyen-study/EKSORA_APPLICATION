@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { COLORS } from '../../../../constants/colors';
 
@@ -17,12 +17,15 @@ const ProductOptionSelector = ({
   onDateFilterChange,
   onPromotionChange,
   onOptionSelect,
+  onSelectionUpdate = () => {},
   title = 'Các dịch vụ cần thiết', // mặc định
 }) => {
   const defaultDate = dateFilters.find(df => df.isDefault)?.id || dateFilters[0]?.id;
   const [selectedDate, setSelectedDate] = useState(defaultDate);
   const [selectedPromotion, setSelectedPromotion] = useState(promotions[0]?.id || null);
   const [selectedOptions, setSelectedOptions] = useState({});
+
+  const initialTotalPrice = 0;
 
   const calculateTotalPrice = () => {
     let total = 0; 
@@ -53,122 +56,143 @@ const ProductOptionSelector = ({
       const isCurrentlySelected = prev[pkgId]?.id === opt.id;
       const updated = { ...prev };
       if (isCurrentlySelected) {
-        delete updated[pkgId]; // If the option is already selected, deselect it
+        delete updated[pkgId];
       } else {
-        updated[pkgId] = opt; // Otherwise, select the option
+        updated[pkgId] = opt;
       }
       return updated;
     });
-    onOptionSelect?.(pkgId, opt);
   };
 
-  return (
-    <ScrollView style={styles.container}>
-      {/* Ưu đãi */}
-      {promotions.length > 0 && (
-        <View style={styles.promotionContainerRow}>
-          <Text style={styles.promotionTitle}>Ưu đãi cho bạn</Text>
-          <View style={styles.promotionChipsRow}>
-            {promotions.map(promo => (
-              <TouchableOpacity
-                key={promo.id}
-                style={[styles.chipSquareSmall, selectedPromotion === promo.id && styles.chipActive]}
-                onPress={() => handlePromotionPress(promo.id)}
+
+return (
+  <ScrollView style={styles.container}>
+    {/* Ưu đãi */}
+    {promotions.length > 0 && (
+      <View style={styles.promotionContainerRow}>
+        <Text style={styles.promotionTitle}>Ưu đãi cho bạn</Text>
+        <View style={styles.promotionChipsRow}>
+          {promotions.map((promo, index) => (
+            <TouchableOpacity
+              key={`${promo.id}-${index}`}
+              style={[
+                styles.chipSquareSmall,
+                selectedPromotion === promo.id && styles.chipActive,
+              ]}
+              onPress={() => handlePromotionPress(promo.id)}
+            >
+
+              <Ionicons
+                name="pricetags-outline"
+                size={14}
+                color={selectedPromotion === promo.id ? COLORS.primary : COLORS.textSecondary}
+                style={styles.chipIcon}
+              />
+
+              <Text
+                style={[
+                  styles.chipTextSmall,
+                  selectedPromotion === promo.id && styles.chipTextActive,
+                ]}
               >
-                <Ionicons
-                  name="pricetags-outline"
-                  size={14}
-                  color={selectedPromotion === promo.id ? COLORS.primary : COLORS.textSecondary}
-                  style={styles.chipIcon}
-                />
+                {promo.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} style={styles.chevronIcon} />
+      </View>
+    )}
+
+    {/* Các dịch vụ cần thiết */}
+    <View style={styles.secttrion}>
+     <Text style={styles.sectionTitle}>{title}</Text>
+      {/* Chọn ngày */}
+      {dateFilters.length > 0 && (
+        <View style={styles.innerSection}>
+          <Text style={styles.packageTitle}>Chọn ngày</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalScroll}
+          >
+            {dateFilters.map((df, index) => (
+              <TouchableOpacity
+                key={`${df.id}-${index}`}
+                style={[
+                  styles.chip,
+                  selectedDate === df.id && styles.chipActive,
+                ]}
+                onPress={() => handleDatePress(df.id)}
+              >
+                {df.icon && (
+                  <Ionicons
+                    name={df.icon}
+                    size={16}
+                    color={selectedDate === df.id ? COLORS.primary : COLORS.textSecondary}
+                    style={styles.chipIcon}
+                  />
+                )}
                 <Text
-                  style={[styles.chipTextSmall, selectedPromotion === promo.id && styles.chipTextActive]}
+                  style={[
+                    styles.chipText,
+                    selectedDate === df.id && styles.chipTextActive,
+                  ]}
                 >
-                  {promo.label}
+                  {df.label}
                 </Text>
               </TouchableOpacity>
             ))}
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} style={styles.chevronIcon} />
+          </ScrollView>
         </View>
       )}
 
-      {/* Các dịch vụ cần thiết */}
-      <View style={styles.secttrion}>
-        <Text style={styles.sectionTitle}>{title}</Text>
+      {/* Danh sách dịch vụ (thức ăn, phiên dịch, ...) */}
 
-        {/* Chọn ngày */}
-        {dateFilters.length > 0 && (
-          <View style={styles.innerSection}>
-            <Text style={styles.packageTitle}>Chọn ngày</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalScroll}
-            >
-              {dateFilters.map(df => (
-                <TouchableOpacity
-                  key={df.id}
-                  style={[styles.chip, selectedDate === df.id && styles.chipActive]}
-                  onPress={() => handleDatePress(df.id)}
-                >
-                  {df.icon && (
-                    <Ionicons
-                      name={df.icon}
-                      size={16}
-                      color={selectedDate === df.id ? COLORS.primary : COLORS.textSecondary}
-                      style={styles.chipIcon}
-                    />
-                  )}
-                  <Text
-                    style={[styles.chipText, selectedDate === df.id && styles.chipTextActive]}
-                  >
-                    {df.label}
+      {servicePackages.map(pkg => (
+        <View key={pkg.id} style={styles.packageSection}>
+          <Text style={styles.packageTitle}>{pkg.title}</Text>
+          {pkg.options.map(opt => {
+            const isSelected = selectedOptions[pkg.id]?.id === opt.id;
+            return (
+              <TouchableOpacity
+                key={`${pkg.id}-${opt.id}`}
+                style={[styles.optionCard, isSelected && styles.optionCardActive]}
+                onPress={() => handleOptionPress(pkg.id, opt)}
+              >
+                <View style={styles.optionInfo}>
+                  <Text style={[styles.optionName, isSelected && styles.optionNameActive]}>
+                    {opt.name}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
 
-        {/* Danh sách dịch vụ */}
-        {servicePackages.map(pkg => (
-          <View key={pkg.id} style={styles.packageSection}>
-            <Text style={styles.packageTitle}>{pkg.title}</Text>
-            {pkg.options.map(opt => {
-              const isSelected = selectedOptions[pkg.id]?.id === opt.id;
-              return (
-                <TouchableOpacity
-                  key={`${pkg.id}-${opt.id}`}
-                  style={[styles.optionCard, isSelected && styles.optionCardActive]}
-                  onPress={() => handleOptionPress(pkg.id, opt)}
-                >
-                  <View style={styles.optionInfo}>
-                    <Text style={[styles.optionName, isSelected && styles.optionNameActive]}>
-                      {opt.name}
-                    </Text>
-                    {!!opt.description && (
-                      <Text style={styles.optionDesc}>{opt.description}</Text>
-                    )}
-                  </View>
-                  <View style={styles.optionRight}>
-                    <Text style={[styles.optionPrice, isSelected && styles.optionPriceActive]}>
-                      {opt.price.toLocaleString('vi-VN')} đ
-                    </Text>
-                    <Ionicons
-                      name={isSelected ? 'radio-button-on' : 'radio-button-off'}
-                      size={20}
-                      color={isSelected ? COLORS.primary : COLORS.textSecondary}
-                    />
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        ))}
-      </View>
-    </ScrollView>
-  );
+                  {!!opt.description && (
+                    <Text style={styles.optionDesc}>{opt.description}</Text>
+                  )}
+
+                </View>
+                <View style={styles.optionRight}>
+                  <Text style={[styles.optionPrice, isSelected && styles.optionPriceActive]}>
+                    {opt.price.toLocaleString('vi-VN')} đ
+                  </Text>
+                  <Ionicons
+                    name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                    size={20}
+                    color={isSelected ? COLORS.primary : COLORS.textSecondary}
+                  />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+   
+
+  </ScrollView>
+);
+
+
+
 };
 
 const styles = StyleSheet.create({
@@ -186,6 +210,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 50,
+    paddingLeft: 0,
     paddingHorizontal: 16,
   },
   promotionTitle: {
