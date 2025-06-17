@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '@/constants/colors';
+import { COLORS } from '../../../../constants/colors';
 import ReviewItem from './ReviewItem';
 
 const { width: screenWidth } = Dimensions.get('window');

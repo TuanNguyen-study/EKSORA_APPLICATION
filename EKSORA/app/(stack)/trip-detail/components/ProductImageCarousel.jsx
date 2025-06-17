@@ -1,4 +1,4 @@
-import { COLORS } from '@/constants/colors';
+import { COLORS } from '../../../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -213,8 +213,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   paginationDotBase: {
-    width: 8,
-    height: 8,
+    width: 75,
+    height: 2.5,
     borderRadius: 4,
     marginHorizontal: 4,
   },

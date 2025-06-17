@@ -88,7 +88,7 @@ export default function PaymentScreen() {
       </ScrollView>
 
       {/* Nút thanh toán */}
-      <TouchableOpacity style={styles.payNowBtn} onPress={handlePayment}>
+      <TouchableOpacity style={styles.payNowBtn} onPress={handlePayment} onPressOut={() => router.replace('/(tabs)/home')}>
         <Text style={styles.payNowText}>Thanh toán ngay</Text>
       </TouchableOpacity>
     </View>
