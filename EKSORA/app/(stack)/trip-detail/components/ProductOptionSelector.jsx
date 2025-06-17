@@ -10,30 +10,25 @@ import {
 } from 'react-native';
 import { COLORS } from '../../../../constants/colors';
 
-
 const ProductOptionSelector = ({
   servicePackages = [],
   dateFilters = [],
-
   promotions = [],
   onDateFilterChange,
   onPromotionChange,
   onOptionSelect,
   onSelectionUpdate = () => {},
   title = 'Các dịch vụ cần thiết', // mặc định
-
-
 }) => {
   const defaultDate = dateFilters.find(df => df.isDefault)?.id || dateFilters[0]?.id;
   const [selectedDate, setSelectedDate] = useState(defaultDate);
   const [selectedPromotion, setSelectedPromotion] = useState(promotions[0]?.id || null);
-
   const [selectedOptions, setSelectedOptions] = useState({});
 
   const initialTotalPrice = 0;
 
   const calculateTotalPrice = () => {
-    let total = initialTotalPrice;
+    let total = 0; 
     Object.values(selectedOptions).forEach(opt => {
       total += opt.price || 0;
     });
@@ -205,15 +200,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     paddingVertical: 0,
   },
-  section: {
-    top: 2,
-    marginBottom: 2,
-    paddingHorizontal: 16,
-  },
-  promotionContainer: {
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    backgroundColor: COLORS.white,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 12,
   },
   promotionContainerRow: {
     flexDirection: 'row',
@@ -221,23 +212,18 @@ const styles = StyleSheet.create({
     marginBottom: 50,
     paddingLeft: 0,
     paddingHorizontal: 16,
-    backgroundColor: COLORS.white,
   },
   promotionTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: COLORS.text,
     marginRight: 20,
-  
   },
   promotionChipsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'nowrap',
     flexGrow: 1,
-  },
-  chevronIcon: {
-    marginLeft: 8,
   },
   chipSquareSmall: {
     flexDirection: 'row',
@@ -254,48 +240,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textSecondary,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 12,
-  },
-  horizontalScroll: {
-    flexDirection: 'row',
-  },
-
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginRight: 10,
-    backgroundColor: COLORS.white,
-  },
-  chipSquare: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginRight: 10,
-    backgroundColor: COLORS.white,
+  chipIcon: {
+    marginRight: 6,
   },
   chipActive: {
     backgroundColor: COLORS.primaryLight,
     borderColor: COLORS.primary,
-  },
-  chipIcon: {
-    marginRight: 6,
-  },
-  chipText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
   },
   chipTextActive: {
     color: COLORS.primary,
@@ -343,24 +293,9 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: 'bold',
   },
-
-  innerSection: {
-  marginBottom: 2,
-},
-packageSection: {
-  marginBottom: 0,
-},
-
-packageTitle: {
-  fontSize: 16,
-  fontWeight: '600',
-  color: COLORS.text,
-  marginBottom: 10,
-},
-
-
-
-  
+  horizontalScroll: {
+    flexDirection: 'row',
+  },
 });
 
 export default ProductOptionSelector;
