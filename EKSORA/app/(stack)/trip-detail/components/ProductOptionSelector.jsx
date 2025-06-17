@@ -1,13 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { COLORS } from '../../../../constants/colors';
 
@@ -20,6 +19,7 @@ const ProductOptionSelector = ({
   onDateFilterChange,
   onPromotionChange,
   onOptionSelect,
+  onSelectionUpdate = () => {},
   title = 'Các dịch vụ cần thiết', // mặc định
 
 
@@ -29,6 +29,8 @@ const ProductOptionSelector = ({
   const [selectedPromotion, setSelectedPromotion] = useState(promotions[0]?.id || null);
 
   const [selectedOptions, setSelectedOptions] = useState({});
+
+  const initialTotalPrice = 0;
 
   const calculateTotalPrice = () => {
     let total = initialTotalPrice;
@@ -55,9 +57,17 @@ const ProductOptionSelector = ({
   };
 
   const handleOptionPress = (pkgId, opt) => {
-  setSelectedOptions(prev => {
-    const isCurrentlySelected = prev[pkgId]?.id === opt.id;
-    const updated = { ...prev };
+    setSelectedOptions(prev => {
+      const isCurrentlySelected = prev[pkgId]?.id === opt.id;
+      const updated = { ...prev };
+      if (isCurrentlySelected) {
+        delete updated[pkgId];
+      } else {
+        updated[pkgId] = opt;
+      }
+      return updated;
+    });
+  };
 
 
 return (
@@ -67,9 +77,9 @@ return (
       <View style={styles.promotionContainerRow}>
         <Text style={styles.promotionTitle}>Ưu đãi cho bạn</Text>
         <View style={styles.promotionChipsRow}>
-          {promotions.map(promo => (
+          {promotions.map((promo, index) => (
             <TouchableOpacity
-              key={promo.id}
+              key={`${promo.id}-${index}`}
               style={[
                 styles.chipSquareSmall,
                 selectedPromotion === promo.id && styles.chipActive,
@@ -111,9 +121,9 @@ return (
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalScroll}
           >
-            {dateFilters.map(df => (
+            {dateFilters.map((df, index) => (
               <TouchableOpacity
-                key={df.id}
+                key={`${df.id}-${index}`}
                 style={[
                   styles.chip,
                   selectedDate === df.id && styles.chipActive,
@@ -188,7 +198,6 @@ return (
 
 
 
-
 };
 
 const styles = StyleSheet.create({
@@ -210,6 +219,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 50,
+    paddingLeft: 0,
     paddingHorizontal: 16,
     backgroundColor: COLORS.white,
   },
