@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform,Modal } from 'react-native';
 import { COLORS } from '../../../../constants/colors';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
