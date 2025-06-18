@@ -1,124 +1,260 @@
-import { COLORS } from '@/constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { COLORS } from '../../../../constants/colors';
 
 const ProductOptionSelector = ({
   servicePackages = [],
   dateFilters = [],
-  initialTotalPrice = 0,
+  promotions = [],
   onDateFilterChange,
+  onPromotionChange,
   onOptionSelect,
-  onSelectionUpdate,
+  onSelectionUpdate, // ✅ THÊM DÒNG NÀY
+  title = 'Các dịch vụ cần thiết',
+
+
 }) => {
   const defaultDate = dateFilters.find(df => df.isDefault)?.id || dateFilters[0]?.id;
   const [selectedDate, setSelectedDate] = useState(defaultDate);
+  const [selectedPromotion, setSelectedPromotion] = useState(promotions[0]?.id || null);
   const [selectedOptions, setSelectedOptions] = useState({});
 
-  const calculateTotalPrice = () => {
-    let total = initialTotalPrice;
-    Object.values(selectedOptions).forEach(opt => {
-      total += opt.price || 0;
-    });
-    return total;
-  };
-
-  useEffect(() => {
-    const total = calculateTotalPrice();
-    onSelectionUpdate?.(selectedOptions, total);
-  }, [selectedOptions]);
-
-  const handleDatePress = (id) => {
+  const handleDatePress = id => {
     setSelectedDate(id);
     onDateFilterChange?.(id);
   };
 
+  const handlePromotionPress = id => {
+    setSelectedPromotion(id);
+    const selectedPromo = promotions.find(p => p.id === id);
+    onPromotionChange?.(selectedPromo);
+  };
+
   const handleOptionPress = (pkgId, opt) => {
-  setSelectedOptions(prev => {
-    const isCurrentlySelected = prev[pkgId]?.id === opt.id;
-    const updated = { ...prev };
+    setSelectedOptions(prev => {
+      const newSelected = { ...prev };
 
-    if (isCurrentlySelected) {
-      delete updated[pkgId]; // Bỏ chọn nếu đã chọn rồi
-    } else {
-      updated[pkgId] = opt; // Chọn option mới
-    }
+      // Nếu option này đang được chọn → bỏ chọn
+      if (newSelected[pkgId] === opt.id) {
+        delete newSelected[pkgId];
+      } else {
+        newSelected[pkgId] = opt.id;
+      }
 
-    return updated;
-  });
+      // Tính lại tổng giá
+      const total = servicePackages.reduce((sum, pkg) => {
+        const selectedOptId = newSelected[pkg.id];
+        const selectedOpt = pkg.options.find(o => o.id === selectedOptId);
+        return sum + (selectedOpt?.price || 0);
+      }, 0);
 
-  onOptionSelect?.(pkgId, opt);
-};
+      // Gọi callback truyền ra ngoài
+      if (onOptionSelect) onOptionSelect(pkgId, opt);
+      if (onSelectionUpdate) onSelectionUpdate(newSelected, total);
+
+      return newSelected;
+    });
+  };
+
+
+
   return (
     <ScrollView style={styles.container}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateFilters}>
-        {dateFilters.map(df => (
-          <TouchableOpacity
-            key={df.id}
-            style={[styles.dateChip, selectedDate === df.id && styles.dateChipActive]}
-            onPress={() => handleDatePress(df.id)}
-          >
-            {df.icon && (
-              <Ionicons
-                name={df.icon}
-                size={16}
-                color={selectedDate === df.id ? COLORS.primary : COLORS.textSecondary}
-                style={styles.dateIcon}
-              />
-            )}
-            <Text style={[styles.dateText, selectedDate === df.id && styles.dateTextActive]}>
-              {df.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {servicePackages.map(pkg => (
-        <View key={pkg.id} style={styles.groupContainer}>
-          <Text style={styles.groupTitle}>{pkg.title}</Text>
-          {pkg.options.map(opt => {
-            const isSelected = selectedOptions[pkg.id]?.id === opt.id;
-            return (
+      {/* Ưu đãi */}
+      {promotions.length > 0 && (
+        <View style={styles.promotionContainerRow}>
+          <Text style={styles.promotionTitle}>Ưu đãi cho bạn</Text>
+          <View style={styles.promotionChipsRow}>
+            {promotions.map(promo => (
               <TouchableOpacity
-                key={opt.id}
-                style={[styles.optionCard, isSelected && styles.optionCardActive]}
-                onPress={() => handleOptionPress(pkg.id, opt)}
+                key={promo.id}
+                style={[
+                  styles.chipSquareSmall,
+                  selectedPromotion === promo.id && styles.chipActive,
+                ]}
+                onPress={() => handlePromotionPress(promo.id)}
               >
-                <View style={styles.optionInfo}>
-                  <Text style={[styles.optionName, isSelected && styles.optionNameActive]}>
-                    {opt.name}
-                  </Text>
-                  {opt.description && <Text style={styles.optionDesc}>{opt.description}</Text>}
-                </View>
-                <View style={styles.optionRight}>
-                  <Text style={[styles.optionPrice, isSelected && styles.optionPriceActive]}>
-                    {opt.price.toLocaleString('vi-VN')} đ
-                  </Text>
-                  <Ionicons
-                    name={isSelected ? 'radio-button-on' : 'radio-button-off'}
-                    size={20}
-                    color={isSelected ? COLORS.primary : COLORS.textSecondary}
-                  />
-                </View>
+                <Ionicons
+                  name="pricetags-outline"
+                  size={14}
+                  color={selectedPromotion === promo.id ? COLORS.primary : COLORS.textSecondary}
+                  style={styles.chipIcon}
+                />
+                <Text
+                  style={[
+                    styles.chipTextSmall,
+                    selectedPromotion === promo.id && styles.chipTextActive,
+                  ]}
+                >
+                  {promo.label}
+                </Text>
               </TouchableOpacity>
-            );
-          })}
+            ))}
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} style={styles.chevronIcon} />
         </View>
-      ))}
+      )}
+
+      {/* Các dịch vụ cần thiết */}
+      <View style={styles.secttrion}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {/* Chọn ngày */}
+        {dateFilters.length > 0 && (
+          <View style={styles.innerSection}>
+            <Text style={styles.packageTitle}>Chọn ngày</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScroll}
+            >
+              {dateFilters.map(df => (
+                <TouchableOpacity
+                  key={df.id}
+                  style={[
+                    styles.chip,
+                    selectedDate === df.id && styles.chipActive,
+                  ]}
+                  onPress={() => handleDatePress(df.id)}
+                >
+                  {df.icon && (
+                    <Ionicons
+                      name={df.icon}
+                      size={16}
+                      color={selectedDate === df.id ? COLORS.primary : COLORS.textSecondary}
+                      style={styles.chipIcon}
+                    />
+                  )}
+                  <Text
+                    style={[
+                      styles.chipText,
+                      selectedDate === df.id && styles.chipTextActive,
+                    ]}
+                  >
+                    {df.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Danh sách dịch vụ (thức ăn, phiên dịch, ...) */}
+        {servicePackages.map(pkg => (
+          <View key={pkg.id} style={styles.packageSection}>
+            <Text style={styles.packageTitle}>{pkg.title}</Text>
+            {pkg.options.map(opt => {
+              const isSelected = selectedOptions[pkg.id] === opt.id;
+              return (
+                <TouchableOpacity
+                  key={`${pkg.id}-${opt.id}`}
+                  style={[styles.optionCard, isSelected && styles.optionCardActive]}
+                  onPress={() => handleOptionPress(pkg.id, opt)}
+                >
+                  <View style={styles.optionInfo}>
+                    <Text style={[styles.optionName, isSelected && styles.optionNameActive]}>
+                      {opt.name}
+                    </Text>
+                    {!!opt.description && (
+                      <Text style={styles.optionDesc}>{opt.description}</Text>
+                    )}
+                  </View>
+                  <View style={styles.optionRight}>
+                    <Text style={[styles.optionPrice, isSelected && styles.optionPriceActive]}>
+                      {opt.price.toLocaleString('vi-VN')} đ
+                    </Text>
+                    <Ionicons
+                      name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                      size={20}
+                      color={isSelected ? COLORS.primary : COLORS.textSecondary}
+                    />
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ))}
+      </View>
+
+
     </ScrollView>
   );
+
+
+
+
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 16,
+    backgroundColor: COLORS.white,
+    paddingVertical: 0,
+  },
+  section: {
+    top: 2,
+    marginBottom: 2,
+    paddingHorizontal: 16,
+  },
+  promotionContainer: {
+    marginBottom: 16,
+    paddingHorizontal: 16,
     backgroundColor: COLORS.white,
   },
-  dateFilters: {
+  promotionContainerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 50,
     paddingHorizontal: 16,
-    marginBottom: 20,
+    backgroundColor: COLORS.white,
   },
-  dateChip: {
+  promotionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginRight: 20,
+
+  },
+  promotionChipsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'nowrap',
+    flexGrow: 1,
+  },
+  chevronIcon: {
+    marginLeft: 8,
+  },
+  chipSquareSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginRight: 10,
+    backgroundColor: COLORS.white,
+  },
+  chipTextSmall: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 12,
+  },
+  horizontalScroll: {
+    flexDirection: 'row',
+  },
+
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
@@ -129,30 +265,31 @@ const styles = StyleSheet.create({
     marginRight: 10,
     backgroundColor: COLORS.white,
   },
-  dateChipActive: {
+  chipSquare: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 10,
+    backgroundColor: COLORS.white,
+  },
+  chipActive: {
     backgroundColor: COLORS.primaryLight,
     borderColor: COLORS.primary,
   },
-  dateIcon: {
+  chipIcon: {
     marginRight: 6,
   },
-  dateText: {
+  chipText: {
     fontSize: 14,
     color: COLORS.textSecondary,
   },
-  dateTextActive: {
+  chipTextActive: {
     color: COLORS.primary,
     fontWeight: 'bold',
-  },
-  groupContainer: {
-    marginBottom: 24,
-    paddingHorizontal: 16,
-  },
-  groupTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 12,
   },
   optionCard: {
     flexDirection: 'row',
@@ -196,6 +333,24 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: 'bold',
   },
+
+  innerSection: {
+    marginBottom: 2,
+  },
+  packageSection: {
+    marginBottom: 0,
+  },
+
+  packageTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 10,
+  },
+
+
+
+
 });
 
 export default ProductOptionSelector;

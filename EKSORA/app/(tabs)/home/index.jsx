@@ -400,6 +400,7 @@ export default function HomeScreen() {
               <DestinationChip
                 destination={item}
                 onPress={handlePressDestination}
+                 isSelected={selectedLocation === item._id}
               />
             )}
             keyExtractor={(item) => item.id}

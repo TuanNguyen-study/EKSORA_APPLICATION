@@ -1,4 +1,3 @@
-import { COLORS } from '@/constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -13,15 +12,31 @@ import {
   View
 } from 'react-native';
 import { fetchTourDetail } from '../../../API/services/tourService';
+import { COLORS } from '../../../constants/colors';
 import CustomerReviewSection from './components/CustomerReviewSection';
-import PolicyInfoSection from './components/PolicyInfoSection';
+import NoteContactSection from './components/NoteContactSection';
 import ProductBasicInfo from './components/ProductBasicInfo';
 import ProductImageCarousel from './components/ProductImageCarousel';
-import ProductOptionSelector from './components/ProductOptionSelector';
+import { default as ProductOptionSelector, default as ProductOptionSelector1 } from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
 
+
+
 export default function TripDetailScreen() {
+  const HARDCODED_DATE_FILTERS = [
+    { id: 'tomorrow', label: 'Ngày mai', isDefault: true },
+    { id: '11-5', label: '11/5' },
+    { id: '12-5', label: '12/5' },
+    { id: 'all', label: 'Tất cả ngày', icon: 'calendar-outline' },
+  ];
+
+  const PROMOTIONS = [
+    { id: 'promo-1', label: 'Giảm 5%' },
+    { id: 'promo-2', label: 'Sale' },
+    { id: 'promo-3', label: 'Giảm 25%' },
+  ];
+
   const router = useRouter();
   const { id: productId } = useLocalSearchParams();
 
@@ -32,7 +47,9 @@ export default function TripDetailScreen() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [currentSelectedPackages, setCurrentSelectedPackages] = useState({});
   const [currentTotalPrice, setCurrentTotalPrice] = useState(0);
-
+  const [bookingData, setBookingData] = useState(null);
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [totalExtraPrice, setTotalExtraPrice] = useState(0);
   const loadTourDetails = useCallback(async (id) => {
     setLoading(true);
     setError(null);
@@ -40,7 +57,7 @@ export default function TripDetailScreen() {
     try {
       // 1) Gọi API, trả về { tour, services[], highlights[], reviews[] }
       const { tour, services = [], highlights = [], reviews = [] } = await fetchTourDetail(id);
-
+      console.log('📦 tour:', tour);
       if (!tour || !tour._id) {
         throw new Error('Dữ liệu tour không hợp lệ.');
       }
@@ -116,6 +133,33 @@ export default function TripDetailScreen() {
     }
   };
 
+  const onBookNow = () => {
+  const basePrice = productData?.price?.current || 0;
+
+  // ✅ Tính tổng giá phụ thu option
+  const optionTotal = Object.values(currentSelectedPackages).reduce((sum, optId) => {
+    for (const pkg of productData.availableServicePackages) {
+      const option = pkg.options.find(opt => opt.id === optId);
+      if (option) return sum + (option.price || 0);
+    }
+    return sum;
+  }, 0);
+
+  const total_price = basePrice + optionTotal;
+
+  const query = new URLSearchParams({
+    tour_id: productData._id,
+    tour_title: productData.name, // name là tên tour
+    total_price: total_price.toString(),
+    selectedOptions: JSON.stringify(currentSelectedPackages),
+  }).toString();
+
+  router.push(`/acount/bookingScreen?${query}`);
+  console.log('🔗 Booking URL:', `/acount/bookingScreen?${query}`);
+};
+
+
+
   if (loading && !productData) {
     return (
       <View style={styles.centered}>
@@ -173,6 +217,44 @@ export default function TripDetailScreen() {
             onSeeAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
           />
 
+          <View style={styles.separator} />
+
+          <ProductOptionSelector1
+            servicePackages={productData.availableServicePackages1}
+            dateFilters={HARDCODED_DATE_FILTERS}
+            promotions={PROMOTIONS}
+            onDateFilterChange={(id) => console.log('Ngày đã chọn:', id)}
+            onPromotionChange={(promo) => console.log('Ưu đãi đã chọn:', promo)}
+            onOptionSelect={(pkgId, opt) => console.log('Gói đã chọn:', pkgId, opt)}
+          />
+
+
+          <ProductOptionSelector
+            servicePackages={productData.availableServicePackages}
+            dateFilters={productData.availableDateFilters}
+            initialTotalPrice={productData.price.current}
+            onSelectionUpdate={(map, totalExtra) => {
+              setCurrentSelectedPackages(map);
+              setCurrentTotalPrice((productData?.price?.current || 0) + totalExtra); // ✅ giá gốc + phụ phí
+            }}
+            title=""
+          />
+
+
+          <CustomerReviewSection
+            reviews={productData.reviews}
+            averageRating={productData.rating.stars}
+            totalReviewsCount={productData.rating.count}
+            onViewAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
+          />
+
+          {/* <PolicyInfoSection
+            noteTitle={productData.tripNotes?.title}
+            notes={productData.tripNotes?.items || []}
+            contactInfo={productData.contactInformation}
+            onChatPress={() => Alert.alert('Chat')}
+          /> */}
+
           <TripHighlightsSection
             title="Địa điểm nổi bật trong tour"
             highlights={productData.highlights.map(h => ({
@@ -183,30 +265,7 @@ export default function TripDetailScreen() {
             }))}
           />
 
-          <View style={styles.separator} />
-
-          <ProductOptionSelector
-            servicePackages={productData.availableServicePackages}
-            initialTotalPrice={productData.price.current}
-            onSelectionUpdate={(selectedMap, totalPrice) => {
-              setCurrentSelectedPackages(selectedMap);
-              setCurrentTotalPrice(totalPrice);
-            }}
-          />
-
-          <CustomerReviewSection
-            reviews={productData.reviews}
-            averageRating={productData.rating.stars}
-            totalReviewsCount={productData.rating.count}
-            onViewAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
-          />
-
-          <PolicyInfoSection
-            noteTitle={productData.tripNotes?.title}
-            notes={productData.tripNotes?.items || []}
-            contactInfo={productData.contactInformation}
-            onChatPress={() => Alert.alert('Chat')}
-          />
+          <NoteContactSection />
         </View>
 
         <View style={{ height: 100 }} />
@@ -215,10 +274,9 @@ export default function TripDetailScreen() {
       <StickyBookingFooter
         priceInfo={{
           ...productData.price,
-          current: currentTotalPrice,
+          current: currentTotalPrice, // ✅ Dùng biến đã tính đúng
         }}
-        onAddToCart={() => console.log('🛒 Giỏ hàng:', currentSelectedPackages)}
-        onBookNow={() => console.log('✅ Đặt ngay:', currentSelectedPackages)}
+        onBookNow={onBookNow}
       />
     </View>
   );
@@ -228,23 +286,50 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
   scrollView: { flex: 1 },
   centered: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: COLORS.background || '#f5f5f5', padding: 20
   },
-  loadingText: { marginTop: 10, fontSize: 16, color: COLORS.textSecondary },
-  errorText: { fontSize: 16, color: COLORS.danger, textAlign: 'center', marginTop: 10 },
-  retryButton: {
-    marginTop: 20, backgroundColor: COLORS.primary,
-    paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8
+
+  loadingText:
+  {
+    marginTop:
+      10, fontSize:
+      16, color: COLORS.textSecondary
   },
-  retryButtonText: { color: COLORS.white, fontSize: 16, fontWeight: 'bold' },
+
+  errorText: {
+    fontSize: 16,
+    color: COLORS.danger,
+    textAlign: 'center',
+    marginTop: 10
+  },
+
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8
+  },
+  retryButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+
   mainContentContainer: {
-    paddingHorizontal: 16, backgroundColor: COLORS.white,
-    marginTop: -10, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.white,
+    marginTop: -10, borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     paddingTop: 30
   },
   separator: {
-    height: 1, backgroundColor: COLORS.background,
-    marginVertical: 15, marginHorizontal: -16
+    height: 1,
+    backgroundColor: COLORS.background,
+    marginVertical: 15,
+    marginHorizontal: -16
   }
 });

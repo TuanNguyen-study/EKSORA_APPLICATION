@@ -1,9 +1,9 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
-import React, { useState } from 'react'
+import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { loginUser } from '../../../../../API/services/AxiosInstance';
-import { FontAwesome} from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 
 function BodyLoginEmail() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -17,12 +17,14 @@ function BodyLoginEmail() {
   const handleLogin = async () => {
     let hasError = false;
 
-    if (!form.email.trim()) { setEmailError(true); hasError = true;
+    if (!form.email.trim()) {
+      setEmailError(true); hasError = true;
     } else {
       setEmailError(false);
     }
 
-    if (!form.password.trim()) {setPasswordError(true); hasError = true;
+    if (!form.password.trim()) {
+      setPasswordError(true); hasError = true;
     } else {
       setPasswordError(false);
     }
@@ -47,8 +49,15 @@ function BodyLoginEmail() {
       Alert.alert('Thành công', 'Đăng nhập thành công!');
       router.push('/(tabs)/home');
     } catch (error) {
-      console.log('Đăng nhập lỗi:', error, error?.response?.data);
-      Alert.alert('Đăng nhập thất bại', error?.response?.data?.message || error?.message || error.toString());
+      console.log('Đăng nhập lỗi:', {
+        message: error?.message,
+        response: error?.response,
+        data: error?.response?.data,
+      });
+      Alert.alert(
+        'Đăng nhập thất bại',
+        error?.response?.data?.message || error?.message || JSON.stringify(error)
+      );
     } finally {
       setLoading(false);
     }
