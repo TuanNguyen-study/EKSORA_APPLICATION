@@ -100,14 +100,6 @@ export default function BookingScreen() {
     }
   };
 
-
-  // const availableDates = [
-  //   "16/6/2025",
-  //   "17/6/2025",
-  //   "18/6/2025",
-  //   "19/6/2025",
-  //   "20/6/2025",
-  // ];
   return (
     <View style={styles.container}>
       <View style={styles.header}>

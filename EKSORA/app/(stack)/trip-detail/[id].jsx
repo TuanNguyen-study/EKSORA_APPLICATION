@@ -17,19 +17,19 @@ import CustomerReviewSection from './components/CustomerReviewSection';
 import NoteContactSection from './components/NoteContactSection';
 import ProductBasicInfo from './components/ProductBasicInfo';
 import ProductImageCarousel from './components/ProductImageCarousel';
-import { default as ProductOptionSelector, default as ProductOptionSelector1 } from './components/ProductOptionSelector';
+import { default as ProductOptionSelector } from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
 
 
 
 export default function TripDetailScreen() {
-  const HARDCODED_DATE_FILTERS = [
-    { id: 'tomorrow', label: 'Ngày mai', isDefault: true },
-    { id: '11-5', label: '11/5' },
-    { id: '12-5', label: '12/5' },
-    { id: 'all', label: 'Tất cả ngày', icon: 'calendar-outline' },
-  ];
+  // const HARDCODED_DATE_FILTERS = [
+  //   { id: 'tomorrow', label: 'Ngày mai', isDefault: true },
+  //   { id: '11-5', label: '11/5' },
+  //   { id: '12-5', label: '12/5' },
+  //   { id: 'all', label: 'Tất cả ngày', icon: 'calendar-outline' },
+  // ];
 
   const PROMOTIONS = [
     { id: 'promo-1', label: 'Giảm 5%' },
@@ -219,14 +219,14 @@ export default function TripDetailScreen() {
 
           <View style={styles.separator} />
 
-          <ProductOptionSelector1
+          {/* <ProductOptionSelector1
             servicePackages={productData.availableServicePackages1}
-            dateFilters={HARDCODED_DATE_FILTERS}
+            // dateFilters={HARDCODED_DATE_FILTERS}
             promotions={PROMOTIONS}
             onDateFilterChange={(id) => console.log('Ngày đã chọn:', id)}
             onPromotionChange={(promo) => console.log('Ưu đãi đã chọn:', promo)}
             onOptionSelect={(pkgId, opt) => console.log('Gói đã chọn:', pkgId, opt)}
-          />
+          /> */}
 
 
           <ProductOptionSelector
