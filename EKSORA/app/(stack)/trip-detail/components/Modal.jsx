@@ -36,7 +36,7 @@ const BookingModalContent = ({ visible, onClose, priceInfo, tourName }) => {
                     <ScrollView style={styles.content}>
                         <View style={styles.tourInfo}>
                             <Text style={styles.tourName}>
-                                {tourName}
+                                {tourName }
                             </Text>
                             <TouchableOpacity>
                                 <Text style={styles.detailsLink}>Chi tiết</Text>
