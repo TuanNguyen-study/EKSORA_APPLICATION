@@ -18,6 +18,7 @@ import NoteContactSection from './components/NoteContactSection';
 import ProductBasicInfo from './components/ProductBasicInfo';
 import ProductImageCarousel from './components/ProductImageCarousel';
 import { default as ProductOptionSelector } from './components/ProductOptionSelector';
+
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
 
@@ -36,6 +37,7 @@ export default function TripDetailScreen() {
     { id: 'promo-2', label: 'Sale' },
     { id: 'promo-3', label: 'Giảm 25%' },
   ];
+
 
   const router = useRouter();
   const { id: productId } = useLocalSearchParams();
@@ -229,6 +231,7 @@ export default function TripDetailScreen() {
           /> */}
 
 
+
           <ProductOptionSelector
             servicePackages={productData.availableServicePackages}
             dateFilters={productData.availableDateFilters}
@@ -239,7 +242,6 @@ export default function TripDetailScreen() {
             }}
             title=""
           />
-
 
           <CustomerReviewSection
             reviews={productData.reviews}
@@ -278,6 +280,7 @@ export default function TripDetailScreen() {
         }}
         onBookNow={onBookNow}
       />
+
     </View>
   );
 }
@@ -323,6 +326,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: COLORS.white,
     marginTop: -10, borderTopLeftRadius: 20,
+
     borderTopRightRadius: 20,
     paddingTop: 30
   },
@@ -331,5 +335,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     marginVertical: 15,
     marginHorizontal: -16
+
   }
 });

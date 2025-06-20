@@ -12,7 +12,9 @@ const StickyBookingFooter = ({
   onEksoraPointsPress
 }) => {
   const router = useRouter();
+
   const insets = useSafeAreaInsets();
+  const [modalVisible, setModalVisible] = useState(false);
 
   const handleBookNow = () => {
     if (onBookNow) {
@@ -35,6 +37,7 @@ const StickyBookingFooter = ({
   return (
     <View
       style={[
+
         styles.outerContainer,
         {
           paddingBottom:
@@ -76,10 +79,20 @@ const StickyBookingFooter = ({
             <Text style={[styles.buttonTextBase, styles.bookNowButtonText]}>
               Đặt ngay
             </Text>
+
           </TouchableOpacity>
         </View>
       </View>
+      
     </View>
+
+      <Modal visible={modalVisible} animationType="slide" transparent>
+        <BookingModalContent onClose={() => setModalVisible(false)}
+         priceInfo={priceInfo}
+         tourName={tourName} />
+          
+      </Modal>
+    </>
   );
 };
 

@@ -194,7 +194,7 @@ export default function HomeScreen() {
 
     try {
       setError(null); 
-      if (item._id === "682ec34331d8b56270a8af8a") { 
+      if (item._id === "682f55804374d8e40b36ea8a") { 
         console.log('Bắt đầu gọi API getTours để lấy tất cả tour');
         const toursData = await getTours();
         const processedTours = Array.isArray(toursData)
@@ -401,9 +401,10 @@ export default function HomeScreen() {
                 destination={item}
                 onPress={handlePressDestination}
                  isSelected={selectedLocation === item._id}
+
               />
             )}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item._id}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalListContentPadding}
