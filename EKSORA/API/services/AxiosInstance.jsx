@@ -41,12 +41,20 @@ export const loginUser = createAsyncThunk(
     try {
       const res = await AxiosInstance.post('/api/login-email', userData);
       const token = res.data?.token;
+      const userId = res.data?.userId;
+
       if (token) {
-        await AsyncStorage.setItem('ACCESS_TOKEN', token); // ✅ Lưu token
+        await AsyncStorage.setItem('ACCESS_TOKEN', token);
       }
-      return res.data;
+
+      return {
+        token: res.data.token,
+        userId: res.data.userId,
+        user: res.data.user,  // 👈 Thêm dòng này nếu backend trả về user
+      }; // 👈 phải return đầy đủ { token, userId }
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Đăng nhập thất bại');
+      console.error('🔥 Lỗi loginUser:', err); // Thêm log
+      return rejectWithValue(err?.response?.data?.message || err.message || 'Đăng nhập thất bại');
     }
   }
 );
@@ -58,6 +66,10 @@ export const loginphone = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const res = await AxiosInstance.post('/api/login-phone', userData);
+      const token = res.data?.token;
+      if (token) {
+        await AsyncStorage.setItem('ACCESS_TOKEN', token); // ✅ Lưu token
+      }
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Đăng nhập thất bại');
@@ -70,7 +82,7 @@ export const loginphone = createAsyncThunk(
 export const sendotp = createAsyncThunk('auth/send-otp',
   async (email, { rejectWithValue }) => {
     try {
-    const res = await AxiosInstance.post('/api/password/send-otp', { email });
+      const res = await AxiosInstance.post('/api/password/send-otp', { email });
       if (res.status !== 200) {
         throw new Error('Gửi OTP thất bại');
       }
@@ -118,7 +130,7 @@ export const resetPassword = createAsyncThunk(
       );
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'đặt lại mật khẩu thất bại'); 
+      return rejectWithValue(err.response?.data?.message || 'đặt lại mật khẩu thất bại');
     }
   }
 );
@@ -126,9 +138,13 @@ export const resetPassword = createAsyncThunk(
 AxiosInstance.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+    console.log('🔐 [Interceptor] ACCESS_TOKEN từ AsyncStorage:', token);
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log('📤 [Interceptor] Headers gửi đi:', config.headers);
+    console.log('📤 [Interceptor] URL:', config.baseURL + config.url);
     return config;
   },
   (error) => Promise.reject(error)
