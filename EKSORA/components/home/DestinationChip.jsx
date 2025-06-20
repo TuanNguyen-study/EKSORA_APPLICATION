@@ -1,29 +1,30 @@
 import { Image, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { COLORS } from '../../constants/colors';
 
-// 1. Nhận thêm prop `isSelected`
 const DestinationChip = ({ destination, onPress, isSelected }) => {
-  const hasImage = destination && destination.image;
+  const imageSource =
+    destination.image
+      ? typeof destination.image === 'string'
+        ? { uri: destination.image }
+        : destination.image
+      : require('../../assets/images/icon.png');
 
   return (
-    // 2. Áp dụng style có điều kiện
-    <TouchableOpacity 
-      style={[styles.chip, isSelected && styles.selectedChip]} 
+    <TouchableOpacity
+      style={[
+        styles.chip,
+        isSelected && styles.chipSelected, // 👈 áp dụng màu nếu được chọn
+      ]}
       onPress={() => onPress(destination)}
     >
-      {hasImage && (
-        <Image
-          source={{ uri: destination.image }}
-          style={styles.chipImage}
-          resizeMode="cover"
-        />
-      )}
-      <Text style={[
-        styles.chipText,
-        // 3. Thay đổi màu chữ khi được chọn
-        isSelected && styles.selectedChipText,
-        !hasImage && { marginLeft: 10 }
-      ]}>
+      <Image source={imageSource} style={styles.chipImage} />
+      <Text
+        style={[
+          styles.chipText,
+          isSelected && styles.chipTextSelected, // 👈 đổi màu chữ nếu được chọn
+        ]}
+      >
+
         {destination.name}
       </Text>
     </TouchableOpacity>
@@ -37,14 +38,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 25,
     marginRight: 10,
-    paddingLeft: 2,
-    paddingRight: 15,
-    paddingVertical: 2,
-    height: 52,
-    // Màu border mặc định
-    borderWidth: 1.5, // Tăng độ dày một chút cho rõ
-    borderColor: COLORS.border || '#EAEAEA',
-    shadowColor: "#000",
+    paddingRight: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+
     shadowOffset: {
       width: 0,
       height: 1,
@@ -53,10 +51,10 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  // 4. Style mới cho chip KHI được chọn
-  selectedChip: {
-    borderColor: COLORS.primary, // Đổi màu border sang màu xanh primary
-    backgroundColor: '#EBF4FF', // Thêm màu nền xanh nhạt cho nổi bật (tùy chọn)
+  chipSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#EAF1FF',
+
   },
   chipImage: {
     width: 48,
@@ -67,7 +65,12 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 14, // Tăng size chữ 1 chút
     fontWeight: '500',
-    color: COLORS.textSecondary || '#555', // Màu chữ mặc định
+    color: COLORS.textSecondary,
+  },
+  chipTextSelected: {
+    color: COLORS.primary,
+    fontWeight: 'bold',
+
   },
   // 5. Style mới cho chữ KHI được chọn
   selectedChipText: {

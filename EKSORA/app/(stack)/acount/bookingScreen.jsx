@@ -1,151 +1,242 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Modal,
-  ActivityIndicator,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useNavigation } from "expo-router"; // Import useNavigation
-import { getOrders, cancelOrder } from "../../../API/services/servicesBooking"; // Import cancelOrder
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from "react-native";
+import { useSelector } from 'react-redux';
+import { createBooking } from "../../../API/services/booking";
 import { COLORS } from "../../../constants/colors";
-
 export default function BookingScreen() {
-  const [orders, setOrders] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
+
   const router = useRouter();
-  const navigation = useNavigation();
+  const params = useLocalSearchParams();
+  const [showPicker, setShowPicker] = useState(false);
 
-  const handleBack = useCallback(() => navigation.goBack(), [navigation]);
+  const tour_id = params.tour_id;
+  const tour_title = typeof params.tour_title === 'string' ? decodeURIComponent(params.tour_title) : '';
+  const total_price = Number(params.total_price || '0');
+  const selectedOptions = typeof params.selectedOptions === 'string' ? JSON.parse(params.selectedOptions) : {};
+  const userId = useSelector(state => state.auth.user?.id);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const userId = await AsyncStorage.getItem("userId");
-        if (userId) {
-          const data = await getOrders(userId);
-          setOrders(data);
-        } else {
-          console.warn("Không tìm thấy userId");
-        }
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách đơn hàng:", error);
-      } finally {
-        setLoading(false);
-      }
+  console.log('▶️ tour_title:', tour_title);
+  console.log('▶️ total_price:', total_price);
+  console.log('▶️ selectedOptions:', selectedOptions);
+  const [selectedDate, setSelectedDate] = useState(null); // ✅ Ban đầu chưa chọn
+  const [quantityAdult, setQuantityAdult] = useState(0); // ✅ Default = 1
+  const [quantityChild, setQuantityChild] = useState(0);
+  const DEFAULT_ADULT_PRICE = 300000;
+  const DEFAULT_CHILD_PRICE = 150000;
+  const incrementAdult = () => setQuantityAdult((q) => q + 1);
+  const decrementAdult = () => setQuantityAdult((q) => (q > 0 ? q - 1 : q));
+  const incrementChild = () => setQuantityChild((q) => q + 1);
+  const decrementChild = () => setQuantityChild((q) => (q > 0 ? q - 1 : q));
+
+  const formatPrice = (price) =>
+    price.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
+
+  const finalPrice =
+    total_price + (quantityAdult * DEFAULT_ADULT_PRICE) + (quantityChild * DEFAULT_CHILD_PRICE);
+
+  const handleBooking = async () => {
+    if (!selectedDate) {
+      Alert.alert("Vui lòng chọn ngày tham gia!");
+      return;
+    }
+
+    if (quantityAdult === 0 && quantityChild === 0) {
+      Alert.alert("Bạn phải chọn ít nhất 1 người để đặt tour!");
+      return;
+    }
+
+    // ✅ Convert ngày dd/mm/yyyy -> yyyy-mm-dd
+    const [day, month, year] = selectedDate.split('/');
+    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    if (!userId) {
+      Alert.alert("Lỗi", "Không tìm thấy user. Vui lòng đăng nhập lại.");
+      return;
+    }
+    const bookingData = {
+      user_id: userId,
+      tour_id,
+      travel_date: formattedDate,
+      quantity_nguoiLon: quantityAdult,
+      quantity_treEm: quantityChild,
+      price_nguoiLon: DEFAULT_ADULT_PRICE,
+      price_treEm: DEFAULT_CHILD_PRICE,
+      optionServices: Object.values(selectedOptions).map(id => ({
+        option_service_id: id
+      })),
+      coin: 0,
+      voucher_id: null,
     };
 
-    fetchOrders();
-  }, []);
+    console.log("📤 bookingData sắp gửi:", JSON.stringify(bookingData, null, 2));
 
-  const handleSelect = (itemId) => {
-    setSelectedItems((prev) =>
-      prev.includes(itemId)
-        ? prev.filter((id) => id !== itemId)
-        : [...prev, itemId]
-    );
-  };
-
-  const handleCancel = () => {
-    setModalVisible(true);
-  };
-
-  const confirmCancel = async () => {
     try {
-      const userId = await AsyncStorage.getItem("userId");
-      if (userId) {
-        await cancelOrder(userId, selectedItems);
-        const updatedOrders = orders.filter(
-          (item) => !selectedItems.includes(item.id)
-        );
-        setOrders(updatedOrders);
-        setSelectedItems([]);
-        setModalVisible(false);
-      }
+      await createBooking(bookingData);
+      Alert.alert("Thành công", "Bạn đã đặt tour thành công!");
+      router.push({
+        pathname: "/acount/BookingCompleted",
+        params: {
+          title: tour_title,
+          quantityAdult: quantityAdult.toString(),
+          quantityChild: quantityChild.toString(),
+          totalPrice: finalPrice.toString(),
+          travelDate: selectedDate,
+        },
+      });
+
     } catch (error) {
-      console.error("Hủy đơn hàng thất bại:", error);
+      console.error("Lỗi khi tạo booking:", error);
+      Alert.alert("Lỗi", "Đặt tour thất bại. Vui lòng thử lại.");
     }
   };
-
-  const cancelDelete = () => {
-    setModalVisible(false);
-  };
-
-  const handleViewDetails = (itemId) => {
-    router.push(`/orders/${itemId}`);
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.black} />
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="chevron-back-outline" size={24} color={COLORS.black} />
         </TouchableOpacity>
-        <Text style={styles.title}>Đơn hàng</Text>
+        <Text style={styles.headerTitle}>Tùy chọn đơn hàng</Text>
         <View style={{ width: 24 }} />
       </View>
-      <FlatList
-        data={orders}
-        renderItem={({ item }) => (
-          <View style={styles.itemContainer}>
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => handleSelect(item.id)}
-            >
-              <Ionicons
-                name={
-                  selectedItems.includes(item.id)
-                    ? "checkbox"
-                    : "square-outline"
-                }
-                size={20}
-                color={selectedItems.includes(item.id) ? "blue" : "gray"}
-              />
-              <View style={styles.orderInfo}>
-                <Text style={styles.itemText}>
-                  {item.title || "Đơn hàng #" + item.id}
-                </Text>
-                <Text style={styles.status}>{item.status || "Đang xử lý"}</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.detailsButton}
-              onPress={() => handleViewDetails(item.id)}
-            >
-              <Text style={styles.detailsText}>Chi tiết</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        keyExtractor={(item) => item.id.toString()}
-      />
 
-  
-      
+      <ScrollView style={styles.content}>
+        <View style={styles.comboTitleContainer}>
+          <Text style={styles.comboTitle} numberOfLines={2}>
+            {tour_title}
+          </Text>
+          <TouchableOpacity onPress={() => { }} style={styles.detailButton}>
+            <Text style={styles.detailText}>Chi tiết</Text>
+            <Ionicons name="chevron-forward-outline" size={16} color={COLORS.primary} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.badgesContainer}>
+          <TouchableOpacity style={styles.badge} onPress={() => { }}>
+            <Text style={styles.badgeText}>Hủy miễn phí 24 giờ</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.badge} onPress={() => { }}>
+            <Text style={styles.badgeText}>Xác nhận tức thời</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.sectionBox}>
+          <View style={styles.badgesContainer}>
+            <Text style={[styles.badgeText, { fontWeight: 'bold', color: 'black', fontSize: 20 }]}> Xin chọn ngày tham gia
+            </Text>
+
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.statusRow}>
+            <Text style={[styles.sectionLabel, { fontWeight: 'bold', color: 'black', fontSize: 16 }]}>Xem trạng thái dịch vụ</Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => setShowPicker(true)}
+            style={[
+              styles.datePickerButton,
+              selectedDate && styles.datePickerSelected,
+            ]}
+          >
+            <Text style={styles.datePickerText}>
+              {selectedDate ? selectedDate : "Chọn ngày"}
+            </Text>
+          </TouchableOpacity>
+
+          {showPicker && (
+            <DateTimePicker
+              value={new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, date) => {
+                setShowPicker(false);
+                if (date) {
+                  const d = new Date(date);
+                  const formatted = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+                  setSelectedDate(formatted);
+                }
+              }}
+            />
+          )}
+        </View>
+        <View style={styles.sectionBox}>
+          <View style={styles.section}>
+            <View style={styles.quantityRow}>
+              <Text style={styles.quantityLabel}>Người lớn</Text>
+              <Text style={styles.priceText}>{formatPrice(DEFAULT_ADULT_PRICE)}</Text>
+              <View style={styles.quantityControls}>
+                <TouchableOpacity onPress={decrementAdult} style={styles.quantityButton}>
+                  <Ionicons name="remove-circle-outline" size={24} color={COLORS.black} />
+                </TouchableOpacity>
+                <Text style={styles.quantityValue}>{quantityAdult}</Text>
+                <TouchableOpacity onPress={incrementAdult} style={styles.quantityButton}>
+                  <Ionicons name="add-circle-outline" size={24} color={COLORS.black} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.quantityRow}>
+              <Text style={styles.quantityLabel}>Trẻ em(5-8)</Text>
+              <Text style={styles.priceText}>{formatPrice(DEFAULT_CHILD_PRICE)}</Text>
+              <View style={styles.quantityControls}>
+                <TouchableOpacity onPress={decrementChild} style={styles.quantityButton}>
+                  <Ionicons name="remove-circle-outline" size={24} color={COLORS.black} />
+                </TouchableOpacity>
+                <Text style={styles.quantityValue}>{quantityChild}</Text>
+                <TouchableOpacity onPress={incrementChild} style={styles.quantityButton}>
+                  <Ionicons name="add-circle-outline" size={24} color={COLORS.black} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <View style={styles.topRow}>
+          <Text style={styles.totalPrice}>{formatPrice(finalPrice)}</Text>
+          <View style={styles.rewardBadge}>
+            <Text style={styles.rewardText}>EKSORA Xu +28</Text>
+          </View>
+        </View>
+
+
+
+
+
+        <TouchableOpacity
+          style={styles.bookNowButton}
+          onPress={handleBooking} // ✅ Gọi hàm đặt tour thật
+        >
+          <Text style={styles.bookNowButtonText}>Đặt ngay</Text>
+        </TouchableOpacity>
+      </View>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: COLORS.white },
+  container: { flex: 1, backgroundColor: COLORS.white, top: 20 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray,
   },
   backButton: {
     width: 40,
@@ -157,48 +248,229 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.gray,
   },
-  title: { fontSize: 22, fontWeight: "bold", color: COLORS.black },
-  itemContainer: {
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: COLORS.black
+  },
+
+
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16
+  },
+
+
+  comboTitleContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  comboTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    flex: 1,
+    marginRight: 8
+  },
+
+
+  detailText: {
+
+    fontSize: 15,
+    color: COLORS.primary,
+    fontWeight: "bold"
+  },
+
+  section: {
+    marginBottom: 24
+  },
+
+  sectionBox: {
+    borderWidth: 1,
+    borderColor: COLORS.gray,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+
+
+  badgesContainer: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+
+  badge: {
+    borderWidth: 1,
+    borderColor: COLORS.gray,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    backgroundColor: COLORS.white,
+  },
+
+  badgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: COLORS.gray,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.gray,
+    marginBottom: 12,
+  },
+
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  statusButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  statusButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginRight: 4,
+    color: COLORS.black,
+  },
+
+  buttontextoption: {
+    width: 100,
+    height: 30,
+    fontSize: 14,
+    fontWeight: "bold",
+    justifyContent: '',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    marginBottom: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.gray,
+    marginRight: 8,
+  },
+
+
+  statusText: {
+    fontSize: 12,
+    color: COLORS.gray,
+    marginBottom: 8
+  },
+
+
+  dateScroll:
+    { flexGrow: 0 },
+
+  dateButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.gray,
+    marginRight: 8,
+  },
+  dateButtonSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  dateButtonText: { fontSize: 14, color: COLORS.gray },
+  dateButtonTextSelected: { color: COLORS.white },
+  quantityRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
+    marginBottom: 12,
   },
-  checkboxContainer: { flexDirection: "row", alignItems: "center" },
-  orderInfo: { marginLeft: 10 },
-  itemText: { fontSize: 16, fontWeight: "500", color: COLORS.black },
-  status: { fontSize: 12, color: "#666" },
-  detailsButton: {
-    backgroundColor: COLORS.primary,
-    padding: 6,
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  detailsText: { color: COLORS.white, fontSize: 12, fontWeight: "bold" },
-  buttonsContainer: {
+  quantityLabel: { fontSize: 14, fontWeight: "bold", flex: 1 },
+  priceText: { fontSize: 14, color: COLORS.black, width: 100, textAlign: "right" },
+  quantityControls: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-  },
-  deleteButton: {
-    backgroundColor: COLORS.red,
-    padding: 12,
-    borderRadius: 10,
-    width: "45%",
     alignItems: "center",
-    opacity: 0.5,
   },
-  deleteText: { color: COLORS.white, fontWeight: "bold" },
-  confirmButton: {
+  quantityButton: {
+    paddingHorizontal: 8,
+  },
+  quantityValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginHorizontal: 8,
+    minWidth: 20,
+    textAlign: "center",
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    bottom: 30,
+    borderTopColor: COLORS.gray,
+    backgroundColor: COLORS.white,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  totalPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.black,
+  },
+  rewardBadge: {
+    backgroundColor: '#C5F1C5', // xanh lá nhạt
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  rewardText: {
+    color: '#008000', // xanh đậm
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  bookNowButton: {
     backgroundColor: COLORS.primary,
-    padding: 12,
-    borderRadius: 10,
-    width: "45%",
-    alignItems: "center",
+    paddingVertical: 12,
+    borderRadius: 24,
+    alignItems: 'center',
+    width: '100%',
   },
-  confirmText: { color: COLORS.white, fontWeight: "bold" },
- 
+  bookNowButtonText: {
+    color: COLORS.white,
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  datePickerButton: {
+    borderWidth: 1,
+    borderColor: '#4A90E2', // Viền xanh nhẹ
+    backgroundColor: '#E6F0FA', // Nền xanh nhạt
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start', // Hoặc 'center' nếu bạn muốn căn giữa toàn bộ
+    marginTop: 8,
+  },
+
+  datePickerText: {
+    color: '#000',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  datePickerSelected: {
+    backgroundColor: '#D8EBFF', // xanh nhạt hơn khi đã chọn
+  }
+
+
+
+
 });
