@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.primaryDark,
   },
-  image: {
+  logo: {
     width: 200,
     height: 200,
   },

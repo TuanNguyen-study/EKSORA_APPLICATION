@@ -13,7 +13,7 @@ function AppFooter (){
       </Typography.Link>
      
     </div>
-    <div>Copyright © 2024 Happyland of Karen. All rights reserved.</div>
+    <div>Copyright © 2024  All rights reserved.</div>
     </footer>
     );
 }

@@ -70,7 +70,6 @@ const serviceCategories = [
   { id: "s4", label: "Khách sạn" },
   { id: "s5", label: "Mục khác" },
 ];
-
 const ITEM_WIDTH_PERCENTAGE_HOME = 0.6;
 const ITEM_HEIGHT_CAROUSEL_TOTAL_HOME = 150;
 const ITEM_SPACING_CAROUSEL_HOME = 15;
@@ -188,65 +187,55 @@ export default function HomeScreen() {
   };
 
   const handlePressDestination = async (item) => {
-    setSelectedLocation(item._id); 
-    setSelectedLocationName(item.name); 
+    setSelectedLocation(item._id);
+    setSelectedLocationName(item.name);
     setLoading(true);
-
     try {
-      setError(null); 
-      if (item._id === "682f55804374d8e40b36ea8a") { 
-        console.log('Bắt đầu gọi API getTours để lấy tất cả tour');
-        const toursData = await getTours();
-        const processedTours = Array.isArray(toursData)
-          ? toursData.map((tour) => ({
-            ...tour,
-            image:
-              Array.isArray(tour.image) && tour.image.length > 0
-                ? tour.image[0]
-                : tour.image || "https://via.placeholder.com/300",
-          }))
-          : toursData.data
-            ? toursData.data.map((tour) => ({
-              ...tour,
-              image:
-                Array.isArray(tour.image) && tour.image.length > 0
-                  ? tour.image[0]
-                  : tour.image || "https://via.placeholder.com/300",
-            }))
-            : [];
-        setLocationTours(processedTours); 
-      } else { 
-        console.log('Bắt đầu gọi API getToursByLocation với cateID:', item._id);
-        const toursData = await getToursByLocation(item._id);
-        console.log('Dữ liệu tour trả về từ getToursByLocation:', toursData);
-        const processedTours = Array.isArray(toursData)
-          ? toursData.map((tour) => ({
-            ...tour,
-            image:
-              Array.isArray(tour.image) && tour.image.length > 0
-                ? tour.image[0]
-                : tour.image || "https://via.placeholder.com/300",
-          }))
-          : toursData.data
-            ? toursData.data.map((tour) => ({
-              ...tour,
-              image:
-                Array.isArray(tour.image) && tour.image.length > 0
-                  ? tour.image[0]
-                  : tour.image || "https://via.placeholder.com/300",
-            }))
-            : [];
-        setLocationTours(processedTours); 
+      setError(null);
+      let toursData;
+
+      // Kiểm tra xem danh mục có phải là "Tất cả" hay không
+      if (item.name.toLowerCase() === "tất cả" || item.isAllCategory) {
+        console.log("Bắt đầu gọi API getTours để lấy tất cả tour");
+        toursData = await getTours();
+      } else {
+        //console.log('Bắt đầu gọi API getToursByLocation với cateID:', item._id);
+        toursData = await getToursByLocation(item._id);
       }
-      setActiveTab('Đề xuất');
+
+      // Xử lý dữ liệu tour
+      const processedTours = Array.isArray(toursData)
+        ? toursData.map((tour) => ({
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : tour.image || "https://via.placeholder.com/300",
+          }))
+        : toursData.data
+          ? toursData.data.map((tour) => ({
+              ...tour,
+              image:
+                Array.isArray(tour.image) && tour.image.length > 0
+                  ? tour.image[0]
+                  : tour.image || "https://via.placeholder.com/300",
+            }))
+          : [];
+
+      setLocationTours(processedTours);
+      setActiveTab("Đề xuất");
     } catch (err) {
       console.error(
-        item._id === "682ec34331d8b56270a8af8a"
-          ? 'Lỗi khi gọi getTours:'
-          : 'Lỗi khi gọi getToursByLocation:',
+        item.name.toLowerCase() === "tất cả"
+          ? "Lỗi khi gọi getTours:"
+          : "Lỗi khi gọi getToursByLocation:",
         err.response?.data || err.message
       );
-      setError(item._id === "682ec34331d8b56270a8af8a" ? 'Không tìm thấy tour nào' : `Không tìm thấy tour cho ${item.name}`);
+      setError(
+        item.name.toLowerCase() === "tất cả"
+          ? "Không tìm thấy tour nào"
+          : `Không tìm thấy tour cho ${item.name}`
+      );
       setLocationTours([]);
     } finally {
       setLoading(false);
@@ -255,8 +244,6 @@ export default function HomeScreen() {
 
   const handlePressSuggestion = (tourId) => {
     console.log("Điều hướng đến trip-detail với ID:", tourId);
-
-    // Thêm bước kiểm tra để đảm bảo an toàn
     if (!tourId) {
       console.error(
         "LỖI: tourId không hợp lệ (undefined) nên không thể điều hướng!"
@@ -281,36 +268,36 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        console.log('Bắt đầu gọi API getCategories');
+        console.log("Bắt đầu gọi API getCategories");
         const response = await getCategories();
-        console.log('Dữ liệu categories trả về:', response);
+        //console.log('Dữ liệu categories trả về:', response);
         setCategories(Array.isArray(response) ? response : response.data || []);
         setLoading(false);
       } catch (err) {
-        console.error('Lỗi khi gọi getCategories:', err);
-        setError('Lỗi khi lấy danh sách categories');
+        console.error("Lỗi khi gọi getCategories:", err);
+        setError("Lỗi khi lấy danh sách categories");
         setLoading(false);
       }
     };
 
     fetchCategories();
   }, []);
+  // gọi API lấy tour
 
-  // Gọi API lấy danh sách tour
   useEffect(() => {
     const fetchTours = async () => {
       try {
         const data = await getTours();
-        console.log("Dữ liệu từ getTours:", data);
+        // console.log("Dữ liệu từ getTours:", data);
 
         const processedData = Array.isArray(data)
           ? data.map((tour) => ({
-            ...tour,
-            image:
-              Array.isArray(tour.image) && tour.image.length > 0
-                ? tour.image[0]
-                : tour.image || "https://via.placeholder.com/300",
-          }))
+              ...tour,
+              image:
+                Array.isArray(tour.image) && tour.image.length > 0
+                  ? tour.image[0]
+                  : tour.image || "https://via.placeholder.com/300",
+            }))
           : [];
 
         setTours(processedData);
@@ -381,7 +368,7 @@ export default function HomeScreen() {
           </View>
         </LinearGradient>
 
-        <View style={styles.sectionWrapper}>
+        {/* <View style={styles.sectionWrapper}>
           <View style={styles.serviceCategoriesContainer}>
             {serviceCategories.map((item) => (
               <ServiceCategoryItem
@@ -391,7 +378,7 @@ export default function HomeScreen() {
               />
             ))}
           </View>
-        </View>
+        </View> */}
 
         <View style={styles.sectionWrapper}>
           <FlatList
@@ -400,8 +387,7 @@ export default function HomeScreen() {
               <DestinationChip
                 destination={item}
                 onPress={handlePressDestination}
-                 isSelected={selectedLocation === item._id}
-
+                isSelected={selectedLocation === item._id}
               />
             )}
             keyExtractor={(item) => item._id}
@@ -410,7 +396,6 @@ export default function HomeScreen() {
             contentContainerStyle={styles.horizontalListContentPadding}
           />
         </View>
-
         <View style={styles.sectionWrapperWithBorderForSuggestions}>
           <View style={styles.tabBarContainer}>
             {["Đề xuất", "Gần đây"].map((tabName) => (
@@ -453,7 +438,8 @@ export default function HomeScreen() {
               maxToRenderPerBatch={6}
               windowSize={5}
               removeClippedSubviews={true}
-              getItemLayout={(data, index) => ({
+              getItemLayout={(_, index) => ({
+                //getItemLayout={(data, index) => ({
                 length: 260,
                 offset: 260 * index,
                 index,
