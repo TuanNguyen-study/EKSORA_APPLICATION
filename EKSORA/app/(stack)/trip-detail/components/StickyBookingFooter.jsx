@@ -1,15 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Platform, StyleSheet, Text, TouchableOpacity, View, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../../../../constants/colors';
+import BookingModalContent from './Modal'; 
 
 const StickyBookingFooter = ({
   priceInfo,
   eksoraPoints,
   onAddToCart,
   onBookNow,
-  onEksoraPointsPress
+  onEksoraPointsPress,
+  tourName
 }) => {
   const router = useRouter();
 
@@ -83,16 +86,14 @@ const StickyBookingFooter = ({
           </TouchableOpacity>
         </View>
       </View>
-      
-    </View>
-
+    
       <Modal visible={modalVisible} animationType="slide" transparent>
         <BookingModalContent onClose={() => setModalVisible(false)}
          priceInfo={priceInfo}
          tourName={tourName} />
           
       </Modal>
-    </>
+    </View>
   );
 };
 
