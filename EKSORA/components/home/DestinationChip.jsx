@@ -13,7 +13,7 @@ const DestinationChip = ({ destination, onPress, isSelected }) => {
     <TouchableOpacity
       style={[
         styles.chip,
-        isSelected && styles.chipSelected, // 👈 áp dụng màu nếu được chọn
+        isSelected && styles.chipSelected, 
       ]}
       onPress={() => onPress(destination)}
     >
@@ -21,10 +21,9 @@ const DestinationChip = ({ destination, onPress, isSelected }) => {
       <Text
         style={[
           styles.chipText,
-          isSelected && styles.chipTextSelected, // 👈 đổi màu chữ nếu được chọn
+          isSelected && styles.chipTextSelected, 
         ]}
       >
-
         {destination.name}
       </Text>
     </TouchableOpacity>
@@ -42,7 +41,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     shadowColor: '#000',
-
     shadowOffset: {
       width: 0,
       height: 1,
@@ -54,7 +52,6 @@ const styles = StyleSheet.create({
   chipSelected: {
     borderColor: COLORS.primary,
     backgroundColor: '#EAF1FF',
-
   },
   chipImage: {
     width: 48,
@@ -63,18 +60,16 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   chipText: {
-    fontSize: 14, // Tăng size chữ 1 chút
+    fontSize: 14, 
     fontWeight: '500',
     color: COLORS.textSecondary,
   },
   chipTextSelected: {
     color: COLORS.primary,
     fontWeight: 'bold',
-
   },
-  // 5. Style mới cho chữ KHI được chọn
   selectedChipText: {
-    color: COLORS.primary, // Đổi màu chữ sang màu xanh primary
+    color: COLORS.primary, 
     fontWeight: 'bold',
   }
 });

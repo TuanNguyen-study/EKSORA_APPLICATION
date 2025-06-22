@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   FlatList,
@@ -9,105 +9,128 @@ import {
   TouchableOpacity,
 } from "react-native";
 import Modal from "react-native-modal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import FavoriteItem from "../FavoriteItem";
 import {
-  getFavorites,
+  getFavoriteToursByUser,
   addFavorites,
-  deleteFavorites,
 } from "../../../API/services/servicesFavorite";
 import { getTours } from "../../../API/services/serverCategories";
 import SuggestionCard from "../../home/SuggestionCard";
+import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+
 
 export default function Body({ filterData }) {
-  const { user_id, selectedDestination, selectedCategory, selectedTime } =
-    filterData || {};
+  const { user_id, selectedDestination, selectedCategory, selectedTime } = filterData || {};
 
   const [tours, setTours] = useState([]);
+  const [filteredTours, setFilteredTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [suggestionTours, setSuggestionTours] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [error, setError] = useState(null);
+  const router = useRouter();
 
-  useEffect(() => {
-    if (!user_id) {
-      console.warn("Chưa có user_id để lấy danh sách favorites");
+  // Load tours yêu thích
+  const loadFavoriteTours = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("ACCESS_TOKEN");
+      const userId = await AsyncStorage.getItem("USER_ID");
 
-      setLoading(false);
-      return;
-    }
-
-    const fetchTours = async () => {
-      try {
-        const data = await getFavorites(user_id);
-        setTours(data || []);
-      } catch (error) {
-        console.error("Lỗi khi tải tour:", error);
-        setError("Không thể tải danh sách tour yêu thích");
-      } finally {
-        setLoading(false);
+      if (!token || !userId) {
+        console.warn("Không tìm thấy token hoặc userId");
+        return;
       }
+
+      const res = await getFavoriteToursByUser(userId, token);
+      const favoriteList = res?.data || [];
+
+      const formatted = favoriteList
+        .filter(item => item.tour_id && typeof item.tour_id === "object")
+        .map((item) => ({
+          id: item.tour_id._id,
+          title: item.tour_id.name,
+          description: item.tour_id.description,
+          price: item.tour_id.price,
+          location: item.tour_id.location || "Địa điểm chưa có",
+          image:
+            Array.isArray(item.tour_id.image) && item.tour_id.image.length > 0
+              ? item.tour_id.image[0]
+              : "https://via.placeholder.com/300",
+          createdAt: item.tour_id.createdAt,
+          category: item.tour_id.category,
+        }));
+
+      setTours(formatted);
+    } catch (error) {
+      console.error("Lỗi khi load danh sách tour yêu thích:", error);
+      setError("Không thể tải danh sách yêu thích");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Lọc lại mỗi khi tours hoặc filterData thay đổi
+  useEffect(() => {
+    const filter = () => {
+      const result = tours.filter((tour) => {
+        let matches = true;
+
+        if (
+          selectedDestination &&
+          tour.location?.toLowerCase().trim() !== selectedDestination.toLowerCase().trim()
+        ) {
+          matches = false;
+        }
+
+        if (selectedCategory && tour.category !== selectedCategory) {
+          matches = false;
+        }
+
+        if (selectedTime && tour.createdAt) {
+          const currentDate = new Date();
+          const tourDate = new Date(tour.createdAt);
+          const timeDiff = Math.floor((currentDate - tourDate) / (1000 * 3600 * 24));
+
+          if (selectedTime === "Trong 7 ngày trước" && timeDiff > 7) matches = false;
+          else if (selectedTime === "Trong 30 ngày trước" && timeDiff > 30) matches = false;
+          else if (selectedTime === "Trong 6 tháng trước" && timeDiff > 180) matches = false;
+          else if (selectedTime === "Trong 12 tháng trước" && timeDiff > 365) matches = false;
+          else if (selectedTime === "Trong hơn 1 năm trước" && timeDiff <= 365) matches = false;
+        }
+
+        return matches;
+      });
+
+      setFilteredTours(result);
     };
 
-    fetchTours();
-  }, [user_id]);
+    filter();
+  }, [tours, selectedDestination, selectedCategory, selectedTime]);
 
-  const filteredTours = tours.filter((tour) => {
-    if (!tour?.id) return false;
-
-    let matches = true;
-
-    if (
-      selectedDestination &&
-      tour.location?.toLowerCase().trim() !==
-        selectedDestination.toLowerCase().trim()
-    ) {
-      matches = false;
-    }
-
-    if (selectedCategory && tour.category !== selectedCategory) {
-      matches = false;
-    }
-
-    if (selectedTime && tour.createdAt) {
-      const currentDate = new Date();
-      const tourDate = new Date(tour.createdAt);
-      const timeDiff = Math.floor(
-        (currentDate - tourDate) / (1000 * 3600 * 24)
-      );
-
-      if (selectedTime === "Trong 7 ngày trước" && timeDiff > 7) {
-        matches = false;
-      } else if (selectedTime === "Trong 30 ngày trước" && timeDiff > 30) {
-        matches = false;
-      } else if (selectedTime === "Trong 6 tháng trước" && timeDiff > 180) {
-        matches = false;
-      } else if (selectedTime === "Trong 12 tháng trước" && timeDiff > 365) {
-        matches = false;
-      } else if (selectedTime === "Trong hơn 1 năm trước" && timeDiff <= 365) {
-        matches = false;
-      }
-    }
-
-    return matches;
-  });
-
+  useFocusEffect(
+    useCallback(() => {
+      loadFavoriteTours();
+    }, [])
+  )
+  // Tải gợi ý tour
   const handleStartPress = async () => {
     setSuggestionLoading(true);
     setError(null);
 
     try {
       const data = await getTours();
-      console.log("Dữ liệu từ getTours:", data);
-
       const processedData = Array.isArray(data)
         ? data.map((tour) => ({
-            ...tour,
-            image:
-              Array.isArray(tour.image) && tour.image.length > 0
-                ? tour.image[0]
-                : tour.image || "https://via.placeholder.com/300",
-          }))
+          ...tour,
+          image:
+            Array.isArray(tour.image) && tour.image.length > 0
+              ? tour.image[0]
+              : "https://via.placeholder.com/300",
+        }))
         : [];
 
       setSuggestionTours(processedData);
@@ -120,6 +143,7 @@ export default function Body({ filterData }) {
     }
   };
 
+  // Thêm tour vào yêu thích
   const handlePressSuggestion = async (item) => {
     if (!user_id || !item?._id) {
       console.warn("Thiếu user_id hoặc tour_id");
@@ -130,6 +154,9 @@ export default function Body({ filterData }) {
       await addFavorites(user_id, item._id);
       console.log("Đã thêm tour vào yêu thích:", item.title);
       setModalVisible(false);
+
+      await loadFavoriteTours();
+
     } catch (error) {
       console.error("Lỗi khi thêm tour vào yêu thích:", error);
       setError("Không thể thêm tour vào yêu thích");
@@ -148,10 +175,7 @@ export default function Body({ filterData }) {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity
-          onPress={() => setError(null)}
-          style={[styles.exploreButton, { marginTop: 16 }]}
-        >
+        <TouchableOpacity onPress={() => setError(null)} style={[styles.exploreButton, { marginTop: 16 }]}>
           <Text style={styles.exploreButtonText}>Thử lại</Text>
         </TouchableOpacity>
       </View>
@@ -162,13 +186,14 @@ export default function Body({ filterData }) {
     <View style={styles.container}>
       <FlatList
         data={filteredTours}
-        renderItem={({ item }) => <FavoriteItem {...item} />}
+        renderItem={({ item }) => (
+          <FavoriteItem
+            {...item}
+            onPress={() => router.push(`/trip-detail/${item.id}`)} 
+          />
+        )}
         keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-        contentContainerStyle={
-          filteredTours.length === 0
-            ? styles.noResultsContainer
-            : { padding: 16 }
-        }
+        contentContainerStyle={filteredTours.length === 0 ? styles.noResultsContainer : { padding: 16 }}
         ListEmptyComponent={
           <View style={styles.noResultsContent}>
             <Image
@@ -177,18 +202,14 @@ export default function Body({ filterData }) {
               resizeMode="contain"
             />
             <Text style={styles.noResults}>Chưa có hoạt động nào ở đây</Text>
-            <Text style={styles.explore}>
-              Bắt đầu khám phá và thêm vào Yêu thích
-            </Text>
-            <TouchableOpacity
-              onPress={handleStartPress}
-              style={{ marginTop: 16 }}
-            >
+            <Text style={styles.explore}>Bắt đầu khám phá và thêm vào Yêu thích</Text>
+            <TouchableOpacity onPress={handleStartPress} style={{ marginTop: 16 }}>
               <Text style={styles.exploreButton}>Bắt đầu</Text>
             </TouchableOpacity>
           </View>
         }
       />
+
       <Modal
         isVisible={modalVisible}
         onBackdropPress={() => setModalVisible(false)}
@@ -200,22 +221,17 @@ export default function Body({ filterData }) {
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Thêm vào Yêu thích</Text>
-            <TouchableOpacity
-              onPress={() => setModalVisible(false)}
-              style={styles.closeButton}
-            >
+            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
               <Text style={styles.closeButtonText}>×</Text>
             </TouchableOpacity>
           </View>
+
           {suggestionLoading ? (
             <ActivityIndicator size="large" color="#007bff" />
           ) : error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity
-                onPress={handleStartPress}
-                style={[styles.exploreButton, { marginTop: 16 }]}
-              >
+              <TouchableOpacity onPress={handleStartPress} style={[styles.exploreButton, { marginTop: 16 }]}>
                 <Text style={styles.exploreButtonText}>Thử lại</Text>
               </TouchableOpacity>
             </View>
@@ -226,32 +242,18 @@ export default function Body({ filterData }) {
           ) : (
             <FlatList
               data={suggestionTours}
-              renderItem={({ item }) => {
-                return (
-                  <SuggestionCard
-                    item={item}
-                    onPress={() => handlePressSuggestion(item)}
-                  />
-                );
-              }}
-              keyExtractor={(item) =>
-                item._id?.toString() || Math.random().toString()
-              }
+              renderItem={({ item }) => (
+                <SuggestionCard item={item} onPress={() => handlePressSuggestion(item)} />
+              )}
+              keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
               contentContainerStyle={styles.suggestionList}
               numColumns={2}
               columnWrapperStyle={styles.columnWrapper}
             />
           )}
-          <TouchableOpacity
-            onPress={() => console.log("Xem danh sách yêu thích")}
-            style={[styles.exploreButton, { marginTop: 8 }]}
-          >
-            <Text
-              style={styles.exploreButtonText}
-              onPress={() => setModalVisible(false)}
-            >
-              Xem danh sách yêu thích
-            </Text>
+
+          <TouchableOpacity onPress={() => setModalVisible(false)} style={[styles.exploreButton, { marginTop: 8 }]}>
+            <Text style={styles.exploreButtonText}>Xem danh sách yêu thích</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -333,7 +335,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     flex: 1,
   },
-
   closeButton: {
     padding: 8,
   },
