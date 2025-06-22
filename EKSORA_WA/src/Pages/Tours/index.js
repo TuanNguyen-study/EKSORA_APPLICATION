@@ -129,7 +129,7 @@ function Inventory() {
 
   return (
     <Space direction="vertical" style={{ width: "100%" }} size={20}>
-      <Typography.Title level={4}>Tour Inventory</Typography.Title>
+      <Typography.Title level={4}>Tours Inventory</Typography.Title>
 
       <Button type="primary" onClick={() => openModal()}>
         Add Tour
@@ -178,11 +178,7 @@ function Inventory() {
             title: "Province",
             dataIndex: "province",
           },
-          {
-            title: "Rating",
-            dataIndex: "rating",
-            render: (rating) => <Rate disabled defaultValue={rating || 0} />,
-          },
+         
           {
             title: "Actions",
             render: (_, record) => (
