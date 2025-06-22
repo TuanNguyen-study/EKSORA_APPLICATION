@@ -7,16 +7,20 @@ export default function FavoriteItem({ title, location, description, price, imag
 
       <View style={styles.content}>
         <View style={styles.titleRow}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+            {title}
+          </Text>
           <Text style={styles.heart}>❤️</Text>
         </View>
 
-        <Text style={styles.description} numberOfLines={1} ellipsizeMode="tail">
+        <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
           {description}
         </Text>
 
         <View style={styles.bottomRow}>
-          <Text style={styles.location}>{location}</Text>
+          <Text style={styles.location} numberOfLines={1} ellipsizeMode="tail">
+            {location}
+          </Text>
           <Text style={styles.price}>Từ {price} đ</Text>
         </View>
       </View>
@@ -51,6 +55,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     flexShrink: 1,
+    marginRight: 8,
   },
   heart: {
     fontSize: 16,
@@ -71,10 +76,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#000',
+    maxWidth: 170, // Giới hạn độ dài location để giá không bị đẩy
   },
   price: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#007bff',
+    color: '#e63946',
+    textAlign: 'right',
+    minWidth: 90,
+    flexShrink: 0,
+    flexGrow: 0,
   },
 });

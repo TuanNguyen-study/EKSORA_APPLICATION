@@ -1,16 +1,16 @@
 import AxiosInstance from "../services/AxiosInstance";
+//import AxiosInstance from "../AxiosInstance";
 
 //API lấy danh sách yêu thích
-export const getFavorites = async (user_id) => {
+export const getFavoriteToursByUser = async (userId) => {
   try {
-    const response = await AxiosInstance().get(`/api/favorites/${user_id}`);
-    return response.data;
+    const response = await AxiosInstance.get(`/api/favorites/${userId}`);
+    return response;
   } catch (error) {
-    console.error("Lỗi khi lấy danh sách favorites:", error);
+    console.error(' Lỗi khi lấy danh sách tour yêu thích:', error);
     throw error;
   }
 };
-
 export const deleteFavorites = async (ids) => {
   try {
     const response = await AxiosInstance().delete(`/api/favorites`, {
@@ -23,20 +23,18 @@ export const deleteFavorites = async (ids) => {
   }
 };
 
-const addFavorites = async (userId, tourId) => {
+
+export const addFavoriteTour = async (userId, tourId) => {
   try {
-    const response = await AxiosInstance().post(`/api/favorites`, {
+    const response = await AxiosInstance.post('/api/favorites', {
       user_id: userId,
       tour_id: tourId,
     });
 
-    if (response.data.success) {
-      console.log("Đã thêm vào yêu thích:", response.data.data);
-    }
+    console.log(' Thêm tour yêu thích thành công:', response);
+    return response;
   } catch (error) {
-    console.error(
-      "Lỗi khi thêm vào yêu thích:",
-      error?.response?.data || error.message
-    );
+    console.error(' Lỗi khi thêm tour yêu thích:', error.response?.data || error.message);
+    throw error;
   }
 };

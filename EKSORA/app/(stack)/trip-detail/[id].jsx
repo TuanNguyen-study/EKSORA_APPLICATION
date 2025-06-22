@@ -14,29 +14,29 @@ import {
 import { fetchTourDetail } from '../../../API/services/tourService';
 import { COLORS } from '../../../constants/colors';
 import CustomerReviewSection from './components/CustomerReviewSection';
-import PolicyInfoSection from './components/PolicyInfoSection';
 import NoteContactSection from './components/NoteContactSection';
 import ProductBasicInfo from './components/ProductBasicInfo';
 import ProductImageCarousel from './components/ProductImageCarousel';
 import { default as ProductOptionSelector, default as ProductOptionSelector1 } from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
-
+import { addFavoriteTour } from '../../../API/services/servicesFavorite';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function TripDetailScreen() {
-const HARDCODED_DATE_FILTERS = [
-  { id: 'tomorrow', label: 'Ngày mai', isDefault: true },
-  { id: '11-5', label: '11/5' },
-  { id: '12-5', label: '12/5' },
-  { id: 'all', label: 'Tất cả ngày', icon: 'calendar-outline' },
-];
+  const HARDCODED_DATE_FILTERS = [
+    { id: 'tomorrow', label: 'Ngày mai', isDefault: true },
+    { id: '11-5', label: '11/5' },
+    { id: '12-5', label: '12/5' },
+    { id: 'all', label: 'Tất cả ngày', icon: 'calendar-outline' },
+  ];
 
-const PROMOTIONS = [
-  { id: 'promo-1', label: 'Giảm 5%' },
-  { id: 'promo-2', label: 'Sale' },
-  { id: 'promo-3', label: 'Giảm 25%' },
-];
+  const PROMOTIONS = [
+    { id: 'promo-1', label: 'Giảm 5%' },
+    { id: 'promo-2', label: 'Sale' },
+    { id: 'promo-3', label: 'Giảm 25%' },
+  ];
 
   const router = useRouter();
   const { id: productId } = useLocalSearchParams();
@@ -177,9 +177,21 @@ const PROMOTIONS = [
             router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
           }
           onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
-          onFavoritePress={() => {
-            setIsFavorite(v => !v);
-            Alert.alert(isFavorite ? 'Đã bỏ khỏi yêu thích' : 'Đã thêm vào yêu thích');
+          onFavoritePress={async () => {
+            try {
+              const userId = await AsyncStorage.getItem('USER_ID');
+              if (!userId || !productId) {
+                Alert.alert('Lỗi', 'Không xác định được người dùng hoặc tour.');
+                return;
+              }
+
+              await addFavoriteTour(userId, productId);
+              setIsFavorite(true); 
+              Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
+            } catch (err) {
+              console.error(' Thêm tour yêu thích lỗi:', err.response?.data || err.message);
+              Alert.alert(' Thêm thất bại', err.response?.data?.message || 'Vui lòng thử lại sau');
+            }
           }}
         />
 
@@ -192,13 +204,13 @@ const PROMOTIONS = [
           <View style={styles.separator} />
 
           <ProductOptionSelector1
-          servicePackages={productData.availableServicePackages1}
-          dateFilters={HARDCODED_DATE_FILTERS}
-          promotions={PROMOTIONS}
-          onDateFilterChange={(id) => console.log('Ngày đã chọn:', id)}
-          onPromotionChange={(promo) => console.log('Ưu đãi đã chọn:', promo)}
-          onOptionSelect={(pkgId, opt) => console.log('Gói đã chọn:', pkgId, opt)}
-        />
+            servicePackages={productData.availableServicePackages1}
+            dateFilters={HARDCODED_DATE_FILTERS}
+            promotions={PROMOTIONS}
+            onDateFilterChange={(id) => console.log('Ngày đã chọn:', id)}
+            onPromotionChange={(promo) => console.log('Ưu đãi đã chọn:', promo)}
+            onOptionSelect={(pkgId, opt) => console.log('Gói đã chọn:', pkgId, opt)}
+          />
 
 
           <ProductOptionSelector
@@ -209,7 +221,7 @@ const PROMOTIONS = [
             title=""
           />
 
-       
+
           <CustomerReviewSection
             reviews={productData.reviews}
             averageRating={productData.rating.stars}
@@ -245,7 +257,7 @@ const PROMOTIONS = [
         current: currentSelectedPackages.totalPrice || productData.price.current
       }}
         tourName={productData.name} // Truyền tên tour vào
- />
+      />
     </View>
   );
 }
@@ -254,46 +266,50 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
   scrollView: { flex: 1 },
   centered: {
-    flex: 1, 
-    justifyContent: 'center', 
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: COLORS.background || '#f5f5f5', padding: 20
   },
-  
-  loadingText: 
-  { marginTop: 
-    10, fontSize: 
-    16, color: COLORS.textSecondary },
+
+  loadingText:
+  {
+    marginTop:
+      10, fontSize:
+      16, color: COLORS.textSecondary
+  },
 
   errorText: {
-     fontSize: 16,
-      color: COLORS.danger,
-       textAlign: 'center',
-        marginTop: 10 },
+    fontSize: 16,
+    color: COLORS.danger,
+    textAlign: 'center',
+    marginTop: 10
+  },
 
   retryButton: {
     marginTop: 20,
-     backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 20,
-     paddingVertical: 10, 
-     borderRadius: 8
+    paddingVertical: 10,
+    borderRadius: 8
   },
-  retryButtonText: { 
+  retryButtonText: {
     color: COLORS.white,
-     fontSize: 16, 
-     fontWeight: 'bold' },
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
 
   mainContentContainer: {
-    paddingHorizontal: 16, 
+    paddingHorizontal: 16,
     backgroundColor: COLORS.white,
-    marginTop: -10, borderTopLeftRadius: 20, 
+    marginTop: -10, borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 30
   },
   separator: {
-    height: 1, 
+    height: 1,
     backgroundColor: COLORS.background,
     marginVertical: 15,
-     marginHorizontal: -16
+    marginHorizontal: -16
   }
 });
