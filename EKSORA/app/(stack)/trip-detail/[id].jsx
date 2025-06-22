@@ -21,7 +21,8 @@ import { default as ProductOptionSelector } from './components/ProductOptionSele
 
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
-
+import { addFavoriteTour } from '../../../API/services/servicesFavorite';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function TripDetailScreen() {
@@ -207,9 +208,21 @@ export default function TripDetailScreen() {
             router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
           }
           onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
-          onFavoritePress={() => {
-            setIsFavorite(v => !v);
-            Alert.alert(isFavorite ? 'Đã bỏ khỏi yêu thích' : 'Đã thêm vào yêu thích');
+          onFavoritePress={async () => {
+            try {
+              const userId = await AsyncStorage.getItem('USER_ID');
+              if (!userId || !productId) {
+                Alert.alert('Lỗi', 'Không xác định được người dùng hoặc tour.');
+                return;
+              }
+
+              await addFavoriteTour(userId, productId);
+              setIsFavorite(true); 
+              Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
+            } catch (err) {
+              console.error(' Thêm tour yêu thích lỗi:', err.response?.data || err.message);
+              Alert.alert(' Thêm thất bại', err.response?.data?.message || 'Vui lòng thử lại sau');
+            }
           }}
         />
 
@@ -221,6 +234,7 @@ export default function TripDetailScreen() {
 
           <View style={styles.separator} />
 
+
           {/* <ProductOptionSelector1
             servicePackages={productData.availableServicePackages1}
             // dateFilters={HARDCODED_DATE_FILTERS}
@@ -228,6 +242,7 @@ export default function TripDetailScreen() {
             onDateFilterChange={(id) => console.log('Ngày đã chọn:', id)}
             onPromotionChange={(promo) => console.log('Ưu đãi đã chọn:', promo)}
             onOptionSelect={(pkgId, opt) => console.log('Gói đã chọn:', pkgId, opt)}
+
           /> */}
 
 
@@ -242,7 +257,6 @@ export default function TripDetailScreen() {
             }}
             title=""
           />
-
           <CustomerReviewSection
             reviews={productData.reviews}
             averageRating={productData.rating.stars}
@@ -272,7 +286,6 @@ export default function TripDetailScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-
       <StickyBookingFooter
         priceInfo={{
           ...productData.price,
@@ -326,7 +339,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: COLORS.white,
     marginTop: -10, borderTopLeftRadius: 20,
-
     borderTopRightRadius: 20,
     paddingTop: 30
   },
@@ -335,6 +347,5 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     marginVertical: 15,
     marginHorizontal: -16
-
   }
 });

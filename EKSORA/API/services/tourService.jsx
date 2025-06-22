@@ -9,7 +9,6 @@ export const fetchTourDetail = async (tourId) => {
   try {
     const response = await axios.get(`/api/tours/${tourId}`);
     console.log('👉 raw axios response:', response);
-    // Next we try both response.data and response itself:
     const payload = response.data ?? response;
     console.log('👉 payload to return:', payload);
     return payload;

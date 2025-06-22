@@ -8,7 +8,7 @@ import {
 import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
 import { useEffect, useState } from "react";
-import { getNewProducts, getInventory, getCustomers } from "../../API";
+import { getInventory, getSuppliers } from "../../API";
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -16,17 +16,25 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 function Dashboard() {
   const [menuItems, setMenuItems] = useState(0); // State to store the menu item count
   const [customer, setCustomers] = useState(0);
+
   useEffect(() => {
     // Fetch inventory data
-    getInventory().then((res) => {
-      setMenuItems(res.data.length); 
+    getInventory()
+      .then((res) => {
+        setMenuItems(res.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching inventory:", err);
+      });
 
-    getCustomers().then((res) => {
-      setCustomers(res.users.length);
-    }).catch((err) => {
-      console.error("Error fetching inventory:", err);
-    });
-  }, [])}); // Empty dependency array to fetch only on mount
+    getSuppliers()
+      .then((res) => {
+        setCustomers(res.users);
+      })
+      .catch((err) => {
+        console.error("Error fetching customers:", err);
+      });
+  }, []); // Empty dependency array to fetch only on mount
 
   return (
     <div style={{ padding: 20, maxWidth: "100%" }}>
@@ -75,7 +83,7 @@ function Dashboard() {
             <SalesChart />
           </Col>
           <Col xs={24} lg={8}>
-            <RecentNewProducts />
+            {/* <RecentNewProducts /> */}
           </Col>
         </Row>
       </Space>
@@ -116,63 +124,63 @@ function DashboardCard({ title, value, icon, bgColor }) {
   );
 }
 
-function RecentNewProducts() {
-  const [dataSource, setDataSource] = useState([]);
-  const [loading, setLoading] = useState(false);
+// function RecentNewProducts() {
+//   const [dataSource, setDataSource] = useState([]);
+//   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setLoading(true);
-    getNewProducts().then((res) => {
-      setDataSource(res.data.products || []);
-      setLoading(false);
-    });
-  }, []);
+//   useEffect(() => {
+//     setLoading(true);
+//     getNewProducts().then((res) => {
+//       setDataSource(res.data.products || []);
+//       setLoading(false);
+//     });
+//   }, []);
 
-  return (
-    <Card
-      style={{
-        borderRadius: 12,
-        boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.2)",
-      }}
-      hoverable
-    >
-      <Typography.Title level={4}>New Tours</Typography.Title>
-      <Table
-        columns={[
-          {
-            title: "Image",
-            dataIndex: "images",
-            render: (images) => {
-              const imageUrl = images && images[0]?.desktopUrl;
-              return imageUrl ? (
-                <img src={imageUrl} alt="Product" style={{ width: 50, height: 50, borderRadius: 5 }} />
-              ) : (
-                "No image available"
-              );
-            },
-          },
-          {
-            title: "Name",
-            dataIndex: "name",
-          },
-          {
-            title: "Price",
-            dataIndex: "price",
-          },
-          {
-            title: "Description",
-            dataIndex: "description",
-          },
-        ]}
-        loading={loading}
-        dataSource={dataSource}
-        pagination={false}
-        rowKey="id"
-        scroll={{ x: "max-content" }}
-      />
-    </Card>
-  );
-}
+//   return (
+//     <Card
+//       style={{
+//         borderRadius: 12,
+//         boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.2)",
+//       }}
+//       hoverable
+//     >
+//       <Typography.Title level={4}>New Tours</Typography.Title>
+//       <Table
+//         columns={[
+//           {
+//             title: "Image",
+//             dataIndex: "images",
+//             render: (images) => {
+//               const imageUrl = images && images[0]?.desktopUrl;
+//               return imageUrl ? (
+//                 <img src={imageUrl} alt="Product" style={{ width: 50, height: 50, borderRadius: 5 }} />
+//               ) : (
+//                 "No image available"
+//               );
+//             },
+//           },
+//           {
+//             title: "Name",
+//             dataIndex: "name",
+//           },
+//           {
+//             title: "Price",
+//             dataIndex: "price",
+//           },
+//           {
+//             title: "Description",
+//             dataIndex: "description",
+//           },
+//         ]}
+//         loading={loading}
+//         dataSource={dataSource}
+//         pagination={false}
+//         rowKey="id"
+//         scroll={{ x: "max-content" }}
+//       />
+//     </Card>
+//   );
+// }
 
 function SalesChart() {
   const data = {

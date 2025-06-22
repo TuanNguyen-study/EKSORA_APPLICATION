@@ -195,8 +195,8 @@ export default function HomeScreen() {
       let toursData;
 
       // Kiểm tra xem danh mục có phải là "Tất cả" hay không
-      if (item.name.toLowerCase() === "tất cả" || item.isAllCategory) {
-        console.log("Bắt đầu gọi API getTours để lấy tất cả tour");
+      if (item.name.toLowerCase() === 'tất cả' || item.isAllCategory) {
+        console.log('Bắt đầu gọi API getTours để lấy tất cả tour');
         toursData = await getTours();
       } else {
         //console.log('Bắt đầu gọi API getToursByLocation với cateID:', item._id);
@@ -206,34 +206,34 @@ export default function HomeScreen() {
       // Xử lý dữ liệu tour
       const processedTours = Array.isArray(toursData)
         ? toursData.map((tour) => ({
+          ...tour,
+          image:
+            Array.isArray(tour.image) && tour.image.length > 0
+              ? tour.image[0]
+              : tour.image || 'https://via.placeholder.com/300',
+        }))
+        : toursData.data
+          ? toursData.data.map((tour) => ({
             ...tour,
             image:
               Array.isArray(tour.image) && tour.image.length > 0
                 ? tour.image[0]
-                : tour.image || "https://via.placeholder.com/300",
+                : tour.image || 'https://via.placeholder.com/300',
           }))
-        : toursData.data
-          ? toursData.data.map((tour) => ({
-              ...tour,
-              image:
-                Array.isArray(tour.image) && tour.image.length > 0
-                  ? tour.image[0]
-                  : tour.image || "https://via.placeholder.com/300",
-            }))
           : [];
 
       setLocationTours(processedTours);
-      setActiveTab("Đề xuất");
+      setActiveTab('Đề xuất');
     } catch (err) {
       console.error(
-        item.name.toLowerCase() === "tất cả"
-          ? "Lỗi khi gọi getTours:"
-          : "Lỗi khi gọi getToursByLocation:",
+        item.name.toLowerCase() === 'tất cả'
+          ? 'Lỗi khi gọi getTours:'
+          : 'Lỗi khi gọi getToursByLocation:',
         err.response?.data || err.message
       );
       setError(
-        item.name.toLowerCase() === "tất cả"
-          ? "Không tìm thấy tour nào"
+        item.name.toLowerCase() === 'tất cả'
+          ? 'Không tìm thấy tour nào'
           : `Không tìm thấy tour cho ${item.name}`
       );
       setLocationTours([]);
@@ -282,22 +282,20 @@ export default function HomeScreen() {
 
     fetchCategories();
   }, []);
-  // gọi API lấy tour
 
+  // gọi API lấy tour
   useEffect(() => {
     const fetchTours = async () => {
       try {
         const data = await getTours();
-        // console.log("Dữ liệu từ getTours:", data);
-
         const processedData = Array.isArray(data)
           ? data.map((tour) => ({
-              ...tour,
-              image:
-                Array.isArray(tour.image) && tour.image.length > 0
-                  ? tour.image[0]
-                  : tour.image || "https://via.placeholder.com/300",
-            }))
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : tour.image || "https://via.placeholder.com/300",
+          }))
           : [];
 
         setTours(processedData);
@@ -439,7 +437,6 @@ export default function HomeScreen() {
               windowSize={5}
               removeClippedSubviews={true}
               getItemLayout={(_, index) => ({
-                //getItemLayout={(data, index) => ({
                 length: 260,
                 offset: 260 * index,
                 index,
