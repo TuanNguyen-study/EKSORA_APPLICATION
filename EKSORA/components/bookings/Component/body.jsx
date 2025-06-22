@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, FlatList, Text, StyleSheet, ActivityIndicator, Image } from 'react-native';
-import { getBooking } from '../../../API/services/servicesBooking'; 
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, View } from 'react-native';
+import { getTrips } from '../../../API/services/servicesBooking';
 
 export default function Body() {
   const [loading, setLoading] = useState(true);
@@ -10,9 +10,11 @@ export default function Body() {
   useEffect(() => {
     const fetchTrips = async () => {
       try {
-        const userId = await AsyncStorage.getItem('userId'); 
+        const userId = await AsyncStorage.getItem('userId');
+        console.log('🧑 userId từ AsyncStorage:', userId);
         if (userId) {
-          const data = await getBooking(userId);
+          const data = await getTrips(userId);
+          console.log('📦 Dữ liệu trips từ API:', data);
           setTrips(data);
         } else {
           console.warn('Không tìm thấy userId');
@@ -25,7 +27,9 @@ export default function Body() {
     };
 
     fetchTrips();
+
   }, []);
+
 
   if (loading) {
     return (
@@ -40,16 +44,31 @@ export default function Body() {
       data={trips}
       renderItem={({ item }) => (
         <View style={styles.tripItem}>
-          <Image source={{ uri: item.image }} style={styles.image} />
+          <Image
+            source={{ uri: item?.tour_id?.image?.[0] }}
+            style={styles.image}
+          />
           <View style={styles.textContainer}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.location}>{item.location}</Text>
-            <Text style={styles.description}>{item.description}</Text>
-            <Text style={styles.status}>{`Trạng thái: ${item.status}`}</Text>
+            <Text style={styles.title}>{item?.tour_id?.name}</Text>
+            <Text style={styles.location}>{item?.tour_id?.location}</Text>
+
+            <Text style={styles.info}>
+              Ngày đi: {new Date(item.travel_date).toLocaleDateString('vi-VN')}
+            </Text>
+            <Text style={styles.info}>
+              Người lớn: {item.quantity_nguoiLon} | Trẻ em: {item.quantity_treEm}
+            </Text>
+            <Text style={styles.info}>
+              Tổng giá: {item.totalPrice.toLocaleString('vi-VN')} VND
+            </Text>
+
+            <Text style={styles.status}>
+              Trạng thái: {item.status}
+            </Text>
           </View>
         </View>
       )}
-      keyExtractor={(item) => item.id.toString()}
+      keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
       contentContainerStyle={trips.length === 0 ? styles.noResultsContainer : { padding: 16 }}
       ListEmptyComponent={
         <View style={styles.noResultsContent}>
