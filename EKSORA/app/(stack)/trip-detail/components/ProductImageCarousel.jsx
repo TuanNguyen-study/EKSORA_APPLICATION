@@ -154,6 +154,7 @@ const ProductImageCarousel = ({
           <TouchableOpacity onPress={onSharePress} style={styles.iconButtonBase}>
             <Ionicons name="share-social-outline" size={24} color={COLORS.white} />
           </TouchableOpacity>
+          
           <TouchableOpacity onPress={onCartPress} style={styles.iconButtonBase}>
             <Ionicons name="cart-outline" size={26} color={COLORS.white} />
           </TouchableOpacity>

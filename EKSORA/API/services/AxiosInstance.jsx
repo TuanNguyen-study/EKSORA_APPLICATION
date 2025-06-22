@@ -47,7 +47,7 @@ export const loginUser = createAsyncThunk(
         await AsyncStorage.setItem('USER_ID', userId);
       }
 
-      return res.data; // Trả về toàn bộ dữ liệu, bao gồm token và userId
+      return res.data;
     } catch (err) {
       console.error('🔥 Lỗi loginUser:', err);
       return rejectWithValue(
@@ -64,7 +64,7 @@ export const loginphone = createAsyncThunk(
     try {
       const res = await AxiosInstance.post('/api/login-phone', userData);
       const token = res.data?.token;
-      const userId = res.data?.userId; // Thêm lấy userId nếu có
+      const userId = res.data?.userId;
 
       if (token) {
         await AsyncStorage.setItem('ACCESS_TOKEN', token);
@@ -140,9 +140,8 @@ export const resetPassword = createAsyncThunk(
       );
       return res.data;
     } catch (err) {
-      return rejectWithValue(
-        extractErrorMessage(err, 'Đặt lại mật khẩu thất bại')
-      );
+
+      return rejectWithValue(err.response?.data?.message || 'đặt lại mật khẩu thất bại');
     }
   }
 );
