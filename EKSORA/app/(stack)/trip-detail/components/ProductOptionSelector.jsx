@@ -20,6 +20,7 @@ const ProductOptionSelector = ({
   title = 'Các dịch vụ cần thiết',
 
 
+
 }) => {
   const defaultDate = dateFilters.find(df => df.isDefault)?.id || dateFilters[0]?.id;
   const [selectedDate, setSelectedDate] = useState(defaultDate);
@@ -27,6 +28,7 @@ const ProductOptionSelector = ({
   const [selectedOptions, setSelectedOptions] = useState({});
 
   const handleDatePress = id => {
+
     setSelectedDate(id);
     onDateFilterChange?.(id);
   };
@@ -95,6 +97,7 @@ const ProductOptionSelector = ({
                 >
                   {promo.label}
                 </Text>
+
               </TouchableOpacity>
             ))}
           </View>
@@ -189,6 +192,7 @@ const ProductOptionSelector = ({
 
 
 
+
 };
 
 const styles = StyleSheet.create({
@@ -205,7 +209,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 16,
     backgroundColor: COLORS.white,
+    paddingVertical: 0,
   },
+
   promotionContainerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -255,13 +261,14 @@ const styles = StyleSheet.create({
   },
 
   chip: {
+
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
     marginRight: 10,
     backgroundColor: COLORS.white,
   },
@@ -279,6 +286,7 @@ const styles = StyleSheet.create({
   chipActive: {
     backgroundColor: COLORS.primaryLight,
     borderColor: COLORS.primary,
+
   },
   chipIcon: {
     marginRight: 6,
@@ -286,6 +294,7 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 14,
     color: COLORS.textSecondary,
+
   },
   chipTextActive: {
     color: COLORS.primary,
@@ -347,6 +356,7 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     marginBottom: 10,
   },
+
 
 
 

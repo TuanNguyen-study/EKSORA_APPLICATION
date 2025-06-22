@@ -11,7 +11,7 @@ const index = () => {
       <Header />
       <Offer/>
       <Promotions/>
-    </ScrollView>
+    </ScrollView> 
   )
 }
 

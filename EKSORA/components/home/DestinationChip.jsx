@@ -13,7 +13,7 @@ const DestinationChip = ({ destination, onPress, isSelected }) => {
     <TouchableOpacity
       style={[
         styles.chip,
-        isSelected && styles.chipSelected, // 👈 áp dụng màu nếu được chọn
+        isSelected && styles.chipSelected, 
       ]}
       onPress={() => onPress(destination)}
     >
@@ -21,7 +21,7 @@ const DestinationChip = ({ destination, onPress, isSelected }) => {
       <Text
         style={[
           styles.chipText,
-          isSelected && styles.chipTextSelected, // 👈 đổi màu chữ nếu được chọn
+          isSelected && styles.chipTextSelected, 
         ]}
       >
         {destination.name}
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   chipText: {
-    fontSize: 13,
+    fontSize: 14, 
     fontWeight: '500',
     color: COLORS.textSecondary,
   },
@@ -68,6 +68,10 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: 'bold',
   },
+  selectedChipText: {
+    color: COLORS.primary, 
+    fontWeight: 'bold',
+  }
 });
 
 export default DestinationChip;

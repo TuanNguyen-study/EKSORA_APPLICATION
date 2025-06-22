@@ -56,7 +56,7 @@ export default function SettingScreen() {
   const handleLogout = useCallback(async () => {
     try {
       await AsyncStorage.removeItem("userToken");
-      router.replace("/login");
+      router.replace("../login/loginEmail");
     } catch {
       setError("Đăng xuất thất bại");
     } finally {

@@ -1,4 +1,5 @@
-import AxiosInstance from "./AxiosInstance";
+import AxiosInstance from "../AxiosInstance";
+
 
 //API lấy danh sách yêu thích
 export const getFavorites = async (user_id) => {

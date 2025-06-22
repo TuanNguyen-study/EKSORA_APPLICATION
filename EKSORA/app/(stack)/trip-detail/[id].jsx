@@ -20,8 +20,15 @@ import NoteContactSection from './components/NoteContactSection';
 import ProductBasicInfo from './components/ProductBasicInfo';
 import ProductImageCarousel from './components/ProductImageCarousel';
 import { default as ProductOptionSelector } from './components/ProductOptionSelector';
+
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
+<<<<<<< HEAD
+=======
+import { addFavoriteTour } from '../../../API/services/servicesFavorite';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+>>>>>>> 6ec6905d279b0a3afe5b0cb3b9ae76f846f981fa
 
 export default function TripDetailScreen() {
   // const HARDCODED_DATE_FILTERS = [
@@ -36,6 +43,7 @@ export default function TripDetailScreen() {
     { id: 'promo-2', label: 'Sale' },
     { id: 'promo-3', label: 'Giảm 25%' },
   ];
+
 
   const router = useRouter();
   const { id: productId } = useLocalSearchParams();
@@ -229,7 +237,26 @@ export default function TripDetailScreen() {
             router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
           }
           onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
+<<<<<<< HEAD
           onFavoritePress={onFavoritePress}
+=======
+          onFavoritePress={async () => {
+            try {
+              const userId = await AsyncStorage.getItem('USER_ID');
+              if (!userId || !productId) {
+                Alert.alert('Lỗi', 'Không xác định được người dùng hoặc tour.');
+                return;
+              }
+
+              await addFavoriteTour(userId, productId);
+              setIsFavorite(true); 
+              Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
+            } catch (err) {
+              console.error(' Thêm tour yêu thích lỗi:', err.response?.data || err.message);
+              Alert.alert(' Thêm thất bại', err.response?.data?.message || 'Vui lòng thử lại sau');
+            }
+          }}
+>>>>>>> 6ec6905d279b0a3afe5b0cb3b9ae76f846f981fa
         />
         
 
@@ -243,6 +270,7 @@ export default function TripDetailScreen() {
 
           <View style={styles.separator} />
 
+
           {/* <ProductOptionSelector1
             servicePackages={productData.availableServicePackages1}
             // dateFilters={HARDCODED_DATE_FILTERS}
@@ -250,7 +278,9 @@ export default function TripDetailScreen() {
             onDateFilterChange={(id) => console.log('Ngày đã chọn:', id)}
             onPromotionChange={(promo) => console.log('Ưu đãi đã chọn:', promo)}
             onOptionSelect={(pkgId, opt) => console.log('Gói đã chọn:', pkgId, opt)}
+
           /> */}
+
 
 
           <ProductOptionSelector
@@ -263,8 +293,6 @@ export default function TripDetailScreen() {
             }}
             title=""
           />
-
-
           <CustomerReviewSection
             reviews={productData.reviews}
             averageRating={productData.rating.stars}
@@ -294,7 +322,6 @@ export default function TripDetailScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-
       <StickyBookingFooter
         priceInfo={{
           ...productData.price,
@@ -302,6 +329,7 @@ export default function TripDetailScreen() {
         }}
         onBookNow={onBookNow}
       />
+
     </View>
   );
 }

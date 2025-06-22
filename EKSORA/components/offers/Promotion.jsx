@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, ImageBackground } from "react-native";
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, ImageBackground, Dimensions } from "react-native";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 import { getTours } from "../../API/services/serverCategories";
+import { getToursByLocation } from "../../API/services/serverCategories";
+import { router } from "expo-router";
 
-export default function Promotions() {
+export default function Promotions({ onPress }) {
+
+  // Lấy kích thước màn hình
+  const { width } = Dimensions.get('window');
+
+  // Cập nhật CARD_WIDTH và IMAGE_HEIGHT để linh hoạt với kích thước màn hình
+  const CARD_WIDTH = width * 0.43;
+  const IMAGE_HEIGHT = CARD_WIDTH * (3 / 4);
+
   const [loading, setLoading] = useState(true);
   const [tour, setTours] = useState([]);
+  const [tourId, setId] = useState([]);
 
   useEffect(() => {
     const fetchTours = async () => {
@@ -22,6 +33,23 @@ export default function Promotions() {
     fetchTours();
   }, []);
 
+
+
+  useEffect(() => {
+    const fetchToursByLocation = async () => {
+      try {
+        const response = await getToursByLocation();
+        setId(response);
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        console.error("Lỗi khi lấy chi tiết", err);
+      }
+    };
+
+    fetchToursByLocation();
+  }, [])
+
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
       <Image source={require("../../assets/images/imgOffer.png")} style={styles.headerIcon} />
@@ -36,11 +64,14 @@ export default function Promotions() {
           numColumns={2}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
           renderItem={({ item }) => {
-            // Tính giá sau khi giảm giá
-            const discountPrice = (item.price - (item.price * 15) / 100).toLocaleString('vi-VN'); // Thêm dấu phẩy
+            const discountPrice = (item.price - (item.price * 15) / 100).toLocaleString('vi-VN');
 
             return (
-              <View style={styles.card}>
+
+              <TouchableOpacity style={styles.card} onPress={() => router.push({
+                pathname: "/(stack)/trip-detail/[id]",
+                params: { id: item._id }
+              })}>
                 <ImageBackground source={{ uri: item.image[0] }} style={styles.image}>
                   <TouchableOpacity style={styles.heartIcon}>
                     <EvilIcons name="heart" size={24} color="black" />
@@ -56,7 +87,7 @@ export default function Promotions() {
                   </View>
                   <Text style={styles.price}>{`${discountPrice} VND`}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           }}
           keyExtractor={(_, index) => index.toString()}

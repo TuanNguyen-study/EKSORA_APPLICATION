@@ -31,9 +31,9 @@ export const getToursByLocation = async (cateID) => {
         cateID: cateID,
       },
     });
-    console.log('Response đầy đủ:', response);
-    console.log('Data từ API:', response);
-    return response; // Trả về response trực tiếp vì AxiosInstance đã xử lý trả về data
+    //console.log('Response đầy đủ:', response);
+    //console.log('Data từ API:', response);
+    return response; 
   } catch (error) {
     console.error('Lỗi khi lấy danh sách tour theo cateID:', error);
     throw error;
