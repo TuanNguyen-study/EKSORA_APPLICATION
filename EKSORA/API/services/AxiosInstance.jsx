@@ -46,6 +46,9 @@ export const loginUser = createAsyncThunk(
       if (token) {
         await AsyncStorage.setItem('ACCESS_TOKEN', token);
       }
+      if (userId) {
+        await AsyncStorage.setItem('userId', userId); // ✅ Lưu userId tại đây
+      }
 
       return {
         token: res.data.token,
@@ -67,8 +70,12 @@ export const loginphone = createAsyncThunk(
     try {
       const res = await AxiosInstance.post('/api/login-phone', userData);
       const token = res.data?.token;
+      const userId = res.data?.userId;
       if (token) {
         await AsyncStorage.setItem('ACCESS_TOKEN', token); // ✅ Lưu token
+      }
+      if (userId) {
+        await AsyncStorage.setItem('userId', userId); // ✅ Lưu userId tại đây
       }
       return res.data;
     } catch (err) {

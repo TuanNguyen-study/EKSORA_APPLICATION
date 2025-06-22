@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { toggleFavorite } from '../../../API/services/servicesFavorite';
 import { fetchTourDetail } from '../../../API/services/tourService';
 import { COLORS } from '../../../constants/colors';
 import CustomerReviewSection from './components/CustomerReviewSection';
@@ -20,8 +22,6 @@ import ProductImageCarousel from './components/ProductImageCarousel';
 import { default as ProductOptionSelector } from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
-
-
 
 export default function TripDetailScreen() {
   // const HARDCODED_DATE_FILTERS = [
@@ -132,6 +132,27 @@ export default function TripDetailScreen() {
       loadTourDetails(productId);
     }
   };
+  const onFavoritePress = async () => {
+  try {
+    const userId = await AsyncStorage.getItem('userId'); // 👈 nhớ đúng key
+    if (!userId) {
+      Alert.alert('Thông báo', 'Bạn cần đăng nhập để sử dụng chức năng này.');
+      return;
+    }
+
+    await toggleFavorite(userId, productData._id, isFavorite); // 👈 API xử lý thêm/xoá
+    const newState = !isFavorite;
+    setIsFavorite(newState);
+
+    Alert.alert(
+      'Thành công',
+      newState ? '❤️ Đã thêm vào danh sách yêu thích' : '❌ Đã xoá khỏi danh sách yêu thích'
+    );
+  } catch (error) {
+    console.error('Lỗi khi cập nhật yêu thích:', error);
+    Alert.alert('Lỗi', 'Không thể cập nhật danh sách yêu thích. Vui lòng thử lại sau.');
+  }
+};
 
   const onBookNow = () => {
   const basePrice = productData?.price?.current || 0;
@@ -144,6 +165,9 @@ export default function TripDetailScreen() {
     }
     return sum;
   }, 0);
+
+  
+
 
   const total_price = basePrice + optionTotal;
 
@@ -205,11 +229,11 @@ export default function TripDetailScreen() {
             router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
           }
           onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
-          onFavoritePress={() => {
-            setIsFavorite(v => !v);
-            Alert.alert(isFavorite ? 'Đã bỏ khỏi yêu thích' : 'Đã thêm vào yêu thích');
-          }}
+          onFavoritePress={onFavoritePress}
         />
+        
+
+        
 
         <View style={styles.mainContentContainer}>
           <ProductBasicInfo
@@ -281,6 +305,7 @@ export default function TripDetailScreen() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
