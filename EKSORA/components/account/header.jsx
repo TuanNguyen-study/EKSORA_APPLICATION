@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getUser } from '../../API/services/servicesUser';
-
 export default function Header() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -11,9 +10,9 @@ export default function Header() {
     const fetchUser = async () => {
       try {
         const data = await getUser();
-        setUser(data);
-      } catch (error) {
-        // xử lý lỗi nếu cần
+        setUser(data); // hoặc data.user nếu cần
+      } catch (err) {
+        console.error('Không lấy được thông tin user');
       } finally {
         setLoading(false);
       }
@@ -43,7 +42,7 @@ export default function Header() {
       <View style={styles.userInfo}>
         <Ionicons name="person-circle-outline" size={50} color="black" />
         <View style={styles.textGroup}>
-          <Text style={styles.username}>{user.name}</Text>
+          <Text style={styles.username}>{user.first_name}</Text>
           <TouchableOpacity>
             <Text style={styles.update}>Cập nhật thông tin cá nhân</Text>
           </TouchableOpacity>
