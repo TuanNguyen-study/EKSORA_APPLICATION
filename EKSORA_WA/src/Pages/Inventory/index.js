@@ -1,34 +1,44 @@
 import React, { useEffect, useState } from "react";
-import { Typography, Space, Table, Avatar, Button, Modal, Form, Input, Upload, message } from "antd";
+import {
+  Typography,
+  Space,
+  Table,
+  Avatar,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Upload,
+  message,
+  Rate,
+} from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import { getInventory } from "../../API"; 
+import { getInventory } from "../../API"; // API trả về danh sách tour
 
 function Inventory() {
   const [loading, setLoading] = useState(false);
   const [dataSource, setDataSource] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
-  const [fileList, setFileList] = useState([]); 
+  const [fileList, setFileList] = useState([]);
   const [form] = Form.useForm();
 
-  // Fetch inventory data
   useEffect(() => {
     const fetchInventory = async () => {
       setLoading(true);
       try {
         const res = await getInventory();
-        const inventory = res.data || [];
-        const formattedData = inventory.map((item) => ({
+        const dataRaw = Array.isArray(res) ? res : res.data || [];
+
+        const formatted = dataRaw.map((item) => ({
           ...item,
-          categories: item.categories
-            ? item.categories.map((cat) => cat.name).join(", ")
-            : "No categories",
-          imageUrl: item.images?.[0]?.desktopUrl || "",
+          imageUrl: item.image?.[0] || "", // chỉ lấy ảnh đầu tiên
         }));
-        setDataSource(formattedData);
-      } catch (error) {
-        console.error("Error fetching inventory:", error);
-        message.error("Failed to load inventory data.");
+
+        setDataSource(formatted);
+      } catch (err) {
+        console.error("Fetch failed", err);
+        message.error("Failed to load tour list");
       } finally {
         setLoading(false);
       }
@@ -37,18 +47,26 @@ function Inventory() {
     fetchInventory();
   }, []);
 
-  // Open modal for Add/Edit
   const openModal = (item = null) => {
     setCurrentItem(item);
-    form.setFieldsValue(item || { name: "", categories: "", price: "", stock: "" });
+    form.setFieldsValue(
+      item || {
+        name: "",
+        description: "",
+        location: "",
+        duration: "",
+        price: "",
+        province: "",
+      }
+    );
     setFileList(
-      item?.images
+      item?.image?.length
         ? [
             {
               uid: "-1",
               name: "current-image",
               status: "done",
-              url: item.images[0].desktopUrl,
+              url: item.image[0],
             },
           ]
         : []
@@ -56,64 +74,79 @@ function Inventory() {
     setIsModalOpen(true);
   };
 
-  // Handle Add/Edit submission
   const handleSubmit = async (values) => {
     try {
-      const imageUrl = fileList[0]?.url || fileList[0]?.response?.url;
-      const data = { ...values, imageUrl };
+      const imageUrl = fileList[0]?.url || fileList[0]?.response?.url || "";
+      const dataImg = {
+        ...values,
+        image: [imageUrl],
+      };
+
       if (currentItem) {
-        // await editMenuItem(currentItem.id, data); 
-        message.success("Menu item updated successfully!");
+        // await updateTour(currentItem._id, data);
+        message.success("Tour updated successfully!");
       } else {
-        // await addMenuItem(data);
-        message.success("New menu item added successfully!");
+        // await addTour(data);
+        message.success("Tour added successfully!");
       }
+
       setIsModalOpen(false);
       form.resetFields();
       setFileList([]);
-      setDataSource(await getInventory().then((res) => res.data));
-    } catch (error) {
-      console.error("Error saving menu item:", error);
-      message.error("Failed to save menu item.");
+
+      const res = await getInventory();
+      const data = Array.isArray(res) ? res : res.data || [];
+      const formatted = data.map((item) => ({
+        ...item,
+        imageUrl: item.image?.[0] || "",
+      }));
+      setDataSource(formatted);
+    } catch (err) {
+      console.error("Save error", err);
+      message.error("Failed to save tour");
     }
   };
 
   const handleDelete = async (id) => {
     try {
-      // await deleteMenuItem(id);
-      message.success("Menu item deleted successfully!");
-      setDataSource(await getInventory().then((res) => res.data)); 
-    } catch (error) {
-      console.error("Error deleting menu item:", error);
-      message.error("Failed to delete menu item.");
+      // await deleteTour(id);
+      message.success("Deleted successfully");
+
+      const res = await getInventory();
+      const dataRaw = Array.isArray(res) ? res : res.data || [];
+      const formatted = dataRaw.map((item) => ({
+        ...item,
+        imageUrl: item.image?.[0] || "",
+      }));
+      setDataSource(formatted);
+    } catch (err) {
+      console.error("Delete error", err);
+      message.error("Failed to delete tour");
     }
   };
 
-  // Handle image upload
-  const handleUploadChange = ({ fileList: newFileList }) => {
-    setFileList(newFileList);
-  };
+  const handleUploadChange = ({ fileList }) => setFileList(fileList);
 
   return (
-    <Space size={20} direction="vertical" style={{ width: "100%" }}>
-      <Typography.Title level={4}>Inventory</Typography.Title>
+    <Space direction="vertical" style={{ width: "100%" }} size={20}>
+      <Typography.Title level={4}>Tour Inventory</Typography.Title>
+
       <Button type="primary" onClick={() => openModal()}>
-        Add Menu Item
+        Add Tour
       </Button>
+
       <Table
         loading={loading}
+        dataSource={dataSource}
+        rowKey="_id"
+        pagination={{ pageSize: 5 }}
         columns={[
           {
             title: "Image",
             dataIndex: "imageUrl",
-            render: (imageUrl) =>
-              imageUrl ? (
-                <Avatar
-                  src={imageUrl}
-                  size={64}
-                  shape="square"
-                  alt="Product Image"
-                />
+            render: (url) =>
+              url ? (
+                <Avatar src={url} size={64} shape="square" />
               ) : (
                 "No Image"
               ),
@@ -123,91 +156,107 @@ function Inventory() {
             dataIndex: "name",
           },
           {
-            title: "Categories",
-            dataIndex: "categories",
+            title: "Description",
+            dataIndex: "description",
+            render: (desc) =>
+              desc?.length > 50 ? desc.slice(0, 50) + "..." : desc,
+          },
+          {
+            title: "Location",
+            dataIndex: "location",
+          },
+          {
+            title: "Duration",
+            dataIndex: "duration",
           },
           {
             title: "Price",
             dataIndex: "price",
-            render: (value) => <span>{value} VND</span>,
+            render: (price) => `${price?.toLocaleString()} VND`,
           },
           {
-            title: "Stock",
-            dataIndex: "stock",
+            title: "Province",
+            dataIndex: "province",
+          },
+          {
+            title: "Rating",
+            dataIndex: "rating",
+            render: (rating) => <Rate disabled defaultValue={rating || 0} />,
           },
           {
             title: "Actions",
             render: (_, record) => (
-              <Space size="middle">
+              <Space>
                 <Button type="link" onClick={() => openModal(record)}>
                   Edit
                 </Button>
-                <Button
-                  type="link"
-                  danger
-                  onClick={() => handleDelete(record.id)}
-                >
+                <Button danger type="link" onClick={() => handleDelete(record._id)}>
                   Delete
                 </Button>
               </Space>
             ),
           },
         ]}
-        dataSource={dataSource}
-        rowKey="id"
-        pagination={{
-          pageSize: 5,
-        }}
       />
-      {/* Modal for Add/Edit */}
+
       <Modal
-        title={currentItem ? "Edit Menu Item" : "Add Menu Item"}
+        title={currentItem ? "Edit Tour" : "Add Tour"}
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         onOk={() => form.submit()}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          initialValues={{
-            name: "",
-            categories: "",
-            price: "",
-            stock: "",
-          }}
-        >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
             label="Name"
             name="name"
-            rules={[{ required: true, message: "Please enter the name!" }]}
+            rules={[{ required: true, message: "Please enter name" }]}
           >
-            <Input placeholder="Enter item name" />
+            <Input placeholder="Enter tour name" />
           </Form.Item>
+
           <Form.Item
-            label="Categories"
-            name="categories"
-            rules={[{ required: true, message: "Please enter categories!" }]}
+            label="Description"
+            name="description"
+            rules={[{ required: true, message: "Please enter description" }]}
           >
-            <Input placeholder="Enter categories (comma-separated)" />
+            <Input.TextArea rows={3} placeholder="Enter description" />
           </Form.Item>
+
+          <Form.Item
+            label="Location"
+            name="location"
+            rules={[{ required: true, message: "Please enter location" }]}
+          >
+            <Input placeholder="Enter location" />
+          </Form.Item>
+
+          <Form.Item
+            label="Duration"
+            name="duration"
+            rules={[{ required: true, message: "Please enter duration" }]}
+          >
+            <Input placeholder="e.g., 2 ngày 1 đêm" />
+          </Form.Item>
+
           <Form.Item
             label="Price"
             name="price"
-            rules={[{ required: true, message: "Please enter the price!" }]}
+            rules={[{ required: true, message: "Please enter price" }]}
           >
-            <Input placeholder="Enter price" />
+            <Input type="number" placeholder="Enter price in VND" />
           </Form.Item>
+
           <Form.Item
-            label="Stock"
-            name="stock"
-            rules={[{ required: true, message: "Please enter the stock quantity!" }]}
+            label="Province"
+            name="province"
+            rules={[{ required: true, message: "Please enter province" }]}
           >
-            <Input placeholder="Enter stock quantity" />
+            <Input placeholder="Enter province" />
           </Form.Item>
+
           <Form.Item label="Upload Image">
             <Upload
-              action="/api/upload" 
+              action="/api/upload"
               listType="picture"
               fileList={fileList}
               onChange={handleUploadChange}

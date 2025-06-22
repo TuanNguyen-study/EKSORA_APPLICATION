@@ -136,7 +136,7 @@ function RecentNewProducts() {
       }}
       hoverable
     >
-      <Typography.Title level={4}>New Popchese Combo</Typography.Title>
+      <Typography.Title level={4}>New Tours</Typography.Title>
       <Table
         columns={[
           {

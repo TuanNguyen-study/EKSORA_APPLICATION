@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getUser } from '../../API/services/servicesUser';
-
+import { router } from 'expo-router';
 export default function Header() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,8 +12,8 @@ export default function Header() {
       try {
         const data = await getUser();
         setUser(data);
-      } catch (error) {
-        // xử lý lỗi nếu cần
+      } catch (err) {
+        console.error('Không lấy được thông tin user');
       } finally {
         setLoading(false);
       }
@@ -43,9 +43,9 @@ export default function Header() {
       <View style={styles.userInfo}>
         <Ionicons name="person-circle-outline" size={50} color="black" />
         <View style={styles.textGroup}>
-          <Text style={styles.username}>{user.name}</Text>
+          <Text style={styles.username}>{user.first_name}</Text>
           <TouchableOpacity>
-            <Text style={styles.update}>Cập nhật thông tin cá nhân</Text>
+            <Text style={styles.update} onPress={() => router.push('/(stack)/UpdateUser')}>Cập nhật thông tin cá nhân</Text>
           </TouchableOpacity>
         </View>
         <Ionicons name="notifications-outline" size={24} color="black" />
