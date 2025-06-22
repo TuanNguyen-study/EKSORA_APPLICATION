@@ -51,17 +51,17 @@ export default function Header({ setFilterData }) {
 
   return (
     <View style={styles.header}>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.editButton}
         
         onPress={ () => router.push("/(stack)/favorites/editFavouriScreen")}
       >
         <Ionicons name="create-outline" size={24} color="#005c8b" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <Text style={styles.title}>Yêu thích</Text>
 
       <View style={styles.filterRow}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.filterBtn}
           onPress={() => setModalVisible(true)}
         >
@@ -71,7 +71,7 @@ export default function Header({ setFilterData }) {
             style={styles.filterIcon}
           />
           <Text style={styles.filterText}>Lọc</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <Modal

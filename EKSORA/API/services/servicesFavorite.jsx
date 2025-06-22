@@ -11,17 +11,6 @@ export const getFavoriteToursByUser = async (userId) => {
     throw error;
   }
 };
-export const deleteFavorites = async (ids) => {
-  try {
-    const response = await AxiosInstance().delete(`/api/favorites`, {
-      data: { ids },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Lỗi khi xoá favorites:", error);
-    throw error;
-  }
-};
 
 
 export const addFavoriteTour = async (userId, tourId) => {
@@ -38,3 +27,24 @@ export const addFavoriteTour = async (userId, tourId) => {
     throw error;
   }
 };
+
+export const deleteFavoriteTour = async (userId, tourId, token) => {
+  try {
+    const response = await AxiosInstance.delete('/api/favorites', {
+      data: {
+        user_id: userId,
+        tour_id: tourId,
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log('Xoá tour yêu thích thành công:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi xoá tour yêu thích:', error.response?.data || error.message);
+    throw error;
+  }
+};
+

@@ -18,6 +18,7 @@ import {
 import { getTours } from "../../../API/services/serverCategories";
 import SuggestionCard from "../../home/SuggestionCard";
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
 
 export default function Body({ filterData }) {
@@ -30,6 +31,7 @@ export default function Body({ filterData }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [error, setError] = useState(null);
+  const router = useRouter();
 
   // Load tours yêu thích
   const loadFavoriteTours = useCallback(async () => {
@@ -109,11 +111,11 @@ export default function Body({ filterData }) {
     filter();
   }, [tours, selectedDestination, selectedCategory, selectedTime]);
 
-useFocusEffect(
-  useCallback(() => {
-    loadFavoriteTours();
-  }, [])
-)
+  useFocusEffect(
+    useCallback(() => {
+      loadFavoriteTours();
+    }, [])
+  )
   // Tải gợi ý tour
   const handleStartPress = async () => {
     setSuggestionLoading(true);
@@ -184,8 +186,12 @@ useFocusEffect(
     <View style={styles.container}>
       <FlatList
         data={filteredTours}
-        //extraData={filteredTours}
-        renderItem={({ item }) => <FavoriteItem {...item} />}
+        renderItem={({ item }) => (
+          <FavoriteItem
+            {...item}
+            onPress={() => router.push(`/trip-detail/${item.id}`)} 
+          />
+        )}
         keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
         contentContainerStyle={filteredTours.length === 0 ? styles.noResultsContainer : { padding: 16 }}
         ListEmptyComponent={
