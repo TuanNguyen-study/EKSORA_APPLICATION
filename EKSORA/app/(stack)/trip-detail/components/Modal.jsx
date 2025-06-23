@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
-const BookingModalContent = ({ visible, onClose, priceInfo, tourName }) => {
+export const BookingModalContent = ({ visible, onClose, priceInfo, tourName }) => {
     const [selectedDate, setSelectedDate] = React.useState('16/5');
 
     const formatPrice = (price) => {

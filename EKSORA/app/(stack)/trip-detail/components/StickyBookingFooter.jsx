@@ -102,7 +102,6 @@ const StickyBookingFooter = ({
           </View>
         </View>
       </View>
-
       <Modal visible={modalVisible} animationType="slide" transparent>
         <BookingModalContent
           onClose={() => setModalVisible(false)}
@@ -111,6 +110,7 @@ const StickyBookingFooter = ({
         />
       </Modal>
     </>
+
   );
 };
 

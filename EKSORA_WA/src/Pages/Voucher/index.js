@@ -31,8 +31,7 @@ function Voucher() {
     setLoading(true);
     try {
       const res = await getVoucher();
-      
-      const data = Array.isArray(res?.data) ? res.data : [];
+      const data = Array.isArray(res) ? res : [];
 
       const formatted = data.map((voucher, index) => ({
         key: voucher._id || index,
@@ -42,6 +41,7 @@ function Voucher() {
         start_date: voucher.start_date,
         end_date: voucher.end_date,
         status: voucher.status,
+        booking_id: voucher.booking_id, 
       }));
 
       setVouchers(formatted);
@@ -63,6 +63,7 @@ function Voucher() {
             end_date: dayjs(item.end_date),
           }
         : {
+            booking_id: "",
             code: "",
             discount: "",
             start_date: null,
@@ -175,6 +176,14 @@ function Voucher() {
         onOk={() => form.submit()}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form.Item
+            label="Booking ID"
+            name="booking_id"
+            rules={[{ required: true, message: "Please enter booking ID" }]}
+          >
+            <Input placeholder="Enter booking ID" />
+          </Form.Item>
+
           <Form.Item
             label="Code"
             name="code"

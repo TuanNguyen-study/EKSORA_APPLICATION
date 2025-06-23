@@ -141,6 +141,11 @@ function Inventory() {
         rowKey="_id"
         pagination={{ pageSize: 5 }}
         columns={[
+            {
+    title: "ID",
+    dataIndex: "_id",
+    render: (id) => <span style={{ fontSize: 12, color: "#999" }}>{id}</span>,
+  },
           {
             title: "Image",
             dataIndex: "imageUrl",
