@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, Modal, Dimensions
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { routeToScreen } from 'expo-router/build/useScreens';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUserProfile } from '../../../API/services/servicesProfile';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+const screenHeight = Dimensions.get('window').height;
 
 export default function PersonalInfoScreen() {
   const [userInfo, setUserInfo] = useState({
@@ -10,88 +17,230 @@ export default function PersonalInfoScreen() {
     title: '',
     birth: '',
     country: '',
-    phoneEmail: ''
+    phoneEmail: '',
   });
 
-  const handleChange = (field, value) => {
-    setUserInfo({ ...userInfo, [field]: value });
+  const [avatarUri, setAvatarUri] = useState('https://cdn-icons-png.flaticon.com/512/149/149071.png');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentField, setCurrentField] = useState('');
+  const [tempValue, setTempValue] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const localAvatar = await AsyncStorage.getItem('LOCAL_AVATAR_URI');
+        const localBirth = await AsyncStorage.getItem('LOCAL_BIRTH');
+        if (localAvatar) setAvatarUri(localAvatar);
+
+        const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+        if (!token) {
+          console.warn('Không tìm thấy token');
+          return;
+        }
+
+        const user = await getUserProfile(token);
+        setUserInfo({
+          name: user.first_name || '',
+          title: user.last_name || '',
+          birth: localBirth || '',
+          country: user.address || '',
+          phoneEmail: user.phone || user.email || '',
+        });
+      } catch (err) {
+        console.log('Lỗi khi tải dữ liệu người dùng:', err);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleOpenModal = (field, currentValue) => {
+    if (field === 'birth') {
+      setShowDatePicker(true);
+    } else {
+      setCurrentField(field);
+      setTempValue(currentValue);
+      setModalVisible(true);
+    }
+  };
+
+  const handleModalSave = () => {
+    setUserInfo(prev => ({
+      ...prev,
+      [currentField]: tempValue
+    }));
+    if (currentField === 'birth') {
+      AsyncStorage.setItem('LOCAL_BIRTH', tempValue);
+    }
+    setModalVisible(false);
+  };
+
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      const formattedDate = selectedDate.toISOString().split('T')[0]; // yyyy-mm-dd
+      setUserInfo(prev => ({
+        ...prev,
+        birth: formattedDate,
+      }));
+      AsyncStorage.setItem('LOCAL_BIRTH', formattedDate);
+    }
   };
 
   const handleSave = () => {
     console.log('Thông tin lưu:', userInfo);
-    // Gửi API lưu thông tin ở đây nếu cần
+    // Gửi API cập nhật nếu cần
   };
+
+const pickImage = async () => {
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== 'granted') {
+    alert('Bạn cần cấp quyền truy cập ảnh.');
+    return;
+  }
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 0.7,
+    base64: true, 
+  });
+
+  if (!result.canceled && result.assets?.length > 0) {
+    const base64Img = result.assets[0].base64;
+    const uri = `data:image/jpeg;base64,${base64Img}`;
+
+    setAvatarUri(uri); // hiển thị ảnh
+    await AsyncStorage.setItem('LOCAL_AVATAR_URI', uri); 
+  }
+};
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity>
-          <Ionicons name="arrow-back" size={24} color="black"  onPress={() => router.push('/(tabs)/account')}/>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/account')}>
+          <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Thông tin cá nhân</Text>
         <Ionicons name="eye-off-outline" size={24} color="black" />
       </View>
 
-      {/* Body */}
       <ScrollView style={styles.body}>
-        <Item label="Ảnh của tôi" valueComponent={<Avatar />} />
-        <Item label="Tên của bạn" inputValue={userInfo.name} onChangeText={(text) => handleChange('name', text)} />
-        <Item label="Danh xưng" inputValue={userInfo.title} onChangeText={(text) => handleChange('title', text)} />
-        <Item label="Ngày sinh" inputValue={userInfo.birth} onChangeText={(text) => handleChange('birth', text)} />
-        <Item label="Quốc gia/Khu vực cư trú" inputValue={userInfo.country} onChangeText={(text) => handleChange('country', text)} />
-        <Item label="Số điện thoại/Email" inputValue={userInfo.phoneEmail} onChangeText={(text) => handleChange('phoneEmail', text)} />
+        <Item label="Ảnh của tôi" valueComponent={<Avatar avatarUri={avatarUri} pickImage={pickImage} />} />
+
+        <TouchableOpacity onPress={() => handleOpenModal('name', userInfo.name)}>
+          <Item label="Tên của bạn" inputValue={userInfo.name} isEditable />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => handleOpenModal('title', userInfo.title)}>
+          <Item label="Danh xưng" inputValue={userInfo.title} isEditable />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => handleOpenModal('birth', userInfo.birth)}>
+          <Item label="Ngày sinh" inputValue={userInfo.birth} isEditable />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => handleOpenModal('country', userInfo.country)}>
+          <Item label="Quốc gia/Khu vực cư trú" inputValue={userInfo.country} isEditable />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => handleOpenModal('phoneEmail', userInfo.phoneEmail)}>
+          <Item label="Số điện thoại/Email" inputValue={userInfo.phoneEmail} isEditable />
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveButtonText}>Lưu</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Modal chỉnh sửa văn bản */}
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Chỉnh sửa {getFieldLabel(currentField)}</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder={`Nhập ${getFieldLabel(currentField).toLowerCase()}`}
+              value={tempValue}
+              onChangeText={setTempValue}
+            />
+
+            <TouchableOpacity style={styles.modalSaveButton} onPress={handleModalSave}>
+              <Text style={styles.modalSaveButtonText}>Lưu</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date Picker cho ngày sinh */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={userInfo.birth ? new Date(userInfo.birth) : new Date()}
+          mode="date"
+          display="spinner"
+          onChange={handleDateChange}
+          maximumDate={new Date()}
+        />
+      )}
     </View>
   );
 }
 
-function Item({ label, value, valueComponent, inputValue, onChangeText, noValue }) {
+// COMPONENTS
+
+function Item({ label, inputValue, valueComponent, isEditable }) {
   return (
     <View style={styles.itemWrapper}>
       <View style={styles.itemContainer}>
         <View style={styles.itemHeader}>
           <Text style={styles.itemLabel}>{label}</Text>
-          {!valueComponent && inputValue !== undefined && <Text style={styles.editText}>Chỉnh sửa</Text>}
+          {isEditable && <Text style={styles.editText}>Chỉnh sửa</Text>}
         </View>
         {valueComponent ? (
           valueComponent
-        ) : inputValue !== undefined ? (
+        ) : (
           <TextInput
             style={styles.inputField}
             value={inputValue}
-            onChangeText={onChangeText}
-            placeholder="Chưa có"
-            placeholderTextColor="#888"
+            editable={false}
           />
-        ) : (
-          <Text style={[styles.valueText, noValue && { color: '#666', fontSize: 12 }]}>{value}</Text>
         )}
       </View>
     </View>
   );
 }
 
-function Avatar() {
+function Avatar({ avatarUri, pickImage }) {
   return (
-    <View style={styles.avatarWrapper}>
-      <Image
-        source={{ uri: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }}
-        style={styles.avatar}
-      />
-    </View>
+    <TouchableOpacity onPress={pickImage} style={styles.avatarWrapper}>
+      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+    </TouchableOpacity>
   );
 }
 
+const getFieldLabel = (field) => {
+  switch (field) {
+    case 'name': return 'Tên của bạn';
+    case 'title': return 'Danh xưng';
+    case 'birth': return 'Ngày sinh';
+    case 'country': return 'Quốc gia/Khu vực cư trú';
+    case 'phoneEmail': return 'Số điện thoại/Email';
+    default: return '';
+  }
+};
+
+// STYLES
 const styles = StyleSheet.create({
+  // Container tổng thể
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
+
+  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -104,9 +253,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+
+  // Body ScrollView
   body: {
     paddingHorizontal: 16,
   },
+
+  // Item thông tin
   itemWrapper: {
     marginBottom: 8,
     backgroundColor: '#fff',
@@ -115,7 +268,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderColor: '#eee',
-    paddingHorizontal: 0,
   },
   itemHeader: {
     flexDirection: 'row',
@@ -131,23 +283,25 @@ const styles = StyleSheet.create({
     color: '#007BFF',
     fontSize: 13,
   },
-  valueText: {
-    fontSize: 14,
-    color: '#000',
-  },
   inputField: {
     fontSize: 14,
     paddingVertical: 4,
     color: '#000',
   },
+
+  // Avatar
   avatarWrapper: {
     marginTop: 8,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 1,
+    borderColor: '#ccc',
   },
+
+  // Nút Lưu
   saveButton: {
     backgroundColor: '#007BFF',
     paddingVertical: 12,
@@ -157,6 +311,44 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
+  // Modal chỉnh sửa văn bản
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: screenHeight * 0.3,
+    justifyContent: 'space-between',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 20,
+  },
+  modalSaveButton: {
+    backgroundColor: '#FF5A00',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalSaveButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',

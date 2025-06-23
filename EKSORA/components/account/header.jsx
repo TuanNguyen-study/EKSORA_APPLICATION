@@ -3,15 +3,22 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { getUser } from '../../API/services/servicesUser';
 import { router } from 'expo-router';
+import { Image } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function Header() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [avatarUri, setAvatarUri] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const data = await getUser();
         setUser(data);
+        const localAvatar = await AsyncStorage.getItem('LOCAL_AVATAR_URI');
+        if (localAvatar) {
+          setAvatarUri(localAvatar);
+        }
       } catch (err) {
         console.error('Không lấy được thông tin user');
       } finally {
@@ -41,7 +48,7 @@ export default function Header() {
   return (
     <View style={styles.header}>
       <View style={styles.userInfo}>
-        <Ionicons name="person-circle-outline" size={50} color="black" />
+        <Image source={{ uri: avatarUri }} style={styles.avatar} />
         <View style={styles.textGroup}>
           <Text style={styles.username}>{user.first_name}</Text>
           <TouchableOpacity>
@@ -167,5 +174,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     height: 150,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ccc',
   },
 });

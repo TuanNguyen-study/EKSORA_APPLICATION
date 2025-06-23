@@ -19,11 +19,11 @@ export default function Body() {
         </TouchableOpacity>
         <View style={styles.separator} />
 
-        <View style={styles.item}>
+        {/* <View style={styles.item}>
           <Ionicons name="gift-outline" size={20} color="black" />
           <Text style={styles.label}>Eskora Rewards</Text>
         </View>
-        <View style={styles.separator} />
+        <View style={styles.separator} /> */}
 
         <View style={styles.itemColumn}>
           <View style={styles.item}>
