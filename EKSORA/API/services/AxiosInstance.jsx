@@ -42,7 +42,7 @@ export const loginUser = createAsyncThunk(
       const res = await AxiosInstance.post('/api/login-email', userData);
       const token = res.data?.token;
       if (token) {
-        await AsyncStorage.setItem('ACCESS_TOKEN', token); // ✅ Lưu token
+        await AsyncStorage.setItem('ACCESS_TOKEN', token);
       }
       return res.data;
     } catch (err) {
