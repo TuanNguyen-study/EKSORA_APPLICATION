@@ -26,6 +26,7 @@ import TripHighlightsSection from './components/TripHighlightsSection';
 import { addFavoriteTour } from '../../../API/services/servicesFavorite';
 
 
+
 export default function TripDetailScreen() {
   // const HARDCODED_DATE_FILTERS = [
   //   { id: 'tomorrow', label: 'Ngày mai', isDefault: true },
@@ -242,7 +243,7 @@ export default function TripDetailScreen() {
                 return;
               }
 
-              await addFavoriteTour(userId, productId);
+              await addFavorites(userId, productId);
               setIsFavorite(true); 
               Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
             } catch (err) {
