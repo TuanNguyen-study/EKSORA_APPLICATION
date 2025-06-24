@@ -30,13 +30,13 @@ function SideMenu (){
             key: "/",
           },
           {
-            label: "Inventory",
+            label: "Tours",
             key: "/inventory",
             icon: <ShopOutlined />,
           },
           {
-            label: "Promotion",
-            key: "/Promo",
+            label: "Voucher",
+            key: "/Voucher",
             icon: <SketchOutlined />,
           },
           {
@@ -45,12 +45,12 @@ function SideMenu (){
             icon: <ShoppingCartOutlined />,
           },
           {
-            label: "Customers",
-            key: "/customers",
+            label: "Suppliers",
+            key: "/Suppliers",
             icon: <UserOutlined />,
           },
           {
-            type: "divider", // This is where the break line is added
+            type: "divider", 
           },
           {
             label: "Account Settings",  

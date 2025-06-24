@@ -1,9 +1,9 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Customers from "../../Pages/Customers";
+import Customers from "../../Pages/Supplier";
 import Dashboard from "../../Pages/Dashboard";
-import Inventory from "../../Pages/Inventory";
+import Inventory from "../../Pages/Tours";
 import Orders from "../../Pages/Orders";
-import Promo from "../../Pages/Promotion";
+import Promo from "../../Pages/Voucher";
 import AccountSettings from "../../Pages/AccountSetting";
 function AppRoutes (){
     return(
@@ -11,9 +11,9 @@ function AppRoutes (){
         <Routes>
             <Route path="/" element={<Dashboard />}></Route>
             <Route path="/inventory" element={<Inventory />}></Route>
-            <Route path="/promo" element={<Promo />}></Route>
+            <Route path="/voucher" element={<Promo />}></Route>
             <Route path="/orders" element={<Orders />}></Route>
-            <Route path="/customers" element={<Customers />}></Route>
+            <Route path="/suppliers" element={<Customers />}></Route>
             <Route path="/account-settings" element={<AccountSettings />}></Route>
         </Routes>
 
