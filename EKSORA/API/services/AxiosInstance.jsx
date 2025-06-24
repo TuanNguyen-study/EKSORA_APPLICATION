@@ -44,11 +44,7 @@ export const loginUser = createAsyncThunk(
         await AsyncStorage.setItem('ACCESS_TOKEN', token);
       }
       if (userId) {
-<<<<<<< HEAD
-        await AsyncStorage.setItem('userId', userId); // ✅ Lưu userId tại đây
-=======
         await AsyncStorage.setItem('USER_ID', userId);
->>>>>>> 6ec6905d279b0a3afe5b0cb3b9ae76f846f981fa
       }
 
       return res.data;
@@ -69,22 +65,14 @@ export const loginphone = createAsyncThunk(
       const res = await AxiosInstance.post('/api/login-phone', userData);
       const token = res.data?.token;
       const userId = res.data?.userId;
-<<<<<<< HEAD
-=======
 
->>>>>>> 6ec6905d279b0a3afe5b0cb3b9ae76f846f981fa
       if (token) {
         await AsyncStorage.setItem('ACCESS_TOKEN', token);
       }
       if (userId) {
-<<<<<<< HEAD
-        await AsyncStorage.setItem('userId', userId); // ✅ Lưu userId tại đây
-      }
-=======
         await AsyncStorage.setItem('USER_ID', userId);
       }
 
->>>>>>> 6ec6905d279b0a3afe5b0cb3b9ae76f846f981fa
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -162,13 +150,13 @@ export const resetPassword = createAsyncThunk(
 AxiosInstance.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('ACCESS_TOKEN');
-    console.log('🔐 [Interceptor] ACCESS_TOKEN từ AsyncStorage:', token);
+    console.log('[Interceptor] ACCESS_TOKEN từ AsyncStorage:', token);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log('📤 [Interceptor] Headers gửi đi:', config.headers);
-    console.log('📤 [Interceptor] URL:', config.baseURL + config.url);
+    console.log('[Interceptor] Headers gửi đi:', config.headers);
+    console.log('[Interceptor] URL:', config.baseURL + config.url);
     return config;
   },
   (error) => Promise.reject(error)
