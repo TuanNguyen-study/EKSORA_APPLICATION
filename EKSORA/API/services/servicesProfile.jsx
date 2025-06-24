@@ -15,3 +15,19 @@ export const getUserProfile = async (token) => {
     throw error;
   }
 };
+
+export const updateUserProfile = async (token, profileData) => {
+  try {
+    const response = await AxiosInstance.put('/api/profile', profileData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log('Cập nhật thông tin người dùng thành công:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi cập nhật thông tin người dùng:', error.response?.data || error.message);
+    throw error;
+  }
+};

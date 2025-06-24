@@ -1,10 +1,10 @@
 import React from "react";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router"; 
+import { useRouter } from "expo-router";
 
 export default function Body() {
-  const router = useRouter(); 
+  const router = useRouter();
   return (
     <View style={styles.body}>
       {/* Box chứa danh sách */}

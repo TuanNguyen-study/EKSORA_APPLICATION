@@ -4,9 +4,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getUserProfile } from '../../../API/services/servicesProfile';
+import { router } from 'expo-router';
+import { getUserProfile, updateUserProfile } from '../../../API/services/servicesProfile';
+import { provinces } from './provinces';
+
+
+
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 const screenHeight = Dimensions.get('window').height;
@@ -65,15 +69,54 @@ export default function PersonalInfoScreen() {
     }
   };
 
-  const handleModalSave = () => {
-    setUserInfo(prev => ({
-      ...prev,
-      [currentField]: tempValue
-    }));
-    if (currentField === 'birth') {
-      AsyncStorage.setItem('LOCAL_BIRTH', tempValue);
+  const handleModalSave = async () => {
+    try {
+      const updatedField = { ...userInfo, [currentField]: tempValue };
+      setUserInfo(updatedField);
+
+      if (currentField === 'birth') {
+        await AsyncStorage.setItem('LOCAL_BIRTH', tempValue);
+      }
+
+      const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+      if (!token) {
+        alert('Không tìm thấy token!');
+        return;
+      }
+
+      // Chuẩn bị payload
+      const payload = {};
+      switch (currentField) {
+        case 'name':
+          payload.first_name = tempValue;
+          break;
+        case 'title':
+          payload.last_name = tempValue;
+          break;
+        case 'country':
+          payload.address = tempValue;
+          break;
+        case 'phoneEmail':
+          if (tempValue.includes('@')) {
+          } else {
+            payload.phone = tempValue;
+          }
+          break;
+        default:
+          break;
+      }
+
+      // Gọi API cập nhật nếu có trường hợp cần gửi
+      if (Object.keys(payload).length > 0) {
+        await updateUserProfile(token, payload);
+      }
+
+      setModalVisible(false);
+      alert('Cập nhật thành công!');
+    } catch (err) {
+      console.error('Lỗi khi cập nhật thông tin:', err);
+      alert('Có lỗi xảy ra!');
     }
-    setModalVisible(false);
   };
 
   const handleDateChange = (event, selectedDate) => {
@@ -88,39 +131,35 @@ export default function PersonalInfoScreen() {
     }
   };
 
-  const handleSave = () => {
-    console.log('Thông tin lưu:', userInfo);
-    // Gửi API cập nhật nếu cần
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Bạn cần cấp quyền truy cập ảnh.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets?.length > 0) {
+      const base64Img = result.assets[0].base64;
+      const uri = `data:image/jpeg;base64,${base64Img}`;
+
+      setAvatarUri(uri); // hiển thị ảnh
+      await AsyncStorage.setItem('LOCAL_AVATAR_URI', uri);
+    }
   };
-
-const pickImage = async () => {
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (status !== 'granted') {
-    alert('Bạn cần cấp quyền truy cập ảnh.');
-    return;
-  }
-
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: 0.7,
-    base64: true, 
-  });
-
-  if (!result.canceled && result.assets?.length > 0) {
-    const base64Img = result.assets[0].base64;
-    const uri = `data:image/jpeg;base64,${base64Img}`;
-
-    setAvatarUri(uri); // hiển thị ảnh
-    await AsyncStorage.setItem('LOCAL_AVATAR_URI', uri); 
-  }
-};
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/account')}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Thông tin cá nhân</Text>
@@ -150,23 +189,43 @@ const pickImage = async () => {
           <Item label="Số điện thoại/Email" inputValue={userInfo.phoneEmail} isEditable />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+        {/* <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveButtonText}>Lưu</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
 
       {/* Modal chỉnh sửa văn bản */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View style={[
+            styles.modalContent,
+            { height: currentField === 'country' ? screenHeight * 0.7 : screenHeight * 0.3 }
+          ]}>
             <Text style={styles.modalTitle}>Chỉnh sửa {getFieldLabel(currentField)}</Text>
 
-            <TextInput
-              style={styles.modalInput}
-              placeholder={`Nhập ${getFieldLabel(currentField).toLowerCase()}`}
-              value={tempValue}
-              onChangeText={setTempValue}
-            />
+            {currentField === 'country' ? (
+              <ScrollView >
+                {provinces.map((province, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => setTempValue(province)}
+                    style={{
+                      padding: 10,
+                      backgroundColor: tempValue === province ? '#f0f0f0' : 'white',
+                    }}
+                  >
+                    <Text>{province}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <TextInput
+                style={styles.modalInput}
+                placeholder={`Nhập ${getFieldLabel(currentField).toLowerCase()}`}
+                value={tempValue}
+                onChangeText={setTempValue}
+              />
+            )}
 
             <TouchableOpacity style={styles.modalSaveButton} onPress={handleModalSave}>
               <Text style={styles.modalSaveButtonText}>Lưu</Text>
@@ -188,8 +247,6 @@ const pickImage = async () => {
     </View>
   );
 }
-
-// COMPONENTS
 
 function Item({ label, inputValue, valueComponent, isEditable }) {
   return (
@@ -242,6 +299,7 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
+    marginTop: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -327,7 +385,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    height: screenHeight * 0.3,
+    //height: screenHeight * 0.3,
     justifyContent: 'space-between',
   },
   modalTitle: {

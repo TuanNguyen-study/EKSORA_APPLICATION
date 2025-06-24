@@ -5,12 +5,18 @@ import { getUser } from '../../API/services/servicesUser';
 import { router } from 'expo-router';
 import { Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
+
+
 export default function Header() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [avatarUri, setAvatarUri] = useState(null);
 
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
     const fetchUser = async () => {
       try {
         const data = await getUser();
@@ -27,7 +33,8 @@ export default function Header() {
     };
 
     fetchUser();
-  }, []);
+  }, [])
+);
 
   if (loading) {
     return (
