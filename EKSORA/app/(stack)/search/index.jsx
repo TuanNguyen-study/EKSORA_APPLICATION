@@ -1,7 +1,6 @@
-import { StyleSheet, Text, View, ScrollView } from 'react-native'
-import React from 'react'
-import HeaderSearch from '../../../components/search/headerSearch';
-import BodySearch from '../../../components/search/bodySearch';
+import { StyleSheet, View } from 'react-native';
+import HeaderSearch from '../search/Component/headerSearch'
+import BodySearch from '../search/Component/bodySearch';
 
 const index = () => {
  return (

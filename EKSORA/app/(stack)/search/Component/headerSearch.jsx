@@ -1,18 +1,32 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  Image,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { getTours } from "../../API/services/serverCategories";
 import { router } from "expo-router";
+import { useState } from "react";
+import {
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TextInput,
+    Platform,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { getTours } from "../../../../API/services/serverCategories";
 
 export default function HeaderSearch() {
+
+  const cardShadow = Platform.select({
+      ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+      },
+      android: {
+          elevation: 3,
+      },
+  });
+  
   const keywords = [
     "Tây ninh",
     "Đà nẵng",
