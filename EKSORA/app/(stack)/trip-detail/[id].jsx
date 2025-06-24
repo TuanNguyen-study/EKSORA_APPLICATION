@@ -23,12 +23,8 @@ import { default as ProductOptionSelector } from './components/ProductOptionSele
 
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
-<<<<<<< HEAD
-=======
-import { addFavoriteTour } from '../../../API/services/servicesFavorite';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { addFavorites } from '../../../API/services/servicesFavorite';
 
->>>>>>> 6ec6905d279b0a3afe5b0cb3b9ae76f846f981fa
 
 export default function TripDetailScreen() {
   // const HARDCODED_DATE_FILTERS = [
@@ -237,9 +233,7 @@ export default function TripDetailScreen() {
             router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
           }
           onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
-<<<<<<< HEAD
-          onFavoritePress={onFavoritePress}
-=======
+
           onFavoritePress={async () => {
             try {
               const userId = await AsyncStorage.getItem('USER_ID');
@@ -248,7 +242,7 @@ export default function TripDetailScreen() {
                 return;
               }
 
-              await addFavoriteTour(userId, productId);
+              await addFavorites(userId, productId);
               setIsFavorite(true); 
               Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
             } catch (err) {
@@ -256,7 +250,6 @@ export default function TripDetailScreen() {
               Alert.alert(' Thêm thất bại', err.response?.data?.message || 'Vui lòng thử lại sau');
             }
           }}
->>>>>>> 6ec6905d279b0a3afe5b0cb3b9ae76f846f981fa
         />
         
 
