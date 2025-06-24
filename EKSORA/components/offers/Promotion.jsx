@@ -71,6 +71,7 @@ export default function Promotions({ onPress }) {
               <TouchableOpacity style={styles.card} onPress={() => router.push({
                 pathname: "/(stack)/trip-detail/[id]",
                 params: { id: item._id }
+              
               })}>
                 <ImageBackground source={{ uri: item.image[0] }} style={styles.image}>
                   <TouchableOpacity style={styles.heartIcon}>

@@ -23,7 +23,8 @@ import { default as ProductOptionSelector } from './components/ProductOptionSele
 
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
-import { addFavorites } from '../../../API/services/servicesFavorite';
+import { addFavoriteTour } from '../../../API/services/servicesFavorite';
+
 
 
 export default function TripDetailScreen() {
