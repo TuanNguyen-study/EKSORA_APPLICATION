@@ -1,115 +1,185 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { COLORS } from '@/constants/colors'; 
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons'; 
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useState } from 'react';
+import {
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { COLORS } from "../../../../constants/colors";
+import BookingModalContent from "./Modal"; // Adjust the import path as necessary
+const StickyBookingFooter = ({
+  priceInfo,
+  eksoraPoints,
+  onAddToCart,
+  onBookNow,
+  onEksoraPointsPress,
+  tourName,
+}) => {
+  const router = useRouter();
 
-const StickyBookingFooter = ({ priceInfo, eksoraPoints, onAddToCart, onBookNow, onEksoraPointsPress }) => {
   const insets = useSafeAreaInsets();
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const handleBookNow = () => {
+    if (onBookNow) {
+      onBookNow();
+    } else {
+      router.push("/acount/bookingScreen");
+    }
+  };
 
   const formatPrice = (price) => {
-    if (typeof price !== 'number') return 'N/A';
-    return price.toLocaleString('vi-VN');
+    const value = typeof price === "number" ? price : parseFloat(price);
+    if (isNaN(value)) return "0 đ";
+    return value.toLocaleString("vi-VN", {
+      style: "currency",
+      currency: "VND",
+      minimumFractionDigits: 0,
+    });
   };
 
   return (
-    <View style={[
-        styles.outerContainer,
-        { paddingBottom: insets.bottom > 0 ? insets.bottom : (Platform.OS === 'ios' ? 20 : 16) }
-    ]}>
-      <View style={styles.innerContainer}>
-        <View style={styles.topRow}>
-          <Text style={styles.priceText}>
-            {priceInfo?.currency || 'đ'}{formatPrice(priceInfo?.current)}
-          </Text>
-          {eksoraPoints && (
-            <TouchableOpacity style={styles.eksoraPointsChip} onPress={onEksoraPointsPress}>
-              <Text style={styles.eksoraPointsText}>EKSORA Xu +{eksoraPoints}</Text>
-              <Ionicons name="chevron-forward-outline" size={12} color={COLORS.white} />
-            </TouchableOpacity>
-          )}
-        </View>
+    <>
+      <View
+        style={[
+          styles.outerContainer,
+          {
+            paddingBottom:
+              insets.bottom > 0
+                ? insets.bottom
+                : Platform.OS === "ios"
+                  ? 20
+                  : 16,
+          },
+        ]}
+      >
+        <View style={styles.innerContainer}>
+          <View style={styles.topRow}>
+            <Text style={styles.priceText}>
+              {formatPrice(priceInfo?.current)}
+            </Text>
 
-        <View style={styles.buttonRow}>
-          <TouchableOpacity style={[styles.buttonBase, styles.addToCartButton]} onPress={onAddToCart}>
-            <Text style={[styles.buttonTextBase, styles.addToCartButtonText]}>Thêm vào giỏ hàng</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.buttonBase, styles.bookNowButton]} onPress={onBookNow}>
-            <Text style={[styles.buttonTextBase, styles.bookNowButtonText]}>Đặt ngay</Text>
-          </TouchableOpacity>
+            {eksoraPoints && (
+              <TouchableOpacity
+                style={styles.eksoraPointsChip}
+                onPress={onEksoraPointsPress}
+              >
+                <Text style={styles.eksoraPointsText}>
+                  EKSORA Xu +{eksoraPoints}
+                </Text>
+                <Ionicons
+                  name="chevron-forward-outline"
+                  size={12}
+                  color={COLORS.white}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={[styles.buttonBase, styles.addToCartButton]}
+              onPress={onAddToCart}
+            >
+              <Text style={[styles.buttonTextBase, styles.addToCartButtonText]}>
+                Thêm vào giỏ hàng
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.buttonBase, styles.bookNowButton]}
+              onPress={handleBookNow}
+            >
+              <Text style={[styles.buttonTextBase, styles.bookNowButtonText]}>
+                Đặt ngay
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
+      <Modal visible={modalVisible} animationType="slide" transparent>
+        <BookingModalContent
+          onClose={() => setModalVisible(false)}
+          priceInfo={priceInfo}
+          tourName={tourName}
+        />
+      </Modal>
+    </>
+
   );
 };
 
 const styles = StyleSheet.create({
   outerContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 20, 
+    borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 }, 
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 10,
   },
   innerContainer: {
     paddingHorizontal: 16,
-    paddingTop: 12, 
-    
+    paddingTop: 12,
   },
   topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   priceText: {
-    fontSize: 22, 
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: "bold",
     color: COLORS.text,
   },
   eksoraPointsChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#A5D6A7', 
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#A5D6A7",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 10,
   },
   eksoraPointsText: {
-    color: COLORS.white, 
+    color: COLORS.white,
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: "500",
     marginRight: 2,
   },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   buttonBase: {
-    flex: 1, 
-    paddingVertical: 14, 
-    borderRadius: 12, 
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
     marginHorizontal: 6,
   },
   addToCartButton: {
-    backgroundColor: '#FF7E7E', 
+    backgroundColor: "#FF7E7E",
   },
   bookNowButton: {
-    backgroundColor: COLORS.primary, 
+    backgroundColor: COLORS.primary,
   },
   buttonTextBase: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   addToCartButtonText: {
     color: COLORS.white,

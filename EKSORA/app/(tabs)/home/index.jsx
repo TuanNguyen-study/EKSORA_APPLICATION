@@ -187,60 +187,60 @@ export default function HomeScreen() {
   };
 
   const handlePressDestination = async (item) => {
-  setSelectedLocation(item._id);
-  setSelectedLocationName(item.name);
-  setLoading(true);
-  try {
-    setError(null);
-    let toursData;
+    setSelectedLocation(item._id);
+    setSelectedLocationName(item.name);
+    setLoading(true);
+    try {
+      setError(null);
+      let toursData;
 
-    // Kiểm tra xem danh mục có phải là "Tất cả" hay không
-    if (item.name.toLowerCase() === 'tất cả' || item.isAllCategory) {
-      console.log('Bắt đầu gọi API getTours để lấy tất cả tour');
-      toursData = await getTours();
-    } else {
-      //console.log('Bắt đầu gọi API getToursByLocation với cateID:', item._id);
-      toursData = await getToursByLocation(item._id);
+      // Kiểm tra xem danh mục có phải là "Tất cả" hay không
+      if (item.name.toLowerCase() === 'tất cả' || item.isAllCategory) {
+        console.log('Bắt đầu gọi API getTours để lấy tất cả tour');
+        toursData = await getTours();
+      } else {
+        //console.log('Bắt đầu gọi API getToursByLocation với cateID:', item._id);
+        toursData = await getToursByLocation(item._id);
+      }
+
+      // Xử lý dữ liệu tour
+      const processedTours = Array.isArray(toursData)
+        ? toursData.map((tour) => ({
+          ...tour,
+          image:
+            Array.isArray(tour.image) && tour.image.length > 0
+              ? tour.image[0]
+              : tour.image || 'https://via.placeholder.com/300',
+        }))
+        : toursData.data
+          ? toursData.data.map((tour) => ({
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : tour.image || 'https://via.placeholder.com/300',
+          }))
+          : [];
+
+      setLocationTours(processedTours);
+      setActiveTab('Đề xuất');
+    } catch (err) {
+      console.error(
+        item.name.toLowerCase() === 'tất cả'
+          ? 'Lỗi khi gọi getTours:'
+          : 'Lỗi khi gọi getToursByLocation:',
+        err.response?.data || err.message
+      );
+      setError(
+        item.name.toLowerCase() === 'tất cả'
+          ? 'Không tìm thấy tour nào'
+          : `Không tìm thấy tour cho ${item.name}`
+      );
+      setLocationTours([]);
+    } finally {
+      setLoading(false);
     }
-
-    // Xử lý dữ liệu tour
-    const processedTours = Array.isArray(toursData)
-      ? toursData.map((tour) => ({
-          ...tour,
-          image:
-            Array.isArray(tour.image) && tour.image.length > 0
-              ? tour.image[0]
-              : tour.image || 'https://via.placeholder.com/300',
-        }))
-      : toursData.data
-      ? toursData.data.map((tour) => ({
-          ...tour,
-          image:
-            Array.isArray(tour.image) && tour.image.length > 0
-              ? tour.image[0]
-              : tour.image || 'https://via.placeholder.com/300',
-        }))
-      : [];
-
-    setLocationTours(processedTours);
-    setActiveTab('Đề xuất');
-  } catch (err) {
-    console.error(
-      item.name.toLowerCase() === 'tất cả'
-        ? 'Lỗi khi gọi getTours:'
-        : 'Lỗi khi gọi getToursByLocation:',
-      err.response?.data || err.message
-    );
-    setError(
-      item.name.toLowerCase() === 'tất cả'
-        ? 'Không tìm thấy tour nào'
-        : `Không tìm thấy tour cho ${item.name}`
-    );
-    setLocationTours([]);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handlePressSuggestion = (tourId) => {
     console.log("Điều hướng đến trip-detail với ID:", tourId);
@@ -268,28 +268,26 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        console.log('Bắt đầu gọi API getCategories');
+        console.log("Bắt đầu gọi API getCategories");
         const response = await getCategories();
         //console.log('Dữ liệu categories trả về:', response);
         setCategories(Array.isArray(response) ? response : response.data || []);
         setLoading(false);
       } catch (err) {
-        console.error('Lỗi khi gọi getCategories:', err);
-        setError('Lỗi khi lấy danh sách categories');
+        console.error("Lỗi khi gọi getCategories:", err);
+        setError("Lỗi khi lấy danh sách categories");
         setLoading(false);
       }
     };
 
     fetchCategories();
   }, []);
-// gọi API lấy tour
 
+  // gọi API lấy tour
   useEffect(() => {
     const fetchTours = async () => {
       try {
         const data = await getTours();
-       // console.log("Dữ liệu từ getTours:", data);
-
         const processedData = Array.isArray(data)
           ? data.map((tour) => ({
             ...tour,
@@ -368,7 +366,7 @@ export default function HomeScreen() {
           </View>
         </LinearGradient>
 
-        <View style={styles.sectionWrapper}>
+        {/* <View style={styles.sectionWrapper}>
           <View style={styles.serviceCategoriesContainer}>
             {serviceCategories.map((item) => (
               <ServiceCategoryItem
@@ -378,7 +376,7 @@ export default function HomeScreen() {
               />
             ))}
           </View>
-        </View>
+        </View> */}
 
         <View style={styles.sectionWrapper}>
           <FlatList
@@ -396,7 +394,6 @@ export default function HomeScreen() {
             contentContainerStyle={styles.horizontalListContentPadding}
           />
         </View>
-
         <View style={styles.sectionWrapperWithBorderForSuggestions}>
           <View style={styles.tabBarContainer}>
             {["Đề xuất", "Gần đây"].map((tabName) => (
@@ -440,7 +437,6 @@ export default function HomeScreen() {
               windowSize={5}
               removeClippedSubviews={true}
               getItemLayout={(_, index) => ({
-              //getItemLayout={(data, index) => ({
                 length: 260,
                 offset: 260 * index,
                 index,

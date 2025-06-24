@@ -1,28 +1,29 @@
 import { Image, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { COLORS } from '../../constants/colors';
 
-// 1. Nhận thêm prop `isSelected`
 const DestinationChip = ({ destination, onPress, isSelected }) => {
-  const hasImage = destination && destination.image;
+  const imageSource =
+    destination.image
+      ? typeof destination.image === 'string'
+        ? { uri: destination.image }
+        : destination.image
+      : require('../../assets/images/icon.png');
 
   return (
-    // 2. Áp dụng style có điều kiện
-    <TouchableOpacity 
-      style={[styles.chip, isSelected && styles.selectedChip]} 
+    <TouchableOpacity
+      style={[
+        styles.chip,
+        isSelected && styles.chipSelected, 
+      ]}
       onPress={() => onPress(destination)}
     >
-      {hasImage && (
-        <Image
-          source={{ uri: destination.image }}
-          style={styles.chipImage}
-          resizeMode="cover"
-        />
-      )}
-      <Text style={[
-        styles.chipText,
-        isSelected && styles.selectedChipText,
-        !hasImage && { marginLeft: 10 }
-      ]}>
+      <Image source={imageSource} style={styles.chipImage} />
+      <Text
+        style={[
+          styles.chipText,
+          isSelected && styles.chipTextSelected, 
+        ]}
+      >
         {destination.name}
       </Text>
     </TouchableOpacity>
@@ -36,13 +37,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 25,
     marginRight: 10,
-    paddingLeft: 2,
-    paddingRight: 15,
-    paddingVertical: 2,
-    height: 52,
-    borderWidth: 1.5, 
-    borderColor: COLORS.border || '#EAEAEA',
-    shadowColor: "#000",
+    paddingRight: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 1,
@@ -51,9 +49,9 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  selectedChip: {
-    //borderColor: COLORS.primary, 
-    backgroundColor: '#EBF4FF', 
+  chipSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#EAF1FF',
   },
   chipImage: {
     width: 48,
@@ -64,7 +62,11 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 14, 
     fontWeight: '500',
-    color: COLORS.textSecondary || '#555', 
+    color: COLORS.textSecondary,
+  },
+  chipTextSelected: {
+    color: COLORS.primary,
+    fontWeight: 'bold',
   },
   selectedChipText: {
     color: COLORS.primary, 

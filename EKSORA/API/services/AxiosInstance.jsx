@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+// Tạo instance Axios
 const AxiosInstance = axios.create({
   baseURL: 'https://api-eksora-app.onrender.com',
   headers: {
@@ -9,19 +10,15 @@ const AxiosInstance = axios.create({
   },
 });
 
-
-// helpers/errorUtils.js
+// Helpers
 export const extractErrorMessage = (err, defaultMessage = 'Có lỗi xảy ra') => {
   const message = err?.response?.data?.message;
-
   if (typeof message === 'string') return message;
-
   if (typeof message === 'object') return JSON.stringify(message);
-
   return defaultMessage;
 };
 
-
+// Register
 export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData, { rejectWithValue }) => {
@@ -34,66 +31,103 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-// hhàm đăng nhập 
+// Login Email
 export const loginUser = createAsyncThunk(
   'auth/login',
   async (userData, { rejectWithValue }) => {
     try {
       const res = await AxiosInstance.post('/api/login-email', userData);
       const token = res.data?.token;
+      const userId = res.data?.userId;
+
       if (token) {
         await AsyncStorage.setItem('ACCESS_TOKEN', token);
       }
+      if (userId) {
+<<<<<<< HEAD
+        await AsyncStorage.setItem('userId', userId); // ✅ Lưu userId tại đây
+=======
+        await AsyncStorage.setItem('USER_ID', userId);
+>>>>>>> 6ec6905d279b0a3afe5b0cb3b9ae76f846f981fa
+      }
+
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Đăng nhập thất bại');
+      console.error('🔥 Lỗi loginUser:', err);
+      return rejectWithValue(
+        extractErrorMessage(err, 'Đăng nhập thất bại')
+      );
     }
   }
 );
 
-
-/// login-phone
+// Login Phone
 export const loginphone = createAsyncThunk(
   'auth/phone-login',
   async (userData, { rejectWithValue }) => {
     try {
       const res = await AxiosInstance.post('/api/login-phone', userData);
+      const token = res.data?.token;
+      const userId = res.data?.userId;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6ec6905d279b0a3afe5b0cb3b9ae76f846f981fa
+      if (token) {
+        await AsyncStorage.setItem('ACCESS_TOKEN', token);
+      }
+      if (userId) {
+<<<<<<< HEAD
+        await AsyncStorage.setItem('userId', userId); // ✅ Lưu userId tại đây
+      }
+=======
+        await AsyncStorage.setItem('USER_ID', userId);
+      }
+
+>>>>>>> 6ec6905d279b0a3afe5b0cb3b9ae76f846f981fa
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Đăng nhập thất bại');
+      return rejectWithValue(
+        extractErrorMessage(err, 'Đăng nhập thất bại')
+      );
     }
   }
 );
 
-
-//sendotp 
-export const sendotp = createAsyncThunk('auth/send-otp',
+// Send OTP
+export const sendotp = createAsyncThunk(
+  'auth/send-otp',
   async (email, { rejectWithValue }) => {
     try {
-    const res = await AxiosInstance.post('/api/password/send-otp', { email });
+      const res = await AxiosInstance.post('/api/password/send-otp', { email });
       if (res.status !== 200) {
         throw new Error('Gửi OTP thất bại');
       }
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Gửi OTP thất bại');
+      return rejectWithValue(
+        extractErrorMessage(err, 'Gửi OTP thất bại')
+      );
     }
   }
 );
 
-// verify otp
-export const verifyOtp = createAsyncThunk('auth/verify-otp',
+// Verify OTP
+export const verifyOtp = createAsyncThunk(
+  'auth/verify-otp',
   async ({ email, otp }, { rejectWithValue }) => {
     try {
       const res = await AxiosInstance.post('/api/password/verify-otp', { email, otp });
-      return res.data; // ✅ res.data = { resetToken, ... }
+      return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Xác thực OTP thất bại');
+      return rejectWithValue(
+        extractErrorMessage(err, 'Xác thực OTP thất bại')
+      );
     }
   }
 );
 
-
+// Reset Password
 export const resetPassword = createAsyncThunk(
   'auth/resetPassword',
   async ({ newPassword }, { getState, rejectWithValue }) => {
@@ -118,17 +152,23 @@ export const resetPassword = createAsyncThunk(
       );
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'đặt lại mật khẩu thất bại'); 
+
+      return rejectWithValue(err.response?.data?.message || 'đặt lại mật khẩu thất bại');
     }
   }
 );
 
+// Interceptor
 AxiosInstance.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+    console.log('🔐 [Interceptor] ACCESS_TOKEN từ AsyncStorage:', token);
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log('📤 [Interceptor] Headers gửi đi:', config.headers);
+    console.log('📤 [Interceptor] URL:', config.baseURL + config.url);
     return config;
   },
   (error) => Promise.reject(error)
