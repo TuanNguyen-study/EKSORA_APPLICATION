@@ -2,7 +2,7 @@ import React, { useState }  from 'react';
 import { View, Alert, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useDispatch } from 'react-redux';
-import { sendotp} from '../../.../../../../API/services/AxiosInstance'; 
+import { sendotp} from '../../../../API/services/passwordActions';
 import { useRouter } from 'expo-router';
 
 const Index = () => {
@@ -42,7 +42,7 @@ const Index = () => {
           style={styles.input}
            value={email}
             onChangeText={setEmail}
-          placeholder="email-address"
+          placeholder="Nhập email"
           placeholderTextColor="#999"
            autoCapitalize="none"
           keyboardType="email-address"
