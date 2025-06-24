@@ -148,13 +148,13 @@ export const resetPassword = createAsyncThunk(
 AxiosInstance.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('ACCESS_TOKEN');
-    console.log('🔐 [Interceptor] ACCESS_TOKEN từ AsyncStorage:', token);
+    console.log('[Interceptor] ACCESS_TOKEN từ AsyncStorage:', token);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log('📤 [Interceptor] Headers gửi đi:', config.headers);
-    console.log('📤 [Interceptor] URL:', config.baseURL + config.url);
+    console.log('[Interceptor] Headers gửi đi:', config.headers);
+    console.log('[Interceptor] URL:', config.baseURL + config.url);
     return config;
   },
   (error) => Promise.reject(error)
