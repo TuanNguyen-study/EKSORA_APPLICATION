@@ -289,7 +289,7 @@ export default function TripDetailScreen() {
             initialTotalPrice={productData.price.current}
             onSelectionUpdate={(map, totalExtra) => {
               setCurrentSelectedPackages(map);
-              setCurrentTotalPrice((productData?.price?.current || 0) + totalExtra); // ✅ giá gốc + phụ phí
+              setCurrentTotalPrice((productData?.price?.current || 0) + totalExtra); 
             }}
             title=""
           />
@@ -325,7 +325,7 @@ export default function TripDetailScreen() {
       <StickyBookingFooter
         priceInfo={{
           ...productData.price,
-          current: currentTotalPrice, // ✅ Dùng biến đã tính đúng
+          current: currentTotalPrice, //  Dùng biến đã tính đúng
         }}
         onBookNow={onBookNow}
       />
