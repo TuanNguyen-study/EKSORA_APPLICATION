@@ -243,7 +243,7 @@ export default function TripDetailScreen() {
                 return;
               }
 
-              await addFavorites(userId, productId);
+              await addFavoriteTour(userId, productId);
               setIsFavorite(true); 
               Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
             } catch (err) {
