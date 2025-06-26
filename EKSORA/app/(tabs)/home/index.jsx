@@ -19,14 +19,12 @@ import {
   getToursByLocation,
 } from "../../../API/services/serverCategories";
 import DestinationChip from "../../../components/home/DestinationChip";
-import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
 import ImageCarouselCard from "../../../components/home/ImageCarouselCard";
-import PromoBanner from "../../../components/home/PromoBanner";
-import ServiceCategoryItem from "../../../components/home/ServiceCategoryItem";
 import SuggestionCard from "../../../components/home/SuggestionCard";
-import { COLORS } from "../../../constants/colors";
-
+import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
+import PromoBanner from "../../../components/home/PromoBanner";
 import LoadingScreen from "../../../components/LoadingScreen";
+import { COLORS } from "../../../constants/colors";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -88,11 +86,9 @@ export default function HomeScreen() {
   const initialIndex = carouselImages.length;
 
   const [activeTab, setActiveTab] = useState("Đề xuất");
-  const [currentCarouselIndex, setCurrentCarouselIndex] =
-    useState(initialIndex);
+  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(initialIndex);
   const carouselRef = useRef(null);
-  const [isCarouselManuallyScrolling, setIsCarouselManuallyScrolling] =
-    useState(false);
+  const [isCarouselManuallyScrolling, setIsCarouselManuallyScrolling] = useState(false);
 
   // State quản lý danh mục
   const [categories, setCategories] = useState([]);
@@ -194,16 +190,13 @@ export default function HomeScreen() {
       setError(null);
       let toursData;
 
-      // Kiểm tra xem danh mục có phải là "Tất cả" hay không
       if (item.name.toLowerCase() === 'tất cả' || item.isAllCategory) {
         console.log('Bắt đầu gọi API getTours để lấy tất cả tour');
         toursData = await getTours();
       } else {
-        //console.log('Bắt đầu gọi API getToursByLocation với cateID:', item._id);
         toursData = await getToursByLocation(item._id);
       }
 
-      // Xử lý dữ liệu tour
       const processedTours = Array.isArray(toursData)
         ? toursData.map((tour) => ({
           ...tour,
@@ -253,16 +246,10 @@ export default function HomeScreen() {
 
     router.push(`/trip-detail/${tourId}`);
   };
+
   const handlePressCategory = async (item) => {
     console.log("Chọn danh mục:", item.label);
   };
-
-  const HomeHeaderContent = () => (
-    <View style={styles.homeHeaderContentContainer}>
-      <HeaderSearchBar />
-      <PromoBanner />
-    </View>
-  );
 
   // Gọi API lấy danh mục
   useEffect(() => {
@@ -270,7 +257,6 @@ export default function HomeScreen() {
       try {
         console.log("Bắt đầu gọi API getCategories");
         const response = await getCategories();
-        //console.log('Dữ liệu categories trả về:', response);
         setCategories(Array.isArray(response) ? response : response.data || []);
         setLoading(false);
       } catch (err) {
@@ -283,7 +269,7 @@ export default function HomeScreen() {
     fetchCategories();
   }, []);
 
-  // gọi API lấy tour
+  // Gọi API lấy tour
   useEffect(() => {
     const fetchTours = async () => {
       try {
@@ -321,8 +307,6 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.rootContainer}>
-      <HomeHeaderContent />
-
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -330,55 +314,61 @@ export default function HomeScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <LinearGradient
-          colors={[COLORS.primary, COLORS.primary, COLORS.white, COLORS.white]}
-          locations={[0, 0.7, 0.7, 1]}
-          style={styles.carouselSectionWithGradient}
+          colors={['#00639B', '#0087CA', '#E6F3FA', '#FFFFFF']}
+          locations={[0, 0.3, 0.8, 1]}
+          style={styles.gradientSection}
         >
-          <FlatList
-            ref={carouselRef}
-            data={loopedCarouselImages}
-            keyExtractor={(_, index) => `carousel-item-${index}`}
-            renderItem={({ item }) => <ImageCarouselCard item={item} />}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={SNAP_INTERVAL}
-            decelerationRate="fast"
-            bounces={false}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
-            style={styles.carouselFlatListStyle}
-            contentContainerStyle={{
-              paddingHorizontal:
-                (screenWidth - ITEM_WIDTH_CAROUSEL) / 2 -
-                ITEM_SPACING_CAROUSEL_HOME / 2,
-              paddingTop: 20,
-            }}
-            getItemLayout={(data, index) => ({
-              length: SNAP_INTERVAL,
-              offset: SNAP_INTERVAL * index,
-              index,
-            })}
-            onScrollBeginDrag={handleCarouselScrollBegin}
-            onMomentumScrollEnd={handleCarouselScrollEnd}
-          />
-          <View style={styles.paginationWrapperInGradient}>
-            {renderPagination()}
+          <HeaderSearchBar />
+
+          <View style={styles.carouselSection}>
+            <FlatList
+              ref={carouselRef}
+              data={loopedCarouselImages}
+              keyExtractor={(_, index) => `carousel-item-${index}`}
+              renderItem={({ item }) => <ImageCarouselCard item={item} />}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={SNAP_INTERVAL}
+              decelerationRate="fast"
+              bounces={false}
+              onViewableItemsChanged={onViewableItemsChanged}
+              viewabilityConfig={viewabilityConfig}
+              style={styles.carouselFlatListStyle}
+              contentContainerStyle={{
+                paddingHorizontal:
+                  (screenWidth - ITEM_WIDTH_CAROUSEL) / 2 -
+                  ITEM_SPACING_CAROUSEL_HOME / 2,
+                paddingTop: 20,
+              }}
+              getItemLayout={(data, index) => ({
+                length: SNAP_INTERVAL,
+                offset: SNAP_INTERVAL * index,
+                index,
+              })}
+              onScrollBeginDrag={handleCarouselScrollBegin}
+              onMomentumScrollEnd={handleCarouselScrollEnd}
+            />
+            <View style={styles.paginationWrapper}>
+              {renderPagination()}
+            </View>
           </View>
         </LinearGradient>
-
-        {/* <View style={styles.sectionWrapper}>
-          <View style={styles.serviceCategoriesContainer}>
-            {serviceCategories.map((item) => (
-              <ServiceCategoryItem
-                key={item.id}
-                label={item.label}
-                onPress={handlePressCategory}
-              />
-            ))}
+        <View>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Ưu đãi tuyệt vời!</Text>
+            <TouchableOpacity onPress={() => console.log("Nút 'Xem thêm' được nhấn")}>
+              <Text style={styles.seeMoreText}>Xem thêm</Text>
+            </TouchableOpacity>
           </View>
-        </View> */}
-
+          <PromoBanner />
+        </View>
         <View style={styles.sectionWrapper}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Bạn muốn đi đâu chơi?</Text>
+            <TouchableOpacity onPress={() => console.log("Nút 'Xem thêm' được nhấn")}>
+              <Text style={styles.seeMoreText}>Xem thêm</Text>
+            </TouchableOpacity>
+          </View>
           <FlatList
             data={categories}
             renderItem={({ item }) => (
@@ -468,23 +458,24 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.white,
   },
-  homeHeaderContentContainer: {
-    backgroundColor: COLORS.primary,
+  gradientSection: {
+    paddingBottom: 20, // Thêm padding để gradient không bị cắt đột ngột
   },
   scrollView: {
     flex: 1,
     backgroundColor: COLORS.white,
   },
-  carouselSectionWithGradient: {
+  carouselSection: {
     height: ITEM_HEIGHT_CAROUSEL_TOTAL_HOME + 20 + PAGINATION_AREA_HEIGHT,
     justifyContent: "space-between",
+    backgroundColor: 'transparent',
   },
   carouselFlatListStyle: {
     height: ITEM_HEIGHT_CAROUSEL_TOTAL_HOME,
   },
-  paginationWrapperInGradient: {
+  paginationWrapper: {
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: (PAGINATION_AREA_HEIGHT - 8 - 5) / 2,
@@ -508,29 +499,30 @@ const styles = StyleSheet.create({
     width: 8,
   },
   sectionWrapper: {
-    backgroundColor: COLORS.white,
+    paddingTop: 15, // Thêm padding top cho cả khu vực
   },
-  serviceCategoriesContainer: {
-    backgroundColor: COLORS.white,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.categoryBorder || "#E0E0E0",
-    marginHorizontal: 15,
-    marginTop: 15,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+  // THÊM CÁC STYLE MỚI Ở ĐÂY
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15, // Căn lề cho khớp với FlatList
+    marginBottom: 15, // Tạo khoảng cách với FlatList bên dưới
   },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#222222',
+  },
+  seeMoreText: {
+    fontSize: 14,
+    color: '#555555',
+    textDecorationLine: 'underline',
+  },
+  // Chỉnh sửa style này một chút
   horizontalListContentPadding: {
     paddingHorizontal: 15,
-    paddingVertical: 15,
+    paddingBottom: 15, // Chỉ cần padding bottom, vì padding top đã có ở sectionWrapper
   },
   sectionWrapperWithBorderForSuggestions: {
     backgroundColor: COLORS.white,

@@ -1,13 +1,4 @@
-// constants/colors.jsx
 export const COLORS = {
-// <<<<<<< HEAD
-//   primary: '#001932',
-//   secondary: '#003B64',
-//   // background: '#00639B',
-//   text: '#0087CA',
-//   white: '#FFFFFF',
-//   black: '00DDF9'
-// // =======
   primary: '#0087CA',
   primaryDark: '#00639B',
   primaryLight: '#E6F3FA',   // Xanh rất nhạt
@@ -41,4 +32,16 @@ export const COLORS = {
 
   iconBackground: '#E0F2FE',
   categoryBorder: '#E0E0E0',
-}
+
+  // Gradient cũ (cam-vàng)
+  gradientBackground: {
+    colors: ['#FF9800', '#FFA726', '#FFCA28', '#FFEB3B'],
+    locations: [0, 0.3, 0.6, 1],
+  },
+
+  // Gradient mới (xanh-trắng)
+  gradientBlueWhite: {
+    colors: ['#00639B', '#0087CA', '#E6F3FA', '#FFFFFF'],
+    locations: [0, 0.3, 0.6, 1],
+  },
+};
