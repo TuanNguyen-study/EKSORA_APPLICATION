@@ -57,8 +57,8 @@ const AnimatedTabBarIcon = ({
     <Animated.View
       style={{
         transform: [
-          { scale: scaleValue },        // Phóng to
-          { translateY: translateYValue }, // Trồi lên
+          { scale: scaleValue },        
+          { translateY: translateYValue }, 
         ],
       }}
     >
