@@ -253,7 +253,8 @@ const onBookNow = () => {
               }
 
               await addFavoriteTour(userId, productId);
-              setIsFavorite(true);
+              setIsFavorite(true); 
+
               Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
             } catch (err) {
               console.error(' Thêm tour yêu thích lỗi:', err.response?.data || err.message);
