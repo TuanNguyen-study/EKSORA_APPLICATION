@@ -8,7 +8,7 @@ const { width } = Dimensions.get('window');
 
 // Cập nhật CARD_WIDTH và IMAGE_HEIGHT để linh hoạt với kích thước màn hình
 const CARD_WIDTH = width * 0.43;  
-const IMAGE_HEIGHT = CARD_WIDTH * (3 / 4); 
+const IMAGE_HEIGHT = CARD_WIDTH * (2.5 / 4); 
 
 const SuggestionCard = ({ item, onPress }) => (
   <TouchableOpacity style={styles.card} onPress={() => onPress(item)}>
@@ -21,12 +21,12 @@ const SuggestionCard = ({ item, onPress }) => (
       </View>
     )}
     <View style={styles.infoContainer}>
-      <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-      <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
+      <Text style={styles.title} numberOfLines={3}>{item.name}</Text>
+      {/* <Text style={styles.description} numberOfLines={2}>{item.description}</Text> */}
 
       <View style={styles.ratingContainer}>
         <Ionicons name="star" size={16} color="#FACC15" />
-        <Text style={styles.ratingText}>{item.rating} ()</Text>
+        <Text style={styles.ratingText}>{item.rating}</Text>
       </View>
 
       <Text style={styles.currentPrice}>Từ {item.price.toLocaleString('vi-VN')}đ</Text>
@@ -38,6 +38,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.cardBackground,
     borderRadius: 12,
+    borderWidth: 0.1,
     marginBottom: 20,
     marginHorizontal: 2,
     shadowColor: '#000',

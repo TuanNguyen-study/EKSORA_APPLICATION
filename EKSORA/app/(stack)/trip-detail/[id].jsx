@@ -12,7 +12,8 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { toggleFavorite } from '../../../API/services/servicesFavorite';
+import { addFavoriteTour, toggleFavorite } from '../../../API/services/servicesFavorite';
+
 import { fetchTourDetail } from '../../../API/services/tourService';
 import { COLORS } from '../../../constants/colors';
 import CustomerReviewSection from './components/CustomerReviewSection';
@@ -23,7 +24,7 @@ import { default as ProductOptionSelector } from './components/ProductOptionSele
 
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
-import { addFavoriteTour } from '../../../API/services/servicesFavorite';
+
 
 
 
@@ -74,20 +75,29 @@ export default function TripDetailScreen() {
         options: (svc.options || []).map(opt => ({
           id: opt._id,
           name: opt.name,
-          description: opt.description,
+description: opt.description,
           price: opt.price_extra,
         }))
       }));
-
+      console.log('⭐ reviews raw:', reviews);
       // 3) Map reviews về UI-ready
-      const mappedReviews = reviews.map(r => ({
-        _id: r._id,
-        userName: r.user?.id?.name || 'Khách ẩn danh',
-        userAvatar: r.user?.id?.avatarUrl || null,
-        rating: r.rating,
-        comment: r.comment,
-        date: new Date(r.created_at).toLocaleDateString('vi-VN'),
-      }));
+      const mappedReviews = reviews.map(r => {
+         console.log('📄 Review raw:', r);
+        const hasValidName =
+          (r.user?.first_name && r.user?.first_name.trim()) ||
+          (r.user?.last_name && r.user?.last_name.trim());
+
+        return {
+          _id: r._id,
+          userName: hasValidName
+            ? `${r.user?.first_name?.trim() || ''} ${r.user?.last_name?.trim() || ''}`.trim()
+            : r.user_name || 'Khách ẩn danh',
+          userAvatar: r.user?.avatarUrl || null,
+          rating: r.rating,
+          comment: r.comment,
+          date: new Date(r.created_at).toLocaleDateString('vi-VN'),
+        };
+      });
 
       // 4) Tạo productData
       const mappedProductData = {
@@ -138,54 +148,53 @@ export default function TripDetailScreen() {
     }
   };
   const onFavoritePress = async () => {
-  try {
-    const userId = await AsyncStorage.getItem('userId'); // 👈 nhớ đúng key
-    if (!userId) {
-      Alert.alert('Thông báo', 'Bạn cần đăng nhập để sử dụng chức năng này.');
-      return;
+    try {
+      const userId = await AsyncStorage.getItem('userId'); // 👈 nhớ đúng key
+      if (!userId) {
+        Alert.alert('Thông báo', 'Bạn cần đăng nhập để sử dụng chức năng này.');
+        return;
+      }
+
+      await toggleFavorite(userId, productData._id, isFavorite); // 👈 API xử lý thêm/xoá
+      const newState = !isFavorite;
+      setIsFavorite(newState);
+
+      Alert.alert(
+        'Thành công',
+        newState ? '❤️ Đã thêm vào danh sách yêu thích' : '❌ Đã xoá khỏi danh sách yêu thích'
+      );
+    } catch (error) {
+      console.error('Lỗi khi cập nhật yêu thích:', error);
+      Alert.alert('Lỗi', 'Không thể cập nhật danh sách yêu thích. Vui lòng thử lại sau.');
     }
+  };
+const onBookNow = () => {
+    const basePrice = productData?.price?.current || 0;
 
-    await toggleFavorite(userId, productData._id, isFavorite); // 👈 API xử lý thêm/xoá
-    const newState = !isFavorite;
-    setIsFavorite(newState);
-
-    Alert.alert(
-      'Thành công',
-      newState ? '❤️ Đã thêm vào danh sách yêu thích' : '❌ Đã xoá khỏi danh sách yêu thích'
-    );
-  } catch (error) {
-    console.error('Lỗi khi cập nhật yêu thích:', error);
-    Alert.alert('Lỗi', 'Không thể cập nhật danh sách yêu thích. Vui lòng thử lại sau.');
-  }
-};
-
-  const onBookNow = () => {
-  const basePrice = productData?.price?.current || 0;
-
-  // ✅ Tính tổng giá phụ thu option
-  const optionTotal = Object.values(currentSelectedPackages).reduce((sum, optId) => {
-    for (const pkg of productData.availableServicePackages) {
-      const option = pkg.options.find(opt => opt.id === optId);
-      if (option) return sum + (option.price || 0);
-    }
-    return sum;
-  }, 0);
-
-  
+    // ✅ Tính tổng giá phụ thu option
+    const optionTotal = Object.values(currentSelectedPackages).reduce((sum, optId) => {
+      for (const pkg of productData.availableServicePackages) {
+        const option = pkg.options.find(opt => opt.id === optId);
+        if (option) return sum + (option.price || 0);
+      }
+      return sum;
+    }, 0);
 
 
-  const total_price = basePrice + optionTotal;
 
-  const query = new URLSearchParams({
-    tour_id: productData._id,
-    tour_title: productData.name, // name là tên tour
-    total_price: total_price.toString(),
-    selectedOptions: JSON.stringify(currentSelectedPackages),
-  }).toString();
 
-  router.push(`/acount/bookingScreen?${query}`);
-  console.log('🔗 Booking URL:', `/acount/bookingScreen?${query}`);
-};
+    const total_price = basePrice + optionTotal;
+
+    const query = new URLSearchParams({
+      tour_id: productData._id,
+      tour_title: productData.name, // name là tên tour
+      total_price: total_price.toString(),
+      selectedOptions: JSON.stringify(currentSelectedPackages),
+    }).toString();
+
+    router.push(`/acount/bookingScreen?${query}`);
+    console.log('🔗 Booking URL:', `/acount/bookingScreen?${query}`);
+  };
 
 
 
@@ -245,16 +254,17 @@ export default function TripDetailScreen() {
 
               await addFavoriteTour(userId, productId);
               setIsFavorite(true); 
+
               Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
             } catch (err) {
               console.error(' Thêm tour yêu thích lỗi:', err.response?.data || err.message);
-              Alert.alert(' Thêm thất bại', err.response?.data?.message || 'Vui lòng thử lại sau');
+Alert.alert(' Thêm thất bại', err.response?.data?.message || 'Vui lòng thử lại sau');
             }
           }}
         />
-        
 
-        
+
+
 
         <View style={styles.mainContentContainer}>
           <ProductBasicInfo
@@ -283,7 +293,7 @@ export default function TripDetailScreen() {
             initialTotalPrice={productData.price.current}
             onSelectionUpdate={(map, totalExtra) => {
               setCurrentSelectedPackages(map);
-              setCurrentTotalPrice((productData?.price?.current || 0) + totalExtra); 
+              setCurrentTotalPrice((productData?.price?.current || 0) + totalExtra);
             }}
             title=""
           />
@@ -352,8 +362,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10
   },
-
-  retryButton: {
+retryButton: {
     marginTop: 20,
     backgroundColor: COLORS.primary,
     paddingHorizontal: 20,
