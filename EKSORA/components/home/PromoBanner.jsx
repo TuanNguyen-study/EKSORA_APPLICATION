@@ -1,66 +1,71 @@
-// components/home/PromoBanner.jsx
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../constants/colors';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; 
 
 const PromoBanner = () => (
-  <View style={styles.bannerOuterContainer}>
-    <View style={styles.bannerInnerContainer}>
-      <Text style={styles.bannerText}>Mã giảm giá cho người mới</Text>
-      <View style={styles.pointsContainer}>
-        <Ionicons name="pricetags" size={18} color={COLORS.danger} /> 
-        <Text style={styles.pointsAmountText}>4</Text>
-        <Ionicons name="ellipse" size={6} color={COLORS.danger} style={styles.separatorDot} />
-        <Text style={styles.pointsDetailText}>250 điểm</Text>
-      </View>
+  <View style={styles.container}>
+    {/* Icon bên trái */}
+    <Ionicons name="flame" size={32} color='#0087CA' style={styles.icon} />
+
+    {/* Khối văn bản ở giữa */}
+    <View style={styles.textContainer}>
+      <Text style={styles.title}>Mã Ngon Giảm Sốc</Text>
+      <Text style={styles.subtitle}>Có hạn, dùng ngay!</Text>
     </View>
+
+    {/* Nút bên phải */}
+    <TouchableOpacity style={styles.button}>
+      <Text style={styles.buttonText}>Xem tất cả</Text>
+    </TouchableOpacity>
   </View>
 );
 
 const styles = StyleSheet.create({
-  bannerOuterContainer: {
-    paddingHorizontal: 15, 
-  },
-  bannerInnerContainer: {
-    backgroundColor: COLORS.white, 
-    paddingVertical: 12,
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E6F3FA', // Màu nền be/cam nhạt
+    borderRadius: 12,
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: 10, 
+    paddingVertical: 12,
+    marginHorizontal: 15, // Khoảng cách với lề màn hình
+    marginBottom:10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: 2,
+    elevation: 3,
   },
-  bannerText: {
-    color: COLORS.text,
-    fontWeight: '600',
-    fontSize: 15,
+  icon: {
+    marginRight: 12,
   },
-  pointsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  textContainer: {
+    flex: 1, // Giúp khối này chiếm hết không gian còn lại
   },
-  pointsAmountText: {
-    color: COLORS.danger,
-    fontSize: 15,
+  title: {
+    fontSize: 16,
     fontWeight: 'bold',
-    marginLeft: 5,
+    color: '#333', // Màu chữ đậm
   },
-  pointsDetailText: {
-    color: COLORS.text, 
-    fontSize: 15,
-    fontWeight: '500',
-    marginLeft: 4,
+  subtitle: {
+    fontSize: 13,
+    color: '#757575', // Màu chữ xám nhạt
+    marginTop: 2,
   },
-  separatorDot: {
-    marginHorizontal: 8,
-    color: COLORS.danger, 
-  }
+  button: {
+    backgroundColor: '#0087CA', // Màu cam đậm cho nút
+    borderRadius: 20, // Bo tròn để tạo hình viên thuốc
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  buttonText: {
+    color: '#FFFFFF', // Chữ trắng
+    fontWeight: '600',
+    fontSize: 14,
+  },
 });
 
 export default PromoBanner;
