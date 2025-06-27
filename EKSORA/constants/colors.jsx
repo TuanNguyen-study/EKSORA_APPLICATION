@@ -1,13 +1,13 @@
 export const COLORS = {
   primary: '#0087CA',
   primaryDark: '#00639B',
-  primaryLight: '#E6F3FA',  
-  primaryUltraLight: '#F0F8FF', 
+  primaryLight: '#E6F3FA',
+  primaryUltraLight: '#F0F8FF',
 
   secondary: '#FF9800',
-  background: '#F4F7F9', 
+  background: '#F4F7F9',
   cardBackground: '#FFFFFF',
-  bannerBackground: '#2AA7E8', 
+  bannerBackground: '#2AA7E8',
 
   text: '#212121',
   textSecondary: '#757575',
@@ -19,7 +19,7 @@ export const COLORS = {
   textGray: '#666',
 
   border: '#E0E0E0',
-  borderColor: '#ccc', 
+  borderColor: '#ccc',
   divider: '#EEEEEE',
 
   danger: '#F44336',
@@ -59,4 +59,17 @@ export const COLORS = {
   separatorLight: '#eee',
 
   avatarBackground: '#ccc',
+
+  primaryDark: '#00639B',
+  primary: '#0087CA',
+  lightBackground: '#E6F3FA',
+  white: '#FFFFFF',
+  grey: '#6c757d',
+    primaryDark: '#00639B',
+  primary: '#0087CA',
+  white: '#FFFFFF',
+  success: '#28a745',
+  warning: '#ffc107',
+  danger: '#dc3545',
+  grey: '#6c757d',
 };

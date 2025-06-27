@@ -1,17 +1,19 @@
-import { Image, StyleSheet, Text, View, TouchableOpacity, Animated } from 'react-native';
+import { Image, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import React, { useState } from 'react';
 import { deleteFavoriteTour } from '../../API/services/servicesFavorite';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Swipeable } from 'react-native-gesture-handler';
+import { AntDesign } from '@expo/vector-icons';
 
 export default function FavoriteItem({
   id,
   title,
-  description,
   price,
-  location,
   image,
   onPress,
+  rating,
+  reviewCount,
+  bookedCount,
 }) {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -27,13 +29,12 @@ export default function FavoriteItem({
 
       await deleteFavoriteTour(userId, id, token);
       console.log("Đã xoá khỏi yêu thích:", id);
-      setIsVisible(false);  
+      setIsVisible(false);
     } catch (error) {
       console.error("Lỗi khi xoá yêu thích:", error);
     }
   };
 
-  // Render action khi vuốt
   const renderRightActions = () => {
     return (
       <View style={styles.deleteBox}>
@@ -42,32 +43,56 @@ export default function FavoriteItem({
     );
   };
 
-  if (!isVisible) return null;  
+  if (!isVisible) return null;
 
   return (
     <Swipeable
       renderRightActions={renderRightActions}
       onSwipeableRightOpen={handleRemoveFavorite}
     >
-      <TouchableOpacity onPress={onPress}>
+      <TouchableOpacity onPress={onPress} style={styles.touchable}>
         <View style={styles.container}>
-          <Image source={{ uri: image }} style={styles.image} />
+          {/* Cột bên trái: Ảnh và icon trái tim */}
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: image }} style={styles.image} />
+            <View style={styles.heartIconWrapper}>
+              <AntDesign name="heart" size={20} color="red" />
+            </View>
+          </View>
+
+          {/* Cột bên phải: Toàn bộ thông tin */}
           <View style={styles.content}>
-            <View style={styles.titleRow}>
-              <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+            {/* Phần trên: Title, tags, rating */}
+            <View>
+              <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
                 {title}
               </Text>
+
+              {/* <View style={styles.tagsContainer}>
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>Đặt ngay hôm nay</Text>
+                </View>
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>Miễn phí huỷ</Text>
+                </View>
+              </View> */}
+
+              <View style={styles.ratingContainer}>
+                <Text style={styles.starIcon}>★</Text>
+                <Text style={styles.ratingText}> {rating}</Text>
+                <Text style={styles.reviewText}> ({reviewCount})</Text>
+                <Text style={styles.separator}> • </Text>
+                <Text style={styles.reviewText}>{bookedCount}+ Đã đặt</Text>
+              </View>
             </View>
 
-            <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
-              {description}
-            </Text>
-
-            <View style={styles.bottomRow}>
-              <Text style={styles.location} numberOfLines={1} ellipsizeMode="tail">
-                {location}
+            {/* Phần dưới: Giá tiền */}
+            <View style={styles.priceContainer}>
+              <Text style={styles.pricePrefix}>Từ </Text>
+              <Text style={styles.priceValue}>
+                <Text style={styles.currencySymbol}>₫</Text>
+                {price}
               </Text>
-              <Text style={styles.price}>Từ {price} đ</Text>
             </View>
           </View>
         </View>
@@ -77,65 +102,114 @@ export default function FavoriteItem({
 }
 
 const styles = StyleSheet.create({
+  touchable: {
+    //backgroundColor: 'white',
+  },
   container: {
     flexDirection: 'row',
-    padding: 12,
-    marginBottom: 10,
-    backgroundColor: '#f6fafd',
-    borderRadius: 12,
-    alignItems: 'flex-start',
+    padding: 10,
+    //backgroundColor: 'white',
+  },
+  // --- CỘT BÊN TRÁI ---
+  imageContainer: {
+    width: 100,
+    height: 100,
   },
   image: {
-    width: 90,
-    height: 90,
-    borderRadius: 10,
-    marginRight: 12,
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
-  content: { flex: 1 },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  heartIconWrapper: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
     alignItems: 'center',
+
+  },
+  // --- CỘT BÊN PHẢI ---
+  content: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'space-between', 
   },
   title: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
-    flexShrink: 1,
-    marginRight: 8,
+    color: '#1a1a1a',
+    lineHeight: 22,
   },
-  description: {
-    fontSize: 13,
-    color: '#555',
-    marginTop: 4,
-  },
-  bottomRow: {
+  // --- Tags ---
+  tagsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 6,
+  },
+  tag: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  tagText: {
+    fontSize: 11,
+    color: '#555',
+    fontWeight: '500',
+  },
+  // --- Rating ---
+  ratingContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 6,
   },
-  location: {
+  starIcon: {
+    color: '#FFB800', 
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-    maxWidth: 170,
   },
-  price: {
+  ratingText: {
+    color: '#FFB800',
+    fontWeight: 'bold',
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#e63946',
-    textAlign: 'right',
-    minWidth: 90,
-    flexShrink: 0,
-    flexGrow: 0,
   },
+  reviewText: {
+    color: '#666',
+    fontSize: 14,
+    marginLeft: 4,
+  },
+  separator: {
+    color: '#666',
+    fontSize: 14,
+    marginHorizontal: 4,
+  },
+  // --- Price ---
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end', 
+    marginTop: 8,
+  },
+  pricePrefix: {
+    fontSize: 14,
+    color: '#333',
+  },
+  priceValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  currencySymbol: {
+    textDecorationLine: 'underline',
+    fontWeight: 'bold',
+  },
+  // --- Delete Box ---
   deleteBox: {
     backgroundColor: '#FF3B30',
     justifyContent: 'center',
     alignItems: 'center',
     width: 80,
-    borderRadius: 10,
-    marginVertical: 10,
+    height: '100%',
   },
   deleteText: {
     color: '#fff',

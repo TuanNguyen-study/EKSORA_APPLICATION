@@ -74,21 +74,7 @@ export default function Header() {
               <Text style={styles.update}>Cập nhật thông tin cá nhân </Text>
             </TouchableOpacity>
           </View>
-          <Ionicons name="notifications-outline" size={28} color={COLORS.white} />
         </View>
-
-        {/* <View style={styles.levelRow}>
-          <View style={styles.levelBox}>
-            <Ionicons name="compass-outline" size={24} color={COLORS.white} style={{marginRight: 8}}/>
-            <View style={styles.levelBadgeContainer}>
-              <Text style={styles.level}>Lv.{user.level || 1}</Text>
-            </View>
-            <Text style={styles.badge}>{user.badge || 'Bạc'}</Text>
-          </View>
-          <TouchableOpacity>
-            <Text style={styles.link}>Xem quyền lợi </Text>
-          </TouchableOpacity>
-        </View> */}
       </View>
 
       {/* Phần statsContainer sẽ là một card trắng */}

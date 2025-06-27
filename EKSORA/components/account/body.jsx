@@ -12,7 +12,7 @@ export default function Body() {
       <View style={styles.box}>
         <TouchableOpacity
           style={styles.touchableItem}
-          onPress={() => router.push("/(stack)/acount/bookingScreen")}
+          onPress={() => router.push("/MyOrder/MyBookingsScreen")}
         >
           <Ionicons name="receipt-outline" size={24} color={COLORS.textDark} style={styles.icon} />
           <Text style={styles.label}>Đơn hàng</Text>
