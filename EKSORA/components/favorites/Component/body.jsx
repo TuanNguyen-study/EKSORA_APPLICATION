@@ -16,16 +16,13 @@ import {
   addFavorites,
 } from "../../../API/services/servicesFavorite";
 import { getTours } from "../../../API/services/serverCategories";
+import { fetchTourDetail } from '../../../API/services/tourService';
 import SuggestionCard from "../../home/SuggestionCard";
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 
-
-export default function Body({ filterData }) {
-  const { user_id, selectedDestination, selectedCategory, selectedTime } = filterData || {};
-
+export default function Body() {
   const [tours, setTours] = useState([]);
-  const [filteredTours, setFilteredTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [suggestionTours, setSuggestionTours] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -33,13 +30,11 @@ export default function Body({ filterData }) {
   const [error, setError] = useState(null);
   const router = useRouter();
 
-  // Load tours yêu thích
   const loadFavoriteTours = useCallback(async () => {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem("ACCESS_TOKEN");
       const userId = await AsyncStorage.getItem("USER_ID");
-
       if (!token || !userId) {
         console.warn("Không tìm thấy token hoặc userId");
         return;
@@ -48,21 +43,38 @@ export default function Body({ filterData }) {
       const res = await getFavoriteToursByUser(userId, token);
       const favoriteList = res?.data || [];
 
-      const formatted = favoriteList
-        .filter(item => item.tour_id && typeof item.tour_id === "object")
-        .map((item) => ({
-          id: item.tour_id._id,
-          title: item.tour_id.name,
-          description: item.tour_id.description,
-          price: item.tour_id.price,
-          location: item.tour_id.location || "Địa điểm chưa có",
-          image:
-            Array.isArray(item.tour_id.image) && item.tour_id.image.length > 0
-              ? item.tour_id.image[0]
-              : "https://via.placeholder.com/300",
-          createdAt: item.tour_id.createdAt,
-          category: item.tour_id.category,
-        }));
+      const formatted = await Promise.all(
+        favoriteList
+          .filter(item => item.tour_id && typeof item.tour_id === "object")
+          .map(async (item) => {
+            const tourId = item.tour_id._id;
+            let detail = {};
+            let reviewCount = 0;
+            try {
+              const res = await fetchTourDetail(tourId);
+              detail = res?.tour || {};
+              reviewCount = res?.reviews?.length || res?.tour?.reviews?.length || 0;
+            } catch (err) {
+              console.warn(`Không thể lấy chi tiết cho tour ${tourId}:`, err);
+            }
+
+            return {
+              id: tourId,
+              title: detail.name || item.tour_id.name,
+              description: detail.description || item.tour_id.description,
+              price: detail.price || item.tour_id.price,
+              location: detail.location || item.tour_id.location || "Địa điểm chưa có",
+              image:
+                Array.isArray(detail.image) && detail.image.length > 0
+                  ? detail.image[0]
+                  : "https://via.placeholder.com/300",
+              createdAt: detail.createdAt || item.tour_id.createdAt,
+              category: detail.category || item.tour_id.category,
+              rating: detail.rating || 0,
+              totalReviews: reviewCount,
+            };
+          })
+      );
 
       setTours(formatted);
     } catch (error) {
@@ -73,50 +85,12 @@ export default function Body({ filterData }) {
     }
   }, []);
 
-  // Lọc lại mỗi khi tours hoặc filterData thay đổi
-  useEffect(() => {
-    const filter = () => {
-      const result = tours.filter((tour) => {
-        let matches = true;
-
-        if (
-          selectedDestination &&
-          tour.location?.toLowerCase().trim() !== selectedDestination.toLowerCase().trim()
-        ) {
-          matches = false;
-        }
-
-        if (selectedCategory && tour.category !== selectedCategory) {
-          matches = false;
-        }
-
-        if (selectedTime && tour.createdAt) {
-          const currentDate = new Date();
-          const tourDate = new Date(tour.createdAt);
-          const timeDiff = Math.floor((currentDate - tourDate) / (1000 * 3600 * 24));
-
-          if (selectedTime === "Trong 7 ngày trước" && timeDiff > 7) matches = false;
-          else if (selectedTime === "Trong 30 ngày trước" && timeDiff > 30) matches = false;
-          else if (selectedTime === "Trong 6 tháng trước" && timeDiff > 180) matches = false;
-          else if (selectedTime === "Trong 12 tháng trước" && timeDiff > 365) matches = false;
-          else if (selectedTime === "Trong hơn 1 năm trước" && timeDiff <= 365) matches = false;
-        }
-
-        return matches;
-      });
-
-      setFilteredTours(result);
-    };
-
-    filter();
-  }, [tours, selectedDestination, selectedCategory, selectedTime]);
-
   useFocusEffect(
     useCallback(() => {
       loadFavoriteTours();
     }, [])
-  )
-  // Tải gợi ý tour
+  );
+
   const handleStartPress = async () => {
     setSuggestionLoading(true);
     setError(null);
@@ -125,12 +99,12 @@ export default function Body({ filterData }) {
       const data = await getTours();
       const processedData = Array.isArray(data)
         ? data.map((tour) => ({
-          ...tour,
-          image:
-            Array.isArray(tour.image) && tour.image.length > 0
-              ? tour.image[0]
-              : "https://via.placeholder.com/300",
-        }))
+            ...tour,
+            image:
+              Array.isArray(tour.image) && tour.image.length > 0
+                ? tour.image[0]
+                : "https://via.placeholder.com/300",
+          }))
         : [];
 
       setSuggestionTours(processedData);
@@ -143,8 +117,8 @@ export default function Body({ filterData }) {
     }
   };
 
-  // Thêm tour vào yêu thích
   const handlePressSuggestion = async (item) => {
+    const user_id = await AsyncStorage.getItem("USER_ID");
     if (!user_id || !item?._id) {
       console.warn("Thiếu user_id hoặc tour_id");
       return;
@@ -152,11 +126,8 @@ export default function Body({ filterData }) {
 
     try {
       await addFavorites(user_id, item._id);
-      console.log("Đã thêm tour vào yêu thích:", item.title);
       setModalVisible(false);
-
       await loadFavoriteTours();
-
     } catch (error) {
       console.error("Lỗi khi thêm tour vào yêu thích:", error);
       setError("Không thể thêm tour vào yêu thích");
@@ -185,15 +156,16 @@ export default function Body({ filterData }) {
   return (
     <View style={styles.container}>
       <FlatList
-        data={filteredTours}
+        data={tours}
         renderItem={({ item }) => (
           <FavoriteItem
             {...item}
-            onPress={() => router.push(`/trip-detail/${item.id}`)} 
+            reviewCount={item.totalReviews}
+            onPress={() => router.push(`/trip-detail/${item.id}`)}
           />
         )}
         keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-        contentContainerStyle={filteredTours.length === 0 ? styles.noResultsContainer : { padding: 16 }}
+        contentContainerStyle={tours.length === 0 ? styles.noResultsContainer : { padding: 16 }}
         ListEmptyComponent={
           <View style={styles.noResultsContent}>
             <Image
@@ -264,6 +236,7 @@ export default function Body({ filterData }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'white',
   },
   noResultsContainer: {
     flexGrow: 1,

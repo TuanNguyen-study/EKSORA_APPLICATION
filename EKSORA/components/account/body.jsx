@@ -20,7 +20,7 @@ export default function Body() {
         </TouchableOpacity>
         <View style={styles.separator} />
 
-        <TouchableOpacity style={styles.touchableItemColumn} onPress={() => {}}>
+        <TouchableOpacity style={styles.touchableItemColumn} onPress={() => router.push('/MyOrder/UserInfoForm')}>
           <View style={styles.itemRow}>
             <Ionicons name="person-outline" size={24} color={COLORS.textDark} style={styles.icon} />
             <View style={styles.textContainer}>
@@ -34,7 +34,7 @@ export default function Body() {
         </TouchableOpacity>
         <View style={styles.separator} />
 
-        <TouchableOpacity style={styles.touchableItem} onPress={() => {}}>
+        <TouchableOpacity style={styles.touchableItem} onPress={() => router.push('/TourReview/ReviewScreen')}>
           <Ionicons name="chatbubble-ellipses-outline" size={24} color={COLORS.textDark} style={styles.icon}/>
           <Text style={styles.label}>Đánh giá</Text>
           <Ionicons name="chevron-forward-outline" size={20} color={COLORS.textGray} />
@@ -42,7 +42,7 @@ export default function Body() {
       </View>
 
       <View style={styles.box}>
-        <TouchableOpacity style={styles.touchableItem} onPress={() => {}}>
+        <TouchableOpacity style={styles.touchableItem} onPress={() => router.push('/MyOrder/HelpScreen')}>
           <Ionicons name="help-circle-outline" size={24} color={COLORS.textDark} style={styles.icon}/>
           <Text style={styles.label}>Trợ giúp</Text>
           <Ionicons name="chevron-forward-outline" size={20} color={COLORS.textGray} />

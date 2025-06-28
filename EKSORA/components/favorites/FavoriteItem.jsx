@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { deleteFavoriteTour } from '../../API/services/servicesFavorite';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Swipeable } from 'react-native-gesture-handler';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, FontAwesome } from '@expo/vector-icons';
+import { COLORS } from '../../constants/colors';
 
 export default function FavoriteItem({
   id,
@@ -13,7 +14,7 @@ export default function FavoriteItem({
   onPress,
   rating,
   reviewCount,
-  bookedCount,
+  description
 }) {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -35,13 +36,11 @@ export default function FavoriteItem({
     }
   };
 
-  const renderRightActions = () => {
-    return (
-      <View style={styles.deleteBox}>
-        <Text style={styles.deleteText}>Xóa</Text>
-      </View>
-    );
-  };
+  const renderRightActions = () => (
+    <View style={styles.deleteBox}>
+      <Text style={styles.deleteText}>Xóa</Text>
+    </View>
+  );
 
   if (!isVisible) return null;
 
@@ -50,9 +49,8 @@ export default function FavoriteItem({
       renderRightActions={renderRightActions}
       onSwipeableRightOpen={handleRemoveFavorite}
     >
-      <TouchableOpacity onPress={onPress} style={styles.touchable}>
+      <TouchableOpacity onPress={onPress}>
         <View style={styles.container}>
-          {/* Cột bên trái: Ảnh và icon trái tim */}
           <View style={styles.imageContainer}>
             <Image source={{ uri: image }} style={styles.image} />
             <View style={styles.heartIconWrapper}>
@@ -60,39 +58,23 @@ export default function FavoriteItem({
             </View>
           </View>
 
-          {/* Cột bên phải: Toàn bộ thông tin */}
           <View style={styles.content}>
-            {/* Phần trên: Title, tags, rating */}
             <View>
               <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
                 {title}
               </Text>
-
-              {/* <View style={styles.tagsContainer}>
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>Đặt ngay hôm nay</Text>
-                </View>
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>Miễn phí huỷ</Text>
-                </View>
-              </View> */}
-
+              <Text style={styles.description} numberOfLines={2}>
+                {description}
+              </Text>
               <View style={styles.ratingContainer}>
-                <Text style={styles.starIcon}>★</Text>
+                <FontAwesome name="star" size={14} color="#FFB800" />
                 <Text style={styles.ratingText}> {rating}</Text>
                 <Text style={styles.reviewText}> ({reviewCount})</Text>
-                <Text style={styles.separator}> • </Text>
-                <Text style={styles.reviewText}>{bookedCount}+ Đã đặt</Text>
               </View>
             </View>
 
-            {/* Phần dưới: Giá tiền */}
             <View style={styles.priceContainer}>
-              <Text style={styles.pricePrefix}>Từ </Text>
-              <Text style={styles.priceValue}>
-                <Text style={styles.currencySymbol}>₫</Text>
-                {price}
-              </Text>
+              <Text style={styles.currentPrice}>Từ {price?.toLocaleString('vi-VN')}đ</Text>
             </View>
           </View>
         </View>
@@ -102,15 +84,10 @@ export default function FavoriteItem({
 }
 
 const styles = StyleSheet.create({
-  touchable: {
-    //backgroundColor: 'white',
-  },
   container: {
     flexDirection: 'row',
     padding: 10,
-    //backgroundColor: 'white',
   },
-  // --- CỘT BÊN TRÁI ---
   imageContainer: {
     width: 100,
     height: 100,
@@ -128,13 +105,11 @@ const styles = StyleSheet.create({
     height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-
   },
-  // --- CỘT BÊN PHẢI ---
   content: {
     flex: 1,
     marginLeft: 12,
-    justifyContent: 'space-between', 
+    justifyContent: 'space-between',
   },
   title: {
     fontSize: 17,
@@ -142,68 +117,34 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
     lineHeight: 22,
   },
-  // --- Tags ---
-  tagsContainer: {
-    flexDirection: 'row',
-    marginTop: 6,
+  description: {
+    fontSize: 13,
+    color: COLORS.textLight,
+    minHeight: 32,
   },
-  tag: {
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  tagText: {
-    fontSize: 11,
-    color: '#555',
-    fontWeight: '500',
-  },
-  // --- Rating ---
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
-  },
-  starIcon: {
-    color: '#FFB800', 
-    fontSize: 14,
   },
   ratingText: {
-    color: '#FFB800',
-    fontWeight: 'bold',
+    marginLeft: 4,
     fontSize: 14,
+    color: '#757575',
   },
   reviewText: {
     color: '#666',
     fontSize: 14,
     marginLeft: 4,
   },
-  separator: {
-    color: '#666',
-    fontSize: 14,
-    marginHorizontal: 4,
-  },
-  // --- Price ---
   priceContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end', 
+    alignItems: 'flex-end',
     marginTop: 8,
   },
-  pricePrefix: {
-    fontSize: 14,
-    color: '#333',
+  currentPrice: {
+    fontSize: 15,
+    color: COLORS.primary,
   },
-  priceValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-  },
-  currencySymbol: {
-    textDecorationLine: 'underline',
-    fontWeight: 'bold',
-  },
-  // --- Delete Box ---
   deleteBox: {
     backgroundColor: '#FF3B30',
     justifyContent: 'center',

@@ -38,6 +38,25 @@ export const getUserBookings = async (userId, token) => {
     throw error;
   }
 };
+// API gửi đánh giá tour đã đặt
+export const postReview = async (userId, tourId, rating, comment) => {
+  try {
+    const response = await AxiosInstance.post('/api/reviews', {
+      userId: userId,
+      tourId: tourId,
+      rating: rating,
+      comment: comment,
+      status: 'pending' 
+    });
+
+    return response.data;
+
+  } catch (error) {
+    console.error('Lỗi khi gửi đánh giá:', error);
+    throw error;
+  }
+};
+
 
 
 
