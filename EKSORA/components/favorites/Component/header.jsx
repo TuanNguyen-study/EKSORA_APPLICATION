@@ -1,78 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 
 export default function Header({ setFilterData }) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedDestination, setSelectedDestination] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(null);
-  const router = useRouter();
-
-  const destinations = [
-    "Halong",
-    "TP Hồ Chí Minh",
-    "Đà lạt",
-    "Hà Nội",
-    "Nha Trang",
-    "Phú Quốc",
-    "Bến Tre",
-  ];
-  const categories = ["Tour & Trải nghiệm", "Vé tham quan"];
-  const times = [
-    "Trong 7 ngày trước",
-    "Trong 30 ngày trước",
-    "Trong 6 tháng trước",
-    "Trong 12 tháng trước",
-    "Trong hơn 1 năm trước",
-  ];
 
   const applyFilters = () => {
-    setFilterData({
-      selectedDestination,
-      selectedCategory,
-      selectedTime,
-    });
-    setModalVisible(false); 
+    setFilterData({});
+    setModalVisible(false);
   };
 
   const clearFilters = () => {
-    setSelectedDestination(null);
-    setSelectedCategory(null);
-    setSelectedTime(null);
-    setFilterData({
-      selectedDestination: null,
-      selectedCategory: null,
-      selectedTime: null,
-    });
-    setModalVisible(false); 
+    setFilterData({});
+    setModalVisible(false);
   };
 
   return (
     <View style={styles.header}>
-      {/* <TouchableOpacity
-        style={styles.editButton}
-        
-        onPress={ () => router.push("/(stack)/favorites/editFavouriScreen")}
-      >
-        <Ionicons name="create-outline" size={24} color="#005c8b" />
-      </TouchableOpacity> */}
       <Text style={styles.title}>Yêu thích</Text>
-
-      <View style={styles.filterRow}>
-        {/* <TouchableOpacity
-          style={styles.filterBtn}
-          onPress={() => setModalVisible(true)}
-        >
-          <Ionicons
-            name="options-outline"
-            size={20}
-            style={styles.filterIcon}
-          />
-          <Text style={styles.filterText}>Lọc</Text>
-        </TouchableOpacity> */}
-      </View>
 
       <Modal
         animationType="slide"
@@ -91,93 +36,13 @@ export default function Header({ setFilterData }) {
 
             <Text style={styles.modalTitle}>Bộ lọc</Text>
 
-            <View style={styles.filterSection}>
-              <Text style={styles.filterTitle}>Điểm đến</Text>
-              <View style={styles.filterOptions}>
-                {destinations.map((item, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.filterButton,
-                      selectedDestination === item && styles.selectedButton,
-                    ]}
-                    onPress={() => setSelectedDestination(item)}
-                  >
-                    <Text
-                      style={[
-                        styles.filterButtonText,
-                        selectedDestination === item &&
-                          styles.selectedButtonText,
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.filterSection}>
-              <Text style={styles.filterTitle}>Danh mục</Text>
-              <View style={styles.filterOptions}>
-                {categories.map((item, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.filterButton,
-                      selectedCategory === item && styles.selectedButton,
-                    ]}
-                    onPress={() => setSelectedCategory(item)}
-                  >
-                    <Text
-                      style={[
-                        styles.filterButtonText,
-                        selectedCategory === item && styles.selectedButtonText,
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.filterSection}>
-              <Text style={styles.filterTitle}>Đã lưu vào Yêu thích</Text>
-              <View style={styles.filterOptions}>
-                {times.map((item, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.filterButton,
-                      selectedTime === item && styles.selectedButton,
-                    ]}
-                    onPress={() => setSelectedTime(item)}
-                  >
-                    <Text
-                      style={[
-                        styles.filterButtonText,
-                        selectedTime === item && styles.selectedButtonText,
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+            {/* Các lựa chọn đã bị xoá ở đây */}
 
             <View style={styles.buttonsRow}>
-              <TouchableOpacity
-                style={styles.clearButton}
-                onPress={clearFilters}
-              >
+              <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
                 <Text style={styles.clearButtonText}>Xóa</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={applyFilters}
-              >
+              <TouchableOpacity style={styles.confirmButton} onPress={applyFilters}>
                 <Text style={styles.confirmButtonText}>Xác nhận</Text>
               </TouchableOpacity>
             </View>
@@ -193,48 +58,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-  },
-   editButton: {
-    position: "absolute",
-    top: 20,
-    right: 20,
-    zIndex: 999,
+    backgroundColor: 'white',
   },
   title: {
     fontSize: 26,
     fontWeight: "bold",
     color: "#005c8b",
-  },
-  icons: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: -30,
-  },
-  icon: {
-    marginRight: 16,
-  },
-  filterRow: {
-    marginTop: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-  filterBtn: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginRight: 10,
-    marginBottom: 8,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  filterIcon: {
-    marginRight: 6,
-  },
-  filterText: {
-    color: "#005c8b",
-    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,
@@ -256,38 +85,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 12,
-  },
-  filterSection: {
-    marginBottom: 20,
-  },
-  filterTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 10,
-  },
-  filterOptions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  filterButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: "#f0f0f0",
-    marginRight: 10,
-    marginBottom: 10,
-  },
-  selectedButton: {
-    backgroundColor: "#0088dc",
-  },
-  filterButtonText: {
-    fontSize: 14,
-    color: "#333",
-  },
-  selectedButtonText: {
-    color: "white",
-    fontWeight: "bold",
   },
   buttonsRow: {
     flexDirection: "row",
@@ -312,11 +109,6 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     color: "white",
     fontSize: 16,
-  },
-  selectedLocationText: {
-    marginTop: 10,
-    fontSize: 14,
-    color: "#005c8b",
   },
   closeButton: {
     position: "absolute",
