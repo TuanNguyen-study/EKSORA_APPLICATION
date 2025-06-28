@@ -1,38 +1,50 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, FlatList, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
 import { COLORS } from "../../../constants/colors";
 
 
 const paymentMethods = [
-  { id: "momo", label: "MoMo E-Wallet" },
+  { id: "Payos", label: "Payos" },
   { id: "atm", label: "ATM by MoMo", note: "Hoàn tiền không áp dụng cho lựa chọn thanh toán của bạn" },
   { id: "credit", label: "Thêm/Quản lý Thẻ tín dụng" },
   { id: "googlepay", label: "Google Pay" },
 ];
 
+
 export default function PaymentPage() {
   const router = useRouter();
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [profile, setProfile] = useState(null);
 
-  const { totalPrice } = useLocalSearchParams();
+  const { title, quantityAdult, quantityChild, totalPrice, travelDate, image } = useLocalSearchParams();
+  console.log("📷 image param:", image);
+
   const totalAmount = Number(totalPrice || 0);
 
-
   const bankIcons = {
-    momo: "microsoft-xbox-controller-menu", // replaced with closer icon to MoMo wallet
-    atm: "bank-outline", // outlined bank icon for ATM
-    credit: "credit-card-outline", // outlined credit card icon
-    googlepay: "google", // keep google icon
+    momo: "microsoft-xbox-controller-menu",
+    atm: "bank-outline",
+    credit: "credit-card-outline",
+    googlepay: "google",
   };
+  useEffect(() => {
+    (async () => {
+      const profStr = await AsyncStorage.getItem('USER_PROFILE');
+      if (profStr) {
+        try {
+          setProfile(JSON.parse(profStr));
+        } catch {
+          console.warn('USER_PROFILE không phải JSON hợp lệ');
+        }
+      }
+    })();
+  }, []);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
@@ -52,38 +64,154 @@ export default function PaymentPage() {
     </TouchableOpacity>
   );
 
+  const handlePayment = async () => {
+    if (!profile) {
+      Alert.alert('Lỗi', 'Không có thông tin người dùng.');
+      return;
+    }
+    if (!selectedMethod) {
+      Alert.alert('Thông báo', 'Vui lòng chọn phương thức thanh toán');
+      return;
+    }
+
+    const payload = {
+      amount: totalAmount,
+      description: `Thanh toán đơn hàng ${title || 'không tên'}`,
+      buyerName: `${profile.firstName} ${profile.lastName}`,
+      buyerEmail: profile.email,
+      buyerPhone: profile.phone,
+      buyerAddress: profile.address,
+    };
+
+    console.log('🔀 Dữ liệu gửi sang API tạo thanh toán:');
+    console.log('💰 Amount:', payload.amount);
+    console.log('📄 Description:', payload.description);
+    console.log('👤 Name:', payload.buyerName);
+    console.log('📧 Email:', payload.buyerEmail);
+    console.log('📞 Phone:', payload.buyerPhone);
+    console.log('🏠 Address:', payload.buyerAddress);
+
+    try {
+      const response = await fetch('http://160.250.246.76:3000/create-payment-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      console.log('📤 HTTP status:', response.status);
+
+      let data;
+      try {
+        data = await response.json();
+        console.log('📥 Response body:', data);
+      } catch (parseErr) {
+        const text = await response.text();
+        console.error('❌ Lỗi parse JSON:', parseErr, 'Raw text:', text);
+        return Alert.alert('Lỗi', `Phản hồi không hợp lệ: ${text}`);
+      }
+
+      if (!response.ok) {
+        const msg = data.message || JSON.stringify(data);
+        console.error(`❌ API lỗi ${response.status}:`, msg);
+        return Alert.alert(`Lỗi ${response.status}`, msg);
+      }
+
+      if (!data.url) {
+        console.error('❌ create-payment-link trả về nhưng thiếu url:', data);
+        return Alert.alert('Lỗi', 'Phản hồi không hợp lệ từ server.');
+      }
+
+      console.log('✅ Mở URL thanh toán:', data.url);
+      Linking.openURL(data.url);
+    } catch (err) {
+      console.error('🔥 Exception khi tạo payment link:', err);
+      Alert.alert('Lỗi', 'Đã xảy ra lỗi khi tạo thanh toán.');
+    }
+  };
+
+
+
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
         <Ionicons name="close" size={24} color={COLORS.white} />
       </TouchableOpacity>
-      <Text style={styles.totalAmount}>
-        {totalAmount.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
-      </Text>
 
-      <TouchableOpacity
-        style={styles.dropdown}
-        onPress={() => setDropdownVisible(!dropdownVisible)}
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.dropdownText}>Thông tin đơn hàng</Text>
-        <Ionicons name={dropdownVisible ? "chevron-up" : "chevron-down"} size={20} color={COLORS.white} />
-      </TouchableOpacity>
+        <Text style={styles.totalAmount}>
+          {totalAmount.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+        </Text>
 
-      <TouchableOpacity style={styles.discountButton}>
-        <Text style={styles.discountButtonText}>Sử dụng ưu đãi thanh toán</Text>
-        <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.dropdown}
+          onPress={() => setShowOrderDetails(!showOrderDetails)}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", flex: 1 }}>
+            <Text style={styles.dropdownText}>Thông tin đơn hàng</Text>
+            <Ionicons name={showOrderDetails ? "chevron-up" : "chevron-down"} size={20} color={COLORS.white} />
+          </View>
+        </TouchableOpacity>
+        {showOrderDetails && (
+          <View style={styles.orderDetailsContainer}>
+            {/* {image && (
+            <View style={{ alignItems: "center", marginBottom: 12 }}>
+              <Image
+                source={{ uri: image }}
+                style={styles.tourImage}
+                resizeMode="cover"
+              />
+            </View>
+          )} */}
 
-      <FlatList
-        data={paymentMethods}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        style={styles.methodList}
-      />
+            <Text style={styles.sectionTitle}>Thông tin liên lạc:</Text>
+            <Text style={styles.orderInfo}>
+              {`${profile?.firstName ?? ''} ${profile?.lastName ?? ''}`}
+            </Text>
+            <Text style={styles.orderInfo}>{`${profile?.phone ?? ''}`}</Text>
+            <Text style={styles.orderInfo}>{`${profile?.email ?? ''}`}</Text>
+            {/* <Text style={styles.orderInfo}>{profile?.address}</Text> */}
+
+            <View style={styles.separator} />
+
+            <Text style={styles.sectionTitle}>{`${title ?? ''}`}</Text>
+            <Text style={styles.orderInfo}>{`${travelDate ?? ''}`}</Text> {/* Có thể truyền selectedDate nếu muốn */}
+            <Text style={styles.orderInfo}>
+              {`${quantityAdult} x Người lớn, ${quantityChild} x Trẻ em (5-8)`}
+            </Text>
+
+            <Text style={styles.orderPrice}>₫ {totalAmount.toLocaleString("vi-VN")}</Text>
+
+            <View style={styles.separator} />
+
+
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Tổng cộng</Text>
+              <Text style={styles.totalAmountBold}>₫ {totalAmount.toLocaleString("vi-VN")}</Text>
+            </View>
+          </View>
+        )}
+
+
+        <TouchableOpacity style={styles.discountButton}>
+          <Text style={styles.discountButtonText}>Sử dụng ưu đãi thanh toán</Text>
+          <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
+        </TouchableOpacity>
+
+        <FlatList
+          data={paymentMethods}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          style={styles.methodList}
+          scrollEnabled={false}
+        />
+      </ScrollView>
 
       <TouchableOpacity
         style={styles.payNowButton}
-        onPress={() => router.push("/acount/SuccessScreen")} // 👈 chuyển sang trang thành công
+        onPress={handlePayment}
       >
         <Text style={styles.payNowButtonText}>Thanh toán ngay</Text>
       </TouchableOpacity>
@@ -94,7 +222,7 @@ export default function PaymentPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#004080", // Darker shade for background
+    backgroundColor: "#004080",
     paddingTop: 40,
     paddingHorizontal: 16,
   },
@@ -175,7 +303,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: COLORS.primary,
   },
-
   methodLabel: {
     fontSize: 16,
     fontWeight: "bold",
@@ -197,4 +324,66 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+  orderDetailsContainer: {
+    backgroundColor: COLORS.white,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  orderText: {
+    fontSize: 14,
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  tourImage: {
+    width: "100%",
+    height: 180,
+    borderRadius: 12,
+  },
+  sectionTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 4,
+    color: COLORS.black,
+  },
+
+  orderInfo: {
+    fontSize: 14,
+    color: COLORS.black,
+    marginBottom: 4,
+  },
+
+  orderPrice: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: COLORS.black,
+    marginBottom: 4,
+  },
+
+  separator: {
+    height: 1,
+    backgroundColor: COLORS.gray,
+    marginVertical: 8,
+  },
+
+  totalAmountBold: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "right",
+    color: COLORS.black,
+    marginTop: 8,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+
+  totalLabel: {
+    fontSize: 14,
+
+    color: COLORS.black,
+  },
+
 });

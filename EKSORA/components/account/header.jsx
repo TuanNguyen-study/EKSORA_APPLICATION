@@ -57,7 +57,7 @@ export default function Header() {
       <View style={styles.userInfo}>
         <Image source={{ uri: avatarUri }} style={styles.avatar} />
         <View style={styles.textGroup}>
-          <Text style={styles.username}>{user.first_name}</Text>
+          <Text style={styles.username}>{user.first_name + '' + user.last_name}</Text>
           <TouchableOpacity>
             <Text style={styles.update} onPress={() => router.push('/(stack)/UpdateUser')}>Cập nhật thông tin cá nhân</Text>
           </TouchableOpacity>

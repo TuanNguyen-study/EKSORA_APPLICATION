@@ -10,7 +10,7 @@ export default function Body() {
       {/* Box chứa danh sách */}
       <View style={styles.box}>
         <TouchableOpacity
-          onPress={() => router.push("/(stack)/acount/bookingScreen")}
+          onPress={() => router.push("/trips")}
         >
           <View style={styles.item}>
             <Ionicons name="document-text-outline" size={20} color="black" />
