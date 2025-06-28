@@ -92,6 +92,7 @@ const TourReviewCard = ({ tourBooking, onSubmitReview }) => {
                 <TextInput
                     style={styles.textInput}
                     placeholder="Hãy chia sẻ những trải nghiệm của bạn về chuyến đi này nhé..."
+                    placeholderTextColor="#999" 
                     multiline
                     value={comment}
                     onChangeText={setComment}
@@ -170,6 +171,7 @@ const styles = StyleSheet.create({
         textAlignVertical: 'top', // Căn text lên trên cùng cho Android
         fontSize: 15,
         marginBottom: 20,
+        color: 'black',
     },
     submitButton: {
         backgroundColor: '#007BFF',
@@ -241,12 +243,13 @@ const styles = StyleSheet.create({
     textInput: {
         height: 120,
         borderWidth: 1,
-        borderColor: '#d1d1d1',
+        borderColor: '#000000',
         borderRadius: 8,
         padding: 15,
         textAlignVertical: 'top',
         fontSize: 15,
         marginBottom: 20,
+        color: 'black',
     },
     submitButton: {
         backgroundColor: '#007BFF',
