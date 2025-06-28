@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { View, Alert, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useDispatch } from 'react-redux';
-import { verifyOtp } from '../../../../API/services/AxiosInstance';
+import {  verifyOtp } from '../../../../API/services/passwordActions';
+import { loginUser } from '../../../../API/services/AxiosInstance';
 
 
 const Otp = () => {
@@ -27,26 +28,30 @@ const Otp = () => {
     }
   };
 
-  const handleVerify = async () => {
-    const otpValue = otp.join('');
-    if (otpValue.length !== 4) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đủ 4 số OTP');
-      return;
-    }
+// ...existing code...
+const handleVerify = async () => {
+  const otpValue = otp.join('');
+  if (otpValue.length !== 4) {
+    Alert.alert('Lỗi', 'Vui lòng nhập đủ 4 số OTP');
+    return;
+  }
 
-    try {
-      setLoading(true);
-      await dispatch(verifyOtp({ email, otp: otpValue })).unwrap();
+  try {
+    setLoading(true);
+    const result = await dispatch(verifyOtp({ email, otp: otpValue })).unwrap();
 
-      router.replace({
-        pathname: '/(stack)/signup/ResetPassword',
-      });
-    } catch (error) {
-      Alert.alert('Lỗi', error || 'Xác thực OTP thất bại');
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Lấy resetToken từ result và truyền sang màn ResetPassword
+    router.replace({
+      pathname: '/(stack)/signup/ResetPassword',
+      params: { token: result.resetToken }, // truyền resetToken
+    });
+  } catch (error) {
+    Alert.alert('Lỗi', error || 'Xác thực OTP thất bại');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <View style={styles.container}>

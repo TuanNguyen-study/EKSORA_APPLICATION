@@ -1,23 +1,31 @@
-import { makeRedirectUri } from "expo-auth-session";
-import * as Google from "expo-auth-session/providers/google";
-import { useRouter } from "expo-router";
+import React, { useCallback, useEffect } from "react";
 import * as WebBrowser from "expo-web-browser";
-import React, { useCallback } from "react";
+import * as Google from "expo-auth-session/providers/google";
+import { makeRedirectUri } from "expo-auth-session";
+import { useRouter } from "expo-router";
 
 WebBrowser.maybeCompleteAuthSession();
 
-export default function useGoogleLogin({ style, textStyle, iconStyle } = {}) {
+export default function useGoogleLogin() {
   const router = useRouter();
 
- const [request, response, promptAsync] = Google.useAuthRequest({
-  androidClientId: "550765995121-gia9o8hdhfcp60fe1rnm224i6uvlngpv.apps.googleusercontent.com",
-  iosClientId: "202826142981-f7afuh14h1dtsso6phl7ttb61qorlt6v.apps.googleusercontent.com", // ← thêm dòng này
-  webClientId: "202826142981-na9784r84dlvmg91bor5e6bcumuh40ts.apps.googleusercontent.com",
-  prompt: "select_account",
-  redirectUri: makeRedirectUri({ useProxy: true }),
-});
+  // ✅ Sử dụng Expo Proxy để chạy được trên Expo Go
+  const redirectUri = makeRedirectUri({
+    useProxy: true
+  });
 
+  console.log("🔁 Redirect URI:", redirectUri);
+  // Sẽ ra: https://auth.expo.io/@tentaikhoan/tenproject
 
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: "202826142981-5qsfp2r4cdt65c2jpfc8c4pl9mq828te.apps.googleusercontent.com",
+    iosClientId: "202826142981-f7afuh14h1dtsso6phl7ttb61qorlt6v.apps.googleusercontent.com",
+    webClientId: "202826142981-na9784r84dlvmg91bor5e6bcumuh40ts.apps.googleusercontent.com",
+    redirectUri,
+    useProxy: true,
+    scopes: ["profile", "email"],
+    prompt: "select_account",
+  });
 
   const fetchUserInfo = useCallback(async (token) => {
     try {
@@ -25,16 +33,20 @@ export default function useGoogleLogin({ style, textStyle, iconStyle } = {}) {
         headers: { Authorization: `Bearer ${token}` },
       });
       const user = await res.json();
-      console.log("Google User:", user); // xử lý user nếu cần
-      router.replace("/(tabs)/home");
+      console.log("✅ Google User:", user);
+      router.replace("/(tabs)/home"); 
     } catch (error) {
-      console.error("Lỗi khi lấy thông tin người dùng:", error);
+      console.error(" Lỗi khi lấy thông tin người dùng:", error);
     }
   }, [router]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    console.log("📱 Response:", response);
     if (response?.type === "success") {
-      fetchUserInfo(response.authentication.accessToken);
+      const token = response.authentication?.accessToken;
+      if (token) fetchUserInfo(token);
+    } else if (response?.type === "error") {
+      console.error(" Google Login Error:", response);
     }
   }, [response, fetchUserInfo]);
 

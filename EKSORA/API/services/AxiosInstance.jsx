@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import { sendotp, verifyOtp, resetPassword } from './passwordActions';
 import axios from 'axios';
 
 // Tạo instance Axios
@@ -84,84 +85,23 @@ export const loginphone = createAsyncThunk(
   }
 );
 
-// Send OTP
-export const sendotp = createAsyncThunk(
-  'auth/send-otp',
-  async (email, { rejectWithValue }) => {
-    try {
-      const res = await AxiosInstance.post('/api/password/send-otp', { email });
-      if (res.status !== 200) {
-        throw new Error('Gửi OTP thất bại');
-      }
-      return res.data;
-    } catch (err) {
-      return rejectWithValue(
-        extractErrorMessage(err, 'Gửi OTP thất bại')
-      );
-    }
-  }
-);
 
-// Verify OTP
-export const verifyOtp = createAsyncThunk(
-  'auth/verify-otp',
-  async ({ email, otp }, { rejectWithValue }) => {
-    try {
-      const res = await AxiosInstance.post('/api/password/verify-otp', { email, otp });
-      return res.data;
-    } catch (err) {
-      return rejectWithValue(
-        extractErrorMessage(err, 'Xác thực OTP thất bại')
-      );
-    }
-  }
-);
-
-// Reset Password
-export const resetPassword = createAsyncThunk(
-  'auth/resetPassword',
-  async ({ newPassword }, { getState, rejectWithValue }) => {
-    const state = getState();
-    if (!state || !state.auth) {
-      return rejectWithValue('Redux state is undefined');
-    }
-    const resetToken = state.auth.resetToken;
-    if (!resetToken) return rejectWithValue('Không có token để reset mật khẩu');
-
-    try {
-      const res = await AxiosInstance.post(
-        '/api/password/reset-password',
-        { newPassword },
-        {
-          headers: {
-            Authorization: `Bearer ${resetToken}`,
-            'x-client-id': 'af5b66e1-254c-4934-b883-937882df00f4',
-            'x-api-key': '8d75fba6-789f-4ea4-8a3f-af375140662d',
-          },
-        }
-      );
-      return res.data;
-    } catch (err) {
-
-      return rejectWithValue(err.response?.data?.message || 'đặt lại mật khẩu thất bại');
-    }
-  }
-);
 
 // Interceptor
+// ...existing code...
 AxiosInstance.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('ACCESS_TOKEN');
-    console.log('[Interceptor] ACCESS_TOKEN từ AsyncStorage:', token);
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Nếu đã có Authorization (ví dụ khi reset password), không ghi đè
+    if (!config.headers.Authorization) {
+      const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
-    console.log('[Interceptor] Headers gửi đi:', config.headers);
-    console.log('[Interceptor] URL:', config.baseURL + config.url);
     return config;
   },
   (error) => Promise.reject(error)
 );
+// ...existing code...
 
 export default AxiosInstance;

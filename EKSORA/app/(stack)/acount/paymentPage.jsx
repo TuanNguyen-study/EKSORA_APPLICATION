@@ -100,34 +100,43 @@ export default function PaymentPage() {
 
       console.log('📤 HTTP status:', response.status);
 
+      const contentType = response.headers.get('content-type');
+      const rawText = await response.text();
+
       let data;
-      try {
-        data = await response.json();
-        console.log('📥 Response body:', data);
-      } catch (parseErr) {
-        const text = await response.text();
-        console.error('❌ Lỗi parse JSON:', parseErr, 'Raw text:', text);
-        return Alert.alert('Lỗi', `Phản hồi không hợp lệ: ${text}`);
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(rawText);
+        } catch (err) {
+          console.error('❌ Không parse được JSON:', err);
+          return Alert.alert('Lỗi', 'Dữ liệu phản hồi không hợp lệ từ server.');
+        }
+      } else {
+        console.error('❌ Server trả về không phải JSON:', rawText);
+        return Alert.alert('Lỗi', rawText || 'Lỗi không xác định từ server.');
       }
 
       if (!response.ok) {
-        const msg = data.message || JSON.stringify(data);
+        const msg = data?.message || rawText;
         console.error(`❌ API lỗi ${response.status}:`, msg);
         return Alert.alert(`Lỗi ${response.status}`, msg);
       }
 
       if (!data.url) {
-        console.error('❌ create-payment-link trả về nhưng thiếu url:', data);
+        console.error('❌ Không tìm thấy URL trong phản hồi:', data);
         return Alert.alert('Lỗi', 'Phản hồi không hợp lệ từ server.');
       }
 
       console.log('✅ Mở URL thanh toán:', data.url);
       Linking.openURL(data.url);
+
     } catch (err) {
       console.error('🔥 Exception khi tạo payment link:', err);
       Alert.alert('Lỗi', 'Đã xảy ra lỗi khi tạo thanh toán.');
     }
-  };
+
+  }
+
 
 
 

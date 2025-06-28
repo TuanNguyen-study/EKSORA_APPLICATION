@@ -75,7 +75,7 @@ export default function TripDetailScreen() {
         options: (svc.options || []).map(opt => ({
           id: opt._id,
           name: opt.name,
-          description: opt.description,
+description: opt.description,
           price: opt.price_extra,
         }))
       }));
@@ -168,8 +168,7 @@ export default function TripDetailScreen() {
       Alert.alert('Lỗi', 'Không thể cập nhật danh sách yêu thích. Vui lòng thử lại sau.');
     }
   };
-
-  const onBookNow = () => {
+const onBookNow = () => {
     const basePrice = productData?.price?.current || 0;
 
     // ✅ Tính tổng giá phụ thu option
@@ -191,11 +190,10 @@ export default function TripDetailScreen() {
       tour_title: productData.name, // name là tên tour
       total_price: total_price.toString(),
       selectedOptions: JSON.stringify(currentSelectedPackages),
-      image: productData?.images?.[0]?.uri || '',
     }).toString();
 
     router.push(`/acount/bookingScreen?${query}`);
-    console.log('🔗 Booking URL:', `/acount/bookingScreen?${query}`);
+    console.log('Booking URL:', `/acount/bookingScreen?${query}`);
   };
 
 
@@ -255,11 +253,11 @@ export default function TripDetailScreen() {
               }
 
               await addFavoriteTour(userId, productId);
-              setIsFavorite(true);
+              setIsFavorite(true); 
               Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
             } catch (err) {
               console.error(' Thêm tour yêu thích lỗi:', err.response?.data || err.message);
-              Alert.alert(' Thêm thất bại', err.response?.data?.message || 'Vui lòng thử lại sau');
+Alert.alert(' Thêm thất bại', err.response?.data?.message || 'Vui lòng thử lại sau');
             }
           }}
         />
@@ -363,8 +361,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10
   },
-
-  retryButton: {
+retryButton: {
     marginTop: 20,
     backgroundColor: COLORS.primary,
     paddingHorizontal: 20,

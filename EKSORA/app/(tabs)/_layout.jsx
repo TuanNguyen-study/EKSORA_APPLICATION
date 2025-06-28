@@ -2,19 +2,58 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Platform, StyleSheet } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import AnimatedTabBarIcon from "../../components/AnimatedTabBarIcon";
 
 const TabArr = [
   {
     route: "home/index",
-    Label: "Trang chủ",
+    label: "Trang chủ",
     type: Ionicons,
     activeIcon: "home",
-    inActiveIcon: "home-filled",
-    component: COLORS,
+    inActiveIcon: "home-outline",
   },
-  { route: "offers/index", lable: "Ưu đãi", type: Ionicons, activeIcon: "" },
+  {
+    route: "offers/index",
+    label: "Ưu đãi",
+    type: Ionicons,
+    activeIcon: "pricetag",
+    inActiveIcon: "pricetag-outline",
+  },
+  {
+    route: "favorites/index",
+    label: "Yêu thích",
+    type: Ionicons,
+    activeIcon: "heart",
+    inActiveIcon: "heart",
+    isCustom: true,
+  },
+  {
+    route: "trips/index",
+    label: "Chuyến đi",
+    type: Ionicons,
+    activeIcon: "airplane",
+    inActiveIcon: "airplane-outline",
+  },
+  {
+    route: "account/index",
+    label: "Tài khoản",
+    type: Ionicons,
+    activeIcon: "person",
+    inActiveIcon: "person-outline",
+  },
 ];
+
+const CustomTabBarButton = ({ children, onPress }) => (
+  <TouchableOpacity
+    style={styles.customButtonContainer}
+    onPress={onPress}
+  >
+    <View style={styles.customButton}>
+      {children}
+    </View>
+  </TouchableOpacity>
+);
 
 export default function TabsLayout() {
   return (
@@ -28,68 +67,85 @@ export default function TabsLayout() {
           headerShown: false,
         }}
       >
-        <Tabs.Screen
-          name="home/index"
-          options={{
-            title: "Trang chủ",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home-outline" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="offers/index"
-          options={{
-            title: "Ưu đãi",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="pricetag-outline" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="favorites/index"
-          options={{
-            title: "Yêu thích",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="heart-outline" size={size} color={color} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="trips/index"
-          options={{
-            title: "Chuyến đi",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="airplane-outline" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="account/index"
-          options={{
-            title: "Tài khoản",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person-outline" size={size} color={color} />
-            ),
-          }}
-        />
+        {TabArr.map((item, index) => {
+          if (item.isCustom) {
+            return (
+              <Tabs.Screen
+                key={index}
+                name={item.route}
+                options={{
+                  tabBarLabel: () => null,
+                  tabBarButton: (props) => <CustomTabBarButton {...props} />,
+                  tabBarIcon: () => (
+                    <Ionicons name={item.activeIcon} size={32} color={COLORS.white} />
+                  ),
+                }}
+              />
+            );
+          } else {
+            return (
+              <Tabs.Screen
+                key={index}
+                name={item.route}
+                options={{
+                  title: item.label,
+                  tabBarIcon: ({ color, size, focused }) => (
+                    <AnimatedTabBarIcon
+                      focused={focused}
+                      color={color}
+                      size={size}
+                      activeIcon={item.activeIcon}
+                      inActiveIcon={item.inActiveIcon}
+                      IconComponent={item.type}
+                    />
+                  ),
+                }}
+              />
+            );
+          }
+        })}
       </Tabs>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.primary },
+  container: { flex: 1, backgroundColor: "#00639B" },
   tabBar: {
     backgroundColor: COLORS.white,
-    paddingBottom: Platform.OS === "ios" ? 10 : 5,
-    height: Platform.OS === "ios" ? 80 : 60,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.text + "20",
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    borderRadius: 15,
+    height: 70,
+    borderTopWidth: 0,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   tabBarLabel: {
     fontSize: 12,
-    paddingBottom: 8,
+    fontWeight: "500",
+    marginTop: -5,
+  },
+  customButtonContainer: {
+    top: -20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  customButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 35,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
   },
 });
