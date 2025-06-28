@@ -104,7 +104,6 @@ const TourReviewCard = ({ tourBooking, onSubmitReview }) => {
         </View>
     );
 };
-// StyleSheet để tạo style cho giao diện
 const styles = StyleSheet.create({
     card: {
         backgroundColor: '#FFFFFF',
@@ -116,7 +115,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 8,
         elevation: 5,
-        overflow: 'hidden', // Đảm bảo bo góc cho ảnh
+        overflow: 'hidden', 
     },
     tourImage: {
         width: '100%',
@@ -168,7 +167,7 @@ const styles = StyleSheet.create({
         borderColor: '#d1d1d1',
         borderRadius: 8,
         padding: 15,
-        textAlignVertical: 'top', // Căn text lên trên cùng cho Android
+        textAlignVertical: 'top',
         fontSize: 15,
         marginBottom: 20,
         color: 'black',

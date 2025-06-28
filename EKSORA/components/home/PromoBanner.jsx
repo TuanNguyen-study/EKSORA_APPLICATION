@@ -1,35 +1,51 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; 
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import CouponModal from '../../app/(stack)/Voucher/CouponModal'; 
 
-const PromoBanner = () => (
-  <View style={styles.container}>
-    {/* Icon bên trái */}
-    <Ionicons name="flame" size={32} color='#0087CA' style={styles.icon} />
+const PromoBanner = () => {
+  const [modalVisible, setModalVisible] = useState(false); // State để quản lý Modal
 
-    {/* Khối văn bản ở giữa */}
-    <View style={styles.textContainer}>
-      <Text style={styles.title}>Mã Ngon Giảm Sốc</Text>
-      <Text style={styles.subtitle}>Có hạn, dùng ngay!</Text>
-    </View>
+  return (
+    <>
+      <View style={styles.container}>
+        {/* Icon bên trái */}
+        <Ionicons name="flame" size={32} color="#0087CA" style={styles.icon} />
 
-    {/* Nút bên phải */}
-    <TouchableOpacity style={styles.button}>
-      <Text style={styles.buttonText}>Xem tất cả</Text>
-    </TouchableOpacity>
-  </View>
-);
+        {/* Khối văn bản ở giữa */}
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>Mã Ngon Giảm Sốc</Text>
+          <Text style={styles.subtitle}>Có hạn, dùng ngay!</Text>
+        </View>
+
+        {/* Nút bên phải */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => setModalVisible(true)} // Mở Modal khi nhấn
+        >
+          <Text style={styles.buttonText}>Xem tất cả</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Gọi CouponModal */}
+      <CouponModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)} // Đóng Modal
+      />
+    </>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E6F3FA', // Màu nền be/cam nhạt
+    backgroundColor: '#E6F3FA',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    marginHorizontal: 15, // Khoảng cách với lề màn hình
-    marginBottom:10,
+    marginHorizontal: 15,
+    marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -43,26 +59,26 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   textContainer: {
-    flex: 1, // Giúp khối này chiếm hết không gian còn lại
+    flex: 1,
   },
   title: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333', // Màu chữ đậm
+    color: '#333',
   },
   subtitle: {
     fontSize: 13,
-    color: '#757575', // Màu chữ xám nhạt
+    color: '#757575',
     marginTop: 2,
   },
   button: {
-    backgroundColor: '#0087CA', // Màu cam đậm cho nút
-    borderRadius: 20, // Bo tròn để tạo hình viên thuốc
+    backgroundColor: '#0087CA',
+    borderRadius: 20,
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
   buttonText: {
-    color: '#FFFFFF', // Chữ trắng
+    color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 14,
   },

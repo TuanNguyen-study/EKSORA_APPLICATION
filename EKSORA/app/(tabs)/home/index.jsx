@@ -61,13 +61,6 @@ const carouselImages = [
   },
 ];
 
-const serviceCategories = [
-  { id: "s1", label: "Vui chơi & Trải nghiệm" },
-  { id: "s2", label: "Xe khách" },
-  { id: "s3", label: "Tự thuê xe" },
-  { id: "s4", label: "Khách sạn" },
-  { id: "s5", label: "Mục khác" },
-];
 const ITEM_WIDTH_PERCENTAGE_HOME = 0.6;
 const ITEM_HEIGHT_CAROUSEL_TOTAL_HOME = 150;
 const ITEM_SPACING_CAROUSEL_HOME = 15;
@@ -311,7 +304,7 @@ export default function HomeScreen() {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
-        contentContainerStyle={{ paddingBottom: 50 }}
+        contentContainerStyle={{ paddingBottom: 60 }}
         contentInsetAdjustmentBehavior="automatic"
       >
         <LinearGradient
