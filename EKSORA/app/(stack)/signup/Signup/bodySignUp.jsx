@@ -79,7 +79,7 @@ const BodySignUp = () => {
     <View>
       <TextInput
          style={[styles.input, errors.email && styles.errorBorder]}
-        placeholder="Email"
+        placeholder= "Nhập email"
         keyboardType="email-address"
         value={form.email}
         onChangeText={text => setForm(prev => ({ ...prev, email: text }))}
@@ -89,7 +89,7 @@ const BodySignUp = () => {
       <View style={styles.passwordContainer }>
         <TextInput
           style={[styles.input, { flex: 1, marginBottom: 0 }, errors.password&& styles.errorBorder]}
-          placeholder="Password"
+          placeholder="nhập mật khẩu"
           secureTextEntry={!passwordVisible}
           value={form.password}
           onChangeText={text => setForm(prev => ({ ...prev, password: text }))}
@@ -109,26 +109,26 @@ const BodySignUp = () => {
 
       <TextInput
         style={[styles.input, errors.first_name && styles.errorBorder]}
-        placeholder="First Name"
+        placeholder="Nhập tên"
         value={form.first_name}
         onChangeText={text => setForm(prev => ({ ...prev, first_name: text }))}
       />
       <TextInput
       style={[styles.input, errors.last_name && styles.errorBorder]}
-        placeholder="Last Name"
+        placeholder="Nhập họ"
         value={form.last_name}
         onChangeText={text => setForm(prev => ({ ...prev, last_name: text }))}
       />
       <TextInput
         style={[styles.input, errors.phone && styles.errorBorder]}
-        placeholder="Phone"
+        placeholder="Nhập số điện thoại"
         keyboardType="phone-pad"
         value={form.phone}
         onChangeText={text => setForm(prev => ({ ...prev, phone: text }))}
       />
       <TextInput
           style={[styles.input, errors.address && styles.errorBorder]}
-        placeholder="Address"
+        placeholder="Nhập địa chỉ "
         value={form.address}
         onChangeText={text => setForm(prev => ({ ...prev, address: text }))}
       />

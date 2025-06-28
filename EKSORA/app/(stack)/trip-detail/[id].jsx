@@ -203,7 +203,24 @@ export default function TripDetailScreen() {
           tourId={productData._id}
           onBackPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/home')}
           onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
-          onFavoritePress={() => setIsFavorite(prev => !prev)}
+
+          onFavoritePress={async () => {
+            try {
+              const userId = await AsyncStorage.getItem('USER_ID');
+              if (!userId || !productId) {
+                Alert.alert('Lỗi', 'Không xác định được người dùng hoặc tour.');
+                return;
+              }
+
+              await addFavoriteTour(userId, productId);
+              setIsFavorite(true);
+
+              Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
+            } catch (err) {
+              console.error(' Thêm tour yêu thích lỗi:', err.response?.data || err.message);
+              Alert.alert(' Thêm thất bại', err.response?.data?.message || 'Vui lòng thử lại sau');
+            }
+          }}
         />
 
 
