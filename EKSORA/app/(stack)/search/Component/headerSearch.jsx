@@ -1,131 +1,114 @@
+import { useState, useEffect } from "react";
+import {
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ScrollView,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState } from "react";
-import {
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TextInput,
-    Platform,
-    TouchableOpacity,
-    View,
-} from "react-native";
-import { getTours } from "../../../../API/services/serverCategories";
+import { COLORS } from "../../../../constants/colors";
 
 export default function HeaderSearch() {
-
-  const cardShadow = Platform.select({
-      ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-      },
-      android: {
-          elevation: 3,
-      },
-  });
-  
-  const keywords = [
-    "Tây ninh",
-    "Đà nẵng",
-    "Sapa cáp treo",
-    "Bình thuận",
-    "Tour đã phú quốc",
-    "Hà nội",
+  const [searchText, setSearchText] = useState("");
+  const [historySearch, setHistorySearch] = useState([]);
+  const popularSearch = [
+    "tràng an",
+    "Hà Nội",
+    "đà nẵng",
+    "hạ long",
+    "hồ chí minh",
+    "Ninh Bình",
   ];
 
-  const [searchText, setSearchText] = useState("");
-  const [filteredTours, setFilteredTours] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
+  useEffect(() => {
+    const loadHistory = async () => {
+      const stored = await AsyncStorage.getItem("searchHistory");
+      setHistorySearch(stored ? JSON.parse(stored) : []);
+    };
+    loadHistory();
+  }, []);
 
-  const fetchTours = async () => {
-    try {
-      const allTours = await getTours();
-      const matched = allTours.filter((tour) =>
-        tour.name.toLowerCase().includes(searchText.toLowerCase())
-      );
-      setFilteredTours(matched);
-      setShowDropdown(true);
-    } catch (error) {
-      console.error("Lỗi khi tìm tour:", error);
-    }
+  const saveSearchHistory = async (keyword) => {
+    let updated = [keyword, ...historySearch.filter((item) => item !== keyword)];
+    if (updated.length > 10) updated = updated.slice(0, 10);
+    setHistorySearch(updated);
+    await AsyncStorage.setItem("searchHistory", JSON.stringify(updated));
   };
 
-  const handleSelectTour = (tour) => {
-    alert(`Bạn đã chọn tour: ${tour.name}`);
-    setSearchText(tour.name);
-    setShowDropdown(false);
+  const clearSearchHistory = async () => {
+    await AsyncStorage.removeItem("searchHistory");
+    setHistorySearch([]);
+  };
+
+  const handleSearch = async (keyword) => {
+    if (!keyword) return;
+    await saveSearchHistory(keyword);
+    router.push({
+      pathname: "/(stack)/SearchResult",
+      params: { query: keyword },
+    });
   };
 
   return (
     <View style={styles.header}>
-      {/* Hàng chứa nút back và thanh tìm kiếm */}
-      <View style={styles.searchRow}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.push("/(tabs)/home")}
-        >
-          <Ionicons name="arrow-back" size={24} color="black" />
+      {/* Back button + Search bar */}
+      <View style={styles.searchWrapper}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/home")} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={20} color="#333" />
         </TouchableOpacity>
 
-        <View style={styles.searchContainer}>
-          <TextInput
-            placeholder="Núi bà đen"
-            placeholderTextColor="#007AFF"
-            style={styles.searchInput}
-            value={searchText}
-            onChangeText={setSearchText}
-          />
-          <TouchableOpacity style={styles.searchButton} onPress={fetchTours}>
-            <Text style={styles.searchIcon}>🔍</Text>
-          </TouchableOpacity>
-        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="Tìm Kiếm"
+          placeholderTextColor={COLORS.gradientBackground}
+          value={searchText}
+          onChangeText={setSearchText}
+          onSubmitEditing={() => handleSearch(searchText)}
+        />
+        <TouchableOpacity style={styles.iconWrapper} onPress={() => handleSearch(searchText)}>
+          <Ionicons name="search" size={18} color="white" />
+        </TouchableOpacity>
       </View>
 
-      {showDropdown && filteredTours.length > 0 && (
-        <View style={styles.dropdownContainer}>
-          <FlatList
-            data={filteredTours}
-            keyExtractor={(item, index) => item._id ? item._id.toString() : index.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.dropdownItem}
-                onPress={() => handleSelectTour(item)}
-              >
-                <Image
-                  source={{ uri: item.image[0] }}
-                  style={styles.dropdownImage}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.dropdownTitle}>{item.name}</Text>
-                  <Text style={styles.dropdownDesc} numberOfLines={2}>
-                    {item.description}
-                  </Text>
+      {/* Lịch sử tìm kiếm */}
+      {historySearch.length > 0 && (
+        <>
+          <View style={styles.historyHeader}>
+            <Text style={styles.sectionLabel}>Lịch sử tìm kiếm</Text>
+            <TouchableOpacity onPress={clearSearchHistory}>
+              <Text style={styles.clearText}>Xoá</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.keywordWrap}>
+            {historySearch.map((item, index) => (
+              <TouchableOpacity key={index} onPress={() => handleSearch(item)}>
+                <View style={styles.chip}>
+                  <Text style={styles.chipText}>{item}</Text>
                 </View>
               </TouchableOpacity>
-            )}
-          />
-        </View>
+            ))}
+          </View>
+        </>
       )}
 
-      <Text style={styles.sectionTitle}>Được tìm kiếm nhiều nhất</Text>
-
-      <View style={styles.keywordsContainer}>
-        {keywords.map((item) => (
-          <TouchableOpacity
-            key={item}
-            onPress={() => {
-              setSearchText(item);
-              fetchTours();
-            }}
-          >
-            <View style={styles.keywordChip}>
-              <Text style={styles.keywordText}>{item}</Text>
+      {/* Mọi người đang tìm kiếm */}
+      <Text style={styles.sectionLabel}>Mọi người đang tìm kiếm</Text>
+      <View style={styles.keywordWrap}>
+        {popularSearch.map((item, index) => (
+          <TouchableOpacity key={index} onPress={() => handleSearch(item)}>
+            <View style={styles.chip}>
+              <Text style={styles.chipText}>{item}</Text>
             </View>
           </TouchableOpacity>
         ))}
+        <Ionicons name="chevron-down" size={18} color="#999" />
       </View>
     </View>
   );
@@ -133,95 +116,66 @@ export default function HeaderSearch() {
 
 const styles = StyleSheet.create({
   header: {
-    marginTop: 15,
-    marginBottom: 16,
-    paddingHorizontal: 16,
     backgroundColor: "#fff",
-  },
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 5,
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#3B82F6",
-    borderRadius: 25,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingTop: 20,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333",
-  },
-  searchButton: {
-    marginLeft: 8,
-    backgroundColor: "#3B82F6",
-    padding: 8,
-    borderRadius: 20,
-  },
-  searchIcon: {
-    color: "#fff",
-    fontSize: 14,
-  },
-  sectionTitle: {
-    marginTop: 16,
-    marginBottom: 8,
-    fontWeight: "500",
-    fontSize: 14,
-  },
-  keywordsContainer: {
+  searchWrapper: {
     flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  keywordChip: {
-    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: COLORS.gradientBackground,
+    borderRadius: 30,
     paddingHorizontal: 12,
     paddingVertical: 6,
+  },
+  backBtn: {
+    paddingRight: 8,
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    color: "#000",
+  },
+  iconWrapper: {
+    backgroundColor: COLORS.primary,
     borderRadius: 20,
+    padding: 6,
+    marginLeft: 8,
+  },
+  sectionLabel: {
+    fontWeight: "bold",
+    fontSize: 14,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  clearText: {
+    fontSize: 12,
+    color:  COLORS.primary,
+  },
+  historyHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 16,
+  },
+  keywordWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    alignItems: "center",
+  },
+  chip: {
+    backgroundColor: "#F3F4F6",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     marginRight: 8,
     marginBottom: 8,
   },
-  keywordText: {
+  chipText: {
     fontSize: 12,
-    color: "#111827",
-  },
-  dropdownContainer: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-    marginTop: 8,
-    maxHeight: 200,
-  },
-  dropdownItem: {
-    flexDirection: "row",
-    padding: 10,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
-    alignItems: "center",
-  },
-  dropdownImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: 10,
-  },
-  dropdownTitle: {
-    fontWeight: "bold",
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  dropdownDesc: {
-    fontSize: 12,
-    color: "#555",
+    color: "#333",
   },
 });
