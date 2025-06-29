@@ -27,18 +27,9 @@ const cardShadow = Platform.select({
   },
 });
 
-// ✅ Hàm xáo trộn mảng
-const shuffleArray = (array) => {
-  return array
-    .map((item) => ({ item, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ item }) => item);
-};
-
 export default function Body() {
   const [activeTab, setActiveTab] = useState("top");
   const [tours, setTours] = useState([]);
-  const [shuffledTours, setShuffledTours] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,18 +48,10 @@ export default function Body() {
     fetchTours();
   }, []);
 
-  // ✅ Mỗi khi activeTab thay đổi → shuffle lại
-  useEffect(() => {
-    if (tours.length > 0) {
-      const shuffled = shuffleArray(tours);
-      setShuffledTours(shuffled);
-    }
-  }, [activeTab, tours]);
-
-  const handlePressTour = (tour) => {
+  const handlePressTour = (tours) => {
     router.push({
       pathname: "/(stack)/trip-detail/[id]",
-      params: { id: tour._id }
+      params: { id: tours._id }
     });
   };
 
@@ -77,9 +60,9 @@ export default function Body() {
       contentContainerStyle={styles.listContainer}
       showsVerticalScrollIndicator={false}
     >
-      {shuffledTours.map((item, index) => (
+      {tours.map((item, index) => (
         <TouchableOpacity
-          key={item._id || index}
+          key={item.id || index}
           style={styles.cardContainer}
           onPress={() => handlePressTour(item)}
         >
@@ -88,7 +71,7 @@ export default function Body() {
           </View>
           <Image source={{ uri: item.image[0] }} style={styles.cardImage} />
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+            <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>
             <Text style={styles.cardLocation}>{item.location || item.province}</Text>
             <Text style={styles.cardPrice}>Từ {item.price.toLocaleString()}đ</Text>
           </View>
@@ -101,19 +84,13 @@ export default function Body() {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={styles.tabContainer}>
         <TouchableOpacity onPress={() => setActiveTab("top")}>
-          <Text style={[styles.tabText, activeTab === "top" && styles.activeTab]}>
-            Top tìm kiếm
-          </Text>
+          <Text style={[styles.tabText, activeTab === "top" && styles.activeTab]}>Top tìm kiếm</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setActiveTab("trend")}>
-          <Text style={[styles.tabText, activeTab === "trend" && styles.activeTab]}>
-            Điểm đến theo xu hướng
-          </Text>
+          <Text style={[styles.tabText, activeTab === "trend" && styles.activeTab]}>Điểm đến theo xu hướng</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setActiveTab("visit")}>
-          <Text style={[styles.tabText, activeTab === "visit" && styles.activeTab]}>
-            Top điểm tham quan
-          </Text>
+          <Text style={[styles.tabText, activeTab === "visit" && styles.activeTab]}>Top điểm tham quan</Text>
         </TouchableOpacity>
       </View>
 
@@ -156,7 +133,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: COLORS.primaryAction,
+    backgroundColor:COLORS.primaryAction,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10,
