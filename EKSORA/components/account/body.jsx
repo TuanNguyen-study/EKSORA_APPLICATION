@@ -2,63 +2,59 @@ import React from "react";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
+import { COLORS } from '../../constants/colors';  
+
 
 export default function Body() {
   const router = useRouter();
   return (
-    <View style={styles.body}>
-      {/* Box chứa danh sách */}
+    <View style={styles.bodyContainer}>
       <View style={styles.box}>
         <TouchableOpacity
-          onPress={() => router.push("/(stack)/acount/bookingScreen")}
+          onPress={() => router.push("/trips")}
+
         >
-          <View style={styles.item}>
-            <Ionicons name="document-text-outline" size={20} color="black" />
-            <Text style={styles.label}>Đơn hàng</Text>
+          <Ionicons name="receipt-outline" size={24} color={COLORS.textDark} style={styles.icon} />
+          <Text style={styles.label}>Đơn hàng</Text>
+          <Ionicons name="chevron-forward-outline" size={20} color={COLORS.textGray} />
+        </TouchableOpacity>
+        <View style={styles.separator} />
+
+        <TouchableOpacity style={styles.touchableItemColumn} onPress={() => router.push('/MyOrder/UserInfoForm')}>
+          <View style={styles.itemRow}>
+            <Ionicons name="person-outline" size={24} color={COLORS.textDark} style={styles.icon} />
+            <View style={styles.textContainer}>
+              <Text style={styles.label}>Thông tin thường dùng</Text>
+              <Text style={styles.sub}>
+                Quản lý thông tin khách trên đơn hàng, địa chỉ và phương thức thanh toán
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward-outline" size={20} color={COLORS.textGray} />
           </View>
         </TouchableOpacity>
         <View style={styles.separator} />
 
-        {/* <View style={styles.item}>
-          <Ionicons name="gift-outline" size={20} color="black" />
-          <Text style={styles.label}>Eskora Rewards</Text>
-        </View>
-        <View style={styles.separator} /> */}
-
-        <View style={styles.itemColumn}>
-          <View style={styles.item}>
-            <Ionicons name="person-outline" size={20} color="black" />
-            <Text style={styles.label}>Thông tin người dùng</Text>
-          </View>
-          <Text style={styles.sub}>
-            Quản lý thông tin khách trên đơn hàng, địa chỉ và phương thức thanh
-            toán
-          </Text>
-        </View>
-        <View style={styles.separator} />
-
-        <View style={styles.item}>
-          <MaterialIcons name="rate-review" size={20} color="black" />
+        <TouchableOpacity style={styles.touchableItem} onPress={() => router.push('/TourReview/ReviewScreen')}>
+          <Ionicons name="chatbubble-ellipses-outline" size={24} color={COLORS.textDark} style={styles.icon}/>
           <Text style={styles.label}>Đánh giá</Text>
-        </View>
+          <Ionicons name="chevron-forward-outline" size={20} color={COLORS.textGray} />
+        </TouchableOpacity>
       </View>
 
-      {/* Trợ giúp & Cài đặt */}
-      <View style={styles.extra}>
-        <View style={styles.item}>
-          <Ionicons name="help-circle-outline" size={20} color="black" />
+      <View style={styles.box}>
+        <TouchableOpacity style={styles.touchableItem} onPress={() => router.push('/MyOrder/HelpScreen')}>
+          <Ionicons name="help-circle-outline" size={24} color={COLORS.textDark} style={styles.icon}/>
           <Text style={styles.label}>Trợ giúp</Text>
-        </View>
-        <View style={styles.separatorThin} />
-
-        {/* TouchableOpacity cho nút Settings */}
+          <Ionicons name="chevron-forward-outline" size={20} color={COLORS.textGray} />
+        </TouchableOpacity>
+        <View style={styles.separator} />
         <TouchableOpacity
+          style={styles.touchableItem}
           onPress={() => router.push("/(stack)/acount/settingScreen")}
         >
-          <View style={styles.item}>
-            <Ionicons name="settings-outline" size={20} color="black" />
-            <Text style={styles.label}>Cài đặt</Text>
-          </View>
+          <Ionicons name="settings-outline" size={24} color={COLORS.textDark} style={styles.icon}/>
+          <Text style={styles.label}>Cài đặt</Text>
+          <Ionicons name="chevron-forward-outline" size={20} color={COLORS.textGray} />
         </TouchableOpacity>
       </View>
     </View>
@@ -66,53 +62,58 @@ export default function Body() {
 }
 
 const styles = StyleSheet.create({
-  body: {
-    paddingHorizontal: 16,
-    backgroundColor: "#fff",
-    paddingBottom: 32,
+  bodyContainer: {
+    flex: 1,
+    paddingHorizontal: 16, 
+    backgroundColor: COLORS.white, 
   },
   box: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: "#fff",
-    marginBottom: 35,
+    borderRadius: 12,
+    backgroundColor: COLORS.white, 
+    marginBottom: 16, 
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 2.22,
+    elevation: 3,
   },
-  item: {
+  touchableItem: { 
     flexDirection: "row",
     alignItems: "center",
-    gap: 15,
-    paddingVertical: 10,
-    marginLeft: 15,
-    margin: 5,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
   },
-  itemColumn: {
-    paddingVertical: 10,
+  touchableItemColumn: { 
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+  },
+  itemRow: { 
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  icon: {
+    marginRight: 15,
+  },
+  textContainer: { 
+    flex: 1,
   },
   label: {
-    fontSize: 14,
-    color: "#000",
+    fontSize: 16,
+    color: COLORS.textDark,
+    fontWeight: '500',
+    flex: 1, 
   },
   sub: {
     fontSize: 12,
-    color: "#666",
-    marginLeft: 30,
-    marginTop: -6,
-    marginBottom: 10,
+    color: COLORS.textGray,
+    marginTop: 3,
   },
   separator: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    marginLeft: 30,
-  },
-  separatorThin: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    marginVertical: 4,
-  },
-  extra: {
-    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth, 
+    borderBottomColor: COLORS.separatorLight,
+    marginLeft: 16 + 24 + 15,
   },
 });

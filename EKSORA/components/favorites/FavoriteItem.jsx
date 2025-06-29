@@ -1,17 +1,20 @@
-import { Image, StyleSheet, Text, View, TouchableOpacity, Animated } from 'react-native';
+import { Image, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import React, { useState } from 'react';
 import { deleteFavoriteTour } from '../../API/services/servicesFavorite';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Swipeable } from 'react-native-gesture-handler';
+import { AntDesign, FontAwesome } from '@expo/vector-icons';
+import { COLORS } from '../../constants/colors';
 
 export default function FavoriteItem({
   id,
   title,
-  description,
   price,
-  location,
   image,
   onPress,
+  rating,
+  reviewCount,
+  description
 }) {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -27,22 +30,19 @@ export default function FavoriteItem({
 
       await deleteFavoriteTour(userId, id, token);
       console.log("Đã xoá khỏi yêu thích:", id);
-      setIsVisible(false);  
+      setIsVisible(false);
     } catch (error) {
       console.error("Lỗi khi xoá yêu thích:", error);
     }
   };
 
-  // Render action khi vuốt
-  const renderRightActions = () => {
-    return (
-      <View style={styles.deleteBox}>
-        <Text style={styles.deleteText}>Xóa</Text>
-      </View>
-    );
-  };
+  const renderRightActions = () => (
+    <View style={styles.deleteBox}>
+      <Text style={styles.deleteText}>Xóa</Text>
+    </View>
+  );
 
-  if (!isVisible) return null;  
+  if (!isVisible) return null;
 
   return (
     <Swipeable
@@ -51,23 +51,30 @@ export default function FavoriteItem({
     >
       <TouchableOpacity onPress={onPress}>
         <View style={styles.container}>
-          <Image source={{ uri: image }} style={styles.image} />
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: image }} style={styles.image} />
+            <View style={styles.heartIconWrapper}>
+              <AntDesign name="heart" size={20} color="red" />
+            </View>
+          </View>
+
           <View style={styles.content}>
-            <View style={styles.titleRow}>
-              <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+            <View>
+              <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
                 {title}
               </Text>
+              <Text style={styles.description} numberOfLines={2}>
+                {description}
+              </Text>
+              <View style={styles.ratingContainer}>
+                <FontAwesome name="star" size={14} color="#FFB800" />
+                <Text style={styles.ratingText}> {rating}</Text>
+                <Text style={styles.reviewText}> ({reviewCount})</Text>
+              </View>
             </View>
 
-            <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
-              {description}
-            </Text>
-
-            <View style={styles.bottomRow}>
-              <Text style={styles.location} numberOfLines={1} ellipsizeMode="tail">
-                {location}
-              </Text>
-              <Text style={styles.price}>Từ {price} đ</Text>
+            <View style={styles.priceContainer}>
+              <Text style={styles.currentPrice}>Từ {price?.toLocaleString('vi-VN')}đ</Text>
             </View>
           </View>
         </View>
@@ -79,63 +86,71 @@ export default function FavoriteItem({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    padding: 12,
-    marginBottom: 10,
-    backgroundColor: '#f6fafd',
-    borderRadius: 12,
-    alignItems: 'flex-start',
+    padding: 10,
+  },
+  imageContainer: {
+    width: 100,
+    height: 100,
   },
   image: {
-    width: 90,
-    height: 90,
-    borderRadius: 10,
-    marginRight: 12,
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
-  content: { flex: 1 },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  heartIconWrapper: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
     alignItems: 'center',
   },
+  content: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'space-between',
+  },
   title: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
-    flexShrink: 1,
-    marginRight: 8,
+    color: '#1a1a1a',
+    lineHeight: 22,
   },
   description: {
     fontSize: 13,
-    color: '#555',
-    marginTop: 4,
+    color: COLORS.textLight,
+    minHeight: 32,
   },
-  bottomRow: {
+  ratingContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
     alignItems: 'center',
   },
-  location: {
+  ratingText: {
+    marginLeft: 4,
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-    maxWidth: 170,
+    color: '#757575',
   },
-  price: {
+  reviewText: {
+    color: '#666',
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#e63946',
-    textAlign: 'right',
-    minWidth: 90,
-    flexShrink: 0,
-    flexGrow: 0,
+    marginLeft: 4,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginTop: 8,
+  },
+  currentPrice: {
+    fontSize: 15,
+    color: COLORS.primary,
   },
   deleteBox: {
     backgroundColor: '#FF3B30',
     justifyContent: 'center',
     alignItems: 'center',
     width: 80,
-    borderRadius: 10,
-    marginVertical: 10,
+    height: '100%',
   },
   deleteText: {
     color: '#fff',

@@ -1,33 +1,36 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../../../../constants/colors';
 import ReviewItem from './ReviewItem';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 // Component lấy từ ReviewItem hoặc ProductBasicInfo
-const StarRatingDisplay = ({ rating, size = 20, color = COLORS.warning }) => { 
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      if (i <= rating) {
-        stars.push(<Ionicons key={i} name="star" size={size} color={color} />);
-      } else if (i - 0.5 <= rating) {
-        stars.push(<Ionicons key={i} name="star-half-sharp" size={size} color={color} />);
-      } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={size} color={color} />);
-      }
+const StarRatingDisplay = ({ rating, size = 20, color = COLORS.warning }) => {
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    if (i <= rating) {
+      stars.push(<Ionicons key={i} name="star" size={size} color={color} />);
+    } else if (i - 0.5 <= rating) {
+      stars.push(<Ionicons key={i} name="star-half-sharp" size={size} color={color} />);
+    } else {
+      stars.push(<Ionicons key={i} name="star-outline" size={size} color={color} />);
     }
-    return <View style={{ flexDirection: 'row' }}>{stars}</View>;
+  }
+  return <View style={{ flexDirection: 'row' }}>{stars}</View>;
 };
+
+
+
+
 
 const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount, onViewAllReviews }) => {
   if (!reviews || reviews.length === 0) {
     return (
       <View style={styles.container}>
-         <View style={styles.sectionHeader}>
-            <View style={styles.headerIndicator} />
-            <Text style={styles.sectionTitle}>Đánh giá</Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.headerIndicator} />
+          <Text style={styles.sectionTitle}>Đánh giá</Text>
         </View>
         <Text style={styles.noReviewsText}>Chưa có đánh giá nào cho sản phẩm này.</Text>
       </View>
@@ -48,14 +51,16 @@ const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount, onVi
           <Text style={styles.ratingOutOfFive}>/5</Text>
         </Text>
         <View style={styles.starsAndTotalCount}>
-            <StarRatingDisplay rating={averageRating} />
-            <Text style={styles.totalReviewsText}>{totalReviewsCount} Đánh giá</Text>
+          <StarRatingDisplay rating={averageRating} />
+          <Text style={styles.totalReviewsText}>{totalReviewsCount} Đánh giá</Text>
         </View>
       </View>
 
+
+
       {/* Carousel Đánh giá Nổi bật */}
       <FlatList
-        data={reviews} 
+        data={reviews}
         renderItem={({ item }) => <ReviewItem review={item} />}
         keyExtractor={(item) => item.id}
         horizontal
@@ -66,8 +71,8 @@ const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount, onVi
       {/* Nút Đọc tất cả bài đánh giá */}
       <TouchableOpacity style={styles.viewAllButton} onPress={onViewAllReviews}>
         <Text style={styles.viewAllButtonText}>Đọc tất cả bài đánh giá</Text>
-      </TouchableOpacity>      
-     
+      </TouchableOpacity>
+
     </View>
   );
 };
@@ -118,9 +123,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   reviewsCarouselContent: {
-    paddingLeft: 0, 
-    paddingRight: screenWidth - (screenWidth * 0.8) - 12, 
-    paddingVertical: 8, 
+    paddingLeft: 0,
+    paddingRight: screenWidth - (screenWidth * 0.8) - 12,
+    paddingVertical: 8,
   },
   viewAllButton: {
     backgroundColor: COLORS.white,
@@ -128,11 +133,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 20,
-    borderWidth: 1.5, 
-    borderColor: COLORS.textSecondary, 
+    borderWidth: 1.5,
+    borderColor: COLORS.textSecondary,
   },
   viewAllButtonText: {
-    color: COLORS.text, 
+    color: COLORS.text,
     fontSize: 15,
     fontWeight: '500',
   },

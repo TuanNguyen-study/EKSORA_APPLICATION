@@ -311,6 +311,7 @@ export default function HomeScreen() {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
+        contentContainerStyle={{ paddingBottom: 50 }}
         contentInsetAdjustmentBehavior="automatic"
       >
         <LinearGradient

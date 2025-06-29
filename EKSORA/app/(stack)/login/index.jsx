@@ -17,7 +17,7 @@ const  Index = () => {
 
     }, 3000);
 
-    return () => clearTimeout(timer); // Dọn dẹp khi unmount
+    return () => clearTimeout(timer); 
   }, []);
 
 

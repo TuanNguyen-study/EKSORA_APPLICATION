@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, Modal, Dimensions
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, Modal, Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -8,12 +8,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { getUserProfile, updateUserProfile } from '../../../API/services/servicesProfile';
 import { provinces } from './provinces';
-
-
-
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const screenHeight = Dimensions.get('window').height;
 
 export default function PersonalInfoScreen() {
   const [userInfo, setUserInfo] = useState({
@@ -23,7 +20,7 @@ export default function PersonalInfoScreen() {
     country: '',
     phoneEmail: '',
   });
-
+  const [isInfoVisible, setIsInfoVisible] = useState(false);
   const [avatarUri, setAvatarUri] = useState('https://cdn-icons-png.flaticon.com/512/149/149071.png');
   const [modalVisible, setModalVisible] = useState(false);
   const [currentField, setCurrentField] = useState('');
@@ -38,10 +35,7 @@ export default function PersonalInfoScreen() {
         if (localAvatar) setAvatarUri(localAvatar);
 
         const token = await AsyncStorage.getItem('ACCESS_TOKEN');
-        if (!token) {
-          console.warn('Không tìm thấy token');
-          return;
-        }
+        if (!token) return;
 
         const user = await getUserProfile(token);
         setUserInfo({
@@ -70,67 +64,33 @@ export default function PersonalInfoScreen() {
   };
 
   const handleModalSave = async () => {
-    try {
-      const updatedField = { ...userInfo, [currentField]: tempValue };
-      setUserInfo(updatedField);
+    const updatedInfo = { ...userInfo, [currentField]: tempValue };
+    setUserInfo(updatedInfo);
 
-      if (currentField === 'birth') {
-        await AsyncStorage.setItem('LOCAL_BIRTH', tempValue);
-      }
-
-      const token = await AsyncStorage.getItem('ACCESS_TOKEN');
-      if (!token) {
-        alert('Không tìm thấy token!');
-        return;
-      }
-
-      // Chuẩn bị payload
-      const payload = {};
-      switch (currentField) {
-        case 'name':
-          payload.first_name = tempValue;
-          break;
-        case 'title':
-          payload.last_name = tempValue;
-          break;
-        case 'country':
-          payload.address = tempValue;
-          break;
-        case 'phoneEmail':
-          if (tempValue.includes('@')) {
-          } else {
-            payload.phone = tempValue;
-          }
-          break;
-        default:
-          break;
-      }
-
-      // Gọi API cập nhật nếu có trường hợp cần gửi
-      if (Object.keys(payload).length > 0) {
-        await updateUserProfile(token, payload);
-      }
-
-      setModalVisible(false);
-      alert('Cập nhật thành công!');
-    } catch (err) {
-      console.error('Lỗi khi cập nhật thông tin:', err);
-      alert('Có lỗi xảy ra!');
+    if (currentField === 'birth') {
+      await AsyncStorage.setItem('LOCAL_BIRTH', tempValue);
     }
-  };
 
-  const handleDateChange = (event, selectedDate) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      const formattedDate = selectedDate.toISOString().split('T')[0]; // yyyy-mm-dd
-      setUserInfo(prev => ({
-        ...prev,
-        birth: formattedDate,
-      }));
-      AsyncStorage.setItem('LOCAL_BIRTH', formattedDate);
+    const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+    if (!token) return;
+
+    const payload = {};
+    switch (currentField) {
+      case 'name': payload.first_name = tempValue; break;
+      case 'title': payload.last_name = tempValue; break;
+      case 'country': payload.address = tempValue; break;
+      case 'phoneEmail':
+        if (!tempValue.includes('@')) payload.phone = tempValue;
+        break;
     }
-  };
 
+    if (Object.keys(payload).length > 0) {
+      await updateUserProfile(token, payload);
+    }
+
+    setModalVisible(false);
+    alert('Cập nhật thành công!');
+  };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -148,107 +108,108 @@ export default function PersonalInfoScreen() {
     });
 
     if (!result.canceled && result.assets?.length > 0) {
-      const base64Img = result.assets[0].base64;
-      const uri = `data:image/jpeg;base64,${base64Img}`;
-
-      setAvatarUri(uri); // hiển thị ảnh
+      const uri = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      setAvatarUri(uri);
       await AsyncStorage.setItem('LOCAL_AVATAR_URI', uri);
     }
   };
 
+  const onChangeDate = (event, selectedDate) => {
+    setShowDatePicker(Platform.OS === 'ios'); // iOS giữ mở picker
+    if (selectedDate) {
+      const formatted = selectedDate.toISOString().split('T')[0];
+      setTempValue(formatted);
+      setCurrentField('birth');
+      setModalVisible(true); // mở modal lưu
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thông tin cá nhân</Text>
-        <Ionicons name="eye-off-outline" size={24} color="black" />
-      </View>
-
-      <ScrollView style={styles.body}>
-        <Item label="Ảnh của tôi" valueComponent={<Avatar avatarUri={avatarUri} pickImage={pickImage} />} />
-
-        <TouchableOpacity onPress={() => handleOpenModal('name', userInfo.name)}>
-          <Item label="Tên của bạn" inputValue={userInfo.name} isEditable />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => handleOpenModal('title', userInfo.title)}>
-          <Item label="Danh xưng" inputValue={userInfo.title} isEditable />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => handleOpenModal('birth', userInfo.birth)}>
-          <Item label="Ngày sinh" inputValue={userInfo.birth} isEditable />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => handleOpenModal('country', userInfo.country)}>
-          <Item label="Quốc gia/Khu vực cư trú" inputValue={userInfo.country} isEditable />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => handleOpenModal('phoneEmail', userInfo.phoneEmail)}>
-          <Item label="Số điện thoại/Email" inputValue={userInfo.phoneEmail} isEditable />
-        </TouchableOpacity>
-
-        {/* <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Lưu</Text>
-        </TouchableOpacity> */}
-      </ScrollView>
-
-      {/* Modal chỉnh sửa văn bản */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={[
-            styles.modalContent,
-            { height: currentField === 'country' ? screenHeight * 0.7 : screenHeight * 0.3 }
-          ]}>
-            <Text style={styles.modalTitle}>Chỉnh sửa {getFieldLabel(currentField)}</Text>
-
-            {currentField === 'country' ? (
-              <ScrollView >
-                {provinces.map((province, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => setTempValue(province)}
-                    style={{
-                      padding: 10,
-                      backgroundColor: tempValue === province ? '#f0f0f0' : 'white',
-                    }}
-                  >
-                    <Text>{province}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            ) : (
-              <TextInput
-                style={styles.modalInput}
-                placeholder={`Nhập ${getFieldLabel(currentField).toLowerCase()}`}
-                value={tempValue}
-                onChangeText={setTempValue}
-              />
-            )}
-
-            <TouchableOpacity style={styles.modalSaveButton} onPress={handleModalSave}>
-              <Text style={styles.modalSaveButtonText}>Lưu</Text>
-            </TouchableOpacity>
-          </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="black" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Thông tin cá nhân</Text>
+          <TouchableOpacity onPress={() => setIsInfoVisible(!isInfoVisible)}>
+            <Ionicons
+              name={isInfoVisible ? "eye-outline" : "eye-off-outline"}
+              size={24}
+              color="black"
+            />
+          </TouchableOpacity>
         </View>
-      </Modal>
 
-      {/* Date Picker cho ngày sinh */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={userInfo.birth ? new Date(userInfo.birth) : new Date()}
-          mode="date"
-          display="spinner"
-          onChange={handleDateChange}
-          maximumDate={new Date()}
-        />
-      )}
-    </View>
+        <ScrollView style={styles.body}>
+          <Item label="Ảnh của tôi" valueComponent={<Avatar avatarUri={avatarUri} pickImage={pickImage} />} />
+          <TouchableOpacity onPress={() => handleOpenModal('name', userInfo.name)}>
+            <Item label="Tên của bạn" inputValue={userInfo.name} isEditable isInfoVisible={isInfoVisible} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleOpenModal('title', userInfo.title)}>
+            <Item label="Danh xưng" inputValue={userInfo.title} isEditable isInfoVisible={isInfoVisible} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleOpenModal('birth', userInfo.birth)}>
+            <Item label="Ngày sinh" inputValue={userInfo.birth} isEditable isInfoVisible={isInfoVisible} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleOpenModal('country', userInfo.country)}>
+            <Item label="Quốc gia/Khu vực cư trú" inputValue={userInfo.country} isEditable isInfoVisible={isInfoVisible} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleOpenModal('phoneEmail', userInfo.phoneEmail)}>
+            <Item label="Số điện thoại/Email" inputValue={userInfo.phoneEmail} isEditable isInfoVisible={isInfoVisible} />
+          </TouchableOpacity>
+        </ScrollView>
+
+        {/* Modal chỉnh sửa country hoặc input thông thường */}
+        <Modal visible={modalVisible} transparent animationType="slide">
+          <View style={styles.modalContainer}>
+            <View style={[styles.modalContent, {
+              height: currentField === 'country' ? '70%' : '30%'
+            }]}>
+              <Text style={styles.modalTitle}>Chỉnh sửa {getFieldLabel(currentField)}</Text>
+              {currentField === 'country' ? (
+                <ScrollView>
+                  {provinces.map((province, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => setTempValue(province)}
+                      style={{
+                        padding: 10,
+                        backgroundColor: tempValue === province ? '#f0f0f0' : 'white',
+                      }}>
+                      <Text>{province}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              ) : (
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder={`Nhập ${getFieldLabel(currentField).toLowerCase()}`}
+                  value={tempValue}
+                  onChangeText={setTempValue}
+                />
+              )}
+              <TouchableOpacity style={styles.modalSaveButton} onPress={handleModalSave}>
+                <Text style={styles.modalSaveButtonText}>Lưu</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* DateTime Picker native */}
+        {showDatePicker && (
+          <DateTimePicker
+            value={userInfo.birth ? new Date(userInfo.birth) : new Date()}
+            mode="date"
+            display="default"
+            maximumDate={new Date()}
+            onChange={onChangeDate}
+          />
+        )}
+    </SafeAreaView>
   );
 }
 
-function Item({ label, inputValue, valueComponent, isEditable }) {
+function Item({ label, inputValue, valueComponent, isEditable, isInfoVisible }) {
   return (
     <View style={styles.itemWrapper}>
       <View style={styles.itemContainer}>
@@ -256,12 +217,10 @@ function Item({ label, inputValue, valueComponent, isEditable }) {
           <Text style={styles.itemLabel}>{label}</Text>
           {isEditable && <Text style={styles.editText}>Chỉnh sửa</Text>}
         </View>
-        {valueComponent ? (
-          valueComponent
-        ) : (
+        {valueComponent || (
           <TextInput
             style={styles.inputField}
-            value={inputValue}
+            value={isInfoVisible ? inputValue : '••••••••'}
             editable={false}
           />
         )}
@@ -291,15 +250,8 @@ const getFieldLabel = (field) => {
 
 // STYLES
 const styles = StyleSheet.create({
-  // Container tổng thể
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-
   // Header
   header: {
-    marginTop: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -401,13 +353,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalSaveButton: {
-    backgroundColor: '#FF5A00',
+    backgroundColor: '#00639B',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
   modalSaveButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },

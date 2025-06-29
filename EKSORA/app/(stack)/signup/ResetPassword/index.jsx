@@ -3,10 +3,9 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useDispatch } from 'react-redux';
-import { resetPassword } from '../../../../API/services/AxiosInstance'; // Cập nhật đúng đường dẫn nếu cần
-
+import {  resetPassword } from '../../../../API/services/passwordActions';
 const ResetPassword = () => {
-  const { token } = useLocalSearchParams();
+ const { token } = useLocalSearchParams();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
@@ -18,8 +17,7 @@ const handleResetPassword = async () => {
   }
 
   try {
- await dispatch(resetPassword({ newPassword: password, resetToken: token })).unwrap();
-
+await dispatch(resetPassword({ newPassword: password, resetToken: token })).unwrap();
     Alert.alert('Thành công', 'Đổi mật khẩu thành công');
     router.push('/(stack)/login/loginEmail');
   } catch (error) {
