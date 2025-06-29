@@ -5,7 +5,7 @@ import axios from 'axios';
 
 // Tạo instance Axios
 const AxiosInstance = axios.create({
-  baseURL: 'https://api-eksora-app.onrender.com',
+  baseURL: 'http://160.250.246.76:3000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -40,12 +40,16 @@ export const loginUser = createAsyncThunk(
       const res = await AxiosInstance.post('/api/login-email', userData);
       const token = res.data?.token;
       const userId = res.data?.userId;
+      const user = res.data?.user;
 
       if (token) {
         await AsyncStorage.setItem('ACCESS_TOKEN', token);
       }
       if (userId) {
         await AsyncStorage.setItem('USER_ID', userId);
+      }
+      if (user) {
+        await AsyncStorage.setItem('USER_PROFILE', JSON.stringify(user));
       }
 
       return res.data;
