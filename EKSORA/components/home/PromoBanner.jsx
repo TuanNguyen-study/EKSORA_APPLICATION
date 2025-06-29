@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import CouponModal from '../../app/(stack)/Voucher/CouponModal'; 
 
 const PromoBanner = () => {
-  const [modalVisible, setModalVisible] = useState(false); // State để quản lý Modal
+  const [modalVisible, setModalVisible] = useState(false);
 
   return (
     <>
@@ -21,7 +21,7 @@ const PromoBanner = () => {
         {/* Nút bên phải */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => setModalVisible(true)} // Mở Modal khi nhấn
+          onPress={() => setModalVisible(true)} 
         >
           <Text style={styles.buttonText}>Xem tất cả</Text>
         </TouchableOpacity>
