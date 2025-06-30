@@ -5,7 +5,7 @@ import axios from 'axios';
 
 // Tạo instance Axios
 const AxiosInstance = axios.create({
-  baseURL: 'https://api-eksora-app.onrender.com',
+  baseURL: 'http://160.250.246.76:3000',
   headers: {
     'Content-Type': 'application/json',
   },

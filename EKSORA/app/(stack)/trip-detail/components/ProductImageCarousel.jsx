@@ -12,24 +12,24 @@ import {
   Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { addFavoriteTour, deleteFavoriteTour, getFavoriteToursByUser } from '../../../../API/services/servicesFavorite';
-
+import {
+  addFavoriteTour,
+  deleteFavoriteTour,
+  getFavoriteToursByUser,
+} from '../../../../API/services/servicesFavorite';
 
 const { width: screenWidth } = Dimensions.get('window');
-
-const ITEM_WIDTH = screenWidth * 1;
+const ITEM_WIDTH = screenWidth;
 const SNAP_INTERVAL = ITEM_WIDTH;
-const getFavoriteKey = (tourId) => `favorite_tour_${tourId}`;
 
+const getFavoriteKey = (tourId) => `favorite_tour_${tourId}`;
 
 const ProductImageCarousel = ({
   images = [],
-  isFavorite: initialIsFavorite,
-  tourId, 
+  tourId,
   onBackPress,
   onSharePress,
   onFavoritePress,
-  onAudioGuidePress,
   onCartPress,
   onImagePress,
 }) => {
@@ -38,48 +38,44 @@ const ProductImageCarousel = ({
   const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isManuallyScrolling, setIsManuallyScrolling] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+  const [isFavorite, setIsFavorite] = useState(false);
 
+  // Load trạng thái yêu thích từ local + server
   useEffect(() => {
     const fetchFavoriteStatus = async () => {
       try {
-        const userId = await AsyncStorage.getItem("USER_ID");
+        const userId = await AsyncStorage.getItem('USER_ID');
         if (!userId || !tourId) return;
 
-        // Ưu tiên lấy từ local storage
         const localValue = await AsyncStorage.getItem(getFavoriteKey(tourId));
         if (localValue !== null) {
           setIsFavorite(JSON.parse(localValue));
-          return;
+        } else {
+          const res = await getFavoriteToursByUser(userId);
+          const favoriteTours = res?.data || [];
+          const isFav = favoriteTours.some((item) => item.tourId === tourId);
+          setIsFavorite(isFav);
+          await AsyncStorage.setItem(getFavoriteKey(tourId), JSON.stringify(isFav));
         }
-
-        // Nếu chưa có local thì gọi API
-        const res = await getFavoriteToursByUser(userId);
-        const favoriteTours = res.data || [];
-        const isFav = favoriteTours.some((item) => item.tourId === tourId);
-        setIsFavorite(isFav);
-        await AsyncStorage.setItem(getFavoriteKey(tourId), JSON.stringify(isFav));
-      } catch (err) {
-        console.log('Lỗi khi kiểm tra yêu thích:', err.message);
+      } catch (error) {
+        console.log('Lỗi khi load yêu thích:', error.message);
       }
     };
 
     fetchFavoriteStatus();
   }, [tourId]);
 
-
+  // Auto scroll carousel
   useEffect(() => {
-    if (flatListRef.current && loopedImages.length > 0) {
-      flatListRef.current.scrollToIndex({ index: initialIndex, animated: false });
-    }
-  }, [initialIndex, loopedImages.length]);
+    if (!flatListRef.current || loopedImages.length === 0) return;
+    flatListRef.current.scrollToIndex({ index: initialIndex, animated: false });
+  }, [loopedImages.length]);
 
   useEffect(() => {
     if (isManuallyScrolling) return;
 
     const timer = setInterval(() => {
       if (!flatListRef.current) return;
-
       let nextIndex = currentIndex + 1;
       if (nextIndex >= loopedImages.length - 1) {
         nextIndex = initialIndex;
@@ -91,55 +87,38 @@ const ProductImageCarousel = ({
     }, 3000);
 
     return () => clearInterval(timer);
-  }, [currentIndex, isManuallyScrolling, initialIndex, loopedImages.length]);
+  }, [currentIndex, isManuallyScrolling]);
 
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    if (viewableItems && viewableItems.length > 0) {
-      const visibleIndex = viewableItems[0].index ?? initialIndex;
-      setCurrentIndex(visibleIndex);
-    }
-  }).current;
-
-  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
-
-  const handleScrollBeginDrag = () => setIsManuallyScrolling(true);
-  const handleScrollEndDrag = () => {
-    setTimeout(() => setIsManuallyScrolling(false), 500);
-  };
-
+  // Xử lý yêu thích
   const handleFavoritePress = async () => {
     try {
-      const token = await AsyncStorage.getItem("ACCESS_TOKEN");
-      const userId = await AsyncStorage.getItem("USER_ID");
+      const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+      const userId = await AsyncStorage.getItem('USER_ID');
+
       if (!userId || !token || !tourId) {
-        Alert.alert('Lỗi', 'Bạn cần đăng nhập hoặc thông tin tour không hợp lệ.');
+        Alert.alert('Lỗi', 'Thiếu thông tin người dùng hoặc tour.');
         return;
       }
 
       if (isFavorite) {
-        // Xóa khỏi danh sách yêu thích
         await deleteFavoriteTour(userId, tourId, token);
         setIsFavorite(false);
         await AsyncStorage.setItem(getFavoriteKey(tourId), JSON.stringify(false));
-        //Alert.alert('Thành công', 'Đã xóa khỏi danh sách yêu thích');
       } else {
-        // Thêm vào danh sách yêu thích
         await addFavoriteTour(userId, tourId);
         setIsFavorite(true);
         await AsyncStorage.setItem(getFavoriteKey(tourId), JSON.stringify(true));
-        //Alert.alert('Thành công', 'Đã thêm vào danh sách yêu thích');
       }
 
       if (onFavoritePress) onFavoritePress();
-    } catch (err) {
-      console.error('Lỗi khi xử lý yêu thích:', err.response?.data || err.message);
-      Alert.alert('Lỗi', err.response?.data?.message || 'Vui lòng thử lại sau');
+    } catch (error) {
+      console.error('Lỗi yêu thích:', error.response?.data || error.message);
+      Alert.alert('Lỗi', error.response?.data?.message || 'Vui lòng thử lại sau.');
     }
   };
 
-
   const renderItem = ({ item }) => (
-    <TouchableOpacity activeOpacity={0.9} onPress={() => onImagePress && onImagePress(item.id)}>
+    <TouchableOpacity activeOpacity={0.9} onPress={() => onImagePress?.(item.id)}>
       {item.uri ? (
         <Image source={{ uri: item.uri }} style={styles.image} resizeMode="cover" />
       ) : (
@@ -183,29 +162,29 @@ const ProductImageCarousel = ({
         data={loopedImages}
         keyExtractor={(item, index) => `${item?.id || 'image'}-${index}`}
         horizontal
-        showsHorizontalScrollIndicator={false}
         snapToInterval={SNAP_INTERVAL}
         decelerationRate="fast"
         bounces={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        contentContainerStyle={{
-          paddingHorizontal: (screenWidth - ITEM_WIDTH) / 2,
-        }}
+        showsHorizontalScrollIndicator={false}
+        onScrollBeginDrag={() => setIsManuallyScrolling(true)}
+        onMomentumScrollEnd={() => setTimeout(() => setIsManuallyScrolling(false), 500)}
         renderItem={renderItem}
-        onScrollBeginDrag={handleScrollBeginDrag}
-        onMomentumScrollEnd={handleScrollEndDrag}
         getItemLayout={(_, index) => ({
           length: SNAP_INTERVAL,
           offset: SNAP_INTERVAL * index,
           index,
         })}
+        contentContainerStyle={{
+          paddingHorizontal: (screenWidth - ITEM_WIDTH) / 2,
+        }}
       />
 
+      {/* Header actions */}
       <View style={styles.headerActionsContainer}>
         <TouchableOpacity onPress={onBackPress} style={styles.iconButtonBase}>
           <Ionicons name="arrow-back" size={26} color={COLORS.white} />
         </TouchableOpacity>
+
         <View style={styles.rightHeaderActions}>
           <TouchableOpacity onPress={handleFavoritePress} style={styles.iconButtonBase}>
             <Ionicons
@@ -214,9 +193,11 @@ const ProductImageCarousel = ({
               color={isFavorite ? COLORS.danger : COLORS.white}
             />
           </TouchableOpacity>
+
           <TouchableOpacity onPress={onSharePress} style={styles.iconButtonBase}>
             <Ionicons name="share-social-outline" size={24} color={COLORS.white} />
           </TouchableOpacity>
+
           <TouchableOpacity onPress={onCartPress} style={styles.iconButtonBase}>
             <Ionicons name="cart-outline" size={26} color={COLORS.white} />
           </TouchableOpacity>
@@ -242,7 +223,6 @@ const styles = StyleSheet.create({
   image: {
     width: ITEM_WIDTH,
     height: '100%',
-    borderRadius: 0,
   },
   headerActionsContainer: {
     position: 'absolute',
@@ -252,8 +232,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    zIndex: 10,
     alignItems: 'center',
+    zIndex: 10,
   },
   iconButtonBase: {
     padding: 8,

@@ -21,6 +21,7 @@ import ProductImageCarousel from './components/ProductImageCarousel';
 import { default as ProductOptionSelector } from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
+import { addFavoriteTour } from '../../../API/services/servicesFavorite';
 
 
 export default function TripDetailScreen() {
