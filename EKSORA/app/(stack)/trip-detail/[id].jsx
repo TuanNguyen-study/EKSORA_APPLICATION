@@ -213,10 +213,6 @@ export default function TripDetailScreen() {
           }}
         />
 
-
-
-
-
         <View style={styles.mainContentContainer}>
           <ProductBasicInfo
             productInfo={productData}

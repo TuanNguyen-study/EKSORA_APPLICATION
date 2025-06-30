@@ -120,10 +120,15 @@ const ReviewScreen = () => {
                     data={bookings}
                     renderItem={({ item }) => (
                         <TourReviewCard
-                            tourBooking={item}
-                            onSubmitReview={(rating, comment) =>
-                                handleSubmitReview(item.tour_id._id, rating, comment)
-                            }
+                            tourBooking={yourTourBookingData}
+                            onSubmitReview={async (tourId, rating, comment) => {
+                                try {
+                                    await postReview(userId, tourId, rating, comment);
+                                    Alert.alert('Cảm ơn bạn!', 'Đánh giá của bạn đã được ghi nhận!');
+                                } catch (err) {
+                                    Alert.alert('Lỗi', 'Không thể gửi đánh giá. Vui lòng thử lại.');
+                                }
+                            }}
                         />
                     )}
                     keyExtractor={(item) => item._id}
