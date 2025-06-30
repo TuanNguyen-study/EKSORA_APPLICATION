@@ -27,13 +27,14 @@ export const saveUserVoucher = async (userId, voucherId) => {
 
 export const getUserSavedVouchers = async (userId) => {
   try {
-    const response = await AxiosInstance().get(`/api/user-vouchers/${userId}`);
+    const response = await AxiosInstance().get(`/api/user-vouchers/user/${userId}`);
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi lấy voucher đã lưu của người dùng:', error);
+    console.error('Lỗi khi lấy voucher đã lưu của người dùng:', error?.response?.data || error.message);
     return [];
   }
 };
+
 
 
 

@@ -32,45 +32,38 @@ const CouponModal = ({ visible, onClose }) => {
   }, [visible, isFetched]);
 
   const fetchPromotions = async () => {
-    setIsLoading(true);
-    try {
-      const userId = await AsyncStorage.getItem('USER_ID');
-      if (!userId) {
-        Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng.');
-        return;
-      }
+  setIsLoading(true);
+  try {
+    const promotionList = await getPromotion();
 
-      const [promotionList, savedList] = await Promise.all([
-        getPromotion(),
-        getUserSavedVouchers(userId),
-      ]);
+    // ✅ Lấy danh sách voucher đã lưu từ AsyncStorage
+    const savedVoucherIds = await getSavedVoucherIds();
 
-      const savedVoucherIds = savedList.map(item => item.voucher_id);
-
-      if (!Array.isArray(promotionList)) {
-        console.warn('Dữ liệu khuyến mãi không hợp lệ:', promotionList);
-        setCoupons([]);
-        return;
-      }
-
-      const mapped = promotionList.map(item => ({
-        id: item._id,
-        mainTitle: item.condition || `Ưu đãi từ mã ${item.code}`,
-        expiryText: item.end_date ? `Hết hạn: ${formatDate(item.end_date)}` : null,
-        discountAmount: `Giảm ${item.discount}%`,
-        detailsText: `Mã: ${item.code}`,
-        status: savedVoucherIds.includes(item._id) ? 'saved' : 'available',
-      }));
-
-      setCoupons(mapped);
-      setIsFetched(true);
-    } catch (error) {
-      console.error('Lỗi khi fetch dữ liệu:', error);
-      Alert.alert('Lỗi', 'Không thể tải danh sách khuyến mãi.');
-    } finally {
-      setIsLoading(false);
+    if (!Array.isArray(promotionList)) {
+      console.warn('Dữ liệu khuyến mãi không hợp lệ:', promotionList);
+      setCoupons([]);
+      return;
     }
-  };
+
+    const mapped = promotionList.map(item => ({
+      id: item._id,
+      mainTitle: item.condition || `Ưu đãi từ mã ${item.code}`,
+      expiryText: item.end_date ? `Hết hạn: ${formatDate(item.end_date)}` : null,
+      discountAmount: `Giảm ${item.discount}%`,
+      detailsText: `Mã: ${item.code}`,
+      status: savedVoucherIds.includes(item._id) ? 'saved' : 'available',
+    }));
+
+    setCoupons(mapped);
+    setIsFetched(true);
+  } catch (error) {
+    console.error('Lỗi khi fetch dữ liệu:', error);
+    Alert.alert('Lỗi', 'Không thể tải danh sách khuyến mãi.');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const formatDate = (isoString) => {
     const d = new Date(isoString);

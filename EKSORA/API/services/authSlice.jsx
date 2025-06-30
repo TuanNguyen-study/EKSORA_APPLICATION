@@ -25,7 +25,7 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.user = {
           ...action.payload.user,
-          id: action.payload.userId, // ✅ Thêm dòng này
+          id: action.payload.userId, 
         };
       });
   },

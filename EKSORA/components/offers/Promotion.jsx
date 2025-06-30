@@ -13,6 +13,9 @@ import { getTours, getToursByLocation } from "../../API/services/serverCategorie
 import { router } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 import { getPromotion } from "../../API/services/servicesPromotion";
+import { addFavoriteTour, deleteFavoriteTour } from '../../API/services/servicesFavorite';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 
 export default function Promotions() {
@@ -57,13 +60,30 @@ export default function Promotions() {
     fetchToursByLocation();
   }, []);
 
-  const toggleLike = (tourId) => {
-    setLikedTours((prev) =>
-      prev.includes(tourId)
-        ? prev.filter((id) => id !== tourId)
-        : [...prev, tourId]
-    );
-  };;
+  const toggleLike = async (tourId) => {
+    try {
+      const userId = await AsyncStorage.getItem('USER_ID'); // hoặc lấy từ user context nếu có
+      const token = await AsyncStorage.getItem('ACCESS_TOKEN'); // nếu API yêu cầu token
+
+      if (!userId || !token) {
+        console.warn('Người dùng chưa đăng nhập!');
+        return;
+      }
+
+      const isLiked = likedTours.includes(tourId);
+
+      if (isLiked) {
+        await deleteFavoriteTour(userId, tourId, token);
+        setLikedTours((prev) => prev.filter((id) => id !== tourId));
+      } else {
+        await addFavoriteTour(userId, tourId);
+        setLikedTours((prev) => [...prev, tourId]);
+      }
+    } catch (error) {
+      console.error('Lỗi khi xử lý yêu thích:', error.message || error);
+    }
+  };
+
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
@@ -114,6 +134,7 @@ export default function Promotions() {
                       color={isLiked ? "red" : "white"}
                     />
                   </TouchableOpacity>
+
                 </ImageBackground>
 
                 <Text style={styles.cardTitle}>{tour.name}</Text>

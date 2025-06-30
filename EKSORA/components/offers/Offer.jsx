@@ -34,19 +34,15 @@ export default function Offer() {
       const response = await getPromotion();
       if (!Array.isArray(response)) return;
 
-      // Lấy danh sách voucher đã lưu từ AsyncStorage
       const savedIds = await getSavedVoucherIds();
 
-      // Lọc voucher chưa lưu
-      const filteredVouchers = response.filter(item => !savedIds.includes(item._id));
-
-      // Map dữ liệu cho phù hợp với UI
-      const mappedCoupons = filteredVouchers.map(item => ({
+      const mappedCoupons = response.map(item => ({
         id: item._id,
         title: 'Mã giảm giá',
         discount: item.discount ? `Giảm ${item.discount}%` : 'Ưu đãi',
         condition: item.condition || `Áp dụng đơn từ...`,
-        buttonText: 'Lưu',
+        buttonText: savedIds.includes(item._id) ? 'Đã lưu' : 'Lưu',
+        isSaved: savedIds.includes(item._id),
         expiry: item.end_date ? `HSD: ${formatDate(item.end_date)}` : null,
       }));
 
@@ -68,16 +64,20 @@ export default function Offer() {
 
       if (response?.message === 'Bạn đã lưu voucher này rồi') {
         Alert.alert('Thông báo', 'Bạn đã lưu voucher này rồi');
-        return;
+      } else {
+        Alert.alert('Thành công', 'Đã lưu voucher');
       }
 
-      // Lưu voucherId vào AsyncStorage local
       await saveVoucherId(voucherId);
 
-      // Xóa voucher vừa lưu khỏi state để không hiển thị nữa
-      setCoupons(currentCoupons => currentCoupons.filter(coupon => coupon.id !== voucherId));
-
-      Alert.alert('Thành công', 'Đã lưu voucher');
+      // Cập nhật lại nút trong giao diện
+      setCoupons(currentCoupons =>
+        currentCoupons.map(coupon =>
+          coupon.id === voucherId
+            ? { ...coupon, buttonText: 'Đã lưu', isSaved: true }
+            : coupon
+        )
+      );
     } catch (error) {
       Alert.alert('Lỗi', 'Không thể lưu voucher');
       console.error('Lỗi khi lưu voucher:', error);
@@ -99,10 +99,7 @@ export default function Offer() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {coupons.slice(0, 10).map((offer, index) => (
-          <View
-            key={offer.id || index}
-            style={styles.cardWrapper}
-          >
+          <View key={offer.id || index} style={styles.cardWrapper}>
             <LinearGradient colors={['#00639B', '#0087CA']} style={styles.codeBox}>
               <View style={styles.boxHeader}>
                 <Text style={styles.boxHeaderText}>{offer.title}</Text>
@@ -112,7 +109,11 @@ export default function Offer() {
                 <Text style={styles.condition}>{offer.condition}</Text>
                 {offer.expiry && <Text style={styles.condition}>{offer.expiry}</Text>}
                 <TouchableOpacity
-                  style={styles.button}
+                  style={[
+                    styles.button,
+                    offer.isSaved && { backgroundColor: '#ccc', borderWidth: 0 }
+                  ]}
+                  disabled={offer.isSaved}
                   onPress={() => handleSave(offer.id)}
                 >
                   <Text style={styles.buttonText}>{offer.buttonText}</Text>
@@ -128,7 +129,6 @@ export default function Offer() {
   );
 }
 
-// (style giữ nguyên như bạn đã viết)
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',

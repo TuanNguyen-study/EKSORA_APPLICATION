@@ -10,7 +10,7 @@ export default function Body() {
   useEffect(() => {
     const fetchTrips = async () => {
       try {
-        const userId = await AsyncStorage.getItem('userId');
+        const userId = await AsyncStorage.getItem('USER_ID');
         console.log('🧑 userId từ AsyncStorage:', userId);
         if (userId) {
           const data = await getTrips(userId);
