@@ -53,7 +53,7 @@ export const loginUser = createAsyncThunk(
 
       return res.data;
     } catch (err) {
-      console.error('🔥 Lỗi loginUser:', err);
+      console.error('Lỗi loginUser:', err);
       return rejectWithValue(
         extractErrorMessage(err, 'Đăng nhập thất bại')
       );
