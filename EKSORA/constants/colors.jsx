@@ -80,4 +80,13 @@ export const COLORS = {
   textDark: '#333',
   separator: '#e0e0e0',
   success: '#28a745',
+
+  primaryBlue: '#00639B',
+  secondaryBlue: '#0087CA',
+  lightBlue: '#E6F3FA',
+  white: '#FFFFFF',
+  black: '#333333',
+  grayText: '#666666',
+  borderColor: '#D0E9F8',
+  modalOverlay: 'rgba(0, 0, 0, 0.5)',
 };

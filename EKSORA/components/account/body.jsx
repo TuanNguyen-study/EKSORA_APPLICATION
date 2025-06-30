@@ -11,8 +11,8 @@ export default function Body() {
     <View style={styles.bodyContainer}>
       <View style={styles.box}>
         <TouchableOpacity
-          onPress={() => router.push("/trips")}
-
+          style={styles.touchableItem}
+          onPress={() => router.push("/MyOrder/MyBookingsScreen")}
         >
           <Ionicons name="receipt-outline" size={24} color={COLORS.textDark} style={styles.icon} />
           <Text style={styles.label}>Đơn hàng</Text>
