@@ -60,20 +60,23 @@ export default function Header() {
   }
 
   return (
-    <View style={styles.headerBase}>
-      {/* Phần userInfo và levelRow sẽ nằm trên gradient */}
-      <View style={styles.onGradientSection}>
-        <View style={styles.userInfo}>
-          <Image
-            source={avatarUri ? { uri: avatarUri } : require('../../assets/images/favicon.png')} 
-            style={styles.avatar}
-          />
-          <View style={styles.textGroup}>
-            <Text style={styles.username}>{user.first_name || 'Người dùng'}</Text>
-            <TouchableOpacity onPress={() => router.push('/(stack)/UpdateUser')}>
-              <Text style={styles.update}>Cập nhật thông tin cá nhân </Text>
-            </TouchableOpacity>
-          </View>
+    <View style={styles.header}>
+      <View style={styles.userInfo}>
+        <Image source={{ uri: avatarUri }} style={styles.avatar} />
+        <View style={styles.textGroup}>
+          <Text style={styles.username}>{user.first_name + '' + user.last_name}</Text>
+          <TouchableOpacity>
+            <Text style={styles.update} onPress={() => router.push('/(stack)/UpdateUser')}>Cập nhật thông tin cá nhân</Text>
+          </TouchableOpacity>
+        </View>
+        <Ionicons name="notifications-outline" size={24} color="black" />
+      </View>
+
+      <View style={styles.levelRow}>
+        <View style={styles.levelBox}>
+          <Text style={styles.level}>Lv.{user.level || 1}</Text>
+          <Text style={styles.badge}>{user.badge || 'Bạc'}</Text>
+
         </View>
       </View>
 

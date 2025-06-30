@@ -154,7 +154,8 @@ export default function TripDetailScreen() {
     }).toString();
 
     router.push(`/acount/bookingScreen?${query}`);
-    console.log(' Booking URL:', `/acount/bookingScreen?${query}`);
+    console.log('Booking URL:', `/acount/bookingScreen?${query}`);
+
   };
 
 
@@ -214,7 +215,7 @@ export default function TripDetailScreen() {
               }
 
               await addFavoriteTour(userId, productId);
-              setIsFavorite(true);
+              setIsFavorite(true); 
 
               Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
             } catch (err) {

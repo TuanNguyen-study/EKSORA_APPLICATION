@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -19,7 +20,7 @@ export default function BookingScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [showPicker, setShowPicker] = useState(false);
-
+  const image = typeof params.image === 'string' ? decodeURIComponent(params.image) : '';
   const tour_id = params.tour_id;
   const tour_title = typeof params.tour_title === 'string' ? decodeURIComponent(params.tour_title) : '';
   const total_price = Number(params.total_price || '0');
@@ -82,7 +83,7 @@ export default function BookingScreen() {
 
     try {
       await createBooking(bookingData);
-      Alert.alert("Thành công", "Bạn đã đặt tour thành công!");
+      Alert.alert("Thông báo", "Chuyển đến phần hoàn tất đơn hàng !");
       router.push({
         pathname: "/acount/BookingCompleted",
         params: {
@@ -91,6 +92,7 @@ export default function BookingScreen() {
           quantityChild: quantityChild.toString(),
           totalPrice: finalPrice.toString(),
           travelDate: selectedDate,
+          image: image || '', // ✅ Gửi ảnh nếu có
         },
       });
 
@@ -111,7 +113,17 @@ export default function BookingScreen() {
       </View>
 
       <ScrollView style={styles.content}>
+        {image ? (
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <Image
+                source={{ uri: image }}
+                style={{ width: '100%', height: 180, borderRadius: 12 }}
+                resizeMode="cover"
+              />
+            </View>
+          ) : null}
         <View style={styles.comboTitleContainer}>
+          
           <Text style={styles.comboTitle} numberOfLines={2}>
             {tour_title}
           </Text>
@@ -120,6 +132,8 @@ export default function BookingScreen() {
             <Ionicons name="chevron-forward-outline" size={16} color={COLORS.primary} />
           </TouchableOpacity>
         </View>
+
+
         <View style={styles.badgesContainer}>
           <TouchableOpacity style={styles.badge} onPress={() => { }}>
             <Text style={styles.badgeText}>Hủy miễn phí 24 giờ</Text>

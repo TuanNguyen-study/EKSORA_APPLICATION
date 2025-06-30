@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 
-const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api-eksora-app.onrender.com';
+const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://160.250.246.76:3000';
 
 const AxiosInstance = (contentType = 'application/json') => {
     const axiosInstance = axios.create({
