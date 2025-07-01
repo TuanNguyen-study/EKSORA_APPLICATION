@@ -21,6 +21,7 @@ import ProductImageCarousel from './components/ProductImageCarousel';
 import { default as ProductOptionSelector } from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
+import { addFavoriteTour } from '../../../API/services/servicesFavorite';
 
 
 export default function TripDetailScreen() {
@@ -153,7 +154,8 @@ export default function TripDetailScreen() {
     }).toString();
 
     router.push(`/acount/bookingScreen?${query}`);
-    console.log(' Booking URL:', `/acount/bookingScreen?${query}`);
+    console.log('Booking URL:', `/acount/bookingScreen?${query}`);
+
   };
 
 
@@ -199,29 +201,18 @@ export default function TripDetailScreen() {
       >
         <ProductImageCarousel
           images={productData.images}
-          isFavorite={isFavorite}
           tourId={productData._id}
-          onBackPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/home')}
+          onBackPress={() =>
+            router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
+          }
           onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
-
-          onFavoritePress={async () => {
-            try {
-              const userId = await AsyncStorage.getItem('USER_ID');
-              if (!userId || !productId) {
-                Alert.alert('Lỗi', 'Không xác định được người dùng hoặc tour.');
-                return;
-              }
-
-              await addFavoriteTour(userId, productId);
-              setIsFavorite(true);
-
-              Alert.alert(' Thành công', 'Đã thêm vào danh sách yêu thích');
-            } catch (err) {
-              console.error(' Thêm tour yêu thích lỗi:', err.response?.data || err.message);
-              Alert.alert(' Thêm thất bại', err.response?.data?.message || 'Vui lòng thử lại sau');
-            }
+          onFavoritePress={() => {
+            // Nếu bạn cần cập nhật lại UI hoặc toast thông báo thì thêm ở đây.
+            // Nhưng KHÔNG gọi API ở đây nữa, vì đã xử lý trong ProductImageCarousel
+            console.log('Đã nhấn nút yêu thích.');
           }}
         />
+
 
 
 

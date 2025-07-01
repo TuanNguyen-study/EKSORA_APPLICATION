@@ -13,9 +13,10 @@ import { useSelector } from 'react-redux';
 import { COLORS } from "../../../constants/colors";
 
 
+
 export default function BookingCompleted() {
   const router = useRouter();
-  const { title, quantityAdult, quantityChild, totalPrice, travelDate } = useLocalSearchParams();
+  const { title, quantityAdult, quantityChild, totalPrice, travelDate ,image } = useLocalSearchParams();
   const user = useSelector((state) => state.auth.user); // lấy user đăng nhập từ redux
   const [useSavedUser, setUseSavedUser] = useState(true);
   const [newUser, setNewUser] = useState(null);
@@ -64,7 +65,7 @@ export default function BookingCompleted() {
                 useSavedUser && styles.optionBoxSelected
               ]}>
               <Text style={[styles.optionText, useSavedUser && styles.optionTextSelected]}>
-                {(newUser ? `${newUser.lastName} ${newUser.firstName}` : `${user?.lastName} ${user?.firstName}`)?.toUpperCase()}
+                {(newUser ? `${newUser.firstName} ${newUser.lastName}` : `${user?.firstName} ${user?.lastName}`)?.toUpperCase()}
               </Text>
             </TouchableOpacity>
 
@@ -202,10 +203,13 @@ export default function BookingCompleted() {
                 travelDate,
                 fullName: `${newUser?.lastName || user?.lastName} ${newUser?.firstName || user?.firstName}`,
                 phone: newUser?.phone || user?.phone,
-                email: newUser?.email || user?.email
+                email: newUser?.email || user?.email,
+                image,
               }
             });
+            console.log("🔁 image gửi đi:", image);
           }}
+          
         >
           <Text style={styles.payButtonText}>Thanh toán</Text>
         </TouchableOpacity>
