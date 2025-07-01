@@ -25,6 +25,7 @@ import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
 import PromoBanner from "../../../components/home/PromoBanner";
 import LoadingScreen from "../../../components/LoadingScreen";
 import { COLORS } from "../../../constants/colors";
+import { Image } from "react-native";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -61,13 +62,6 @@ const carouselImages = [
   },
 ];
 
-const serviceCategories = [
-  { id: "s1", label: "Vui chơi & Trải nghiệm" },
-  { id: "s2", label: "Xe khách" },
-  { id: "s3", label: "Tự thuê xe" },
-  { id: "s4", label: "Khách sạn" },
-  { id: "s5", label: "Mục khác" },
-];
 const ITEM_WIDTH_PERCENTAGE_HOME = 0.6;
 const ITEM_HEIGHT_CAROUSEL_TOTAL_HOME = 150;
 const ITEM_SPACING_CAROUSEL_HOME = 15;
@@ -311,7 +305,7 @@ export default function HomeScreen() {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
-        contentContainerStyle={{ paddingBottom: 50 }}
+        contentContainerStyle={{ paddingBottom: 60 }}
         contentInsetAdjustmentBehavior="automatic"
       >
         <LinearGradient
@@ -357,18 +351,20 @@ export default function HomeScreen() {
         <View>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Ưu đãi tuyệt vời!</Text>
-            <TouchableOpacity onPress={() => console.log("Nút 'Xem thêm' được nhấn")}>
-              <Text style={styles.seeMoreText}>Xem thêm</Text>
-            </TouchableOpacity>
+            <Image
+              source={require('../../../assets/images/64ecbddcd5a89.png')}
+              style={styles.decorativeImage}
+            />
           </View>
           <PromoBanner />
         </View>
         <View style={styles.sectionWrapper}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Bạn muốn đi đâu chơi?</Text>
-            <TouchableOpacity onPress={() => console.log("Nút 'Xem thêm' được nhấn")}>
-              <Text style={styles.seeMoreText}>Xem thêm</Text>
-            </TouchableOpacity>
+            <Image
+              source={require('../../../assets/images/66acd894de10f.png')}
+              style={styles.decorativeImage}
+            />
           </View>
           <FlatList
             data={categories}
@@ -500,30 +496,33 @@ const styles = StyleSheet.create({
     width: 8,
   },
   sectionWrapper: {
-    paddingTop: 15, // Thêm padding top cho cả khu vực
+    paddingTop: 15,
   },
-  // THÊM CÁC STYLE MỚI Ở ĐÂY
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 15, // Căn lề cho khớp với FlatList
-    marginBottom: 15, // Tạo khoảng cách với FlatList bên dưới
+    paddingHorizontal: 15,
+    marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#222222',
   },
+  decorativeImage: {
+    width: 80,
+    height: 50,
+    resizeMode: 'cover',
+  },
   seeMoreText: {
     fontSize: 14,
     color: '#555555',
     textDecorationLine: 'underline',
   },
-  // Chỉnh sửa style này một chút
   horizontalListContentPadding: {
     paddingHorizontal: 15,
-    paddingBottom: 15, // Chỉ cần padding bottom, vì padding top đã có ở sectionWrapper
+    paddingBottom: 15,
   },
   sectionWrapperWithBorderForSuggestions: {
     backgroundColor: COLORS.white,

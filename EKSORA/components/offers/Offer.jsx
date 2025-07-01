@@ -1,77 +1,130 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+  Dimensions,
+  Alert,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getPromotion, saveUserVoucher, getSavedVoucherIds, saveVoucherId } from '../../API/services/servicesPromotion';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import CouponModal from '../../app/(stack)/Voucher/CouponModal';
+
+const { width: screenWidth } = Dimensions.get('window');
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  if (isNaN(date)) return 'Không xác định';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
 export default function Offer() {
-  const offers = [
-    {
-      title: 'Mã giảm giá',
-      discount: 'Giảm 10%',
-      condition: 'Đơn từ 15.000.000 VNĐ',
-      buttonText: 'Lưu mã',
-      isSelected: true, // cái box được chọn (viền xanh)
-    },
-    {
-      title: 'Mã giảm giá',
-      discount: 'Giảm 10%',
-      condition: 'Đơn từ 3.000.000 VNĐ',
-      buttonText: 'Lưu mã',
-      isSelected: false,
-    },
-    {
-      title: 'Mã giảm giá',
-      discount: 'VNĐ 799,086',
-      condition: 'Đơn tối thiểu 3.000.000 VNĐ',
-      buttonText: 'Sử dụng',
-      isSelected: false,
-    },
-  ];
+  const [coupons, setCoupons] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const fetchPromotions = async () => {
+    try {
+      const response = await getPromotion();
+      if (!Array.isArray(response)) return;
+
+      const savedIds = await getSavedVoucherIds();
+
+      const mappedCoupons = response.map(item => ({
+        id: item._id,
+        title: 'Mã giảm giá',
+        discount: item.discount ? `Giảm ${item.discount}%` : 'Ưu đãi',
+        condition: item.condition || `Áp dụng đơn từ...`,
+        buttonText: savedIds.includes(item._id) ? 'Đã lưu' : 'Lưu',
+        isSaved: savedIds.includes(item._id),
+        expiry: item.end_date ? `HSD: ${formatDate(item.end_date)}` : null,
+      }));
+
+      setCoupons(mappedCoupons);
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách mã khuyến mãi:', error);
+    }
+  };
+
+  const handleSave = async (voucherId) => {
+    try {
+      const userId = await AsyncStorage.getItem('USER_ID');
+      if (!userId) {
+        Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng');
+        return;
+      }
+
+      const response = await saveUserVoucher(userId, voucherId);
+
+      if (response?.message === 'Bạn đã lưu voucher này rồi') {
+        Alert.alert('Thông báo', 'Bạn đã lưu voucher này rồi');
+      } else {
+        Alert.alert('Thành công', 'Đã lưu voucher');
+      }
+
+      await saveVoucherId(voucherId);
+
+      // Cập nhật lại nút trong giao diện
+      setCoupons(currentCoupons =>
+        currentCoupons.map(coupon =>
+          coupon.id === voucherId
+            ? { ...coupon, buttonText: 'Đã lưu', isSaved: true }
+            : coupon
+        )
+      );
+    } catch (error) {
+      Alert.alert('Lỗi', 'Không thể lưu voucher');
+      console.error('Lỗi khi lưu voucher:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPromotions();
+  }, []);
 
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#007ecc', '#007ecc']} style={styles.headerContainer}>
         <Text style={styles.header}>Mã ưu đãi</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => setIsModalVisible(true)}>
           <Text style={styles.seeAll}>Xem tất cả</Text>
         </TouchableOpacity>
       </LinearGradient>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-        {offers.map((offer, index) => (
-          <View
-            key={index}
-            style={[
-              styles.cardWrapper,
-              offer.isSelected && styles.selectedCardWrapper,
-            ]}
-          >
-            <LinearGradient colors={['#2f6c99', '#4f91b8']} style={styles.codeBox}>
+        {coupons.slice(0, 10).map((offer, index) => (
+          <View key={offer.id || index} style={styles.cardWrapper}>
+            <LinearGradient colors={['#00639B', '#0087CA']} style={styles.codeBox}>
               <View style={styles.boxHeader}>
                 <Text style={styles.boxHeaderText}>{offer.title}</Text>
               </View>
               <View style={styles.boxBody}>
                 <Text style={styles.discount}>{offer.discount}</Text>
                 <Text style={styles.condition}>{offer.condition}</Text>
+                {offer.expiry && <Text style={styles.condition}>{offer.expiry}</Text>}
                 <TouchableOpacity
                   style={[
                     styles.button,
-                    offer.buttonText === 'Sử dụng' && styles.useButton,
+                    offer.isSaved && { backgroundColor: '#ccc', borderWidth: 0 }
                   ]}
+                  disabled={offer.isSaved}
+                  onPress={() => handleSave(offer.id)}
                 >
-                  <Text
-                    style={[
-                      styles.buttonText,
-                      offer.buttonText === 'Sử dụng' && styles.useButtonText,
-                    ]}
-                  >
-                    {offer.buttonText}
-                  </Text>
+                  <Text style={styles.buttonText}>{offer.buttonText}</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
           </View>
         ))}
       </ScrollView>
+
+      <CouponModal visible={isModalVisible} onClose={() => setIsModalVisible(false)} />
     </View>
   );
 }
@@ -81,19 +134,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 20,
     margin: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.07,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 10,
-    elevation: 4,
-    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#007ecc',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   header: {
     fontSize: 18,
@@ -111,17 +170,14 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     borderRadius: 16,
-  },
-  selectedCardWrapper: {
-    borderColor: '#00aaff',
-    borderWidth: 2,
-    borderRadius: 16,
+    overflow: 'hidden',
   },
   codeBox: {
-  width: 110,          
-  borderRadius: 12,    
-  overflow: 'hidden',
-},
+    width: screenWidth * 0.3,
+    height: 150,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
   boxHeader: {
     backgroundColor: '#0090d0',
     paddingVertical: 6,
@@ -134,19 +190,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   boxBody: {
+    flex: 1,
     padding: 10,
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-   discount: {
+  discount: {
     fontSize: 14,
     fontWeight: 'bold',
     color: 'white',
     textAlign: 'center',
+    marginBottom: 4,
   },
   condition: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#e0f0ff',
-    marginBottom: 10,
     textAlign: 'center',
   },
   buttonText: {
@@ -161,12 +219,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 14,
     width: '100%',
-  },
-  
-  useButton: {
-    backgroundColor: '#026fc3',
-  },
-  useButtonText: {
-    color: 'white',
+    borderWidth: 0.5,
   },
 });

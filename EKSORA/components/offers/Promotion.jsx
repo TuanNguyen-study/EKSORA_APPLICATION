@@ -1,54 +1,89 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, ImageBackground, Dimensions } from "react-native";
-import EvilIcons from "@expo/vector-icons/EvilIcons";
-import { getTours } from "../../API/services/serverCategories";
-import { getToursByLocation } from "../../API/services/serverCategories";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  FlatList,
+  TouchableOpacity,
+  ImageBackground,
+  Dimensions,
+} from "react-native";
+import { getTours, getToursByLocation } from "../../API/services/serverCategories";
 import { router } from "expo-router";
+import { FontAwesome } from "@expo/vector-icons";
+import { getPromotion } from "../../API/services/servicesPromotion";
+import { addFavoriteTour, deleteFavoriteTour } from '../../API/services/servicesFavorite';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function Promotions({ onPress }) {
 
-  // Lấy kích thước màn hình
-  const { width } = Dimensions.get('window');
 
-  // Cập nhật CARD_WIDTH và IMAGE_HEIGHT để linh hoạt với kích thước màn hình
+export default function Promotions() {
+  const { width } = Dimensions.get("window");
   const CARD_WIDTH = width * 0.43;
   const IMAGE_HEIGHT = CARD_WIDTH * (3 / 4);
 
   const [loading, setLoading] = useState(true);
   const [tour, setTours] = useState([]);
   const [tourId, setId] = useState([]);
+  const [likedTours, setLikedTours] = useState([]);
+  const [promotions, setPromotions] = useState([]);
+
 
   useEffect(() => {
-    const fetchTours = async () => {
+    const fetchPromotions = async () => {
       try {
-        const response = await getTours();
-        setTours(response);
-        setLoading(false);
+        const response = await getPromotion();
+        console.log("Dữ liệu promotions từ API:", response);
+        const filtered = response.filter(item => item.tour_id);
+        setPromotions(filtered);
       } catch (err) {
+        console.error("Lỗi khi lấy danh sách Promotion", err);
+      } finally {
         setLoading(false);
-        console.error("Lỗi khi lấy danh sách tours", err);
       }
     };
-
-    fetchTours();
+    fetchPromotions();
   }, []);
-
-
 
   useEffect(() => {
     const fetchToursByLocation = async () => {
       try {
         const response = await getToursByLocation();
         setId(response);
-        setLoading(false);
-      } catch (error) {
-        setLoading(false);
+      } catch (err) {
         console.error("Lỗi khi lấy chi tiết", err);
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchToursByLocation();
-  }, [])
+  }, []);
+
+  const toggleLike = async (tourId) => {
+    try {
+      const userId = await AsyncStorage.getItem('USER_ID'); // hoặc lấy từ user context nếu có
+      const token = await AsyncStorage.getItem('ACCESS_TOKEN'); // nếu API yêu cầu token
+
+      if (!userId || !token) {
+        console.warn('Người dùng chưa đăng nhập!');
+        return;
+      }
+
+      const isLiked = likedTours.includes(tourId);
+
+      if (isLiked) {
+        await deleteFavoriteTour(userId, tourId, token);
+        setLikedTours((prev) => prev.filter((id) => id !== tourId));
+      } else {
+        await addFavoriteTour(userId, tourId);
+        setLikedTours((prev) => [...prev, tourId]);
+      }
+    } catch (error) {
+      console.error('Lỗi khi xử lý yêu thích:', error.message || error);
+    }
+  };
+
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
@@ -58,41 +93,66 @@ export default function Promotions({ onPress }) {
           <Text style={styles.headerText}>Ưu đãi đang diễn ra</Text>
         </View>
 
-        {/* Danh sách ưu đãi */}
         <FlatList
-          data={tour}
+          data={promotions}
           numColumns={2}
-          contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: 60 }}
           renderItem={({ item }) => {
-            const discountPrice = (item.price - (item.price * 15) / 100).toLocaleString('vi-VN');
+            const tour = item.tour_id;
+            if (!tour || !Array.isArray(tour.image) || !tour.image[0] || !tour.price) return null;
+
+            const discount = item.discount || 0;
+            const discountPrice = (
+              tour.price - (tour.price * discount) / 100
+            ).toLocaleString("vi-VN");
+
+            const isLiked = likedTours.includes(tour._id);
 
             return (
-
-              <TouchableOpacity style={styles.card} onPress={() => router.push({
-                pathname: "/(stack)/trip-detail/[id]",
-                params: { id: item._id }
-              
-              })}>
-                <ImageBackground source={{ uri: item.image[0] }} style={styles.image}>
-                  <TouchableOpacity style={styles.heartIcon}>
-                    <EvilIcons name="heart" size={24} color="black" />
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(stack)/trip-detail/[id]",
+                    params: { id: tour._id },
+                  })
+                }
+              >
+                <ImageBackground
+                  source={{ uri: tour.image[0] }}
+                  style={[styles.image, { height: IMAGE_HEIGHT }]}
+                  imageStyle={{
+                    borderTopLeftRadius: 12,
+                    borderTopRightRadius: 12,
+                  }}
+                  resizeMode="cover"
+                >
+                  <TouchableOpacity style={styles.heartIcon} onPress={() => toggleLike(tour._id)}>
+                    <FontAwesome
+                      name={isLiked ? "heart" : "heart-o"}
+                      size={20}
+                      color={isLiked ? "red" : "white"}
+                    />
                   </TouchableOpacity>
+
                 </ImageBackground>
 
-                <Text style={styles.cardTitle}>{item.name}</Text>
+                <Text style={styles.cardTitle}>{tour.name}</Text>
 
-                <View style={styles.priceRow}>
+                <View style={styles.priceColumn}>
                   <View style={styles.saleBox}>
                     <Text style={styles.saleLabel}>Sale</Text>
-                    <Text style={styles.discount}> - 15%</Text>
+                    <Text style={styles.discount}> -{discount}%</Text>
                   </View>
                   <Text style={styles.price}>{`${discountPrice} VND`}</Text>
                 </View>
               </TouchableOpacity>
             );
           }}
-          keyExtractor={(_, index) => index.toString()}
+
+          keyExtractor={(item, index) => item._id || index.toString()}
         />
+
       </View>
     </View>
   );
@@ -146,17 +206,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   image: {
-    width: "100%",
-    height: 100,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    overflow: "hidden",
     justifyContent: "flex-end",
     padding: 6,
   },
   heartIcon: {
     alignSelf: "flex-end",
-    backgroundColor: "#ffffffcc",
     borderRadius: 12,
     padding: 4,
   },
@@ -166,12 +220,12 @@ const styles = StyleSheet.create({
     padding: 6,
     color: "#333",
   },
-  priceRow: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
+  priceColumn: {
+    flexDirection: "column",
+    alignItems: "flex-start",
     paddingHorizontal: 8,
-    paddingBottom: 6,
+    paddingBottom: 8,
+    gap: 4,
   },
   saleBox: {
     flexDirection: "row",
