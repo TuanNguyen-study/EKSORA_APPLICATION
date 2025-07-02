@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   View,
   Text,
@@ -9,14 +9,12 @@ import {
   ImageBackground,
   Dimensions,
 } from "react-native";
-import { getTours, getToursByLocation } from "../../API/services/serverCategories";
+import { getToursByLocation } from "../../API/services/serverCategories";
 import { router } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 import { getPromotion } from "../../API/services/servicesPromotion";
-import { addFavoriteTour, deleteFavoriteTour } from '../../API/services/servicesFavorite';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-
+import { FavoriteContext } from "../../store/FavoriteContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Promotions() {
   const { width } = Dimensions.get("window");
@@ -24,18 +22,16 @@ export default function Promotions() {
   const IMAGE_HEIGHT = CARD_WIDTH * (3 / 4);
 
   const [loading, setLoading] = useState(true);
-  const [tour, setTours] = useState([]);
   const [tourId, setId] = useState([]);
-  const [likedTours, setLikedTours] = useState([]);
   const [promotions, setPromotions] = useState([]);
 
+  const { likedTours, addFavorite, removeFavorite } = useContext(FavoriteContext);
 
   useEffect(() => {
     const fetchPromotions = async () => {
       try {
         const response = await getPromotion();
-        console.log("Dữ liệu promotions từ API:", response);
-        const filtered = response.filter(item => item.tour_id);
+        const filtered = response.filter((item) => item.tour_id);
         setPromotions(filtered);
       } catch (err) {
         console.error("Lỗi khi lấy danh sách Promotion", err);
@@ -60,27 +56,17 @@ export default function Promotions() {
     fetchToursByLocation();
   }, []);
 
-  const toggleLike = async (tourId) => {
+  const handleToggleLike = async (tourId) => {
     try {
-      const userId = await AsyncStorage.getItem('USER_ID'); // hoặc lấy từ user context nếu có
-      const token = await AsyncStorage.getItem('ACCESS_TOKEN'); // nếu API yêu cầu token
-
-      if (!userId || !token) {
-        console.warn('Người dùng chưa đăng nhập!');
-        return;
-      }
-
-      const isLiked = likedTours.includes(tourId);
-
-      if (isLiked) {
-        await deleteFavoriteTour(userId, tourId, token);
-        setLikedTours((prev) => prev.filter((id) => id !== tourId));
+      if (likedTours.includes(tourId)) {
+        await removeFavorite(tourId);
       } else {
-        await addFavoriteTour(userId, tourId);
-        setLikedTours((prev) => [...prev, tourId]);
+        await addFavorite(tourId);
       }
+      console.log('Toggle like completed, likedTours:', likedTours);
     } catch (error) {
-      console.error('Lỗi khi xử lý yêu thích:', error.message || error);
+      console.error('Lỗi khi toggle like:', error);
+      Alert.alert('Lỗi', 'Không thể thay đổi trạng thái yêu thích.');
     }
   };
 
@@ -127,14 +113,13 @@ export default function Promotions() {
                   }}
                   resizeMode="cover"
                 >
-                  <TouchableOpacity style={styles.heartIcon} onPress={() => toggleLike(tour._id)}>
+                  <TouchableOpacity style={styles.heartIcon} onPress={() => handleToggleLike(tour._id)}>
                     <FontAwesome
                       name={isLiked ? "heart" : "heart-o"}
                       size={20}
                       color={isLiked ? "red" : "white"}
                     />
                   </TouchableOpacity>
-
                 </ImageBackground>
 
                 <Text style={styles.cardTitle}>{tour.name}</Text>
@@ -149,10 +134,8 @@ export default function Promotions() {
               </TouchableOpacity>
             );
           }}
-
           keyExtractor={(item, index) => item._id || index.toString()}
         />
-
       </View>
     </View>
   );

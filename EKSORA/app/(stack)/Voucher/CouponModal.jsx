@@ -36,8 +36,8 @@ const CouponModal = ({ visible, onClose }) => {
   try {
     const promotionList = await getPromotion();
 
-    // ✅ Lấy danh sách voucher đã lưu từ AsyncStorage
-    const savedVoucherIds = await getSavedVoucherIds();
+    //  Lấy danh sách voucher đã lưu từ AsyncStorage
+    const savedVoucherIds = await getUserSavedVouchers();
 
     if (!Array.isArray(promotionList)) {
       console.warn('Dữ liệu khuyến mãi không hợp lệ:', promotionList);

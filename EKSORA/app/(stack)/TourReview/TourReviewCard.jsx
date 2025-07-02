@@ -34,7 +34,7 @@ const TourReviewCard = ({ tourBooking, onSubmitReview }) => {
         }
 
         if (onSubmitReview) {
-            onSubmitReview(tour._id, rating, comment); // Truyền tourId
+            onSubmitReview(tour._id, rating, comment); 
             setRating(0);
             setComment('');
         }
