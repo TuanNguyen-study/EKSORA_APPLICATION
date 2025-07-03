@@ -21,7 +21,7 @@ import ProductImageCarousel from './components/ProductImageCarousel';
 import { default as ProductOptionSelector } from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
 import TripHighlightsSection from './components/TripHighlightsSection';
-import { addFavoriteTour } from '../../../API/services/servicesFavorite';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 export default function TripDetailScreen() {
@@ -207,8 +207,6 @@ export default function TripDetailScreen() {
           }
           onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
           onFavoritePress={() => {
-            // Nếu bạn cần cập nhật lại UI hoặc toast thông báo thì thêm ở đây.
-            // Nhưng KHÔNG gọi API ở đây nữa, vì đã xử lý trong ProductImageCarousel
             console.log('Đã nhấn nút yêu thích.');
           }}
         />
@@ -241,13 +239,20 @@ export default function TripDetailScreen() {
 
           <TripHighlightsSection
             title="Địa điểm nổi bật trong tour"
-            highlights={productData.highlights.map(h => ({
-              _id: h._id,
-              image: h.image_url,
-              title: h.location_name,
-              description: h.description,
-            }))}
+            highlights={
+              Array.isArray(productData.highlights)
+                ? productData.highlights
+                  .filter(h => h && h._id) 
+                  .map(h => ({
+                    _id: h._id,
+                    image: h.image_url || '',
+                    title: h.location_name || 'Không có tên',
+                    description: h.description || '',
+                  }))
+                : []
+            }
           />
+
 
           <NoteContactSection />
         </View>

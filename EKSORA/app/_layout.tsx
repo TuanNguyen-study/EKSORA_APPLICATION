@@ -2,13 +2,13 @@ import { Stack } from 'expo-router';
 import { Provider } from 'react-redux';
 import store from '../store';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { FavoriteProvider } from '../store/FavoriteContext';
+import { AppProviders } from '../store/AppProviders'; 
 
 export default function Layout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>
-        <FavoriteProvider> 
+        <AppProviders>
           <Stack
             screenOptions={{
               headerStyle: { backgroundColor: '#1e90ff' },
@@ -25,7 +25,7 @@ export default function Layout() {
             <Stack.Screen name="setting" options={{ title: 'Setting', headerShown: false }} />
             <Stack.Screen name="booking" options={{ title: 'Booking Screen', headerShown: false }} />
           </Stack>
-        </FavoriteProvider>
+        </AppProviders>
       </Provider>
     </GestureHandlerRootView>
   );

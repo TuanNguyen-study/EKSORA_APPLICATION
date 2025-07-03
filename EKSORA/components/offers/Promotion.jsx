@@ -82,7 +82,7 @@ export default function Promotions() {
         <FlatList
           data={promotions}
           numColumns={2}
-          contentContainerStyle={{ paddingTop: 16, paddingBottom: 60 }}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: 120 }}
           renderItem={({ item }) => {
             const tour = item.tour_id;
             if (!tour || !Array.isArray(tour.image) || !tour.image[0] || !tour.price) return null;

@@ -50,7 +50,7 @@ const loadFavorites = useCallback(async () => {
         console.warn('[FavoriteContext] Thiếu userId hoặc tourId');
         return;
       }
-      console.log('[FavoriteContext] Gọi addFavoriteTour, tourId:', tourId);
+      //console.log('[FavoriteContext] Gọi addFavoriteTour, tourId:', tourId);
       await addFavoriteTour(userId, tourId);
       setLikedTours(prev => {
         if (!prev.includes(tourId)) {
