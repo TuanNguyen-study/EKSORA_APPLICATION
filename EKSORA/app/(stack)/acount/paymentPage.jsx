@@ -21,7 +21,9 @@ export default function PaymentPage() {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [profile, setProfile] = useState(null);
 
-  const { title, quantityAdult, quantityChild, totalPrice, travelDate, image } = useLocalSearchParams();
+  const { bookingId,title, quantityAdult, quantityChild, totalPrice, travelDate, image } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  console.log('🧾 Params nhận được:', params);
   console.log("📷 image param:", image);
 
   const totalAmount = Number(totalPrice || 0);
@@ -81,6 +83,7 @@ export default function PaymentPage() {
       buyerEmail: profile.email,
       buyerPhone: profile.phone,
       buyerAddress: profile.address,
+      booking_id: bookingId,
     };
 
     console.log('🔀 Dữ liệu gửi sang API tạo thanh toán:');
@@ -90,9 +93,10 @@ export default function PaymentPage() {
     console.log('📧 Email:', payload.buyerEmail);
     console.log('📞 Phone:', payload.buyerPhone);
     console.log('🏠 Address:', payload.buyerAddress);
+    console.log('🆔 Booking ID:', payload.booking_id);
 
     try {
-      const response = await fetch('http://160.250.246.76:3000/create-payment-link', {
+      const response = await fetch('http://160.250.246.76:3000/api/create-payment-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -128,11 +132,13 @@ export default function PaymentPage() {
       }
 
       console.log('✅ Mở URL thanh toán:', data.url);
+      console.log('🆔 Booking ID:', data.booking_id);
       Linking.openURL(data.url);
 
     } catch (err) {
       console.error('🔥 Exception khi tạo payment link:', err);
       Alert.alert('Lỗi', 'Đã xảy ra lỗi khi tạo thanh toán.');
+      console.error('❌ Lỗi tạo thanh toán:', err.message);
     }
 
   }
