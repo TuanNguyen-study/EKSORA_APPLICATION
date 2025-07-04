@@ -11,10 +11,10 @@ export default function Body() {
     const fetchTrips = async () => {
       try {
         const userId = await AsyncStorage.getItem('USER_ID');
-        console.log('🧑 userId từ AsyncStorage:', userId);
+        //console.log('🧑 userId từ AsyncStorage:', userId);
         if (userId) {
           const data = await getTrips(userId);
-          console.log('📦 Dữ liệu trips từ API:', data);
+          //console.log('📦 Dữ liệu trips từ API:', data);
           setTrips(data);
         } else {
           console.warn('Không tìm thấy userId');

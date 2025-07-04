@@ -242,7 +242,7 @@ export default function TripDetailScreen() {
             highlights={
               Array.isArray(productData.highlights)
                 ? productData.highlights
-                  .filter(h => h && h._id) 
+                  .filter(h => h && h._id)
                   .map(h => ({
                     _id: h._id,
                     image: h.image_url || '',
@@ -264,6 +264,9 @@ export default function TripDetailScreen() {
           ...productData.price,
           current: currentTotalPrice,
         }}
+        tourName={productData.name}
+        tourInfo={productData} 
+        currentSelectedPackages={currentSelectedPackages} 
         onBookNow={onBookNow}
       />
 
