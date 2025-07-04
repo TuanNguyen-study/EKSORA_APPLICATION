@@ -29,24 +29,21 @@ const ReviewScreen = () => {
                 setLoading(true);
                 const token = await AsyncStorage.getItem("ACCESS_TOKEN");
                 const userId = await AsyncStorage.getItem("USER_ID");
-                console.log("USER_ID:", userId);
-                console.log("TOKEN:", token);
 
                 if (!userId || !token) {
                     setError('Không tìm thấy người dùng hoặc token');
                     return;
                 }
 
-                // Gọi API lấy danh sách bookings
                 const data = await getUserBookings(userId, token);
 
-                // Lấy danh sách các tour đã đánh giá từ AsyncStorage
-                const reviewed = await AsyncStorage.getItem("REVIEWED_TOURS");
-                const reviewedTours = reviewed ? JSON.parse(reviewed) : [];
+                // Danh sách các booking đã review (theo booking._id)
+                const reviewed = await AsyncStorage.getItem("REVIEWED_BOOKINGS");
+                const reviewedBookings = reviewed ? JSON.parse(reviewed) : [];
 
-                // Lọc bỏ tour đã đánh giá khỏi danh sách
+                // Lọc bỏ các booking đã review
                 const filteredData = data.filter(
-                    (item) => !reviewedTours.includes(item.tour_id._id)
+                    (item) => !reviewedBookings.includes(item._id)
                 );
 
                 setBookings(filteredData);
@@ -63,29 +60,29 @@ const ReviewScreen = () => {
     }, []);
 
 
-    const handleSubmitReview = async (tourId, rating, comment) => {
+
+    const handleSubmitReview = async (bookingId, tourId, rating, comment) => {
         try {
             const userId = await AsyncStorage.getItem("USER_ID");
             if (!userId) throw new Error('Không tìm thấy USER_ID');
 
             await postReview(userId, tourId, rating, comment);
 
-            // Cập nhật danh sách đã đánh giá
-            const stored = await AsyncStorage.getItem('REVIEWED_TOURS');
-            let reviewedTours = stored ? JSON.parse(stored) : [];
-            reviewedTours.push(tourId);
-            await AsyncStorage.setItem('REVIEWED_TOURS', JSON.stringify(reviewedTours));
+            // Đánh dấu đã review booking này
+            const stored = await AsyncStorage.getItem('REVIEWED_BOOKINGS');
+            let reviewedBookings = stored ? JSON.parse(stored) : [];
+            reviewedBookings.push(bookingId);
+            await AsyncStorage.setItem('REVIEWED_BOOKINGS', JSON.stringify(reviewedBookings));
 
-            // Cập nhật lại state
-            setBookings((prev) =>
-                prev.filter((item) => item.tour_id._id !== tourId)
-            );
+            // Cập nhật lại UI
+            setBookings((prev) => prev.filter((item) => item._id !== bookingId));
 
         } catch (err) {
             console.error('Lỗi gửi đánh giá:', err);
             Alert.alert('Lỗi', 'Không thể gửi đánh giá. Vui lòng thử lại.');
         }
     };
+
 
 
     return (
@@ -122,9 +119,10 @@ const ReviewScreen = () => {
                         <TourReviewCard
                             tourBooking={item}
                             onSubmitReview={(rating, comment) =>
-                                handleSubmitReview(item.tour_id._id, rating, comment)
+                                handleSubmitReview(item._id, item.tour_id._id, rating, comment)
                             }
                         />
+
                     )}
                     keyExtractor={(item) => item._id}
                     contentContainerStyle={styles.listContainer}

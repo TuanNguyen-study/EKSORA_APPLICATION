@@ -1,30 +1,20 @@
 import { COLORS } from '../../../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback, useContext } from 'react';
 import {
   Dimensions,
   FlatList,
   Image,
-  Platform,
   StyleSheet,
   TouchableOpacity,
   View,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  addFavoriteTour,
-  deleteFavoriteTour,
-  getFavoriteToursByUser,
-} from '../../../../API/services/servicesFavorite';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
+import { FavoriteContext } from '../../../../store/FavoriteContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 const ITEM_WIDTH = screenWidth;
 const SNAP_INTERVAL = ITEM_WIDTH;
-
-const getFavoriteKey = (tourId) => `favorite_tour_${tourId}`;
 
 const ProductImageCarousel = ({
   images = [],
@@ -35,34 +25,32 @@ const ProductImageCarousel = ({
   onCartPress,
   onImagePress,
 }) => {
+  const { likedTours, addFavorite, removeFavorite, isLoading } = useContext(FavoriteContext);
   const loopedImages = [...images, ...images, ...images];
   const initialIndex = images.length;
   const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isManuallyScrolling, setIsManuallyScrolling] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const isFavorite = likedTours.includes(tourId);
 
-  // Load trạng thái yêu thích từ local + server
-useFocusEffect(
-  useCallback(() => {
-    const fetchFavoriteStatus = async () => {
-      try {
-        const userId = await AsyncStorage.getItem('USER_ID');
-        if (!userId || !tourId) return;
-
-        const res = await getFavoriteToursByUser(userId);
-        const favoriteTours = res?.data || [];
-        const isFav = favoriteTours.some((item) => item.tourId === tourId);
-        setIsFavorite(isFav);
-        await AsyncStorage.setItem(getFavoriteKey(tourId), JSON.stringify(isFav));
-      } catch (error) {
-        console.log('Lỗi khi cập nhật lại yêu thích:', error.message);
+  // Xử lý yêu thích
+  const handleFavoritePress = async () => {
+    console.log(`[ProductImageCarousel] handleFavoritePress, tourId: ${tourId}, isFavorite: ${isFavorite}`);
+    try {
+      if (isFavorite) {
+        await removeFavorite(tourId);
+        console.log(`[ProductImageCarousel] Đã gọi removeFavorite cho tourId: ${tourId}`);
+      } else {
+        await addFavorite(tourId);
+        console.log(`[ProductImageCarousel] Đã gọi addFavorite cho tourId: ${tourId}`);
       }
-    };
+      if (onFavoritePress) onFavoritePress();
+    } catch (error) {
+      console.error(`[ProductImageCarousel] Lỗi khi xử lý yêu thích cho tourId ${tourId}:`, error.message);
+      Alert.alert('Lỗi', 'Không thể đồng bộ yêu thích. Vui lòng thử lại.');
+    }
+  };
 
-    fetchFavoriteStatus();
-  }, [tourId])
-);
 
   // Auto scroll carousel
   useEffect(() => {
@@ -87,34 +75,6 @@ useFocusEffect(
 
     return () => clearInterval(timer);
   }, [currentIndex, isManuallyScrolling]);
-
-  // Xử lý yêu thích
-  const handleFavoritePress = async () => {
-    try {
-      const token = await AsyncStorage.getItem('ACCESS_TOKEN');
-      const userId = await AsyncStorage.getItem('USER_ID');
-
-      if (!userId || !token || !tourId) {
-        Alert.alert('Lỗi', 'Thiếu thông tin người dùng hoặc tour.');
-        return;
-      }
-
-      if (isFavorite) {
-        await deleteFavoriteTour(userId, tourId, token);
-        setIsFavorite(false); // <-- Xoá yêu thích => trạng thái trái tim sẽ thành "trống"
-        await AsyncStorage.setItem(getFavoriteKey(tourId), JSON.stringify(false));
-      } else {
-        await addFavoriteTour(userId, tourId);
-        setIsFavorite(true); // <-- Thêm => trái tim đỏ
-        await AsyncStorage.setItem(getFavoriteKey(tourId), JSON.stringify(true));
-      }
-
-      if (onFavoritePress) onFavoritePress();
-    } catch (error) {
-      console.error('Lỗi yêu thích:', error.response?.data || error.message);
-      Alert.alert('Lỗi', error.response?.data?.message || 'Vui lòng thử lại sau.');
-    }
-  };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity activeOpacity={0.9} onPress={() => onImagePress?.(item.id)}>
@@ -178,7 +138,6 @@ useFocusEffect(
         }}
       />
 
-      {/* Header actions */}
       <View style={styles.headerActionsContainer}>
         <TouchableOpacity onPress={onBackPress} style={styles.iconButtonBase}>
           <Ionicons name="arrow-back" size={26} color={COLORS.white} />
@@ -187,9 +146,9 @@ useFocusEffect(
         <View style={styles.rightHeaderActions}>
           <TouchableOpacity onPress={handleFavoritePress} style={styles.iconButtonBase}>
             <Ionicons
-              name={isFavorite ? 'heart' : 'heart-outline'}
+              name={likedTours.includes(tourId) ? 'heart' : 'heart-outline'}
               size={24}
-              color={isFavorite ? COLORS.danger : COLORS.white}
+              color={likedTours.includes(tourId) ? COLORS.danger : COLORS.white}
             />
           </TouchableOpacity>
 
@@ -210,14 +169,14 @@ useFocusEffect(
 
 const styles = StyleSheet.create({
   carouselContainer: {
-    width: screenWidth,
-    height: screenWidth * 0.8,
-    backgroundColor: COLORS.border,
-    overflow: 'visible',
+    position: 'relative',
+    width: '100%',
+    height: 300,
   },
   noImageContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: COLORS.background,
   },
   image: {
     width: ITEM_WIDTH,
@@ -225,28 +184,28 @@ const styles = StyleSheet.create({
   },
   headerActionsContainer: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 40 : 20,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 15,
+    top: 10,
+    left: 10,
+    right: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    zIndex: 10,
-  },
-  iconButtonBase: {
-    padding: 8,
-    borderRadius: 25,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    marginHorizontal: 4,
   },
   rightHeaderActions: {
     flexDirection: 'row',
-    alignItems: 'center',
+  },
+  iconButtonBase: {
+    padding: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    marginHorizontal: 5,
+  },
+  backButton: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
   },
   paginationContainer: {
     position: 'absolute',
-    bottom: 15,
+    bottom: 10,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -254,16 +213,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   paginationDotBase: {
-    width: 75,
-    height: 2.5,
-    borderRadius: 4,
+    width: 64,
+    height: 3,
+    borderRadius: 1,
     marginHorizontal: 4,
+    marginBottom:5,
   },
   paginationDotActive: {
     backgroundColor: COLORS.primary,
   },
   paginationDotInactive: {
-    backgroundColor: COLORS.inactiveTabDot || '#D3D3D3',
+    backgroundColor: 'rgba(255,255,255,0.5)',
   },
 });
 
