@@ -1,20 +1,17 @@
-import { StyleSheet, Text, View, ScrollView } from 'react-native'
-import React from 'react'
-import Header from '../../../components/offers/header'
-import Offer from '../../../components/offers/Offer'
-import Promotions from '../../../components/offers/Promotion'
+import { StyleSheet, View } from 'react-native';
+import React from 'react';
+import Header from '../../../components/offers/header';
+import Offer from '../../../components/offers/Offer';
+import Promotions from '../../../components/offers/Promotion';
 
-
-const index = () => {
+const IndexScreen = () => {
   return (
-    <ScrollView style={{ backgroundColor: '#F5F5F5' }}>
+    <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
       <Header />
-      <Offer/>
-      <Promotions/>
-    </ScrollView> 
-  )
-}
+      <Offer />
+      <Promotions />
+    </View>
+  );
+};
 
-export default index
-
-const styles = StyleSheet.create({})
+export default IndexScreen;
