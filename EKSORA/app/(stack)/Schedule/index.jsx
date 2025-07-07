@@ -11,13 +11,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { COLORS } from "../../../constants/colors";
-
 
 const { width } = Dimensions.get('window');
 
-export default function LenLichTrinhScreen() {
+export default function Index() {
+  const { tourName, nguoiLon, treEm, totalPrice, tourImage } = useLocalSearchParams();
+
+  // State giữ nguyên ngày mặc định
   const [isPublic, setIsPublic] = useState(true);
   const [startDate, setStartDate] = useState(new Date(2025, 6, 8));
   const [endDate, setEndDate] = useState(new Date(2025, 6, 10));
@@ -28,22 +30,23 @@ export default function LenLichTrinhScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Lên lịch trình</Text>
 
-      {/* Card chứa toàn bộ thông tin */}
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={24} color="#333" />
+        <Text style={styles.title}>Lên lịch trình</Text>
+      </TouchableOpacity>
+
       <View style={styles.card}>
-        {/* Điểm xuất phát */}
         <TouchableOpacity style={styles.row}>
           <Ionicons name="navigate-circle-outline" size={22} color="#555" style={styles.icon} />
           <View style={styles.rowContent}>
             <Text style={styles.label}>Điểm xuất phát</Text>
-            <Text style={styles.value}>Hồ Chí Minh</Text>
+            <Text style={styles.value}>{tourName}</Text>
           </View>
         </TouchableOpacity>
 
         <View style={styles.separator} />
 
-        {/* Ngày khởi hành và về */}
         <View style={styles.row}>
           <Ionicons name="calendar-outline" size={22} color="#555" style={styles.icon} />
           <View style={styles.dateRow}>
@@ -60,18 +63,18 @@ export default function LenLichTrinhScreen() {
 
         <View style={styles.separator} />
 
-        {/* Số người */}
         <TouchableOpacity style={styles.row}>
           <Ionicons name="person-outline" size={22} color="#555" style={styles.icon} />
           <View style={styles.rowContent}>
             <Text style={styles.label}>Số người</Text>
-            <Text style={styles.value}>1 người lớn</Text>
+            <Text style={styles.value}>
+              {nguoiLon || '1'} người lớn {treEm && treEm !== '0' ? `| ${treEm} trẻ em` : ''}
+            </Text>
           </View>
         </TouchableOpacity>
 
         <View style={styles.separator} />
 
-        {/* Công khai */}
         <View style={styles.row}>
           <Ionicons name="lock-open-outline" size={22} color="#555" style={styles.icon} />
           <View style={styles.rowContentBetween}>
@@ -86,12 +89,20 @@ export default function LenLichTrinhScreen() {
         </View>
       </View>
 
-      {/* Nút bấm */}
-      <TouchableOpacity style={styles.button} onPress={ () => router.push('/(stack)/ScheduleTrip')}>
+
+      <TouchableOpacity style={styles.button} onPress={() => router.push({
+        pathname: '/(stack)/ScheduleTrip',
+        params: {
+          tourName,
+          nguoiLon,
+          treEm,
+          totalPrice,
+          tourImage,
+        }
+      })}>
         <Text style={styles.buttonText}>Lên lịch trình</Text>
       </TouchableOpacity>
 
-      {/* Date pickers */}
       {showStartPicker && (
         <DateTimePicker
           value={startDate}
@@ -103,7 +114,6 @@ export default function LenLichTrinhScreen() {
           }}
         />
       )}
-
       {showEndPicker && (
         <DateTimePicker
           value={endDate}
@@ -125,12 +135,19 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     backgroundColor: '#F9F9F9',
   },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
   title: {
     fontSize: 22,
     fontWeight: '700',
     textAlign: 'center',
     marginVertical: 24,
     color: '#333',
+    marginStart: 100,
   },
   card: {
     backgroundColor: '#fff',
