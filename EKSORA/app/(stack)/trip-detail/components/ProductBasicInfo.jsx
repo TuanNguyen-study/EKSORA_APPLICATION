@@ -44,7 +44,7 @@ const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, o
 
       {/* Thông tin Khởi hành */}
       {productInfo.departurePoint && (
-        <Text style={styles.departureText}>Khởi hành từ {productInfo.departurePoint}</Text>
+        <Text style={styles.departureText}>Khởi hành từ:  {productInfo.departurePoint}</Text>
       )}
 
       {/* Dòng Đánh giá và Đã đặt */}
@@ -53,8 +53,6 @@ const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, o
           <StarRating rating={productInfo.rating.stars} />
           <Text style={styles.ratingValue}>{productInfo.rating.stars.toFixed(1)}</Text>
           <Text style={styles.ratingCount}>({productInfo.rating.detailsText || `${productInfo.rating.count} Đánh giá`})</Text>
-          <Text style={styles.dotSeparator}>•</Text>
-          <Text style={styles.bookingCount}>{productInfo.bookingCount || '9K+'} Đã đặt</Text>
         </View>
       )}
 
@@ -66,26 +64,6 @@ const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, o
               <Text style={[styles.tagText, tag.isSpecial && styles.specialTagText]}>{tag.label}</Text>
             </View>
           ))}
-        </View>
-      )}
-
-      {/* Box Thông tin Nổi bật Tóm tắt */}
-      {productInfo.summaryHighlight && (
-        <View style={styles.summaryHighlightBox}>
-          <View style={styles.summaryHighlightContent}>
-            {productInfo.summaryHighlight.items.map((item, index) => (
-              <Text key={index} style={styles.summaryHighlightItem}>• {item}</Text>
-            ))}
-            <TouchableOpacity onPress={onSeeMoreHighlights}>
-              <Text style={styles.seeMoreText}>Xem thêm</Text>
-            </TouchableOpacity>
-          </View>
-          {productInfo.summaryHighlight.logo && (
-            <View style={styles.summaryLogoContainer}>
-              <Image source={productInfo.summaryHighlight.logo} style={styles.summaryLogo} />
-              <Text style={styles.summaryLogoText}>{productInfo.summaryHighlight.logoText || "EKSORA"}</Text>
-            </View>
-          )}
         </View>
       )}
 
