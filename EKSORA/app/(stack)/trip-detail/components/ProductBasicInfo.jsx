@@ -1,31 +1,79 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS } from '../../../../constants/colors';
+import VoucherModal from '../../Voucher/components/VoucherModal';
 
 // Component StarRating
-const StarRating = ({ rating, size = 18, color = COLORS.warning }) => { 
+const StarRating = ({ rating, size = 18, color = COLORS.warning }) => {
   const fullStars = Math.floor(rating);
   const halfStar = rating % 1 >= 0.5;
   const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-  let stars = [];
-  for (let i = 0; i < fullStars; i++) stars.push(<Ionicons key={`full_${i}`} name="star" size={size} color={color} />);
-  if (halfStar) stars.push(<Ionicons key="half" name="star-half-sharp" size={size} color={color} />);
-  for (let i = 0; i < emptyStars; i++) stars.push(<Ionicons key={`empty_${i}`} name="star-outline" size={size} color={color} />);
+  const stars = [];
+
+  for (let i = 0; i < fullStars; i++) {
+    stars.push(<Ionicons key={`full_${i}`} name="star" size={size} color={color} />);
+  }
+  if (halfStar) {
+    stars.push(<Ionicons key="half" name="star-half-sharp" size={size} color={color} />);
+  }
+  for (let i = 0; i < emptyStars; i++) {
+    stars.push(<Ionicons key={`empty_${i}`} name="star-outline" size={size} color={color} />);
+  }
+
   return <View style={styles.starContainer}>{stars}</View>;
 };
 
 const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, onSeeOffers }) => {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [error, setError] = useState(null);
+
+  // Lấy userId từ AsyncStorage
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('USER_ID');
+        if (storedUserId && /^[0-9a-fA-F]{24}$/.test(storedUserId)) {
+          setUserId(storedUserId);
+        } else {
+          setError('ID người dùng không hợp lệ hoặc không tồn tại');
+        }
+      } catch (err) {
+        setError('Lỗi khi lấy ID người dùng');
+        console.error('Lỗi AsyncStorage:', err);
+      }
+    };
+
+    fetchUserId();
+  }, []);
+
+  const handleSeeOffers = () => {
+    if (!userId) {
+      setError('Vui lòng đăng nhập để xem ưu đãi');
+      return;
+    }
+    setIsModalVisible(true);
+    if (onSeeOffers) onSeeOffers();
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+  };
+
   if (!productInfo) {
-    return null; 
+    return null;
   }
 
   return (
     <View style={styles.container}>
+      {/* Hiển thị lỗi nếu có */}
+      {error && <Text style={styles.errorText}>{error}</Text>}
+
       {/* Partner Awards Badge */}
       {productInfo.partnerAwards && (
-        <View style={styles.awardsBadgeOuterContainer}> 
+        <View style={styles.awardsBadgeOuterContainer}>
           <View style={styles.awardsBadgeContainer}>
             <Image source={productInfo.partnerAwards.image} style={styles.awardsImage} />
             <View style={styles.awardsTextContainer}>
@@ -44,19 +92,21 @@ const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, o
 
       {/* Thông tin Khởi hành */}
       {productInfo.departurePoint && (
-        <Text style={styles.departureText}>Khởi hành từ:  {productInfo.departurePoint}</Text>
+        <Text style={styles.departureText}>Khởi hành từ: {productInfo.departurePoint}</Text>
       )}
 
-      {/* Dòng Đánh giá và Đã đặt */}
+      {/* Đánh giá */}
       {productInfo.rating && (
         <View style={styles.ratingBookingRow}>
           <StarRating rating={productInfo.rating.stars} />
           <Text style={styles.ratingValue}>{productInfo.rating.stars.toFixed(1)}</Text>
-          <Text style={styles.ratingCount}>({productInfo.rating.detailsText || `${productInfo.rating.count} Đánh giá`})</Text>
+          <Text style={styles.ratingCount}>
+            ({productInfo.rating.detailsText || `${productInfo.rating.count} Đánh giá`})
+          </Text>
         </View>
       )}
 
-      {/* Tags/Chips */}
+      {/* Tags */}
       {productInfo.tags && productInfo.tags.length > 0 && (
         <View style={styles.tagsContainer}>
           {productInfo.tags.map((tag, index) => (
@@ -69,19 +119,31 @@ const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, o
 
       {/* Ưu đãi cho bạn */}
       {productInfo.offers && productInfo.offers.length > 0 && (
-        <TouchableOpacity style={styles.offersSection} onPress={onSeeOffers}>
+        <TouchableOpacity style={styles.offersSection} onPress={handleSeeOffers}>
           <Text style={styles.offersTitle}>Ưu đãi cho bạn</Text>
           <View style={styles.offerTagsContainer}>
             {productInfo.offers.slice(0, 2).map((offer, index) => (
               <View key={index} style={[styles.offerTag, { backgroundColor: offer.bgColor || COLORS.primaryLight }]}>
-                {offer.icon && <Ionicons name={offer.icon} size={14} color={offer.textColor || COLORS.primary} style={{ marginRight: 4 }} />}
-                <Text style={[styles.offerTagText, { color: offer.textColor || COLORS.primary }]}>{offer.label}</Text>
+                {offer.icon && (
+                  <Ionicons
+                    name={offer.icon}
+                    size={14}
+                    color={offer.textColor || COLORS.primary}
+                    style={styles.offerIcon}
+                  />
+                )}
+                <Text style={[styles.offerTagText, { color: offer.textColor || COLORS.primary }]}>
+                  {offer.label}
+                </Text>
               </View>
             ))}
           </View>
           <Ionicons name="chevron-forward-outline" size={22} color={COLORS.textSecondary} />
         </TouchableOpacity>
       )}
+
+      {/* VoucherModal */}
+      <VoucherModal visible={isModalVisible} onClose={handleCloseModal} />
     </View>
   );
 };

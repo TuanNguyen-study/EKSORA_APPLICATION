@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryBlue,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '55%',
+    maxHeight: '70%',
   },
   header: {
     paddingVertical: 20,
