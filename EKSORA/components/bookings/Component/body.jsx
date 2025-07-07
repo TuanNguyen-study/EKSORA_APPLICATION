@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, View } from 'react-native';
 import { getTrips } from '../../../API/services/servicesBooking';
+import { router } from 'expo-router';
 
 export default function Body() {
   const [loading, setLoading] = useState(true);
@@ -44,10 +45,24 @@ export default function Body() {
       data={trips}
       renderItem={({ item }) => (
         <View style={styles.tripItem}>
-          <Image
-            source={{ uri: item?.tour_id?.image?.[0] }}
-            style={styles.image}
-          />
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: item?.tour_id?.image?.[0] }}
+              style={styles.image}
+            />
+            <Text style={styles.link} onPress={() => router.push({
+              pathname: '/(stack)/Schedule',
+              params: {
+                tourName: item?.tour_id?.name,
+                nguoiLon: item?.quantity_nguoiLon?.toString() || '1',
+                treEm: item?.quantity_treEm?.toString() || '0',
+                tourImage: item?.tour_id?.image?.[0],
+                totalPrice: item?.totalPrice?.toString() || '0'
+              }
+            })}>
+              Gợi ý lịch trình
+            </Text>
+          </View>
           <View style={styles.textContainer}>
             <Text style={styles.title}>{item?.tour_id?.name}</Text>
             <Text style={styles.location}>{item?.tour_id?.location}</Text>
@@ -136,6 +151,14 @@ const styles = StyleSheet.create({
     width: 200,
     height: 150,
     marginBottom: 16,
+  },
+  link: {
+    marginTop: 4,
+    fontSize: 11,
+    color: '#2196F3',
+    fontStyle: 'italic',
+    opacity: 0.8,
+    marginStart: 5,
   },
   noResults: {
     fontSize: 20,

@@ -1,17 +1,34 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { COLORS } from "../../../../constants/colors";
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
 export default function PriceFooter() {
+  const { totalPrice } = useLocalSearchParams();
+  const formattedPrice = parseInt(totalPrice || '0', 10).toLocaleString('vi-VN') + ' đ';
+
+  const handleBooking = () => {
+    Alert.alert(
+      "Đặt thành công!",
+      "Cảm ơn bạn đã đặt tour.",
+      [
+        {
+          text: "OK",
+          onPress: () => router.replace('/(tabs)/home'),
+        }
+      ],
+      { cancelable: false }
+    );
+  };
+
   return (
     <View style={styles.footer}>
       <View style={styles.priceBox}>
         <Text style={styles.label}>Bao gồm</Text>
-        <Text style={styles.price}>1.752.000 đ</Text>
+        <Text style={styles.price}>{formattedPrice}</Text>
         <Text style={styles.subtext}>Mỗi người</Text>
       </View>
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={handleBooking}>
         <Text style={styles.buttonText}>Đặt ngay</Text>
       </TouchableOpacity>
     </View>
@@ -35,9 +52,10 @@ const styles = StyleSheet.create({
     color: '#777',
   },
   price: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#000',
+    color: COLORS.primary || '#e53935',
+    marginTop: 4,
   },
   subtext: {
     fontSize: 12,
