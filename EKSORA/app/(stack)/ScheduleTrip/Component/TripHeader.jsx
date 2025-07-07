@@ -1,21 +1,22 @@
 // Component/TripHeader.jsx
 
-import React, { useState } from 'react';
+import React, { useState} from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter,  useLocalSearchParams  } from 'expo-router';
 
 export default function TripHeader() {
   const router = useRouter();
   const [isFavorite, setIsFavorite] = useState(false);
-
   const toggleFavorite = () => setIsFavorite(!isFavorite);
+  const { tourName, nguoiLon, treEm, tourImage } = useLocalSearchParams();
+  
 
   return (
     <View style={styles.container}>
       <Image
         source={{
-          uri: 'https://condao.com.vn/uploads/news/2023_03/toan-canh-thi-tran-con-dao_1.jpg',
+          uri: tourImage,
         }}
         style={styles.headerImage}
       />
@@ -43,8 +44,8 @@ export default function TripHeader() {
       </View>
 
       <View style={styles.infoBox}>
-        <Text style={styles.title}>3 ngày đi Côn Đảo từ Hồ Chí Minh</Text>
-        <Text style={styles.subtitle}>09 thg 7 - 11 thg 7, 1 người</Text>
+        <Text style={styles.title}>{tourName}</Text>
+        <Text style={styles.subtitle}>{nguoiLon} Người lớn | {treEm} Trẻ em</Text>
         <Text style={styles.author}>Tạo bởi Võ Minh</Text>
       </View>
     </View>
