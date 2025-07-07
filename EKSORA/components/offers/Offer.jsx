@@ -1,17 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Platform,
-  Dimensions,
-  Alert,
-} from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Platform, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { getPromotion, saveUserVoucher, getSavedVoucherIds, saveVoucherId } from '../../API/services/servicesPromotion';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useVoucher } from '../../store/VoucherContext';
 import CouponModal from '../../app/(stack)/Voucher/CouponModal';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -19,74 +9,23 @@ const { width: screenWidth } = Dimensions.get('window');
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   if (isNaN(date)) return 'Không xác định';
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+  return `${date.getDate().toString().padStart(2, '0')}/${
+    (date.getMonth() + 1).toString().padStart(2, '0')
+  }/${date.getFullYear()}`;
 };
 
 export default function Offer() {
-  const [coupons, setCoupons] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const { coupons, saveVoucher } = useVoucher();
+  const [isModalVisible, setIsModalVisible] = React.useState(false);
 
-  const fetchPromotions = async () => {
-    try {
-      const response = await getPromotion();
-      if (!Array.isArray(response)) return;
-
-      const savedIds = await getSavedVoucherIds();
-
-      const mappedCoupons = response.map(item => ({
-        id: item._id,
-        title: 'Mã giảm giá',
-        discount: item.discount ? `Giảm ${item.discount}%` : 'Ưu đãi',
-        condition: item.condition || `Áp dụng đơn từ...`,
-        buttonText: savedIds.includes(item._id) ? 'Đã lưu' : 'Lưu',
-        isSaved: savedIds.includes(item._id),
-        expiry: item.end_date ? `HSD: ${formatDate(item.end_date)}` : null,
-      }));
-
-      setCoupons(mappedCoupons);
-    } catch (error) {
-      console.error('Lỗi khi lấy danh sách mã khuyến mãi:', error);
+  const handleSave = async (id, isSaved) => {
+    if (isSaved) {
+      Alert.alert('Thông báo', 'Bạn đã lưu voucher này rồi');
+      return;
     }
+    await saveVoucher(id);
+    Alert.alert('Thành công', 'Đã lưu voucher');
   };
-
-  const handleSave = async (voucherId) => {
-    try {
-      const userId = await AsyncStorage.getItem('USER_ID');
-      if (!userId) {
-        Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng');
-        return;
-      }
-
-      const response = await saveUserVoucher(userId, voucherId);
-
-      if (response?.message === 'Bạn đã lưu voucher này rồi') {
-        Alert.alert('Thông báo', 'Bạn đã lưu voucher này rồi');
-      } else {
-        Alert.alert('Thành công', 'Đã lưu voucher');
-      }
-
-      await saveVoucherId(voucherId);
-
-      // Cập nhật lại nút trong giao diện
-      setCoupons(currentCoupons =>
-        currentCoupons.map(coupon =>
-          coupon.id === voucherId
-            ? { ...coupon, buttonText: 'Đã lưu', isSaved: true }
-            : coupon
-        )
-      );
-    } catch (error) {
-      Alert.alert('Lỗi', 'Không thể lưu voucher');
-      console.error('Lỗi khi lưu voucher:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchPromotions();
-  }, []);
 
   return (
     <View style={styles.container}>
@@ -98,8 +37,8 @@ export default function Offer() {
       </LinearGradient>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-        {coupons.slice(0, 10).map((offer, index) => (
-          <View key={offer.id || index} style={styles.cardWrapper}>
+        {coupons.slice(0, 10).map((offer) => (
+          <View key={offer.id} style={styles.cardWrapper}>
             <LinearGradient colors={['#00639B', '#0087CA']} style={styles.codeBox}>
               <View style={styles.boxHeader}>
                 <Text style={styles.boxHeaderText}>{offer.title}</Text>
@@ -107,14 +46,16 @@ export default function Offer() {
               <View style={styles.boxBody}>
                 <Text style={styles.discount}>{offer.discount}</Text>
                 <Text style={styles.condition}>{offer.condition}</Text>
-                {offer.expiry && <Text style={styles.condition}>{offer.expiry}</Text>}
+                {offer.expiry && (
+                  <Text style={styles.condition}>HSD: {formatDate(offer.expiry)}</Text>
+                )}
                 <TouchableOpacity
                   style={[
                     styles.button,
-                    offer.isSaved && { backgroundColor: '#ccc', borderWidth: 0 }
+                    offer.isSaved && { backgroundColor: '#ccc', borderWidth: 0 },
                   ]}
                   disabled={offer.isSaved}
-                  onPress={() => handleSave(offer.id)}
+                  onPress={() => handleSave(offer.id, offer.isSaved)}
                 >
                   <Text style={styles.buttonText}>{offer.buttonText}</Text>
                 </TouchableOpacity>

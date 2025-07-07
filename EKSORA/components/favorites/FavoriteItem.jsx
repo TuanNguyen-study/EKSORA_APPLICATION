@@ -1,10 +1,9 @@
 import { Image, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
-import { deleteFavoriteTour } from '../../API/services/servicesFavorite';
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useState, useContext } from 'react';
 import { Swipeable } from 'react-native-gesture-handler';
 import { AntDesign, FontAwesome } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
+import { FavoriteContext } from '../../store/FavoriteContext'; 
 
 export default function FavoriteItem({
   id,
@@ -17,20 +16,12 @@ export default function FavoriteItem({
   description
 }) {
   const [isVisible, setIsVisible] = useState(true);
+  const { removeFavorite } = useContext(FavoriteContext); 
 
   const handleRemoveFavorite = async () => {
     try {
-      const token = await AsyncStorage.getItem("ACCESS_TOKEN");
-      const userId = await AsyncStorage.getItem("USER_ID");
-
-      if (!userId || !id || !token) {
-        console.warn("Thiếu thông tin userId, id hoặc token");
-        return;
-      }
-
-      await deleteFavoriteTour(userId, id, token);
-      console.log("Đã xoá khỏi yêu thích:", id);
-      setIsVisible(false);
+      await removeFavorite(id); 
+      setIsVisible(false);      
     } catch (error) {
       console.error("Lỗi khi xoá yêu thích:", error);
     }
