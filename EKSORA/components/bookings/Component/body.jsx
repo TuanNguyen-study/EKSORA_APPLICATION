@@ -56,7 +56,7 @@ export default function Body() {
                 tourName: item?.tour_id?.name,
                 nguoiLon: item?.quantity_nguoiLon?.toString() || '1',
                 treEm: item?.quantity_treEm?.toString() || '0',
-                tourImage: item?.tour_id?.image?.[0],
+                tourImages: JSON.stringify(item?.tour_id?.image || []),
                 totalPrice: item?.totalPrice?.toString() || '0'
               }
             })}>
