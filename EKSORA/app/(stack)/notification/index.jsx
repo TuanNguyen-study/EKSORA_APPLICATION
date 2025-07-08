@@ -6,7 +6,6 @@ import { router } from 'expo-router';
 export default function NotificationScreen() {
     return (
         <View style={styles.container}>
-            {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.push('/(tabs)/home')}>
                     <Ionicons name="arrow-back" size={24} color="black" />
@@ -17,7 +16,6 @@ export default function NotificationScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Alert box */}
             <View style={styles.alertBox}>
                 <Ionicons name="notifications-outline" size={18} color="#007AFF" />
                 <Text style={styles.alertText}>
@@ -28,10 +26,9 @@ export default function NotificationScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* No notification section */}
             <View style={styles.noNotification}>
                 <Image
-                    source={require('../../../assets/images/notification.png')} // Thay ảnh ở đây bằng ảnh tương ứng của bạn
+                    source={require('../../../assets/images/notification.png')}
                     style={styles.image}
                 />
                 <Text style={styles.noText}>Không có thông báo</Text>
