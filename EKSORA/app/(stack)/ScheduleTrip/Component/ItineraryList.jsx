@@ -3,7 +3,6 @@ import React from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
 
 export default function ItineraryList({ data, tourImages }) {
-  console.log(">>> ItineraryList nhận được tourImages:", tourImages);
 
   return (
     <View style={styles.container}>

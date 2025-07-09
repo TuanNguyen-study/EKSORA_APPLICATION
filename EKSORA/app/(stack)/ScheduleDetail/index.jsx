@@ -9,7 +9,7 @@ import AddButton from '../ScheduleDetail/Components/AddButton';
 const Index = () => {
 const { tourImages } = useLocalSearchParams();
 const images = JSON.parse(tourImages || '[]');
-console.log("Ảnh nhận được:", images);
+
 
 
 
