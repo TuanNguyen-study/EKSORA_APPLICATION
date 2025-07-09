@@ -1,27 +1,36 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  StyleSheet,
-  View,
-  SafeAreaView,
-  Text,
-  FlatList,
-  Pressable,
-  ActivityIndicator,
-  TouchableOpacity,
-  Platform,
-  StatusBar,
-} from 'react-native';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import BookingItem from './BookingItem';
+import { useFocusEffect } from '@react-navigation/native'; // ✅ thêm
+import { useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  Pressable, // ✅ thêm
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { getBookingDetailById } from '../../../API/services/bookingdetailService';
 import { getUserBookings } from '../../../API/services/servicesUser';
-import { COLORS } from '../../../constants/colors';  
+import { COLORS } from '../../../constants/colors';
+import BookingItem from './BookingItem';
 
 const filterTabs = [
-  { status: 'confirmed', title: 'Đã xác nhận' },
-  { status: 'pending', title: 'Đang chờ' },
-  { status: 'cancelled', title: 'Đã hủy' },
+  { status: 'pending', title: 'Đang chờ xác nhận' },
+  { status: 'confirmed', title: 'Đã giữ chỗ' },
+  { status: 'paid', title: 'Đã thanh toán' },
+  { status: 'ongoing', title: 'Đang diễn ra' },
+  { status: 'completed', title: 'Hoàn thành' },
+  { status: 'canceled', title: 'Đã hủy' },
+  { status: 'refund_requested', title: 'Yêu cầu hoàn tiền' },
+  { status: 'refunded', title: 'Đã hoàn tiền' },
+  { status: 'expired', title: 'Hết hạn thanh toán' },
 ];
 
 export default function MyBookingsScreen() {
@@ -30,47 +39,58 @@ export default function MyBookingsScreen() {
   const [selectedStatus, setSelectedStatus] = useState('confirmed');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false); // ✅ trạng thái làm mới
 
-  // Lấy userId từ AsyncStorage và gọi API
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setLoading(true);
-        const token = await AsyncStorage.getItem("ACCESS_TOKEN");
-        const userId = await AsyncStorage.getItem("USER_ID");
-        console.log("USER_ID:", userId);
-        console.log("TOKEN:", token);
-
-        if (!userId || !token) {
-          setError('Không tìm thấy người dùng hoặc token');
-          return;
-        }
-        const data = await getUserBookings(userId, token);
-        setBookings(data);
-      } catch (err) {
-        setError('Lỗi khi tải danh sách đơn hàng');
-        console.error('Lỗi API:', err);
-      } finally {
-        setLoading(false);
+  // ✅ Hàm fetch API dùng lại cho cả focus và refresh
+  const fetchBookings = async () => {
+    try {
+      const token = await AsyncStorage.getItem("ACCESS_TOKEN");
+      const userId = await AsyncStorage.getItem("USER_ID");
+      if (!userId || !token) {
+        setError('Không tìm thấy người dùng hoặc token');
+        return;
       }
-    };
+      const data = await getUserBookings(userId, token);
+      setBookings(data);
+    } catch (err) {
+      setError('Lỗi khi tải danh sách đơn hàng');
+      console.error('Lỗi API:', err);
+    }
+  };
 
-    fetchBookings();
-  }, []);
+  // ✅ Gọi API khi focus vào màn hình
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchBookings().finally(() => setLoading(false));
+    }, [])
+  );
 
+  // ✅ Gọi khi người dùng kéo xuống để làm mới
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchBookings();
+    setRefreshing(false);
+  };
 
   const filteredBookings = useMemo(() => {
-    return bookings.filter(booking => booking.status === selectedStatus);
+    return bookings.filter((booking) => {
+      const st = (booking.status || '').toLowerCase().trim();
+      return st === selectedStatus;
+    });
   }, [bookings, selectedStatus]);
 
- const handleItemPress = (item) => {
-  if (item?.tour_id?._id) {
-    router.push(`/trip-detail/${item.tour_id._id}`);
-  } else {
-    alert("Không tìm thấy thông tin tour.");
-  }
-};
-
+  const handleItemPress = async (item) => {
+    try {
+      const detail = await getBookingDetailById(item._id);
+      router.push({
+        pathname: `/booking-detail/${item._id}`,
+        params: { bookingData: JSON.stringify(detail) }
+      });
+    } catch (error) {
+      alert('Không thể lấy dữ liệu chi tiết đơn hàng!');
+    }
+  };
 
   const renderEmptyList = () => (
     <View style={styles.emptyContainer}>
@@ -93,25 +113,31 @@ export default function MyBookingsScreen() {
         </View>
 
         {/* Tabs lọc */}
-        <View style={styles.filterContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterContainer}
+        >
           {filterTabs.map(tab => (
             <Pressable
               key={tab.status}
               style={[
                 styles.filterButton,
-                selectedStatus === tab.status && styles.filterButtonActive
+                selectedStatus === tab.status && styles.filterButtonActive,
               ]}
               onPress={() => setSelectedStatus(tab.status)}
             >
-              <Text style={[
-                styles.filterText,
-                selectedStatus === tab.status && styles.filterTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedStatus === tab.status && styles.filterTextActive,
+                ]}
+              >
                 {tab.title}
               </Text>
             </Pressable>
           ))}
-        </View>
+        </ScrollView>
 
         {/* Danh sách đơn hàng */}
         {loading ? (
@@ -127,6 +153,8 @@ export default function MyBookingsScreen() {
             keyExtractor={item => item._id}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={renderEmptyList}
+            refreshing={refreshing} // ✅ Trạng thái xoay khi kéo xuống
+            onRefresh={onRefresh}   // ✅ Hàm được gọi khi người dùng kéo
           />
         )}
       </View>
@@ -164,16 +192,19 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    backgroundColor: COLORS.white,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   filterButton: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: COLORS.primary,
+    marginRight: 10,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   filterButtonActive: {
     backgroundColor: COLORS.primary,
@@ -190,8 +221,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   emptyContainer: {
-    flex: 1,
-    marginTop: 100,
+    marginTop: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },

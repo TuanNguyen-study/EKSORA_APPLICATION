@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, FlatList, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { COLORS } from "../../../constants/colors";
 
@@ -21,8 +21,21 @@ export default function PaymentPage() {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [profile, setProfile] = useState(null);
 
-  const { bookingId,title, quantityAdult, quantityChild, totalPrice, travelDate, image } = useLocalSearchParams();
+  const { bookingId, title, quantityAdult, quantityChild, totalPrice, travelDate, image } = useLocalSearchParams();
   const params = useLocalSearchParams();
+  useEffect(() => {
+  (async () => {
+    if (!bookingId) {
+      const savedId = await AsyncStorage.getItem("PENDING_BOOKING_ID");
+      if (savedId) {
+        params.bookingId = savedId; // fallback gán lại
+      } else {
+        Alert.alert("Lỗi", "Không tìm thấy mã booking. Vui lòng đặt lại.");
+      }
+    }
+  })();
+}, []);
+
   console.log('🧾 Params nhận được:', params);
   console.log("📷 image param:", image);
 
@@ -85,6 +98,9 @@ export default function PaymentPage() {
       buyerAddress: profile.address,
       booking_id: bookingId,
     };
+    await AsyncStorage.setItem("PENDING_BOOKING_ID", bookingId);
+
+    
 
     console.log('🔀 Dữ liệu gửi sang API tạo thanh toán:');
     console.log('💰 Amount:', payload.amount);
@@ -125,15 +141,24 @@ export default function PaymentPage() {
         console.error(`❌ API lỗi ${response.status}:`, msg);
         return Alert.alert(`Lỗi ${response.status}`, msg);
       }
+      
 
-      if (!data.url) {
-        console.error('❌ Không tìm thấy URL trong phản hồi:', data);
-        return Alert.alert('Lỗi', 'Phản hồi không hợp lệ từ server.');
+      // if (!data.url) {
+      //   console.error('❌ Không tìm thấy URL trong phản hồi:', data);
+      //   return Alert.alert('Lỗi', 'Phản hồi không hợp lệ từ server.');
+      // }
+      if (data.url) {
+        router.push({
+         pathname: "/acount/payment-webview",
+          params: {
+            checkoutUrl: data.url
+          }
+        });
       }
 
       console.log('✅ Mở URL thanh toán:', data.url);
       console.log('🆔 Booking ID:', data.booking_id);
-      Linking.openURL(data.url);
+      // Linking.openURL(data.url);
 
     } catch (err) {
       console.error('🔥 Exception khi tạo payment link:', err);
