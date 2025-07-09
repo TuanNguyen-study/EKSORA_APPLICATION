@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from 'react';
+import { useState } from "react";
 import {
-  Modal,
   Platform,
   StyleSheet,
   Text,
@@ -11,7 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../../../../constants/colors";
-import BookingModalContent from "./Modal"; // Adjust the import path as necessary
+
 const StickyBookingFooter = ({
   priceInfo,
   eksoraPoints,
@@ -19,24 +18,30 @@ const StickyBookingFooter = ({
   onBookNow,
   onEksoraPointsPress,
   tourName,
+  selectedVoucher, // Nhận từ props
 }) => {
   const router = useRouter();
-
   const insets = useSafeAreaInsets();
-  const [modalVisible, setModalVisible] = useState(false);
 
   const handleBookNow = () => {
     if (onBookNow) {
-      onBookNow();
+      onBookNow(selectedVoucher);
     } else {
-      router.push("/acount/bookingScreen");
+      router.push("/account/bookingScreen");
     }
   };
 
   const formatPrice = (price) => {
     const value = typeof price === "number" ? price : parseFloat(price);
     if (isNaN(value)) return "0 đ";
-    return value.toLocaleString("vi-VN", {
+
+    let finalPrice = value;
+    if (selectedVoucher?.voucher_id?.discount) {
+      const discount = selectedVoucher.voucher_id.discount;
+      finalPrice = value - (value * discount) / 100;
+    }
+
+    return finalPrice.toLocaleString("vi-VN", {
       style: "currency",
       currency: "VND",
       minimumFractionDigits: 0,
@@ -44,73 +49,72 @@ const StickyBookingFooter = ({
   };
 
   return (
-    <>
-      <View
-        style={[
-          styles.outerContainer,
-          {
-            paddingBottom:
-              insets.bottom > 0
-                ? insets.bottom
-                : Platform.OS === "ios"
-                  ? 20
-                  : 16,
-          },
-        ]}
-      >
-        <View style={styles.innerContainer}>
-          <View style={styles.topRow}>
-            <Text style={styles.priceText}>
-              {formatPrice(priceInfo?.current)}
+    <View
+      style={[
+        styles.outerContainer,
+        {
+          paddingBottom:
+            insets.bottom > 0
+              ? insets.bottom
+              : Platform.OS === "ios"
+              ? 20
+              : 16,
+        },
+      ]}
+    >
+      <View style={styles.innerContainer}>
+        <View style={styles.topRow}>
+          <Text style={styles.priceText}>
+            {formatPrice(priceInfo?.current)}
+          </Text>
+          <TouchableOpacity
+            style={styles.voucherButton}
+            onPress={() => { /* Không cần mở modal nữa, vì đã xử lý trong ProductBasicInfo */ }}
+          >
+            <Text style={styles.voucherButtonText}>
+              {selectedVoucher
+                ? `Đã áp dụng: ${selectedVoucher.voucher_id.discount}%`
+                : "Chọn Voucher"}
             </Text>
-
-            {eksoraPoints && (
-              <TouchableOpacity
-                style={styles.eksoraPointsChip}
-                onPress={onEksoraPointsPress}
-              >
-                <Text style={styles.eksoraPointsText}>
-                  EKSORA Xu +{eksoraPoints}
-                </Text>
-                <Ionicons
-                  name="chevron-forward-outline"
-                  size={12}
-                  color={COLORS.white}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View style={styles.buttonRow}>
+          </TouchableOpacity>
+          {eksoraPoints && (
             <TouchableOpacity
-              style={[styles.buttonBase, styles.addToCartButton]}
-              onPress={onAddToCart}
+              style={styles.eksoraPointsChip}
+              onPress={onEksoraPointsPress}
             >
-              <Text style={[styles.buttonTextBase, styles.addToCartButtonText]}>
-                Thêm vào giỏ hàng
+              <Text style={styles.eksoraPointsText}>
+                EKSORA Xu +{eksoraPoints}
               </Text>
+              <Ionicons
+                name="chevron-forward-outline"
+                size={12}
+                color={COLORS.white}
+              />
             </TouchableOpacity>
+          )}
+        </View>
 
-            <TouchableOpacity
-              style={[styles.buttonBase, styles.bookNowButton]}
-              onPress={handleBookNow}
-            >
-              <Text style={[styles.buttonTextBase, styles.bookNowButtonText]}>
-                Đặt ngay
-              </Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[styles.buttonBase, styles.addToCartButton]}
+            onPress={onAddToCart}
+          >
+            <Text style={[styles.buttonTextBase, styles.addToCartButtonText]}>
+              Thêm vào giỏ hàng
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.buttonBase, styles.bookNowButton]}
+            onPress={handleBookNow}
+          >
+            <Text style={[styles.buttonTextBase, styles.bookNowButtonText]}>
+              Đặt ngay
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <BookingModalContent
-          onClose={() => setModalVisible(false)}
-          priceInfo={priceInfo}
-          tourName={tourName}
-        />
-      </Modal>
-    </>
-
+    </View>
   );
 };
 

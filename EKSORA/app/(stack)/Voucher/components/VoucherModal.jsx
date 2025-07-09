@@ -13,7 +13,7 @@ import { AntDesign } from '@expo/vector-icons';
 import VoucherItem from './VoucherItem';
 import { getVouchersByUserId } from '../../../../API/services/servicesPromotion';
 
-const VoucherModal = ({ visible, onClose }) => {
+const VoucherModal = ({ visible, onClose, onApplyVoucher, selectedVoucher }) => {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -26,8 +26,6 @@ const VoucherModal = ({ visible, onClose }) => {
 
         try {
           const userId = await AsyncStorage.getItem("USER_ID");
-          console.log('✅ USER_ID từ AsyncStorage:', userId);
-
           if (!userId) {
             setError('Không tìm thấy thông tin người dùng.');
             setLoading(false);
@@ -35,8 +33,6 @@ const VoucherModal = ({ visible, onClose }) => {
           }
 
           const userVouchers = await getVouchersByUserId(userId);
-          console.log('📦 Dữ liệu trả về từ API:', userVouchers);
-
           if (!Array.isArray(userVouchers)) {
             throw new Error('Dữ liệu trả về từ API không phải mảng');
           }
@@ -57,7 +53,7 @@ const VoucherModal = ({ visible, onClose }) => {
           setVouchers(demoData);
         } catch (err) {
           setError('Đã xảy ra lỗi khi tải ưu đãi.');
-          console.error('❌ Voucher fetch error:', err);
+          console.error('Voucher fetch error:', err);
         } finally {
           setLoading(false);
         }
@@ -66,6 +62,13 @@ const VoucherModal = ({ visible, onClose }) => {
       fetchAndFilterVouchers();
     }
   }, [visible]);
+
+  const handleApplyVoucher = (voucher) => {
+    if (onApplyVoucher && typeof onApplyVoucher === 'function') {
+      onApplyVoucher(voucher);
+    }
+    onClose();
+  };
 
   const renderContent = () => {
     if (loading) {
@@ -80,7 +83,13 @@ const VoucherModal = ({ visible, onClose }) => {
     return (
       <FlatList
         data={vouchers}
-        renderItem={({ item }) => <VoucherItem voucherData={item} />}
+        renderItem={({ item }) => (
+          <VoucherItem
+            voucherData={item}
+            onApply={() => handleApplyVoucher(item)}
+            isSelected={selectedVoucher?._id === item._id}
+          />
+        )}
         keyExtractor={(item) => item._id}
         contentContainerStyle={{ paddingBottom: 20 }}
       />
@@ -91,21 +100,13 @@ const VoucherModal = ({ visible, onClose }) => {
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
-          {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <AntDesign name="close" size={24} color="black" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Ưu đãi cho bạn</Text>
           </View>
-
-          {/* Body */}
           <View style={styles.body}>{renderContent()}</View>
-
-          {/* Footer */}
-          <Text style={styles.footerText}>
-            Tất cả ưu đãi được liệt kê chỉ mang tính tham khảo. Bạn cần đến trang thanh toán để xem số tiền cuối cùng.
-          </Text>
         </View>
       </View>
     </Modal>
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    height: '85%',
+    height: '75%',
     backgroundColor: '#F9FAFB',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,

@@ -3,15 +3,24 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 // Hàm helper để định dạng ngày tháng
 const formatDate = (dateString) => {
-  if (!dateString) return '';
+  if (!dateString) return 'Không xác định';
   const date = new Date(dateString);
-  // Định dạng thành "ngày/tháng giờ:phút"
-  return `${date.getDate()}/${date.getMonth() + 1} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
 };
 
-const VoucherItem = ({ voucherData }) => {
-  // Lấy thông tin chi tiết từ object voucher_id
+const VoucherItem = ({ voucherData, onApply }) => {
+  if (!voucherData || !voucherData.voucher_id) {
+    return null; 
+  }
+
   const { code, discount, condition, end_date, min_order_value } = voucherData.voucher_id;
+
+  // Hàm xử lý khi nhấn "Sử dụng"
+  const handleApply = () => {
+    if (onApply) {
+      onApply(voucherData); 
+    }
+  };
 
   return (
     <View style={styles.card}>
@@ -20,8 +29,8 @@ const VoucherItem = ({ voucherData }) => {
         <View style={styles.appOnlyBadge}>
           <Text style={styles.appOnlyText}>Chỉ áp dụng trên ứng dụng</Text>
         </View>
-        <Text style={styles.title}>{condition}</Text>
-        <Text style={styles.code}>Mã ưu đãi: {code}</Text>
+        <Text style={styles.title}>{condition || 'Không có điều kiện'}</Text>
+        <Text style={styles.code}>Mã ưu đãi: {code || 'Không có mã'}</Text>
         <Text style={styles.expiry}>Hết hạn: {formatDate(end_date)}</Text>
       </View>
 
@@ -32,13 +41,13 @@ const VoucherItem = ({ voucherData }) => {
 
       {/* Phần bên phải */}
       <View style={styles.rightContainer}>
-        <Text style={styles.discountText}>Giảm {discount}%</Text>
-        {min_order_value && ( // Chỉ hiển thị nếu có giá trị đơn tối thiểu
-             <Text style={styles.minOrderText}>
-                Đơn tối thiểu: {min_order_value.toLocaleString('vi-VN')}VND
-             </Text>
+        <Text style={styles.discountText}>Giảm {discount ? `${discount}%` : '0%'}</Text>
+        {min_order_value > 0 && (
+          <Text style={styles.minOrderText}>
+            Đơn tối thiểu: {min_order_value.toLocaleString('vi-VN')} VND
+          </Text>
         )}
-        <TouchableOpacity style={styles.useButton}>
+        <TouchableOpacity style={styles.useButton} onPress={handleApply}>
           <Text style={styles.useButtonText}>Sử dụng</Text>
         </TouchableOpacity>
       </View>
@@ -72,11 +81,10 @@ const styles = StyleSheet.create({
     padding: 16,
     borderLeftWidth: 1,
     borderLeftColor: '#FDEEDC',
-    borderStyle: 'dashed', // Lưu ý: 'dashed' chỉ hoạt động tốt trên iOS
+    borderStyle: 'dashed',
   },
   dividerContainer: {
-    // Một mẹo để tạo đường kẻ đứt hoạt động trên cả 2 nền tảng
-    // nhưng ở đây ta dùng borderStyle 'dashed' cho đơn giản
+
   },
   appOnlyBadge: {
     backgroundColor: '#FFF7ED',

@@ -25,12 +25,18 @@ const StarRating = ({ rating, size = 18, color = COLORS.warning }) => {
   return <View style={styles.starContainer}>{stars}</View>;
 };
 
-const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, onSeeOffers }) => {
+const ProductBasicInfo = ({ 
+  productInfo, 
+  onSeeAllReviews, 
+  onSeeMoreHighlights, 
+  onSeeOffers,
+  onApplyVoucher, 
+  selectedVoucher, 
+}) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [userId, setUserId] = useState(null);
   const [error, setError] = useState(null);
 
-  // Lấy userId từ AsyncStorage
   useEffect(() => {
     const fetchUserId = async () => {
       try {
@@ -68,10 +74,8 @@ const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, o
 
   return (
     <View style={styles.container}>
-      {/* Hiển thị lỗi nếu có */}
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      {/* Partner Awards Badge */}
       {productInfo.partnerAwards && (
         <View style={styles.awardsBadgeOuterContainer}>
           <View style={styles.awardsBadgeContainer}>
@@ -87,15 +91,12 @@ const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, o
         </View>
       )}
 
-      {/* Tên sản phẩm */}
       <Text style={styles.productName}>{productInfo.name}</Text>
 
-      {/* Thông tin Khởi hành */}
       {productInfo.departurePoint && (
         <Text style={styles.departureText}>Khởi hành từ: {productInfo.departurePoint}</Text>
       )}
 
-      {/* Đánh giá */}
       {productInfo.rating && (
         <View style={styles.ratingBookingRow}>
           <StarRating rating={productInfo.rating.stars} />
@@ -106,7 +107,6 @@ const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, o
         </View>
       )}
 
-      {/* Tags */}
       {productInfo.tags && productInfo.tags.length > 0 && (
         <View style={styles.tagsContainer}>
           {productInfo.tags.map((tag, index) => (
@@ -117,7 +117,6 @@ const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, o
         </View>
       )}
 
-      {/* Ưu đãi cho bạn */}
       {productInfo.offers && productInfo.offers.length > 0 && (
         <TouchableOpacity style={styles.offersSection} onPress={handleSeeOffers}>
           <Text style={styles.offersTitle}>Ưu đãi cho bạn</Text>
@@ -142,8 +141,12 @@ const ProductBasicInfo = ({ productInfo, onSeeAllReviews, onSeeMoreHighlights, o
         </TouchableOpacity>
       )}
 
-      {/* VoucherModal */}
-      <VoucherModal visible={isModalVisible} onClose={handleCloseModal} />
+      <VoucherModal
+        visible={isModalVisible}
+        onClose={handleCloseModal}
+        onApplyVoucher={onApplyVoucher} 
+        selectedVoucher={selectedVoucher} 
+      />
     </View>
   );
 };

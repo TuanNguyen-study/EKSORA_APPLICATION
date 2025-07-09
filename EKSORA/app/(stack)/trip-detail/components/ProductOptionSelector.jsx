@@ -189,11 +189,6 @@ const ProductOptionSelector = ({
 
     </ScrollView>
   );
-
-
-
-
-
 };
 
 const styles = StyleSheet.create({
@@ -374,10 +369,6 @@ sectionHeader: {
     fontWeight: 'bold',
     color: COLORS.text,
   },
-
-
-
-
 });
 
 export default ProductOptionSelector;

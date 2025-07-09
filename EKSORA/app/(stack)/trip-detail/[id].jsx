@@ -36,16 +36,16 @@ const prepareProductInfo = (tour, services, highlights, reviews) => {
       { label: 'Lịch sử', isSpecial: false },
       { label: 'Văn hóa', isSpecial: false },
       { label: 'Ẩm thực', isSpecial: true },
-    ], 
+    ],
     summaryHighlight: {
-      items: highlights.map((item) => item.location_name), 
+      items: highlights.map((item) => item.location_name),
     },
     offers: services.map((service) => ({
       label: service.name || service.title,
       icon: 'pricetag-outline',
       bgColor: '#E6F0FA',
       textColor: '#1E88E5',
-    })), 
+    })),
   };
 };
 
@@ -100,6 +100,10 @@ export default function TripDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentSelectedPackages, setCurrentSelectedPackages] = useState({});
   const [currentTotalPrice, setCurrentTotalPrice] = useState(0);
+  const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const handleApplyVoucher = (voucher) => {
+    setSelectedVoucher(voucher); 
+  };
 
   const loadTourDetails = useCallback(async (id) => {
     setLoading(true);
@@ -172,7 +176,7 @@ export default function TripDetailScreen() {
         },
         services,
         highlights,
-        productInfo, 
+        productInfo,
       };
 
       setProductData(mappedProductData);
@@ -208,7 +212,7 @@ export default function TripDetailScreen() {
           return sum + (option.price || 0);
         }
       }
-      return sum; 
+      return sum;
     }, 0);
 
     const total_price = basePrice + optionTotal;
@@ -277,10 +281,12 @@ export default function TripDetailScreen() {
 
         <View style={styles.mainContentContainer}>
           <ProductBasicInfo
-            productInfo={productData.productInfo} 
+            productInfo={productData.productInfo}
             onSeeAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
             onSeeMoreHighlights={() => Alert.alert('Xem thêm điểm nổi bật')}
             onSeeOffers={() => Alert.alert('Xem ưu đãi')}
+            onApplyVoucher={handleApplyVoucher} 
+            selectedVoucher={selectedVoucher}
           />
           <View style={styles.separator} />
 
@@ -294,22 +300,24 @@ export default function TripDetailScreen() {
             }))}
           />
 
-
-          <ProductOptionSelector
-            servicePackages={productData.availableServicePackages}
-            dateFilters={productData.availableDateFilters}
-            initialTotalPrice={productData.price.current}
-            onSelectionUpdate={(map, totalExtra) => {
-              setCurrentSelectedPackages(map);
-              setCurrentTotalPrice((productData?.price?.current || 0) + totalExtra);
-            }}
-          />
+          <View >
+            <ProductOptionSelector
+              servicePackages={productData.availableServicePackages}
+              dateFilters={productData.availableDateFilters}
+              initialTotalPrice={productData.price.current}
+              onSelectionUpdate={(map, totalExtra) => {
+                setCurrentSelectedPackages(map);
+                setCurrentTotalPrice((productData?.price?.current || 0) + totalExtra);
+              }}
+            />
+          </View>
           <CustomerReviewSection
             reviews={productData.reviews}
             averageRating={productData.rating.stars}
             totalReviewsCount={productData.rating.count}
             onViewAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
           />
+
           <DescriptionSection
             title="Thông tin chi tiết"
             descriptionData={productData.descriptionContent}
@@ -324,6 +332,7 @@ export default function TripDetailScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
       <StickyBookingFooter
+        selectedVoucher={selectedVoucher}
         priceInfo={{
           ...productData.price,
           current: currentTotalPrice,
