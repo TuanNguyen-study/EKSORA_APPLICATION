@@ -153,8 +153,8 @@ export default function MyBookingsScreen() {
             keyExtractor={item => item._id}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={renderEmptyList}
-            refreshing={refreshing} // ✅ Trạng thái xoay khi kéo xuống
-            onRefresh={onRefresh}   // ✅ Hàm được gọi khi người dùng kéo
+            refreshing={refreshing} 
+            onRefresh={onRefresh}  
           />
         )}
       </View>
@@ -219,6 +219,8 @@ const styles = StyleSheet.create({
   listContent: {
     paddingTop: 8,
     paddingBottom: 20,
+    flexGrow: 1,
+    justifyContent: 'flex-start',
   },
   emptyContainer: {
     marginTop: 24,
