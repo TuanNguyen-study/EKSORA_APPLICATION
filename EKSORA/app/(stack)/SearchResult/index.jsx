@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     fontSize: 14,
-    color: COLORS.primaryAction,
+    color:  COLORS.primaryAction,
     fontWeight: "bold",
   },
   cityCard: {

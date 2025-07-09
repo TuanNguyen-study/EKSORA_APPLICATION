@@ -88,7 +88,7 @@ export default function Body() {
           </View>
           <Image source={{ uri: item.image[0] }} style={styles.cardImage} />
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+            <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>
             <Text style={styles.cardLocation}>{item.location || item.province}</Text>
             <Text style={styles.cardPrice}>Từ {item.price.toLocaleString()}đ</Text>
           </View>
