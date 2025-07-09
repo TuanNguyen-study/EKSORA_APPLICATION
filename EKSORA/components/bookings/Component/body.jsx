@@ -12,10 +12,9 @@ export default function Body() {
     const fetchTrips = async () => {
       try {
         const userId = await AsyncStorage.getItem('USER_ID');
-        console.log('🧑 userId từ AsyncStorage:', userId);
+        console.log('userId từ AsyncStorage:', userId);
         if (userId) {
           const data = await getTrips(userId);
-          console.log('📦 Dữ liệu trips từ API:', data);
           setTrips(data);
         } else {
           console.warn('Không tìm thấy userId');
@@ -56,7 +55,7 @@ export default function Body() {
                 tourName: item?.tour_id?.name,
                 nguoiLon: item?.quantity_nguoiLon?.toString() || '1',
                 treEm: item?.quantity_treEm?.toString() || '0',
-                tourImage: item?.tour_id?.image?.[0],
+                tourImages: JSON.stringify(item?.tour_id?.image || []),
                 totalPrice: item?.totalPrice?.toString() || '0'
               }
             })}>

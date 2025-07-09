@@ -16,63 +16,26 @@ import { COLORS } from "../../../constants/colors";
 const { width } = Dimensions.get('window');
 
 export default function NotificationScreen() {
-  const [selectedTab, setSelectedTab] = useState('chat');
 
-  return (
-    <View style={styles.container}>
+    return (
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/home')}>
+                    <Ionicons name="arrow-back" size={24} color="black" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Thông báo</Text>
+                <TouchableOpacity onPress={() => router.push('/MyOrder/HelpScreen')}>
+                <Ionicons name="help-circle-outline" size={24} color="black" />
+                </TouchableOpacity>
+            </View>
 
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/home')}>
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thông báo</Text>
-        <TouchableOpacity onPress={() => router.push('/MyOrder/HelpScreen')}>
-          <Ionicons name="help-circle-outline" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
-
- 
-      <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'chat' && styles.activeTab]}
-          onPress={() => setSelectedTab('chat')}
-        >
-          <Text style={[styles.tabText, selectedTab === 'chat' && styles.activeTabText]}>
-            Trò chuyện
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'update' && styles.activeTab]}
-          onPress={() => setSelectedTab('update')}
-        >
-          <Text style={[styles.tabText, selectedTab === 'update' && styles.activeTabText]}>
-            Cập nhật
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-   
-        {selectedTab === 'update' && (
-          <View style={styles.filterContainer}>
-            {['Cập nhật đơn hàng', 'Ưu đãi', 'Lời nhắc'].map((label, index) => (
-              <TouchableOpacity key={index} style={styles.filterButton}>
-                <Text style={styles.filterText}>{label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-      
-        <View style={styles.noNotification}>
-          <Image
-            source={require('../../../assets/images/notification.png')}
-            style={styles.image}
-          />
-          <Text style={styles.noText}>Không có thông báo</Text>
-        </View>
-      </ScrollView>
+            <View style={styles.noNotification}>
+                <Image
+                    source={require('../../../assets/images/notification.png')}
+                    style={styles.image}
+                />
+                <Text style={styles.noText}>Không có thông báo</Text>
+            </View>
     </View>
   );
 }

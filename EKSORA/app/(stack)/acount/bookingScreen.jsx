@@ -33,8 +33,8 @@ export default function BookingScreen() {
   const [selectedDate, setSelectedDate] = useState(null); // ✅ Ban đầu chưa chọn
   const [quantityAdult, setQuantityAdult] = useState(0); // ✅ Default = 1
   const [quantityChild, setQuantityChild] = useState(0);
-  const DEFAULT_ADULT_PRICE = 300000;
-  const DEFAULT_CHILD_PRICE = 150000;
+  const DEFAULT_ADULT_PRICE = 3000;//300000
+  const DEFAULT_CHILD_PRICE = 1500;//150000
 
   const incrementAdult = () => setQuantityAdult((q) => q + 1);
   const decrementAdult = () => setQuantityAdult((q) => (q > 0 ? q - 1 : q));

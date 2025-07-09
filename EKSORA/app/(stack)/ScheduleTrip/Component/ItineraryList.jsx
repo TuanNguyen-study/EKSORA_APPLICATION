@@ -2,7 +2,8 @@ import { router } from 'expo-router';
 import React from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
 
-export default function ItineraryList({ data }) {
+export default function ItineraryList({ data, tourImages }) {
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -18,24 +19,31 @@ export default function ItineraryList({ data }) {
         keyExtractor={(item, index) => index.toString()}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
+        renderItem={({ item}) => (
           <View style={styles.card}>
-             <TouchableOpacity onPress={() => router.push('/(stack)/ScheduleDetail')}>
-            <Image source={{ uri: item.image }} style={styles.cardImage} />
-            <View style={styles.dayLabel}>
-              <Text style={styles.dayLabelText}>{item.day}</Text>
-            </View>
-            <View style={styles.cardInfo}>
-              <Text style={styles.cardDate}>{item.date}</Text>
-              <Text style={styles.cardDetail}>
-                {item.places} địa điểm, {item.distance} km
-              </Text>
-            </View>
+            <TouchableOpacity onPress={() => router.push({
+              pathname: '/(stack)/ScheduleDetail',
+              params: {
+               tourImages: JSON.stringify(tourImages),
+                day: item.day,
+              },
+            })} >
+              <Image source={{ uri: item.image }} style={styles.cardImage} />
+              <View style={styles.dayLabel}>
+                <Text style={styles.dayLabelText}>{item.day}</Text>
+              </View>
+              <View style={styles.cardInfo}>
+                <Text style={styles.cardDate}>{item.date}</Text>
+                <Text style={styles.cardDetail}>
+                  {item.places} địa điểm, {item.distance} km
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
-        )}
+        )
+        }
       />
-    </View>
+    </View >
   );
 }
 

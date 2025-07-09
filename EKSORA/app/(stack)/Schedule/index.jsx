@@ -17,9 +17,8 @@ import { COLORS } from "../../../constants/colors";
 const { width } = Dimensions.get('window');
 
 export default function Index() {
-  const { tourName, nguoiLon, treEm, totalPrice, tourImage } = useLocalSearchParams();
+  const { tourName, nguoiLon, treEm, totalPrice, tourImages } = useLocalSearchParams();
 
-  // State giữ nguyên ngày mặc định
   const [isPublic, setIsPublic] = useState(true);
   const [startDate, setStartDate] = useState(new Date(2025, 6, 8));
   const [endDate, setEndDate] = useState(new Date(2025, 6, 10));
@@ -31,7 +30,7 @@ export default function Index() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
 
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/trips')}>
         <Ionicons name="arrow-back" size={24} color="#333" />
         <Text style={styles.title}>Lên lịch trình</Text>
       </TouchableOpacity>
@@ -97,7 +96,7 @@ export default function Index() {
           nguoiLon,
           treEm,
           totalPrice,
-          tourImage,
+          tourImages,
         }
       })}>
         <Text style={styles.buttonText}>Lên lịch trình</Text>

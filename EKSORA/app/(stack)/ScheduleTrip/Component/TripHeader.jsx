@@ -1,28 +1,29 @@
-// Component/TripHeader.jsx
 
-import React, { useState} from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import { useRouter,  useLocalSearchParams  } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function TripHeader() {
   const router = useRouter();
   const [isFavorite, setIsFavorite] = useState(false);
   const toggleFavorite = () => setIsFavorite(!isFavorite);
-  const { tourName, nguoiLon, treEm, tourImage } = useLocalSearchParams();
-  
+  const { tourName, nguoiLon, treEm, tourImages } = useLocalSearchParams();
+  const images = JSON.parse(tourImages || '[]');
 
   return (
     <View style={styles.container}>
       <Image
-        source={{
-          uri: tourImage,
-        }}
+        source={
+          images.length > 0
+            ? { uri: images[0] }
+            : require('../../../../assets/images/success.jpg')
+        }
         style={styles.headerImage}
       />
 
       <View style={styles.topIcons}>
-        <TouchableOpacity onPress={() => router.push('/(stack)/Schedule')}>
+        <TouchableOpacity onPress={() => router.replace('/(stack)/Schedule')}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
 
