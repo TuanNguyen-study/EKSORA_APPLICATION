@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import {
   Platform,
   StyleSheet,
@@ -35,18 +34,13 @@ const StickyBookingFooter = ({
     const value = typeof price === "number" ? price : parseFloat(price);
     if (isNaN(value)) return "0 đ";
 
-    let finalPrice = value;
-    if (selectedVoucher?.voucher_id?.discount) {
-      const discount = selectedVoucher.voucher_id.discount;
-      finalPrice = value - (value * discount) / 100;
-    }
-
-    return finalPrice.toLocaleString("vi-VN", {
+    return value.toLocaleString("vi-VN", {
       style: "currency",
       currency: "VND",
       minimumFractionDigits: 0,
     });
   };
+
 
   return (
     <View
@@ -57,16 +51,24 @@ const StickyBookingFooter = ({
             insets.bottom > 0
               ? insets.bottom
               : Platform.OS === "ios"
-              ? 20
-              : 16,
+                ? 20
+                : 16,
         },
       ]}
     >
       <View style={styles.innerContainer}>
         <View style={styles.topRow}>
-          <Text style={styles.priceText}>
-            {formatPrice(priceInfo?.current)}
-          </Text>
+          <View style={styles.priceContainer}>
+            {selectedVoucher && (
+              <Text style={styles.originalPrice}>
+                {formatPrice(priceInfo?.original || priceInfo?.current)}
+              </Text>
+            )}
+            <Text style={styles.finalPrice}>
+              {formatPrice(priceInfo?.current)}
+            </Text>
+          </View>
+
           <TouchableOpacity
             style={styles.voucherButton}
             onPress={() => { /* Không cần mở modal nữa, vì đã xử lý trong ProductBasicInfo */ }}
@@ -77,21 +79,7 @@ const StickyBookingFooter = ({
                 : "Chọn Voucher"}
             </Text>
           </TouchableOpacity>
-          {eksoraPoints && (
-            <TouchableOpacity
-              style={styles.eksoraPointsChip}
-              onPress={onEksoraPointsPress}
-            >
-              <Text style={styles.eksoraPointsText}>
-                EKSORA Xu +{eksoraPoints}
-              </Text>
-              <Ionicons
-                name="chevron-forward-outline"
-                size={12}
-                color={COLORS.white}
-              />
-            </TouchableOpacity>
-          )}
+
         </View>
 
         <View style={styles.buttonRow}>
@@ -148,20 +136,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: COLORS.text,
   },
-  eksoraPointsChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#A5D6A7",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  eksoraPointsText: {
-    color: COLORS.white,
-    fontSize: 11,
-    fontWeight: "500",
-    marginRight: 2,
-  },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -191,6 +165,24 @@ const styles = StyleSheet.create({
   bookNowButtonText: {
     color: COLORS.white,
   },
+  priceContainer: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    flexShrink: 1,
+  },
+  originalPrice: {
+    fontSize: 14,
+    color: "#999",
+    textDecorationLine: "line-through",
+    marginBottom: 2,
+  },
+  finalPrice: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: COLORS.text,
+  },
+
 });
 
 export default StickyBookingFooter;
