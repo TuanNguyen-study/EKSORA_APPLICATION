@@ -4,20 +4,19 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   ActivityIndicator,
   Modal,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useNavigation } from "expo-router";
-import { getUser, updateUser } from "../../../API/services/servicesUser";
+import { getUser } from "../../../API/services/servicesUser";
 import { COLORS } from "../../../constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SettingScreen() {
   const router = useRouter();
   const navigation = useNavigation();
-  const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -26,8 +25,7 @@ export default function SettingScreen() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const data = await getUser();
-        setUserInfo(data);
+        await getUser();
       } catch {
         setError("Không thể tải thông tin người dùng");
       } finally {
@@ -39,12 +37,12 @@ export default function SettingScreen() {
 
   // Settings data
   const settingsData = [
-    { id: "1", name: "Cài đặt tài khoản", route: "/settings/account" },
-    { id: "2", name: "Về Eksora", route: "/settings/about" },
+    { id: "1", name: "Cài đặt tài khoản", route: "/(stack)/UpdateUser" },
+    { id: "2", name: "Về Eksora", route: "/MyOrder/HelpScreen" },
     { id: "3", name: "Đăng xuất", route: "/logout" },
   ];
 
-  // Memoized handlers
+  // Handlers
   const handlePress = useCallback(
     (item) => {
       if (item.route === "/logout") setModalVisible(true);
@@ -66,39 +64,46 @@ export default function SettingScreen() {
 
   const handleCancel = useCallback(() => setModalVisible(false), []);
 
-  const handleUpdateUser = useCallback(async (updatedInfo) => {
-    try {
-      await updateUser(updatedInfo);
-      setUserInfo(updatedInfo);
-    } catch {
-      setError("Không thể cập nhật thông tin người dùng");
-    }
-  }, []);
-
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
-  // Render content based on state
-  const renderContent = () => {
-    if (loading)
-      return <ActivityIndicator size="large" color={COLORS.primary} />;
-    // if (error) return <Text style={styles.error}>{error}</Text>;
-    return (
-      <FlatList
-        data={settingsData}
-        renderItem={({ item }) => (
+  const renderSection = (title, items) => (
+    <View style={styles.sectionContainer}>
+      <Text style={styles.sectionHeader}>{title}</Text>
+      <View style={styles.cardContainer}>
+        {items.map((item, index) => (
           <TouchableOpacity
-            style={styles.item}
+            key={item.id}
+            style={[
+              styles.item,
+              index !== items.length - 1 && styles.itemWithBorder,
+            ]}
             onPress={() => handlePress(item)}
           >
-            <View style={styles.itemContent}>
-              <Text style={styles.itemText}>{item.name}</Text>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.gray} />
-            </View>
+            <Text style={styles.itemText}>{item.name}</Text>
+            <Ionicons name="chevron-forward" size={20} color={COLORS.gray} />
           </TouchableOpacity>
-        )}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-      />
+        ))}
+      </View>
+    </View>
+  );
+
+  const renderContent = () => {
+    if (loading) {
+      return <ActivityIndicator size="large" color={COLORS.primary} />;
+    }
+
+    return (
+      <View>
+        {renderSection("Cài đặt", [settingsData[0]])}
+        {renderSection("Khác", [settingsData[1]])}
+
+        <TouchableOpacity
+          style={styles.logoutContainer}
+          onPress={() => handlePress(settingsData[2])}
+        >
+          <Text style={styles.logoutText}>{settingsData[2].name}</Text>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -109,9 +114,13 @@ export default function SettingScreen() {
           <Ionicons name="chevron-back" size={24} color={COLORS.black} />
         </TouchableOpacity>
         <Text style={styles.title}>Cài đặt</Text>
-        <View style={{ width: 24 }} /> 
+        <View style={{ width: 24 }} />
       </View>
-      {renderContent()}
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {renderContent()}
+      </ScrollView>
+
       <Modal
         transparent
         visible={modalVisible}
@@ -142,8 +151,17 @@ export default function SettingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: COLORS.white },
-  header: { flexDirection: "row", alignItems: "center",justifyContent:"space-between", marginBottom: 16 },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: COLORS.background || "#F5F5F5",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
   backButton: { padding: 4 },
   title: {
     fontSize: 24,
@@ -151,18 +169,68 @@ const styles = StyleSheet.create({
     color: COLORS.black,
     marginLeft: 8,
   },
-  list: { paddingBottom: 16 },
-  item: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  scrollContent: {
+    paddingBottom: 16,
   },
-  itemContent: { flexDirection: "row", alignItems: "center" },
-  itemText: { fontSize: 16, color: COLORS.black },
-  error: { textAlign: "center", color: COLORS.red, marginTop: 20 },
+  sectionContainer: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    color: COLORS.gray,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  cardContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: 15,
+    marginHorizontal: 0,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  item: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: COLORS.white,
+  },
+  itemWithBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORS.border || "#E0E0E0",
+  },
+  itemText: {
+    fontSize: 16,
+    color: COLORS.black,
+  },
+  logoutContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: 15,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    marginTop: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  logoutText: {
+    fontSize: 16,
+    color: COLORS.red || "#FF3B30",
+    fontWeight: "500",
+  },
+  error: {
+    textAlign: "center",
+    color: COLORS.red,
+    marginTop: 20,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -194,7 +262,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 5,
   },
-  confirmButton: { backgroundColor: COLORS.primary },
-  buttonText: { fontSize: 16, color: COLORS.gray },
-  confirmButtonText: { color: COLORS.white },
+  confirmButton: {
+    backgroundColor: COLORS.primary,
+  },
+  buttonText: {
+    fontSize: 16,
+    color: COLORS.gray,
+  },
+  confirmButtonText: {
+    color: COLORS.white,
+  },
 });

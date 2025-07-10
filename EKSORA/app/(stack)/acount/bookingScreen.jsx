@@ -39,8 +39,8 @@ export default function BookingScreen() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [quantityAdult, setQuantityAdult] = useState(0);
   const [quantityChild, setQuantityChild] = useState(0);
-  const DEFAULT_ADULT_PRICE = 300000;
-  const DEFAULT_CHILD_PRICE = 150000;
+  const DEFAULT_ADULT_PRICE = 3000;//300000
+  const DEFAULT_CHILD_PRICE = 1500;//150000
 
   const incrementAdult = () => setQuantityAdult((q) => q + 1);
   const decrementAdult = () => setQuantityAdult((q) => (q > 0 ? q - 1 : q));
@@ -95,23 +95,32 @@ export default function BookingScreen() {
     console.log("📤 bookingData sắp gửi:", JSON.stringify(bookingData, null, 2));
 
     try {
-      await createBooking(bookingData);
-      Alert.alert("Thông báo", "Chuyển đến phần hoàn tất đơn hàng!");
+      const res = await createBooking(bookingData);
+      console.log("📦 Booking response:", res); // để chắc chắn trả về cái gì
+
+      const bookingId = res?.booking_id || res?.booking?._id;
+
+      if (!bookingId) {
+        console.warn("⚠️ Không tìm thấy bookingId trong response:", res);
+        Alert.alert("Lỗi", "Không thể lấy mã đơn hàng. Vui lòng thử lại.");
+        return;
+      }
+
+      // 👉 Gửi sang trang BookingCompleted
       router.push({
         pathname: "/acount/BookingCompleted",
         params: {
+          bookingId, // ✅ đảm bảo là chuỗi
           title: tour_title,
           quantityAdult: quantityAdult.toString(),
           quantityChild: quantityChild.toString(),
           totalPrice: finalPrice.toString(),
           travelDate: selectedDate,
           image: image || '',
-          voucher_id: voucher_id || '',
-          discount: discount.toString(),
         },
       });
     } catch (error) {
-      console.error("Lỗi khi tạo booking:", error);
+      console.error("❌ Lỗi khi tạo booking:", error.message || error);
       Alert.alert("Lỗi", "Đặt tour thất bại. Vui lòng thử lại.");
     }
   };
@@ -137,6 +146,7 @@ export default function BookingScreen() {
           </View>
         ) : null}
         <View style={styles.comboTitleContainer}>
+
           <Text style={styles.comboTitle} numberOfLines={2}>
             {tour_title}
           </Text>

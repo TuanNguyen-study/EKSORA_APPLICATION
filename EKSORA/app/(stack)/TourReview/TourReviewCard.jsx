@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-    View,
-    Text,
+    Alert,
     Image,
+    StyleSheet,
+    Text,
     TextInput,
     TouchableOpacity,
-    StyleSheet,
-    Alert,
+    View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
