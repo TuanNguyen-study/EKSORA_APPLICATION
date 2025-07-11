@@ -10,6 +10,7 @@ import {
   View,
   Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router'; // Import useRouter
 import { FavoriteContext } from '../../../../store/FavoriteContext';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -32,6 +33,7 @@ const ProductImageCarousel = ({
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isManuallyScrolling, setIsManuallyScrolling] = useState(false);
   const isFavorite = likedTours.includes(tourId);
+  const router = useRouter(); // Sử dụng useRouter
 
   // Xử lý yêu thích
   const handleFavoritePress = async () => {
@@ -50,7 +52,6 @@ const ProductImageCarousel = ({
       Alert.alert('Lỗi', 'Không thể đồng bộ yêu thích. Vui lòng thử lại.');
     }
   };
-
 
   // Auto scroll carousel
   useEffect(() => {
@@ -114,6 +115,10 @@ const ProductImageCarousel = ({
     );
   }
 
+  const handleCartPress = () => {
+    router.push('/(stack)/ShoppingCartScreen'); 
+  };
+
   return (
     <View style={styles.carouselContainer}>
       <FlatList
@@ -156,7 +161,7 @@ const ProductImageCarousel = ({
             <Ionicons name="share-social-outline" size={24} color={COLORS.white} />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={onCartPress} style={styles.iconButtonBase}>
+          <TouchableOpacity onPress={handleCartPress} style={styles.iconButtonBase}>
             <Ionicons name="cart-outline" size={26} color={COLORS.white} />
           </TouchableOpacity>
         </View>
@@ -217,7 +222,7 @@ const styles = StyleSheet.create({
     height: 3,
     borderRadius: 1,
     marginHorizontal: 4,
-    marginBottom:5,
+    marginBottom: 5,
   },
   paginationDotActive: {
     backgroundColor: COLORS.primary,

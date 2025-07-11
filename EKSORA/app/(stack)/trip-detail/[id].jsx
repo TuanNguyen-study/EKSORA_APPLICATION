@@ -317,10 +317,20 @@ export default function TripDetailScreen() {
             totalReviewsCount={productData.rating.count}
             onViewAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
           />
-
-          <DescriptionSection
-            title="Thông tin chi tiết"
-            descriptionData={productData.descriptionContent}
+          <TripHighlightsSection
+            title="Địa điểm nổi bật trong tour"
+            highlights={
+              Array.isArray(productData.highlights)
+                ? productData.highlights
+                  .filter(h => h && h._id)
+                  .map(h => ({
+                    _id: h._id,
+                    image: h.image_url || '',
+                    title: h.location_name || 'Không có tên',
+                    description: h.description || '',
+                  }))
+                : []
+            }
           />
 
           <NoteContactSection
@@ -337,6 +347,9 @@ export default function TripDetailScreen() {
           ...productData.price,
           current: currentTotalPrice,
         }}
+        tourName={productData.name}
+        tourInfo={productData} 
+        currentSelectedPackages={currentSelectedPackages} 
         onBookNow={onBookNow}
       />
     </View>

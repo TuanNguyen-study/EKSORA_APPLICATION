@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../../../../constants/colors";
+import BookingModalContent from "./Modal";
+import { useCart } from "../../../../store/CartContext";
 
 const StickyBookingFooter = ({
   priceInfo,
@@ -18,8 +20,14 @@ const StickyBookingFooter = ({
   onBookNow,
   onEksoraPointsPress,
   tourName,
+
   selectedVoucher, // Nhận từ props
+
+  tourInfo,
+  currentSelectedPackages,
+
 }) => {
+  const { addToCart } = useCart();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -30,7 +38,26 @@ const StickyBookingFooter = ({
       router.push("/account/bookingScreen");
     }
   };
-
+  const handleAddToCart = () => {
+    const tourItem = {
+      id: tourInfo._id || 'default_id',
+      name: tourName || 'Tên tour không xác định',
+      price: (priceInfo.current || 0) * 1000,
+      image: tourInfo.image?.[0] || 'https://via.placeholder.com/80',
+      description: tourInfo.description || 'Không có mô tả',
+      duration: tourInfo.duration,
+      location: tourInfo.location,
+      rating: tourInfo.rating,
+      services: tourInfo.services || [],
+      selectedOptions: currentSelectedPackages || {},
+    };
+    //console.log('Thêm vào giỏ hàng:', tourItem); 
+    addToCart(tourItem);
+    router.push('/ShoppingCartScreen');
+    if (onAddToCart) {
+      onAddToCart();
+    }
+  };
   const formatPrice = (price) => {
     const value = typeof price === "number" ? price : parseFloat(price);
     if (isNaN(value)) return "0 đ";
@@ -57,8 +84,8 @@ const StickyBookingFooter = ({
             insets.bottom > 0
               ? insets.bottom
               : Platform.OS === "ios"
-              ? 20
-              : 16,
+                ? 20
+                : 16,
         },
       ]}
     >
@@ -79,8 +106,9 @@ const StickyBookingFooter = ({
           </TouchableOpacity>
           {eksoraPoints && (
             <TouchableOpacity
-              style={styles.eksoraPointsChip}
-              onPress={onEksoraPointsPress}
+
+              style={[styles.buttonBase, styles.addToCartButton]}
+              onPress={handleAddToCart}
             >
               <Text style={styles.eksoraPointsText}>
                 EKSORA Xu +{eksoraPoints}
@@ -94,15 +122,27 @@ const StickyBookingFooter = ({
           )}
         </View>
 
+
         <View style={styles.buttonRow}>
           <TouchableOpacity
             style={[styles.buttonBase, styles.addToCartButton]}
-            onPress={onAddToCart}
+            onPress={handleAddToCart}
           >
             <Text style={[styles.buttonTextBase, styles.addToCartButtonText]}>
               Thêm vào giỏ hàng
             </Text>
           </TouchableOpacity>
+
+
+          {/* <TouchableOpacity
+            style={[styles.buttonBase, styles.bookNowButton]}
+            onPress={handleBookNow}
+          >
+            <Text style={[styles.buttonTextBase, styles.bookNowButtonText]}>
+              Đặt ngay
+            </Text>
+          </TouchableOpacity> */}
+
 
           <TouchableOpacity
             style={[styles.buttonBase, styles.bookNowButton]}
@@ -113,6 +153,7 @@ const StickyBookingFooter = ({
             </Text>
           </TouchableOpacity>
         </View>
+
       </View>
     </View>
   );
