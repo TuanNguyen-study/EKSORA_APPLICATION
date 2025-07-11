@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  FlatList, 
+  FlatList,
   RefreshControl,
   StyleSheet,
   Text,
@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { fetchTourDetail } from '../../../API/services/tourService';
+import { useReviewContext } from '../../../store/ReviewContext';
 import { COLORS } from '../../../constants/colors';
 import CustomerReviewSection from './components/CustomerReviewSection';
 import NoteContactSection from './components/NoteContactSection';
@@ -22,7 +23,7 @@ import StickyBookingFooter from './components/StickyBookingFooter';
 import DescriptionSection from './components/DescriptionSection';
 import TripHighlightsSection from './components/TripHighlightsSection';
 
-// CÁC HÀM HELPER 
+// CÁC HÀM HELPER
 const prepareProductInfo = (tour, services, highlights, reviews) => {
   return {
     name: tour.name,
@@ -50,28 +51,44 @@ const prepareProductInfo = (tour, services, highlights, reviews) => {
 };
 
 const parseDescription = (htmlString) => {
+  if (!htmlString) return [];
+
   const result = [];
+  let idCounter = 0;
   const seenDescriptions = new Set();
+
+  // Đoạn giới thiệu
   const introMatch = htmlString.match(/<p>(.*?)<\/p>/);
   if (introMatch) {
-    result.push({ type: 'text', content: introMatch[1] });
+    result.push({ id: `desc-${idCounter++}`, type: 'text', content: introMatch[1].replace(/<[^>]*>?/gm, '') });
   }
+
+  // Các đoạn hình ảnh và mô tả
   const figureMatches = htmlString.matchAll(/<figure class="image"><img[^>]+src="([^"]+)"[^>]*><\/figure><blockquote><p>(.*?)<\/p><\/blockquote>/g);
   for (const match of figureMatches) {
     const image = match[1];
-    const content = match[2];
+    const content = match[2].replace(/<[^>]*>?/gm, '');
     if (!seenDescriptions.has(content)) {
       seenDescriptions.add(content);
-      result.push({ type: 'image-text', image, content });
+      result.push({ id: `desc-${idCounter++}`, type: 'image-text', image, content });
     }
   }
+
+  // Đoạn lưu ý
   const noteMatch = htmlString.match(/<h3><strong>Xin lưu ý:.*?(<ul>.*?<\/ul>)/s);
   if (noteMatch) {
     result.push({
+      id: `desc-${idCounter++}`,
       type: 'text',
       content: `Xin lưu ý: Sẽ áp dụng phụ phí nếu ngày tham gia của bạn trùng với ngày lễ, thanh toán tại chỗ (Vui lòng kiểm tra chi tiết gói để tham khảo).${noteMatch[1]}`,
     });
   }
+
+  // Nếu không có kết quả nào được phân tích, trả về một đoạn text mặc định
+  if (result.length === 0) {
+    result.push({ id: `desc-${idCounter++}`, type: 'text', content: htmlString.replace(/<[^>]*>?/gm, '') });
+  }
+
   return result;
 };
 
@@ -95,8 +112,10 @@ const formatPrice = (price, selectedVoucher) => {
 export default function TripDetailScreen() {
   const router = useRouter();
   const { id: productId } = useLocalSearchParams();
+  const { setReviewData } = useReviewContext();
+  const mappedReviewsRef = useRef([]);
 
-  // STATE VÀ LOGIC 
+  // STATE VÀ LOGIC
   const [productData, setProductData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -152,6 +171,8 @@ export default function TripDetailScreen() {
           date: new Date(r.created_at).toLocaleDateString('vi-VN'),
         };
       });
+      mappedReviewsRef.current = mappedReviews;
+      // Giờ đây descriptionContent sẽ có các phần tử với id duy nhất
       const descriptionContent = parseDescription(tour.description || '');
       const productInfo = prepareProductInfo(tour, services, highlights, reviews);
       const mappedProductData = {
@@ -214,7 +235,7 @@ export default function TripDetailScreen() {
     router.push(`/acount/bookingScreen?${query}`);
   };
 
-  // MÀN HÌNH LOADING VÀ LỖI --
+  // MÀN HÌNH LOADING VÀ LỖI
   if (loading && !productData) {
     return (
       <View style={styles.centered}>
@@ -237,19 +258,18 @@ export default function TripDetailScreen() {
     );
   }
 
-  //  PHẦN HIỂN THỊ CHÍNH 
+  // PHẦN HIỂN THỊ CHÍNH
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <FlatList
-        data={[{ key: 'main-content' }]} 
+        data={[{ key: 'main-content' }]}
         keyExtractor={(item) => item.key}
         showsVerticalScrollIndicator={false}
 
-        // Component này nằm ở header, sẽ chiếm toàn bộ chiều rộng và không có padding
         ListHeaderComponent={
-          <View style={{paddingTop:16}}>
+          <View style={{ paddingTop: 16 }}>
             <ProductImageCarousel
               images={productData.images}
               tourId={productData._id}
@@ -262,7 +282,6 @@ export default function TripDetailScreen() {
           </View>
         }
 
-        // Toàn bộ nội dung còn lại được render trong 1 item duy nhất
         renderItem={() => (
           <View style={styles.mainContentContainer}>
             <ProductBasicInfo
@@ -298,7 +317,15 @@ export default function TripDetailScreen() {
               reviews={productData.reviews}
               averageRating={productData.rating.stars}
               totalReviewsCount={productData.rating.count}
-              onViewAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
+              onSeeAllReviews={() => {
+                setReviewData({
+                  reviews: mappedReviewsRef.current,
+                  rating: productData.rating.stars,
+                  count: mappedReviewsRef.current.length,
+                });
+                router.push('/(stack)/ShowReview');
+              }}
+
             />
 
             <DescriptionSection
@@ -313,10 +340,8 @@ export default function TripDetailScreen() {
           </View>
         )}
 
-        // Khoảng trống ở cuối để nội dung không bị footer che
         ListFooterComponent={<View style={{ height: 100 }} />}
 
-        // Tính năng kéo để làm mới
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -327,7 +352,6 @@ export default function TripDetailScreen() {
         }
       />
 
-      {/* Footer đặt ở ngoài để cố định ở cuối màn hình */}
       <StickyBookingFooter
         priceInfo={{
           ...productData.price,
@@ -377,9 +401,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  // Style cho View bọc nội dung có padding
   mainContentContainer: {
-    paddingHorizontal: 16, 
+    paddingHorizontal: 16,
     backgroundColor: COLORS.white,
     marginTop: -18,
     borderTopLeftRadius: 20,

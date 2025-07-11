@@ -1,12 +1,15 @@
 import React from 'react';
 import { FavoriteProvider } from './FavoriteContext';
 import { VoucherProvider } from './VoucherContext';
+import { ReviewProvider } from './ReviewContext';
 
 export const AppProviders = ({ children }) => {
   return (
     <FavoriteProvider>
       <VoucherProvider >
-        {children}
+        <ReviewProvider>
+          {children}
+        </ReviewProvider>
       </VoucherProvider >
     </FavoriteProvider>
   );

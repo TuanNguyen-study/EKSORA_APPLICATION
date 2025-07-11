@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Modal,
-  Pressable,
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Keyboard,
+  Platform,
   View,
   Text,
   FlatList,
@@ -25,7 +28,7 @@ const CouponModal = ({ visible, onClose }) => {
     return `${day}/${month} ${hours}:${minutes < 10 ? '0' : ''}${minutes}`;
   };
 
-  const renderCoupon = ({ item }) => {
+  const renderCoupon = useCallback(({ item }) => {
     const isSaving = savingVoucherId === item.id;
 
     return (
@@ -45,7 +48,7 @@ const CouponModal = ({ visible, onClose }) => {
         loading={isSaving}
       />
     );
-  };
+  }, [savingVoucherId, saveVoucher]);
 
   const getItemLayout = (_, index) => ({
     length: 135,
@@ -55,49 +58,56 @@ const CouponModal = ({ visible, onClose }) => {
 
   return (
     <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.modalContainer} onPress={e => e.stopPropagation()}>
-          <View style={styles.header}>
-            <Pressable onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </Pressable>
-            <Text style={styles.headerTitle}>Quà tặng bạn mới</Text>
-            <Text style={styles.headerSubtitle}>Giảm đến 10%</Text>
-          </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.header}>
+              <Text onPress={onClose} style={styles.closeButtonText}>✕</Text>
+              <Text style={styles.headerTitle}>Quà tặng bạn mới</Text>
+              <Text style={styles.headerSubtitle}>Giảm đến 10%</Text>
+            </View>
 
-          {loading ? (
-            <ActivityIndicator size="large" color={COLORS.primaryBlue} style={{ marginVertical: 20 }} />
-          ) : (
-            <FlatList
-              data={coupons}
-              renderItem={renderCoupon}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.content}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={
-                <Text style={{ textAlign: 'center', marginTop: 20 }}>
-                  Hiện chưa có mã ưu đãi.
-                </Text>
-              }
-              initialNumToRender={5}
-              maxToRenderPerBatch={10}
-              windowSize={5}
-              getItemLayout={getItemLayout}
-              removeClippedSubviews
-            />
-          )}
+            {loading ? (
+              <ActivityIndicator
+                size="large"
+                color={COLORS.primaryBlue}
+                style={{ marginVertical: 20 }}
+              />
+            ) : (
+              <FlatList
+                data={coupons}
+                renderItem={renderCoupon}
+                keyExtractor={item => item.id}
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                  <Text style={{ textAlign: 'center', marginTop: 20 }}>
+                    Hiện chưa có mã ưu đãi.
+                  </Text>
+                }
+                initialNumToRender={3}
+                maxToRenderPerBatch={5}
+                windowSize={3}
+                getItemLayout={getItemLayout}
+                removeClippedSubviews={false}
+              />
+            )}
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Xem ưu đãi trong Tài khoản của bạn</Text>
-            <View style={styles.termsContainer}>
-              <Text style={styles.footerText}>Điều khoản & Điều kiện</Text>
-              <View style={styles.infoIcon}>
-                <Text style={styles.infoIconText}>i</Text>
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Xem ưu đãi trong Tài khoản của bạn</Text>
+              <View style={styles.termsContainer}>
+                <Text style={styles.footerText}>Điều khoản & Điều kiện</Text>
+                <View style={styles.infoIcon}>
+                  <Text style={styles.infoIconText}>i</Text>
+                </View>
               </View>
             </View>
           </View>
-        </Pressable>
-      </Pressable>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -119,14 +129,12 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     alignItems: 'center',
   },
-  closeButton: {
-    position: 'absolute',
-    top: 15,
-    left: 20,
-  },
   closeButtonText: {
     fontSize: 24,
     color: COLORS.black,
+    position: 'absolute',
+    left: 20,
+    top: 15,
   },
   headerTitle: {
     fontSize: 22,
