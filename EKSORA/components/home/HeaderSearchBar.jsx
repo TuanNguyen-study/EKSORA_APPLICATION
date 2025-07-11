@@ -25,7 +25,7 @@ const HeaderSearchBar = () => {
         onPress={() => router.push('/(stack)/ShoppingCartScreen')}>
         <Ionicons name="cart-outline" size={26} color={COLORS.white} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.iconButton}>
+      <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/(stack)/notification')}>
         <Ionicons name="notifications-outline" size={26} color={COLORS.white} />
       </TouchableOpacity>
     </View>

@@ -16,7 +16,7 @@ import { COLORS } from "../../../constants/colors";
 
 export default function BookingCompleted() {
   const router = useRouter();
-  const { title, quantityAdult, quantityChild, totalPrice, travelDate ,image } = useLocalSearchParams();
+  const { bookingId,title, quantityAdult, quantityChild, totalPrice, travelDate ,image } = useLocalSearchParams();
   const user = useSelector((state) => state.auth.user); // lấy user đăng nhập từ redux
   const [useSavedUser, setUseSavedUser] = useState(true);
   const [newUser, setNewUser] = useState(null);
@@ -193,9 +193,12 @@ export default function BookingCompleted() {
         <TouchableOpacity
           style={styles.payButton}
           onPress={() => {
+            
             router.push({
+              
               pathname: "/acount/paymentPage",
               params: {
+                bookingId,
                 title,
                 quantityAdult,
                 quantityChild,
