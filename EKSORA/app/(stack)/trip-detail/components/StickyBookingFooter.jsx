@@ -9,6 +9,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../../../../constants/colors";
+import BookingModalContent from "./Modal";
+import { useCart } from "../../../../store/CartContext";
+import { Alert } from 'react-native';
+
 
 const StickyBookingFooter = ({
   priceInfo,
@@ -17,8 +21,14 @@ const StickyBookingFooter = ({
   onBookNow,
   onEksoraPointsPress,
   tourName,
+
   selectedVoucher, // Nhận từ props
+
+  tourInfo,
+  currentSelectedPackages,
+
 }) => {
+  const { addToCart } = useCart();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -29,6 +39,34 @@ const StickyBookingFooter = ({
       router.push("/account/bookingScreen");
     }
   };
+
+const handleAddToCart = () => {
+  if (!tourInfo) {
+    Alert.alert("Lỗi", "Không có thông tin tour để thêm vào giỏ hàng.");
+    return;
+  }
+
+  const tourItem = {
+    id: tourInfo._id || 'default_id',
+    name: tourName || 'Tên tour không xác định',
+    price: (priceInfo.current || 0) * 1000,
+    image: tourInfo.image?.[0] || 'https://via.placeholder.com/80',
+    description: tourInfo.description || 'Không có mô tả',
+    duration: tourInfo.duration,
+    location: tourInfo.location,
+    rating: tourInfo.rating,
+    services: tourInfo.services || [],
+    selectedOptions: currentSelectedPackages || {},
+  };
+
+  addToCart(tourItem);
+  router.push('/ShoppingCartScreen');
+
+  if (onAddToCart) {
+    onAddToCart();
+  }
+};
+
 
   const formatPrice = (price) => {
     const value = typeof price === "number" ? price : parseFloat(price);
@@ -82,15 +120,27 @@ const StickyBookingFooter = ({
 
         </View>
 
+
         <View style={styles.buttonRow}>
           <TouchableOpacity
             style={[styles.buttonBase, styles.addToCartButton]}
-            onPress={onAddToCart}
+            onPress={handleAddToCart}
           >
             <Text style={[styles.buttonTextBase, styles.addToCartButtonText]}>
               Thêm vào giỏ hàng
             </Text>
           </TouchableOpacity>
+
+
+          {/* <TouchableOpacity
+            style={[styles.buttonBase, styles.bookNowButton]}
+            onPress={handleBookNow}
+          >
+            <Text style={[styles.buttonTextBase, styles.bookNowButtonText]}>
+              Đặt ngay
+            </Text>
+          </TouchableOpacity> */}
+
 
           <TouchableOpacity
             style={[styles.buttonBase, styles.bookNowButton]}
@@ -101,6 +151,7 @@ const StickyBookingFooter = ({
             </Text>
           </TouchableOpacity>
         </View>
+
       </View>
     </View>
   );

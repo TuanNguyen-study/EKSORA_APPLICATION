@@ -360,10 +360,11 @@ export default function TripDetailScreen() {
         eksoraPoints={28}
         tourName={productData.name}
         selectedVoucher={selectedVoucher}
+        currentSelectedPackages={currentSelectedPackages}
+        tourInfo={productData}
         onBookNow={onBookNow}
-        onAddToCart={() => Alert.alert('Thêm vào giỏ hàng', 'Tính năng đang phát triển')}
-        onEksoraPointsPress={() => Alert.alert('EKSORA Xu', 'Tính năng đang phát triển')}
       />
+
     </View>
   );
 }
