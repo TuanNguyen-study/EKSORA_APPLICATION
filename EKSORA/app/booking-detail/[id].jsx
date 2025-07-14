@@ -107,8 +107,8 @@ export default function BookingDetailScreen() {
                 <Text style={styles.label}>Ngày đi: <Text style={styles.value}>{formatDate(bk.travel_date)}</Text></Text>
                 <Text style={styles.label}>Tổng tiền: <Text style={styles.value}>{formatPrice(bk.totalPrice)}</Text></Text>
                 <Text style={styles.label}>Mã đơn: <Text style={styles.value}>{bk.order_code || 'Chưa có'}</Text></Text>
-                <Text style={styles.label}>Người lớn: <Text style={styles.value}>{bk.quantity_nguoiLon} x {formatPrice(bk.price_nguoiLon)}</Text></Text>
-                <Text style={styles.label}>Trẻ em: <Text style={styles.value}>{bk.quantity_treEm} x {formatPrice(bk.price_treEm)}</Text></Text>
+                <Text style={styles.label}>Người lớn: <Text style={styles.value}>{bk.quantity_nguoiLon} </Text></Text>
+                <Text style={styles.label}>Trẻ em: <Text style={styles.value}>{bk.quantity_treEm} </Text></Text>
             </View>
 
             {/* Dịch vụ đi kèm */}

@@ -2,17 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from 'react';
 import {
-  Modal,
   Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../../../../constants/colors";
-import BookingModalContent from "./Modal";
 import { useCart } from "../../../../store/CartContext";
+import BookingScreenModal from "./BookingScreenModal";
 
 const StickyBookingFooter = ({
   priceInfo,
@@ -28,26 +27,23 @@ const StickyBookingFooter = ({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
-
+  const priceAdult = priceInfo.current || 0;
+  const priceChild = priceAdult / 2;
   const handleBookNow = () => {
-    if (onBookNow) {
-      onBookNow();
-    } else {
-      router.push("/acount/bookingScreen");
-    }
+    setModalVisible(true);
   };
-const handleAddToCart = () => {
+  const handleAddToCart = () => {
     const tourItem = {
       id: tourInfo._id || 'default_id',
       name: tourName || 'Tên tour không xác định',
-      price: (priceInfo.current || 0) * 1000, 
+      price: (priceInfo.current || 0) * 1000,
       image: tourInfo.image?.[0] || 'https://via.placeholder.com/80',
       description: tourInfo.description || 'Không có mô tả',
       duration: tourInfo.duration,
       location: tourInfo.location,
       rating: tourInfo.rating,
-      services: tourInfo.services || [], 
-      selectedOptions: currentSelectedPackages || {}, 
+      services: tourInfo.services || [],
+      selectedOptions: currentSelectedPackages || {},
     };
     //console.log('Thêm vào giỏ hàng:', tourItem); 
     addToCart(tourItem);
@@ -126,13 +122,16 @@ const handleAddToCart = () => {
           </View>
         </View>
       </View>
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <BookingModalContent
-          onClose={() => setModalVisible(false)}
-          priceInfo={priceInfo}
-          tourName={tourName}
-        />
-      </Modal>
+      <BookingScreenModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        priceInfo={priceInfo}
+        tourName={tourName}
+        tourInfo={tourInfo}
+        currentSelectedPackages={currentSelectedPackages}
+        priceAdult={priceInfo.current || 0}
+        priceChild={(priceInfo.current || 0) / 2}
+      />
     </>
 
   );

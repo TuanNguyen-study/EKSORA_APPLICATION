@@ -20,6 +20,7 @@ import ProductBasicInfo from './components/ProductBasicInfo';
 import ProductImageCarousel from './components/ProductImageCarousel';
 import { default as ProductOptionSelector } from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
+import BookingModalContent from './components/Modal';
 import TripHighlightsSection from './components/TripHighlightsSection';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -38,6 +39,8 @@ export default function TripDetailScreen() {
   const [bookingData, setBookingData] = useState(null);
   const [selectedOptions, setSelectedOptions] = useState({});
   const [totalExtraPrice, setTotalExtraPrice] = useState(0);
+
+  const [modalVisible, setModalVisible] = useState(false);
   const loadTourDetails = useCallback(async (id) => {
     setLoading(true);
     setError(null);
@@ -141,21 +144,10 @@ export default function TripDetailScreen() {
       return sum;
     }, 0);
 
-
-
-
     const total_price = basePrice + optionTotal;
 
-    const query = new URLSearchParams({
-      tour_id: productData._id,
-      tour_title: productData.name,
-      total_price: total_price.toString(),
-      selectedOptions: JSON.stringify(currentSelectedPackages),
-    }).toString();
-
-    router.push(`/acount/bookingScreen?${query}`);
-    console.log('Booking URL:', `/acount/bookingScreen?${query}`);
-
+    // Mở modal thay vì chuyển trang
+    setModalVisible(true);
   };
 
 

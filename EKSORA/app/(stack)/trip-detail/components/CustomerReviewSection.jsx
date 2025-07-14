@@ -62,7 +62,7 @@ const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount, onVi
       <FlatList
         data={reviews}
         renderItem={({ item }) => <ReviewItem review={item} />}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.reviewsCarouselContent}

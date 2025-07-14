@@ -1,6 +1,6 @@
 
-import { COLORS } from '../../../../constants/colors';
 import { Dimensions, FlatList, Image, StyleSheet, Text, View } from 'react-native';
+import { COLORS } from '../../../../constants/colors';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width * 0.8;
@@ -29,7 +29,7 @@ const TripHighlightsSection = ({ title, highlights }) => {
       <FlatList
         data={highlights}
         renderItem={({ item }) => <HighlightCard item={item} />}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item, index) => item._id?.toString() ?? index.toString()}
         showsVerticalScrollIndicator={false}
         scrollEnabled={false}
         nestedScrollEnabled={true}
