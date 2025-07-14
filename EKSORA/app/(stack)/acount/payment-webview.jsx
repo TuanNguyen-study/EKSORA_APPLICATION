@@ -4,6 +4,7 @@ import { WebView } from "react-native-webview";
 
 export default function PaymentWebview() {
   const { checkoutUrl } = useLocalSearchParams();
+  const finalUrl = decodeURIComponent(checkoutUrl);
   const router = useRouter();
 
   if (!checkoutUrl) {
@@ -12,7 +13,7 @@ export default function PaymentWebview() {
 
   return (
     <WebView
-      source={{ uri: checkoutUrl }}
+      source={{ uri: finalUrl }}
       startInLoadingState={true}
       renderLoading={() => <ActivityIndicator size="large" color="blue" />}
       onNavigationStateChange={nav => {

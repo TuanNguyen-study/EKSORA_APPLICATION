@@ -20,7 +20,8 @@ import ProductBasicInfo from './components/ProductBasicInfo';
 import ProductImageCarousel from './components/ProductImageCarousel';
 import ProductOptionSelector from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
-import DescriptionSection from './components/DescriptionSection';
+import BookingModalContent from './components/Modal';
+
 import TripHighlightsSection from './components/TripHighlightsSection';
 
 // CÁC HÀM HELPER
@@ -122,27 +123,12 @@ export default function TripDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentSelectedPackages, setCurrentSelectedPackages] = useState({});
   const [currentTotalPrice, setCurrentTotalPrice] = useState(0);
-  const [selectedVoucher, setSelectedVoucher] = useState(null);
 
-  const handleApplyVoucher = (voucher) => {
-    setSelectedVoucher(voucher);
-    recalculateTotalPrice(currentSelectedPackages, voucher);
-  };
+  const [bookingData, setBookingData] = useState(null);
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [totalExtraPrice, setTotalExtraPrice] = useState(0);
 
-  const recalculateTotalPrice = (packagesMap, voucher) => {
-    if (!productData) return;
-    const basePrice = productData.price.current;
-    const optionTotal = Object.values(packagesMap).reduce((sum, optId) => {
-      for (const pkg of productData.availableServicePackages) {
-        const option = pkg.options.find((opt) => opt.id === optId);
-        if (option) return sum + (option.price || 0);
-      }
-      return sum;
-    }, 0);
-    const totalBeforeDiscount = basePrice + optionTotal;
-    const finalPrice = formatPrice(totalBeforeDiscount, voucher);
-    setCurrentTotalPrice(finalPrice);
-  };
+  const [modalVisible, setModalVisible] = useState(false);
 
   const loadTourDetails = useCallback(async (id) => {
     setLoading(true);
@@ -221,18 +207,13 @@ export default function TripDetailScreen() {
       }
       return sum;
     }, 0);
-    const totalBeforeDiscount = basePrice + optionTotal;
-    const discount = selectedVoucher?.voucher_id?.discount && totalBeforeDiscount >= (selectedVoucher.voucher_id.min_order_value || 0) ? (totalBeforeDiscount * selectedVoucher.voucher_id.discount) / 100 : 0;
-    const total_price = formatPrice(totalBeforeDiscount, selectedVoucher);
-    const query = new URLSearchParams({
-      tour_id: productData._id,
-      tour_title: productData.name,
-      total_price: total_price.toString(),
-      selectedOptions: JSON.stringify(currentSelectedPackages),
-      voucher_id: selectedVoucher ? selectedVoucher._id : '',
-      discount: discount.toString(),
-    }).toString();
-    router.push(`/acount/bookingScreen?${query}`);
+
+
+    const total_price = basePrice + optionTotal;
+
+    // Mở modal thay vì chuyển trang
+    setModalVisible(true);
+
   };
 
   // MÀN HÌNH LOADING VÀ LỖI

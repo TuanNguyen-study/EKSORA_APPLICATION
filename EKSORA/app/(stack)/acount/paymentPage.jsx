@@ -21,7 +21,7 @@ export default function PaymentPage() {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [profile, setProfile] = useState(null);
 
-  const { bookingId, title, quantityAdult, quantityChild, totalPrice, travelDate, image } = useLocalSearchParams();
+  const { bookingId, title, quantityAdult, quantityChild, totalPrice, travelDate } = useLocalSearchParams();
   const params = useLocalSearchParams();
   useEffect(() => {
   (async () => {
@@ -37,7 +37,7 @@ export default function PaymentPage() {
 }, []);
 
   console.log('🧾 Params nhận được:', params);
-  console.log("📷 image param:", image);
+  // console.log("📷 image param:", image);
 
   const totalAmount = Number(totalPrice || 0);
 
@@ -150,8 +150,8 @@ export default function PaymentPage() {
       if (data.url) {
         router.push({
          pathname: "/acount/payment-webview",
-          params: {
-            checkoutUrl: data.url
+          params: { 
+           checkoutUrl: encodeURIComponent(data.url)
           }
         });
       }

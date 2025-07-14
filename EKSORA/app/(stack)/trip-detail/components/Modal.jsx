@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.3)',
     },
     modalContainer: {
-        height: SCREEN_HEIGHT * 0.5,
+        height: SCREEN_HEIGHT * 0.8,
         backgroundColor: '#fff',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
