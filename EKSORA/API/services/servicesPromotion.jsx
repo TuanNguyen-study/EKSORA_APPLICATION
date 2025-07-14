@@ -35,6 +35,25 @@ export const getUserSavedVouchers = async (userId) => {
   }
 };
 
+export const getVouchersByUserId = async (userId) => {
+  try {
+    const response = await AxiosInstance().get(`/api/user-vouchers/user/${userId}`);
+    //console.log('📡 Full API response:', response);
+
+    const data = response.data || response;
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      throw new Error('Dữ liệu trả về từ API là undefined, rỗng hoặc không hợp lệ');
+    }
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách voucher theo userId:', {
+      message: error.message,
+      status: error?.response?.status,
+      data: error?.response?.data,
+    });
+    return [];
+  }
+};
 
 
 

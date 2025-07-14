@@ -16,22 +16,28 @@ import { useSelector } from 'react-redux';
 import { createBooking } from "../../../API/services/booking";
 import { COLORS } from "../../../constants/colors";
 export default function BookingScreen() {
-
   const router = useRouter();
   const params = useLocalSearchParams();
   const [showPicker, setShowPicker] = useState(false);
+
+  // Lấy thông tin từ params
   const image = typeof params.image === 'string' ? decodeURIComponent(params.image) : '';
   const tour_id = params.tour_id;
   const tour_title = typeof params.tour_title === 'string' ? decodeURIComponent(params.tour_title) : '';
   const total_price = Number(params.total_price || '0');
   const selectedOptions = typeof params.selectedOptions === 'string' ? JSON.parse(params.selectedOptions) : {};
+  const voucher_id = params.voucher_id || null;
+  const discount = Number(params.discount || '0'); // Vẫn giữ để truyền sang BookingCompleted
   const userId = useSelector(state => state.auth.user?.id);
 
   console.log('▶️ tour_title:', tour_title);
   console.log('▶️ total_price:', total_price);
   console.log('▶️ selectedOptions:', selectedOptions);
-  const [selectedDate, setSelectedDate] = useState(null); // ✅ Ban đầu chưa chọn
-  const [quantityAdult, setQuantityAdult] = useState(0); // ✅ Default = 1
+  console.log('▶️ voucher_id:', voucher_id);
+  console.log('▶️ discount:', discount);
+
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [quantityAdult, setQuantityAdult] = useState(0);
   const [quantityChild, setQuantityChild] = useState(0);
   const DEFAULT_ADULT_PRICE = 3000;//300000
   const DEFAULT_CHILD_PRICE = 1500;//150000
@@ -44,8 +50,11 @@ export default function BookingScreen() {
   const formatPrice = (price) =>
     price.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 
+  // Tính giá cuối cùng: chỉ thêm giá người lớn và trẻ em
   const finalPrice =
-    total_price + (quantityAdult * DEFAULT_ADULT_PRICE) + (quantityChild * DEFAULT_CHILD_PRICE);
+    total_price +
+    (quantityAdult * DEFAULT_ADULT_PRICE) +
+    (quantityChild * DEFAULT_CHILD_PRICE);
 
   const handleBooking = async () => {
     if (!selectedDate) {
@@ -58,13 +67,15 @@ export default function BookingScreen() {
       return;
     }
 
-    // ✅ Convert ngày dd/mm/yyyy -> yyyy-mm-dd
-    const [day, month, year] = selectedDate.split('/');
-    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     if (!userId) {
       Alert.alert("Lỗi", "Không tìm thấy user. Vui lòng đăng nhập lại.");
       return;
     }
+
+    // Convert ngày dd/mm/yyyy -> yyyy-mm-dd
+    const [day, month, year] = selectedDate.split('/');
+    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+
     const bookingData = {
       user_id: userId,
       tour_id,
@@ -77,7 +88,8 @@ export default function BookingScreen() {
         option_service_id: id
       })),
       coin: 0,
-      voucher_id: null,
+      voucher_id: voucher_id || null,
+      discount: discount || 0,
     };
 
     console.log("📤 bookingData sắp gửi:", JSON.stringify(bookingData, null, 2));
@@ -144,7 +156,6 @@ export default function BookingScreen() {
           </TouchableOpacity>
         </View>
 
-
         <View style={styles.badgesContainer}>
           <TouchableOpacity style={styles.badge} onPress={() => { }}>
             <Text style={styles.badgeText}>Hủy miễn phí 24 giờ</Text>
@@ -156,17 +167,12 @@ export default function BookingScreen() {
 
         <View style={styles.sectionBox}>
           <View style={styles.badgesContainer}>
-            <Text style={[styles.badgeText, { fontWeight: 'bold', color: 'black', fontSize: 20 }]}> Xin chọn ngày tham gia
-            </Text>
-
+            <Text style={[styles.badgeText, { fontWeight: 'bold', color: 'black', fontSize: 20 }]}>Xin chọn ngày tham gia</Text>
           </View>
-
           <View style={styles.divider} />
-
           <View style={styles.statusRow}>
             <Text style={[styles.sectionLabel, { fontWeight: 'bold', color: 'black', fontSize: 16 }]}>Xem trạng thái dịch vụ</Text>
           </View>
-
           <TouchableOpacity
             onPress={() => setShowPicker(true)}
             style={[
@@ -178,7 +184,6 @@ export default function BookingScreen() {
               {selectedDate ? selectedDate : "Chọn ngày"}
             </Text>
           </TouchableOpacity>
-
           {showPicker && (
             <DateTimePicker
               value={new Date()}
@@ -195,6 +200,7 @@ export default function BookingScreen() {
             />
           )}
         </View>
+
         <View style={styles.sectionBox}>
           <View style={styles.section}>
             <View style={styles.quantityRow}>
@@ -210,7 +216,6 @@ export default function BookingScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-
             <View style={styles.quantityRow}>
               <Text style={styles.quantityLabel}>Trẻ em(5-8)</Text>
               <Text style={styles.priceText}>{formatPrice(DEFAULT_CHILD_PRICE)}</Text>
@@ -226,6 +231,18 @@ export default function BookingScreen() {
             </View>
           </View>
         </View>
+
+        {/* Hiển thị thông tin voucher nếu có */}
+        {discount > 0 && (
+          <View style={styles.sectionBox}>
+            <Text style={[styles.sectionLabel, { fontWeight: 'bold', color: 'black', fontSize: 16 }]}>
+              Voucher đã áp dụng
+            </Text>
+            <Text style={styles.priceText}>
+              Giảm: {formatPrice(discount)}
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -235,19 +252,10 @@ export default function BookingScreen() {
             <Text style={styles.rewardText}>EKSORA Xu +28</Text>
           </View>
         </View>
-
-
-
-
-
-        <TouchableOpacity
-          style={styles.bookNowButton}
-          onPress={handleBooking} // ✅ Gọi hàm đặt tour thật
-        >
+        <TouchableOpacity style={styles.bookNowButton} onPress={handleBooking}>
           <Text style={styles.bookNowButtonText}>Đặt ngay</Text>
         </TouchableOpacity>
       </View>
-
     </View>
   );
 }

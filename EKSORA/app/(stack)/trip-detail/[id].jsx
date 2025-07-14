@@ -1,115 +1,197 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import { fetchTourDetail } from '../../../API/services/tourService';
+import { useReviewContext } from '../../../store/ReviewContext';
 import { COLORS } from '../../../constants/colors';
 import CustomerReviewSection from './components/CustomerReviewSection';
 import NoteContactSection from './components/NoteContactSection';
 import ProductBasicInfo from './components/ProductBasicInfo';
 import ProductImageCarousel from './components/ProductImageCarousel';
-import { default as ProductOptionSelector } from './components/ProductOptionSelector';
+import ProductOptionSelector from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
+import DescriptionSection from './components/DescriptionSection';
 import TripHighlightsSection from './components/TripHighlightsSection';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
+// CÁC HÀM HELPER
+const prepareProductInfo = (tour, services, highlights, reviews) => {
+  return {
+    name: tour.name,
+    departurePoint: tour.province,
+    rating: {
+      stars: tour.rating || 0,
+      count: reviews.length,
+      detailsText: `${reviews.length} Đánh giá`,
+    },
+    tags: [
+      { label: 'Lịch sử', isSpecial: false },
+      { label: 'Văn hóa', isSpecial: false },
+      { label: 'Ẩm thực', isSpecial: true },
+    ],
+    summaryHighlight: {
+      items: highlights.map((item) => item.location_name),
+    },
+    offers: services.map((service) => ({
+      label: service.name || service.title,
+      icon: 'pricetag-outline',
+      bgColor: '#E6F0FA',
+      textColor: '#1E88E5',
+    })),
+  };
+};
+
+const parseDescription = (htmlString) => {
+  if (!htmlString) return [];
+
+  const result = [];
+  let idCounter = 0;
+  const seenDescriptions = new Set();
+
+  // Đoạn giới thiệu
+  const introMatch = htmlString.match(/<p>(.*?)<\/p>/);
+  if (introMatch) {
+    result.push({ id: `desc-${idCounter++}`, type: 'text', content: introMatch[1].replace(/<[^>]*>?/gm, '') });
+  }
+
+  // Các đoạn hình ảnh và mô tả
+  const figureMatches = htmlString.matchAll(/<figure class="image"><img[^>]+src="([^"]+)"[^>]*><\/figure><blockquote><p>(.*?)<\/p><\/blockquote>/g);
+  for (const match of figureMatches) {
+    const image = match[1];
+    const content = match[2].replace(/<[^>]*>?/gm, '');
+    if (!seenDescriptions.has(content)) {
+      seenDescriptions.add(content);
+      result.push({ id: `desc-${idCounter++}`, type: 'image-text', image, content });
+    }
+  }
+
+  // Đoạn lưu ý
+  const noteMatch = htmlString.match(/<h3><strong>Xin lưu ý:.*?(<ul>.*?<\/ul>)/s);
+  if (noteMatch) {
+    result.push({
+      id: `desc-${idCounter++}`,
+      type: 'text',
+      content: `Xin lưu ý: Sẽ áp dụng phụ phí nếu ngày tham gia của bạn trùng với ngày lễ, thanh toán tại chỗ (Vui lòng kiểm tra chi tiết gói để tham khảo).${noteMatch[1]}`,
+    });
+  }
+
+  // Nếu không có kết quả nào được phân tích, trả về một đoạn text mặc định
+  if (result.length === 0) {
+    result.push({ id: `desc-${idCounter++}`, type: 'text', content: htmlString.replace(/<[^>]*>?/gm, '') });
+  }
+
+  return result;
+};
+
+const formatPrice = (price, selectedVoucher) => {
+  const value = typeof price === 'number' ? price : parseFloat(price);
+  if (isNaN(value)) return 0;
+  let finalPrice = value;
+  if (selectedVoucher?.voucher_id?.discount) {
+    const discount = selectedVoucher.voucher_id.discount;
+    const minOrderValue = selectedVoucher.voucher_id.min_order_value || 0;
+    if (value >= minOrderValue) {
+      finalPrice = value - (value * discount) / 100;
+    } else {
+      Alert.alert('Thông báo', `Đơn hàng phải từ ${minOrderValue.toLocaleString('vi-VN')}đ để áp dụng voucher này.`);
+    }
+  }
+  return Math.max(0, finalPrice);
+};
 
 
 export default function TripDetailScreen() {
   const router = useRouter();
   const { id: productId } = useLocalSearchParams();
+  const { setReviewData } = useReviewContext();
+  const mappedReviewsRef = useRef([]);
 
+  // STATE VÀ LOGIC
   const [productData, setProductData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [currentSelectedPackages, setCurrentSelectedPackages] = useState({});
   const [currentTotalPrice, setCurrentTotalPrice] = useState(0);
-  const [bookingData, setBookingData] = useState(null);
-  const [selectedOptions, setSelectedOptions] = useState({});
-  const [totalExtraPrice, setTotalExtraPrice] = useState(0);
+  const [selectedVoucher, setSelectedVoucher] = useState(null);
+
+  const handleApplyVoucher = (voucher) => {
+    setSelectedVoucher(voucher);
+    recalculateTotalPrice(currentSelectedPackages, voucher);
+  };
+
+  const recalculateTotalPrice = (packagesMap, voucher) => {
+    if (!productData) return;
+    const basePrice = productData.price.current;
+    const optionTotal = Object.values(packagesMap).reduce((sum, optId) => {
+      for (const pkg of productData.availableServicePackages) {
+        const option = pkg.options.find((opt) => opt.id === optId);
+        if (option) return sum + (option.price || 0);
+      }
+      return sum;
+    }, 0);
+    const totalBeforeDiscount = basePrice + optionTotal;
+    const finalPrice = formatPrice(totalBeforeDiscount, voucher);
+    setCurrentTotalPrice(finalPrice);
+  };
+
   const loadTourDetails = useCallback(async (id) => {
     setLoading(true);
     setError(null);
-
     try {
-      // 1) Gọi API, trả về { tour, services[], highlights[], reviews[] }
       const { tour, services = [], highlights = [], reviews = [] } = await fetchTourDetail(id);
-      console.log(' tour:', tour);
-      if (!tour || !tour._id) {
-        throw new Error('Dữ liệu tour không hợp lệ.');
-      }
-
-      // 2) Map services thành cấu trúc cho selector
-      const availableServicePackages = services.map(svc => ({
+      if (!tour || !tour._id) throw new Error('Dữ liệu tour không hợp lệ.');
+      const availableServicePackages = services.map((svc) => ({
         id: svc._id,
         title: svc.title || svc.name,
-        options: (svc.options || []).map(opt => ({
+        options: (svc.options || []).map((opt) => ({
           id: opt._id,
           name: opt.name,
           description: opt.description,
           price: opt.price_extra,
-        }))
+        })),
       }));
-      console.log(' reviews raw:', reviews);
-      // 3) Map reviews về UI-ready
-      const mappedReviews = reviews.map(r => {
-        console.log(' Review raw:', r);
-        const hasValidName =
-          (r.user?.first_name && r.user?.first_name.trim()) ||
-          (r.user?.last_name && r.user?.last_name.trim());
-
+      const mappedReviews = reviews.map((r) => {
+        const hasValidName = (r.user?.first_name && r.user?.first_name.trim()) || (r.user?.last_name && r.user?.last_name.trim());
         return {
           _id: r._id,
-          userName: hasValidName
-            ? `${r.user?.first_name?.trim() || ''} ${r.user?.last_name?.trim() || ''}`.trim()
-            : r.user_name || 'Khách ẩn danh',
+          userName: hasValidName ? `${r.user?.first_name?.trim() || ''} ${r.user?.last_name?.trim() || ''}`.trim() : r.user_name || 'Khách ẩn danh',
           userAvatar: r.user?.avatarUrl || null,
           rating: r.rating,
           comment: r.comment,
           date: new Date(r.created_at).toLocaleDateString('vi-VN'),
         };
       });
-
-      // 4) Tạo productData
+      mappedReviewsRef.current = mappedReviews;
+      // Giờ đây descriptionContent sẽ có các phần tử với id duy nhất
+      const descriptionContent = parseDescription(tour.description || '');
+      const productInfo = prepareProductInfo(tour, services, highlights, reviews);
       const mappedProductData = {
         ...tour,
         images: (tour.image || []).map((uri, i) => ({ id: `img_${i}`, uri })),
-        price: {
-          current: tour.price ?? 0,
-          original: tour.price ?? 0,
-          currency: 'đ',
-          unit: 'người',
-        },
-        rating: {
-          stars: tour.rating ?? 0,
-          count: mappedReviews.length,
-        },
+        price: { current: tour.price ?? 0, original: tour.price ?? 0, currency: 'đ', unit: 'người' },
+        rating: { stars: tour.rating ?? 0, count: mappedReviews.length },
         availableServicePackages,
         availableDateFilters: [],
-        descriptionContent: [
-          { type: 'text', content: tour.description || '' }
-        ],
+        descriptionContent,
         reviews: mappedReviews,
         tripNotes: tour.tripNotes || null,
-        contactInformation: tour.contactInformation || null,
+        contactInformation: { supplier: tour.supplier_id || null },
         services,
         highlights,
+        productInfo,
       };
-
       setProductData(mappedProductData);
       setCurrentTotalPrice(mappedProductData.price.current);
-
     } catch (e) {
       console.error('Lỗi khi lấy chi tiết tour:', e);
       setError(e.message || 'Đã xảy ra lỗi khi tải dữ liệu.');
@@ -129,37 +211,31 @@ export default function TripDetailScreen() {
       loadTourDetails(productId);
     }
   };
+
   const onBookNow = () => {
     const basePrice = productData?.price?.current || 0;
-
-    // Tính tổng giá phụ thu option
     const optionTotal = Object.values(currentSelectedPackages).reduce((sum, optId) => {
       for (const pkg of productData.availableServicePackages) {
-        const option = pkg.options.find(opt => opt.id === optId);
+        const option = pkg.options.find((opt) => opt.id === optId);
         if (option) return sum + (option.price || 0);
       }
       return sum;
     }, 0);
-
-
-
-
-    const total_price = basePrice + optionTotal;
-
+    const totalBeforeDiscount = basePrice + optionTotal;
+    const discount = selectedVoucher?.voucher_id?.discount && totalBeforeDiscount >= (selectedVoucher.voucher_id.min_order_value || 0) ? (totalBeforeDiscount * selectedVoucher.voucher_id.discount) / 100 : 0;
+    const total_price = formatPrice(totalBeforeDiscount, selectedVoucher);
     const query = new URLSearchParams({
       tour_id: productData._id,
       tour_title: productData.name,
       total_price: total_price.toString(),
       selectedOptions: JSON.stringify(currentSelectedPackages),
+      voucher_id: selectedVoucher ? selectedVoucher._id : '',
+      discount: discount.toString(),
     }).toString();
-
     router.push(`/acount/bookingScreen?${query}`);
-    console.log('Booking URL:', `/acount/bookingScreen?${query}`);
-
   };
 
-
-
+  // MÀN HÌNH LOADING VÀ LỖI
   if (loading && !productData) {
     return (
       <View style={styles.centered}>
@@ -182,13 +258,90 @@ export default function TripDetailScreen() {
     );
   }
 
+  // PHẦN HIỂN THỊ CHÍNH
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={{ paddingBottom: 40 }}
+      <FlatList
+        data={[{ key: 'main-content' }]}
+        keyExtractor={(item) => item.key}
+        showsVerticalScrollIndicator={false}
+
+        ListHeaderComponent={
+          <View style={{ paddingTop: 16 }}>
+            <ProductImageCarousel
+              images={productData.images}
+              tourId={productData._id}
+              onBackPress={() =>
+                router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
+              }
+              onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
+              onFavoritePress={() => console.log('Đã nhấn nút yêu thích.')}
+            />
+          </View>
+        }
+
+        renderItem={() => (
+          <View style={styles.mainContentContainer}>
+            <ProductBasicInfo
+              productInfo={productData.productInfo}
+              onSeeAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
+              onApplyVoucher={handleApplyVoucher}
+              selectedVoucher={selectedVoucher}
+            />
+
+            <View style={styles.separator} />
+
+            <TripHighlightsSection
+              title="Điểm nổi bật của chuyến đi"
+              highlights={productData.highlights.map((highlight) => ({
+                _id: highlight._id,
+                image: highlight.image_url || 'https://via.placeholder.com/150',
+                title: highlight.location_name || 'Điểm nổi bật',
+                description: highlight.description || 'Mô tả điểm nổi bật của chuyến đi.',
+              }))}
+            />
+
+            <ProductOptionSelector
+              servicePackages={productData.availableServicePackages}
+              dateFilters={productData.availableDateFilters}
+              initialTotalPrice={productData.price.current}
+              onSelectionUpdate={(map, totalExtra) => {
+                setCurrentSelectedPackages(map);
+                recalculateTotalPrice(map, selectedVoucher);
+              }}
+            />
+
+            <CustomerReviewSection
+              reviews={productData.reviews}
+              averageRating={productData.rating.stars}
+              totalReviewsCount={productData.rating.count}
+              onSeeAllReviews={() => {
+                setReviewData({
+                  reviews: mappedReviewsRef.current,
+                  rating: productData.rating.stars,
+                  count: mappedReviewsRef.current.length,
+                });
+                router.push('/(stack)/ShowReview');
+              }}
+
+            />
+
+            <DescriptionSection
+              title="Thông tin chi tiết"
+              descriptionData={productData.descriptionContent}
+            />
+
+            <NoteContactSection
+              tripNotes={productData.tripNotes}
+              contactInformation={productData.contactInformation}
+            />
+          </View>
+        )}
+
+        ListFooterComponent={<View style={{ height: 100 }} />}
+
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -197,76 +350,18 @@ export default function TripDetailScreen() {
             tintColor={COLORS.primary}
           />
         }
-        showsVerticalScrollIndicator={false}
-      >
-        <ProductImageCarousel
-          images={productData.images}
-          tourId={productData._id}
-          onBackPress={() =>
-            router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
-          }
-          onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
-          onFavoritePress={() => {
-            console.log('Đã nhấn nút yêu thích.');
-          }}
-        />
+      />
 
-        <View style={styles.mainContentContainer}>
-          <ProductBasicInfo
-            productInfo={productData}
-            onSeeAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
-          />
-
-          <View style={styles.separator} />
-
-
-          <ProductOptionSelector
-            servicePackages={productData.availableServicePackages}
-            dateFilters={productData.availableDateFilters}
-            initialTotalPrice={productData.price.current}
-            onSelectionUpdate={(map, totalExtra) => {
-              setCurrentSelectedPackages(map);
-              setCurrentTotalPrice((productData?.price?.current || 0) + totalExtra);
-            }}
-            title=""
-          />
-          <CustomerReviewSection
-            reviews={productData.reviews}
-            averageRating={productData.rating.stars}
-            totalReviewsCount={productData.rating.count}
-            onViewAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
-          />
-
-          <TripHighlightsSection
-            title="Địa điểm nổi bật trong tour"
-            highlights={
-              Array.isArray(productData.highlights)
-                ? productData.highlights
-                  .filter(h => h && h._id)
-                  .map(h => ({
-                    _id: h._id,
-                    image: h.image_url || '',
-                    title: h.location_name || 'Không có tên',
-                    description: h.description || '',
-                  }))
-                : []
-            }
-          />
-
-
-          <NoteContactSection />
-        </View>
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
       <StickyBookingFooter
         priceInfo={{
           ...productData.price,
           current: currentTotalPrice,
         }}
+        eksoraPoints={28}
         tourName={productData.name}
-        tourInfo={productData} 
-        currentSelectedPackages={currentSelectedPackages} 
+        selectedVoucher={selectedVoucher}
+        currentSelectedPackages={currentSelectedPackages}
+        tourInfo={productData}
         onBookNow={onBookNow}
       />
 
@@ -277,51 +372,48 @@ export default function TripDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
-  scrollView: { flex: 1 },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background || '#f5f5f5', padding: 20
+    backgroundColor: COLORS.background || '#f5f5f5',
+    padding: 20,
   },
-
-  loadingText:
-  {
-    marginTop:
-      10, fontSize:
-      16, color: COLORS.textSecondary
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: COLORS.textSecondary,
   },
-
   errorText: {
     fontSize: 16,
     color: COLORS.danger,
     textAlign: 'center',
-    marginTop: 10
+    marginTop: 10,
   },
   retryButton: {
     marginTop: 20,
     backgroundColor: COLORS.primary,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 8
+    borderRadius: 8,
   },
   retryButtonText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
-
   mainContentContainer: {
     paddingHorizontal: 16,
     backgroundColor: COLORS.white,
-    marginTop: -10, borderTopLeftRadius: 20,
+    marginTop: -18,
+    borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingTop: 30
+    paddingBottom: 30,
+    paddingTop: 16,
   },
   separator: {
     height: 1,
     backgroundColor: COLORS.background,
     marginVertical: 15,
-    marginHorizontal: -16
-  }
+  },
 });

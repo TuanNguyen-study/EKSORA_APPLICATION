@@ -1,9 +1,8 @@
-
 import { COLORS } from '../../../../constants/colors';
 import { Dimensions, FlatList, Image, StyleSheet, Text, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
-const ITEM_WIDTH = width * 0.8;
+const ITEM_WIDTH = width * 0.8; 
 const ITEM_SPACING = 15;
 
 const HighlightCard = ({ item }) => {
@@ -15,8 +14,8 @@ const HighlightCard = ({ item }) => {
         <Text style={styles.highlightDescription} numberOfLines={3}>{item.description}</Text>
       </View>
     </View>
-  )
-}
+  );
+};
 
 const TripHighlightsSection = ({ title, highlights }) => {
   if (!highlights || highlights.length === 0) {
@@ -25,18 +24,24 @@ const TripHighlightsSection = ({ title, highlights }) => {
 
   return (
     <View style={styles.container}>
-      {title && <Text style={styles.sectionTitle}>{title}</Text>}
+      {title && (
+        <View style={styles.sectionHeaderContainer}>
+          <View style={styles.decoratorLine} />
+          <Text style={styles.sectionTitle}>{title}</Text>
+        </View>
+      )}
       <FlatList
         data={highlights}
         renderItem={({ item }) => <HighlightCard item={item} />}
         keyExtractor={(item) => item._id}
-        showsVerticalScrollIndicator={false}
-        scrollEnabled={false}
-        nestedScrollEnabled={true}
+        horizontal={true}
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={ITEM_WIDTH + ITEM_SPACING}
+        decelerationRate="fast"
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingVertical: 10,
+          paddingHorizontal: ITEM_SPACING,
         }}
+        ItemSeparatorComponent={() => <View style={{ width: ITEM_SPACING }} />}
       />
     </View>
   );
@@ -45,19 +50,28 @@ const TripHighlightsSection = ({ title, highlights }) => {
 const styles = StyleSheet.create({
   container: {
     paddingVertical: 10,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.white,
     marginHorizontal: 0,
-    paddingHorizontal: 0,
+  },
+  sectionHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  decoratorLine: {
+    width: 6,
+    height: 20,
+    backgroundColor: COLORS.primary,
+    borderRadius: 3,
+    marginRight: 10,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.text,
-    marginBottom: 12,
-    paddingHorizontal: 16,
   },
   highlightCard: {
-    width: '100%',
+    width: ITEM_WIDTH,
     marginVertical: 8,
     backgroundColor: COLORS.white,
     borderRadius: 12,
