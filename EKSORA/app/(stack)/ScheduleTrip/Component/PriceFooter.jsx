@@ -9,12 +9,12 @@ export default function PriceFooter() {
 
   const handleBooking = () => {
     Alert.alert(
-      "Đặt thành công!",
-      "Cảm ơn bạn đã đặt tour.",
+      "Khám phá ",
+      "Lịch trình gợi ý cho bạn .",
       [
         {
           text: "OK",
-          onPress: () => router.replace('/(tabs)/home'),
+          onPress: () => router.replace('/(stack)/ScheduleDetail'),
         }
       ],
       { cancelable: false }
@@ -29,7 +29,7 @@ export default function PriceFooter() {
         <Text style={styles.subtext}>Mỗi người</Text>
       </View>
       <TouchableOpacity style={styles.button} onPress={handleBooking}>
-        <Text style={styles.buttonText}>Đặt ngay</Text>
+        <Text style={styles.buttonText}>Khám phá lịch trình</Text>
       </TouchableOpacity>
     </View>
   );

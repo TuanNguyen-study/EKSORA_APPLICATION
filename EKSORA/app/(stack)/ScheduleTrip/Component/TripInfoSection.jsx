@@ -5,16 +5,6 @@ import {FontAwesome, MaterialIcons, Entypo } from '@expo/vector-icons';
 export default function TripInfoSection() {
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Bao gồm</Text>
-      <View style={styles.row}>
-        <Entypo name="ticket" size={18} color="#000" style={styles.icon}  />
-        <View style={styles.infoText}>
-          <Text style={styles.infoTitle}>Chuyến đi </Text>
-          <Text style={styles.infoSub}>1 vé tham quan</Text>
-        </View>
-      </View>
-
-
       <View style={styles.memberHeader}>
         <Text style={styles.sectionTitle}>Thành viên</Text>
         <View style={styles.memberIcons}>
