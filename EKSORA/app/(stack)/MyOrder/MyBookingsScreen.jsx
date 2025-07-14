@@ -38,9 +38,9 @@ export default function MyBookingsScreen() {
   const [selectedStatus, setSelectedStatus] = useState('pending');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [refreshing, setRefreshing] = useState(false); // ✅ trạng thái làm mới
+  const [refreshing, setRefreshing] = useState(false);
 
-  // ✅ Hàm fetch API dùng lại cho cả focus và refresh
+  //  Hàm fetch API dùng lại cho cả focus và refresh
   const fetchBookings = async () => {
     try {
       const token = await AsyncStorage.getItem("ACCESS_TOKEN");
@@ -57,7 +57,7 @@ export default function MyBookingsScreen() {
     }
   };
 
-  // ✅ Gọi API khi focus vào màn hình
+  // Gọi API khi focus vào màn hình
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
@@ -65,7 +65,7 @@ export default function MyBookingsScreen() {
     }, [])
   );
 
-  // ✅ Gọi khi người dùng kéo xuống để làm mới
+  // Gọi khi người dùng kéo xuống để làm mới
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchBookings();
@@ -150,11 +150,16 @@ export default function MyBookingsScreen() {
               <BookingItem item={item} onPress={handleItemPress} />
             )}
             keyExtractor={item => item._id}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[
+              styles.listContent,
+              { flexGrow: 1, justifyContent: 'flex-start' },
+            ]}
+
             ListEmptyComponent={renderEmptyList}
-            refreshing={refreshing} 
-            onRefresh={onRefresh}  
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
+
         )}
       </View>
     </SafeAreaView>
@@ -218,9 +223,8 @@ const styles = StyleSheet.create({
   listContent: {
     paddingTop: 8,
     paddingBottom: 20,
-    flexGrow: 1,
-    justifyContent: 'flex-start',
   },
+
   emptyContainer: {
     marginTop: 24,
     alignItems: 'center',

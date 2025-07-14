@@ -1,11 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { COLORS } from '../../../../constants/colors';
 import ReviewItem from './ReviewItem';
+import { useReviewContext } from '../../../../store/ReviewContext'; 
+
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// Component lấy từ ReviewItem hoặc ProductBasicInfo
+// Component hiển thị sao
 const StarRatingDisplay = ({ rating, size = 20, color = COLORS.warning }) => {
   const stars = [];
   for (let i = 1; i <= 5; i++) {
@@ -20,11 +23,10 @@ const StarRatingDisplay = ({ rating, size = 20, color = COLORS.warning }) => {
   return <View style={{ flexDirection: 'row' }}>{stars}</View>;
 };
 
+const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount }) => {
+  const router = useRouter();
+  const { setReviewData } = useReviewContext(); // dùng context
 
-
-
-
-const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount, onViewAllReviews }) => {
   if (!reviews || reviews.length === 0) {
     return (
       <View style={styles.container}>
@@ -36,6 +38,11 @@ const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount, onVi
       </View>
     );
   }
+
+const handleViewAllPress = () => {
+  setReviewData({ reviews, averageRating, totalReviewsCount });
+  router.push('/(stack)/ShowReview');
+};
 
   return (
     <View style={styles.container}>
@@ -56,8 +63,6 @@ const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount, onVi
         </View>
       </View>
 
-
-
       {/* Carousel Đánh giá Nổi bật */}
       <FlatList
         data={reviews}
@@ -69,10 +74,12 @@ const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount, onVi
       />
 
       {/* Nút Đọc tất cả bài đánh giá */}
-      <TouchableOpacity style={styles.viewAllButton} onPress={onViewAllReviews}>
+      <TouchableOpacity
+        style={styles.viewAllButton}
+        onPress={handleViewAllPress}
+      >
         <Text style={styles.viewAllButtonText}>Đọc tất cả bài đánh giá</Text>
       </TouchableOpacity>
-
     </View>
   );
 };

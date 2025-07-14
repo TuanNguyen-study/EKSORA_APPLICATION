@@ -24,6 +24,7 @@ export default function Layout() {
             <Stack.Screen name="editFavorite" options={{ title: 'Edit Favorite', headerShown: false }} />
             <Stack.Screen name="setting" options={{ title: 'Setting', headerShown: false }} />
             <Stack.Screen name="booking" options={{ title: 'Booking Screen', headerShown: false }} />
+            <Stack.Screen name="ShowReview" options={{ title: 'ShoReview Screen', headerShown: false }} />
           </Stack>
         </AppProviders>
       </Provider>

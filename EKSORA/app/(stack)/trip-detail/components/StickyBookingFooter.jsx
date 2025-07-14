@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from 'react';
 import {
   Platform,
   StyleSheet,
@@ -11,7 +10,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../../../../constants/colors";
 import { useCart } from "../../../../store/CartContext";
+
 import BookingScreenModal from "./BookingScreenModal";
+
 
 const StickyBookingFooter = ({
   priceInfo,
@@ -20,12 +21,17 @@ const StickyBookingFooter = ({
   onBookNow,
   onEksoraPointsPress,
   tourName,
+
+  selectedVoucher, // Nhận từ props
+
   tourInfo,
   currentSelectedPackages,
+
 }) => {
   const { addToCart } = useCart();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
   const [modalVisible, setModalVisible] = useState(false);
   const priceAdult = priceInfo.current || 0;
   const priceChild = priceAdult / 2;
@@ -51,10 +57,22 @@ const StickyBookingFooter = ({
     if (onAddToCart) {
       onAddToCart();
     }
+
   };
+
+  addToCart(tourItem);
+  router.push('/ShoppingCartScreen');
+
+  if (onAddToCart) {
+    onAddToCart();
+  }
+};
+
+
   const formatPrice = (price) => {
     const value = typeof price === "number" ? price : parseFloat(price);
     if (isNaN(value)) return "0 đ";
+
     return value.toLocaleString("vi-VN", {
       style: "currency",
       currency: "VND",
@@ -62,65 +80,79 @@ const StickyBookingFooter = ({
     });
   };
 
+
   return (
-    <>
-      <View
-        style={[
-          styles.outerContainer,
-          {
-            paddingBottom:
-              insets.bottom > 0
-                ? insets.bottom
-                : Platform.OS === "ios"
-                  ? 20
-                  : 16,
-          },
-        ]}
-      >
-        <View style={styles.innerContainer}>
-          <View style={styles.topRow}>
-            <Text style={styles.priceText}>
+    <View
+      style={[
+        styles.outerContainer,
+        {
+          paddingBottom:
+            insets.bottom > 0
+              ? insets.bottom
+              : Platform.OS === "ios"
+                ? 20
+                : 16,
+        },
+      ]}
+    >
+      <View style={styles.innerContainer}>
+        <View style={styles.topRow}>
+          <View style={styles.priceContainer}>
+            {selectedVoucher && (
+              <Text style={styles.originalPrice}>
+                {formatPrice(priceInfo?.original || priceInfo?.current)}
+              </Text>
+            )}
+            <Text style={styles.finalPrice}>
               {formatPrice(priceInfo?.current)}
             </Text>
-
-            {eksoraPoints && (
-              <TouchableOpacity
-                style={styles.eksoraPointsChip}
-                onPress={onEksoraPointsPress}
-              >
-                <Text style={styles.eksoraPointsText}>
-                  EKSORA Xu +{eksoraPoints}
-                </Text>
-                <Ionicons
-                  name="chevron-forward-outline"
-                  size={12}
-                  color={COLORS.white}
-                />
-              </TouchableOpacity>
-            )}
           </View>
 
-          <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={[styles.buttonBase, styles.addToCartButton]}
-              onPress={handleAddToCart}
-            >
-              <Text style={[styles.buttonTextBase, styles.addToCartButtonText]}>
-                Thêm vào giỏ hàng
-              </Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.voucherButton}
+            onPress={() => { /* Không cần mở modal nữa, vì đã xử lý trong ProductBasicInfo */ }}
+          >
+            <Text style={styles.voucherButtonText}>
+              {selectedVoucher
+                ? `Đã áp dụng: ${selectedVoucher.voucher_id.discount}%`
+                : "Chọn Voucher"}
+            </Text>
+          </TouchableOpacity>
 
-
-            <TouchableOpacity
-              style={[styles.buttonBase, styles.bookNowButton]}
-              onPress={handleBookNow}
-            >
-              <Text style={[styles.buttonTextBase, styles.bookNowButtonText]}>
-                Đặt ngay
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
+
+
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[styles.buttonBase, styles.addToCartButton]}
+            onPress={handleAddToCart}
+          >
+            <Text style={[styles.buttonTextBase, styles.addToCartButtonText]}>
+              Thêm vào giỏ hàng
+            </Text>
+          </TouchableOpacity>
+
+
+          {/* <TouchableOpacity
+            style={[styles.buttonBase, styles.bookNowButton]}
+            onPress={handleBookNow}
+          >
+            <Text style={[styles.buttonTextBase, styles.bookNowButtonText]}>
+              Đặt ngay
+            </Text>
+          </TouchableOpacity> */}
+
+
+          <TouchableOpacity
+            style={[styles.buttonBase, styles.bookNowButton]}
+            onPress={handleBookNow}
+          >
+            <Text style={[styles.buttonTextBase, styles.bookNowButtonText]}>
+              Đặt ngay
+            </Text>
+          </TouchableOpacity>
+        </View>
+
       </View>
       <BookingScreenModal
         visible={modalVisible}
@@ -134,6 +166,8 @@ const StickyBookingFooter = ({
       />
     </>
 
+      </View>
+    </View>
   );
 };
 
@@ -167,20 +201,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: COLORS.text,
   },
-  eksoraPointsChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#A5D6A7",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  eksoraPointsText: {
-    color: COLORS.white,
-    fontSize: 11,
-    fontWeight: "500",
-    marginRight: 2,
-  },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -210,6 +230,24 @@ const styles = StyleSheet.create({
   bookNowButtonText: {
     color: COLORS.white,
   },
+  priceContainer: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    flexShrink: 1,
+  },
+  originalPrice: {
+    fontSize: 14,
+    color: "#999",
+    textDecorationLine: "line-through",
+    marginBottom: 2,
+  },
+  finalPrice: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: COLORS.text,
+  },
+
 });
 
 export default StickyBookingFooter;
