@@ -60,33 +60,13 @@ export const COLORS = {
 
   avatarBackground: '#ccc',
 
-  primaryDark: '#00639B',
-  primary: '#0087CA',
   lightBackground: '#E6F3FA',
-  white: '#FFFFFF',
   grey: '#6c757d',
-  primaryDark: '#00639B',
-  primary: '#0087CA',
-  white: '#FFFFFF',
-  success: '#28a745',
-  warning: '#ffc107',
-  danger: '#dc3545',
-  grey: '#6c757d',
-
-  primary: '#007BFF',
-  white: '#FFFFFF',
-  lightGray: '#f4f6f8',
-  darkGray: '#888',
-  textDark: '#333',
-  separator: '#e0e0e0',
   success: '#28a745',
 
   primaryBlue: '#00639B',
   secondaryBlue: '#0087CA',
   lightBlue: '#E6F3FA',
-  white: '#FFFFFF',
-  black: '#333333',
   grayText: '#666666',
-  borderColor: '#D0E9F8',
   modalOverlay: 'rgba(0, 0, 0, 0.5)',
 };

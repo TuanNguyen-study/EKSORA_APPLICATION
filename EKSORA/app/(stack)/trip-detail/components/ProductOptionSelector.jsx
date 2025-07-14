@@ -16,10 +16,8 @@ const ProductOptionSelector = ({
   onDateFilterChange,
   onPromotionChange,
   onOptionSelect,
-  onSelectionUpdate, // ✅ THÊM DÒNG NÀY
+  onSelectionUpdate,
   title = 'Các dịch vụ cần thiết',
-
-
 
 }) => {
   const defaultDate = dateFilters.find(df => df.isDefault)?.id || dateFilters[0]?.id;
@@ -107,7 +105,10 @@ const ProductOptionSelector = ({
 
       {/* Các dịch vụ cần thiết */}
       <View style={styles.secttrion}>
-        <Text style={styles.sectionTitle}>{title}</Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.headerIndicator} />
+          <Text style={styles.sectionTitlet}>Các gói dịch vụ</Text>
+        </View>
         {/* Chọn ngày */}
         {dateFilters.length > 0 && (
           <View style={styles.innerSection}>
@@ -188,11 +189,6 @@ const ProductOptionSelector = ({
 
     </ScrollView>
   );
-
-
-
-
-
 };
 
 const styles = StyleSheet.create({
@@ -356,11 +352,23 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     marginBottom: 10,
   },
-
-
-
-
-
+sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerIndicator: {
+    width: 6,
+    height: 20,
+    backgroundColor: COLORS.primary,
+    borderRadius: 3,
+    marginRight: 10,
+  },
+  sectionTitlet: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.text,
+  },
 });
 
 export default ProductOptionSelector;

@@ -22,7 +22,7 @@ const ReviewScreen = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Lấy userId từ AsyncStorage và gọi API
+
     useEffect(() => {
         const fetchBookings = async () => {
             try {
@@ -64,17 +64,28 @@ const ReviewScreen = () => {
     const handleSubmitReview = async (bookingId, tourId, rating, comment) => {
         try {
             const userId = await AsyncStorage.getItem("USER_ID");
-            if (!userId) throw new Error('Không tìm thấy USER_ID');
+            const token = await AsyncStorage.getItem("ACCESS_TOKEN");
 
-            await postReview(userId, tourId, rating, comment);
+            // Kiểm tra dữ liệu trước khi gửi
+            if (!userId || !tourId || !rating || !comment) {
+                console.warn('Thiếu dữ liệu đánh giá:', { userId, tourId, rating, comment });
+                Alert.alert('Lỗi', 'Thiếu thông tin đánh giá. Vui lòng kiểm tra lại.');
+                return;
+            }
 
-            // Đánh dấu đã review booking này
+
+            // Gọi API postReview với token
+            await postReview(userId, tourId, rating, comment, token);
+
+            // Lưu lại booking đã review
             const stored = await AsyncStorage.getItem('REVIEWED_BOOKINGS');
             let reviewedBookings = stored ? JSON.parse(stored) : [];
             reviewedBookings.push(bookingId);
             await AsyncStorage.setItem('REVIEWED_BOOKINGS', JSON.stringify(reviewedBookings));
 
-            // Cập nhật lại UI
+            Alert.alert('Cảm ơn', 'Cảm ơn bạn đã đánh giá chuyến đi!');
+
+            // Cập nhật lại danh sách
             setBookings((prev) => prev.filter((item) => item._id !== bookingId));
 
         } catch (err) {
@@ -82,6 +93,7 @@ const ReviewScreen = () => {
             Alert.alert('Lỗi', 'Không thể gửi đánh giá. Vui lòng thử lại.');
         }
     };
+
 
 
 
