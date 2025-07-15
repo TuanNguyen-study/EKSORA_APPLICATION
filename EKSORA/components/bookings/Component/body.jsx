@@ -50,7 +50,7 @@ export default function Body() {
               style={styles.image}
             />
             <Text style={styles.link} onPress={() => router.push({
-              pathname: '/(stack)/Schedule',
+              pathname: '/(stack)/ScheduleTrip',
               params: {
                 tourName: item?.tour_id?.name,
                 nguoiLon: item?.quantity_nguoiLon?.toString() || '1',

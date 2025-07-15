@@ -13,19 +13,7 @@ export default function PlaceItem({ item }) {
             <Ionicons name="close" size={20} color="gray" />
           </TouchableOpacity>
         </View>
-
-        <Text style={styles.visitTime}>T/g tham quan: <Text style={styles.time}>{item.visitDuration}</Text></Text>
-
-        <View style={styles.actions}>
-          <TouchableOpacity>
-            <Text style={styles.link}>📝 Ghi chú</Text>
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Text style={styles.link}>📍 Gần đây</Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.timeLabel}>{item.startTime}</Text>
+        <Text style={styles.visitTime}>Thời gian tham quan: <Text style={styles.time}>{item.startTime}</Text></Text>
       </View>
     </View>
   );

@@ -18,31 +18,24 @@ const images = JSON.parse(tourImages || '[]');
       id: '1',
       name: 'Điểm đến 1',
       image: images[0] ,
-      visitDuration: '2h',
       startTime: '08:00',
     },
     {
       connector: true,
-      distance: '2.0 km',
-      duration: '6p',
     },
     {
       id: '2',
       name: 'Điểm đến 2',
       image: images[1],
-      visitDuration: '30p',
       startTime: '10:06',
     },
     {
       connector: true,
-      distance: '24.2 km',
-      duration: '34p',
     },
     {
       id: '3',
       name: 'Điểm đến 3',
       image: images[2],
-      visitDuration: '30p',
       startTime: '11:00',
     },
   ];

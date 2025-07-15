@@ -2,12 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function TimelineConnector({ distance, duration }) {
+export default function TimelineConnector() {
   return (
     <View style={styles.container}>
       <View style={styles.line} />
-      <Ionicons name="car" size={20} color="#007BFF" />
-      <Text style={styles.text}>{distance} | {duration}</Text>
     </View>
   );    
 }
@@ -22,9 +20,5 @@ const styles = StyleSheet.create({
     height: 20,
     backgroundColor: '#007BFF',
     marginBottom: 4,
-  },
-  text: {
-    color: 'gray',
-    fontSize: 12,
   },
 });
