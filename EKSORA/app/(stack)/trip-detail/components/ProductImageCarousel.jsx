@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   },
   headerActionsContainer: {
     position: 'absolute',
-    top: 10,
+    top: 35,
     left: 10,
     right: 10,
     flexDirection: 'row',

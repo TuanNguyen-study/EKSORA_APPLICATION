@@ -1,80 +1,119 @@
-import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Image,
-  Platform,
+  SafeAreaView,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
-  View
-} from "react-native";
+  View,
+} from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useSelector } from 'react-redux';
-import { createBooking } from "../../../API/services/booking";
-import { COLORS } from "../../../constants/colors";
+import { createBooking } from '../../../API/services/booking';
+import { COLORS } from '../../../constants/colors';
+import { useCart } from '../../../store/CartContext';
+import styles from './styles';
+
 export default function BookingScreen() {
+  const { addToCart } = useCart();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const [showPicker, setShowPicker] = useState(false);
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
 
   // Lấy thông tin từ params
+  const adultPrice = Number(params.total_price || '0');
   const image = typeof params.image === 'string' ? decodeURIComponent(params.image) : '';
   const tour_id = params.tour_id;
   const tour_title = typeof params.tour_title === 'string' ? decodeURIComponent(params.tour_title) : '';
-  const total_price = Number(params.total_price || '0');
   const selectedOptions = typeof params.selectedOptions === 'string' ? JSON.parse(params.selectedOptions) : {};
+  const selectedOptionsDetails = typeof params.selectedOptionsDetails === 'string' ? JSON.parse(params.selectedOptionsDetails) : [];
   const voucher_id = params.voucher_id || null;
-  const discount = Number(params.discount || '0'); // Vẫn giữ để truyền sang BookingCompleted
+  const discount = Number(params.discount || '0');
   const userId = useSelector(state => state.auth.user?.id);
 
-  console.log('▶️ tour_title:', tour_title);
-  console.log('▶️ total_price:', total_price);
-  console.log('▶️ selectedOptions:', selectedOptions);
-  console.log('▶️ voucher_id:', voucher_id);
-  console.log('▶️ discount:', discount);
-
   const [selectedDate, setSelectedDate] = useState(null);
-  const [quantityAdult, setQuantityAdult] = useState(0);
+  const [quantityAdult, setQuantityAdult] = useState(1);
   const [quantityChild, setQuantityChild] = useState(0);
-  const DEFAULT_ADULT_PRICE = 3000;//300000
-  const DEFAULT_CHILD_PRICE = 1500;//150000
+  const [availableDates, setAvailableDates] = useState([]);
+  const DEFAULT_CHILD_PRICE = 1500;
+
+  const optionsTotalPrice = useMemo(() => {
+    if (!selectedOptionsDetails || selectedOptionsDetails.length === 0) {
+      return 0;
+    }
+    return selectedOptionsDetails.reduce((total, option) => total + (option.optionPrice || 0), 0);
+  }, [selectedOptionsDetails]);
+
+  useEffect(() => {
+    const today = new Date();
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const formatted = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+      dates.push(formatted);
+    }
+    setAvailableDates(dates);
+    if (dates.length > 0) {
+      setSelectedDate(dates[0]);
+    }
+  }, []);
 
   const incrementAdult = () => setQuantityAdult((q) => q + 1);
-  const decrementAdult = () => setQuantityAdult((q) => (q > 0 ? q - 1 : q));
+  const decrementAdult = () => setQuantityAdult((q) => (q > 1 ? q - 1 : 1));
   const incrementChild = () => setQuantityChild((q) => q + 1);
-  const decrementChild = () => setQuantityChild((q) => (q > 0 ? q - 1 : q));
+  const decrementChild = () => setQuantityChild((q) => (q > 0 ? q - 1 : 0));
 
   const formatPrice = (price) =>
-    price.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
+    price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 
-  // Tính giá cuối cùng: chỉ thêm giá người lớn và trẻ em
-  const finalPrice =
-    total_price +
-    (quantityAdult * DEFAULT_ADULT_PRICE) +
-    (quantityChild * DEFAULT_CHILD_PRICE);
+  const finalPriceBeforeDiscount =
+    (adultPrice * quantityAdult) +
+    (DEFAULT_CHILD_PRICE * quantityChild) +
+    optionsTotalPrice;
 
-  const handleBooking = async () => {
+  const handleAddToCart = () => {
     if (!selectedDate) {
-      Alert.alert("Vui lòng chọn ngày tham gia!");
+      Alert.alert('Thông báo', 'Vui lòng chọn ngày để thêm vào giỏ hàng.');
       return;
     }
 
-    if (quantityAdult === 0 && quantityChild === 0) {
-      Alert.alert("Bạn phải chọn ít nhất 1 người để đặt tour!");
+    const cartItemId = `${tour_id}_${selectedDate}`;
+
+    // Tạo đối tượng item để thêm vào giỏ hàng
+    const cartItem = {
+      id: cartItemId, 
+      tour_id: tour_id,
+      name: tour_title,
+      image: image,
+      travelDate: selectedDate,
+      adults: quantityAdult,
+      children: quantityChild,
+      adultPrice: adultPrice,
+      childPrice: DEFAULT_CHILD_PRICE,
+      selectedOptions: selectedOptionsDetails,
+      price: finalPriceBeforeDiscount, 
+    };
+
+    addToCart(cartItem);
+    Alert.alert('Thành công', `Đã thêm "${tour_title}" vào giỏ hàng!`);
+  };
+  const handleBooking = async () => {
+    if (!selectedDate) {
+      Alert.alert('Thông báo', 'Vui lòng chọn ngày tham gia!');
       return;
     }
 
     if (!userId) {
-      Alert.alert("Lỗi", "Không tìm thấy user. Vui lòng đăng nhập lại.");
+      Alert.alert('Lỗi', 'Không tìm thấy người dùng. Vui lòng đăng nhập lại.');
       return;
     }
 
-    // Convert ngày dd/mm/yyyy -> yyyy-mm-dd
     const [day, month, year] = selectedDate.split('/');
-    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
     const bookingData = {
       user_id: userId,
@@ -82,51 +121,58 @@ export default function BookingScreen() {
       travel_date: formattedDate,
       quantity_nguoiLon: quantityAdult,
       quantity_treEm: quantityChild,
-      price_nguoiLon: DEFAULT_ADULT_PRICE,
+      price_nguoiLon: adultPrice,
       price_treEm: DEFAULT_CHILD_PRICE,
       optionServices: Object.values(selectedOptions).map(id => ({
-        option_service_id: id
+        option_service_id: id,
       })),
       coin: 0,
       voucher_id: voucher_id || null,
       discount: discount || 0,
     };
 
-    console.log("📤 bookingData sắp gửi:", JSON.stringify(bookingData, null, 2));
-
     try {
       const res = await createBooking(bookingData);
-      console.log("📦 Booking response:", res); // để chắc chắn trả về cái gì
-
       const bookingId = res?.booking_id || res?.booking?._id;
 
       if (!bookingId) {
-        console.warn("⚠️ Không tìm thấy bookingId trong response:", res);
-        Alert.alert("Lỗi", "Không thể lấy mã đơn hàng. Vui lòng thử lại.");
+        Alert.alert('Lỗi', 'Không thể lấy mã đơn hàng. Vui lòng thử lại.');
         return;
       }
 
-      // 👉 Gửi sang trang BookingCompleted
       router.push({
-        pathname: "/acount/BookingCompleted",
+        pathname: '/acount/BookingCompleted',
         params: {
-          bookingId, // ✅ đảm bảo là chuỗi
+          bookingId,
           title: tour_title,
           quantityAdult: quantityAdult.toString(),
           quantityChild: quantityChild.toString(),
-          totalPrice: finalPrice.toString(),
+          totalPrice: (finalPriceBeforeDiscount - discount).toString(),
           travelDate: selectedDate,
           image: image || '',
         },
       });
     } catch (error) {
-      console.error("❌ Lỗi khi tạo booking:", error.message || error);
-      Alert.alert("Lỗi", "Đặt tour thất bại. Vui lòng thử lại.");
+      console.error('Lỗi khi tạo booking:', error.message || error);
+      Alert.alert('Lỗi', 'Đặt tour thất bại. Vui lòng thử lại.');
     }
   };
 
+  const handleConfirmDate = (date) => {
+    const formatted = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+    setSelectedDate(formatted);
+    if (!availableDates.includes(formatted)) {
+      setAvailableDates(prevDates => [formatted, ...prevDates.slice(0, 3)]);
+    }
+    setDatePickerVisible(false);
+  };
+
+  const handleSelectDate = (date) => {
+    setSelectedDate(date);
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="chevron-back-outline" size={24} color={COLORS.black} />
@@ -135,7 +181,11 @@ export default function BookingScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={{ paddingBottom: 160 }}
+        showsVerticalScrollIndicator={false}
+      >
         {image ? (
           <View style={{ alignItems: 'center', marginBottom: 16 }}>
             <Image
@@ -146,7 +196,6 @@ export default function BookingScreen() {
           </View>
         ) : null}
         <View style={styles.comboTitleContainer}>
-
           <Text style={styles.comboTitle} numberOfLines={2}>
             {tour_title}
           </Text>
@@ -165,80 +214,106 @@ export default function BookingScreen() {
           </TouchableOpacity>
         </View>
 
+        {selectedOptionsDetails.length > 0 && (
+          <View style={styles.sectionBox}>
+            <Text style={styles.sectionTitle}>
+              Tùy chọn dịch vụ đã chọn
+            </Text>
+            {selectedOptionsDetails.map((option, index) => (
+              <View key={index} style={styles.optionItem}>
+                <Text style={styles.optionTitle}>{option.title}: {option.optionName}</Text>
+                {option.optionDescription && (
+                  <Text style={styles.optionDescription}>{option.optionDescription}</Text>
+                )}
+                <Text style={styles.optionPrice}>{formatPrice(option.optionPrice)}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={styles.sectionBox}>
-          <View style={styles.badgesContainer}>
-            <Text style={[styles.badgeText, { fontWeight: 'bold', color: 'black', fontSize: 20 }]}>Xin chọn ngày tham gia</Text>
+          <Text style={styles.sectionTitle}>Vui lòng chọn ngày sử dụng</Text>
+          <View style={styles.serviceStatusRow}>
+            <Text style={styles.serviceStatusText}>Xem trạng thái dịch vụ</Text>
+            <TouchableOpacity
+              onPress={() => setDatePickerVisible(true)}
+              style={styles.dateRangeButton}
+            >
+              <Text style={styles.dateRangeText}>15/7 - 31/12</Text>
+              <Ionicons name="chevron-forward-outline" size={18} color={COLORS.darkGray || '#666'} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateSelectorScrollView}>
+            {availableDates.map((date, index) => {
+              const [day, month] = date.split('/');
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.dateButton, selectedDate === date && styles.dateButtonSelected,]}
+                  onPress={() => handleSelectDate(date)}
+                >
+                  <Text style={[styles.dateButtonText, selectedDate === date && styles.dateButtonTextSelected,]}>
+                    {`${day}/${month}`}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+            <TouchableOpacity
+              style={[styles.dateButton, styles.dateButtonDisabled]}
+              onPress={() => setDatePickerVisible(true)}
+            >
+              <Ionicons name="calendar-outline" size={20} color={COLORS.black} />
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirmDate}
+          onCancel={() => setDatePickerVisible(false)}
+          locale="vi_VN"
+          confirmTextIOS="Xác nhận"
+          cancelTextIOS="Hủy"
+        />
+
+        <View style={styles.sectionBox}>
+          <Text style={styles.sectionTitle}>Chọn số lượng</Text>
+          <View style={styles.quantityRow}>
+            <Text style={styles.quantityLabel}>Người lớn</Text>
+            <Text style={styles.priceText}>{formatPrice(adultPrice)}</Text>
+            <View style={styles.quantityControls}>
+              <TouchableOpacity onPress={decrementAdult} style={styles.quantityButton}>
+                <Ionicons name="remove-circle-outline" size={28} color={COLORS.black} />
+              </TouchableOpacity>
+              <Text style={styles.quantityValue}>{quantityAdult}</Text>
+              <TouchableOpacity onPress={incrementAdult} style={styles.quantityButton}>
+                <Ionicons name="add-circle-outline" size={28} color={COLORS.black} />
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={styles.divider} />
-          <View style={styles.statusRow}>
-            <Text style={[styles.sectionLabel, { fontWeight: 'bold', color: 'black', fontSize: 16 }]}>Xem trạng thái dịch vụ</Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => setShowPicker(true)}
-            style={[
-              styles.datePickerButton,
-              selectedDate && styles.datePickerSelected,
-            ]}
-          >
-            <Text style={styles.datePickerText}>
-              {selectedDate ? selectedDate : "Chọn ngày"}
-            </Text>
-          </TouchableOpacity>
-          {showPicker && (
-            <DateTimePicker
-              value={new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, date) => {
-                setShowPicker(false);
-                if (date) {
-                  const d = new Date(date);
-                  const formatted = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-                  setSelectedDate(formatted);
-                }
-              }}
-            />
-          )}
-        </View>
-
-        <View style={styles.sectionBox}>
-          <View style={styles.section}>
-            <View style={styles.quantityRow}>
-              <Text style={styles.quantityLabel}>Người lớn</Text>
-              <Text style={styles.priceText}>{formatPrice(DEFAULT_ADULT_PRICE)}</Text>
-              <View style={styles.quantityControls}>
-                <TouchableOpacity onPress={decrementAdult} style={styles.quantityButton}>
-                  <Ionicons name="remove-circle-outline" size={24} color={COLORS.black} />
-                </TouchableOpacity>
-                <Text style={styles.quantityValue}>{quantityAdult}</Text>
-                <TouchableOpacity onPress={incrementAdult} style={styles.quantityButton}>
-                  <Ionicons name="add-circle-outline" size={24} color={COLORS.black} />
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={styles.quantityRow}>
-              <Text style={styles.quantityLabel}>Trẻ em(5-8)</Text>
-              <Text style={styles.priceText}>{formatPrice(DEFAULT_CHILD_PRICE)}</Text>
-              <View style={styles.quantityControls}>
-                <TouchableOpacity onPress={decrementChild} style={styles.quantityButton}>
-                  <Ionicons name="remove-circle-outline" size={24} color={COLORS.black} />
-                </TouchableOpacity>
-                <Text style={styles.quantityValue}>{quantityChild}</Text>
-                <TouchableOpacity onPress={incrementChild} style={styles.quantityButton}>
-                  <Ionicons name="add-circle-outline" size={24} color={COLORS.black} />
-                </TouchableOpacity>
-              </View>
+          <View style={styles.quantityRow}>
+            <Text style={styles.quantityLabel}>Trẻ em (5-8 tuổi)</Text>
+            <Text style={styles.priceText}>{formatPrice(DEFAULT_CHILD_PRICE)}</Text>
+            <View style={styles.quantityControls}>
+              <TouchableOpacity onPress={decrementChild} style={styles.quantityButton}>
+                <Ionicons name="remove-circle-outline" size={28} color={COLORS.black} />
+              </TouchableOpacity>
+              <Text style={styles.quantityValue}>{quantityChild}</Text>
+              <TouchableOpacity onPress={incrementChild} style={styles.quantityButton}>
+                <Ionicons name="add-circle-outline" size={28} color={COLORS.black} />
+              </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* Hiển thị thông tin voucher nếu có */}
         {discount > 0 && (
           <View style={styles.sectionBox}>
-            <Text style={[styles.sectionLabel, { fontWeight: 'bold', color: 'black', fontSize: 16 }]}>
+            <Text style={styles.sectionTitle}>
               Voucher đã áp dụng
             </Text>
-            <Text style={styles.priceText}>
+            <Text style={styles.discountText}>
               Giảm: {formatPrice(discount)}
             </Text>
           </View>
@@ -246,264 +321,19 @@ export default function BookingScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <View style={styles.topRow}>
-          <Text style={styles.totalPrice}>{formatPrice(finalPrice)}</Text>
-          <View style={styles.rewardBadge}>
-            <Text style={styles.rewardText}>EKSORA Xu +28</Text>
-          </View>
+        <View style={styles.footerTopRow}>
+          <Text style={styles.totalPriceLabel}>Tổng cộng:</Text>
+          <Text style={styles.totalPrice}>{formatPrice(finalPriceBeforeDiscount - discount)}</Text>
         </View>
-        <TouchableOpacity style={styles.bookNowButton} onPress={handleBooking}>
-          <Text style={styles.bookNowButtonText}>Đặt ngay</Text>
-        </TouchableOpacity>
+        <View style={styles.footerButtonContainer}>
+          <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
+            <Ionicons name="cart-outline" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.bookNowButton} onPress={handleBooking}>
+            <Text style={styles.bookNowButtonText}>Đặt ngay</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.white, top: 20 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.white,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: COLORS.gray,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.black
-  },
-
-
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16
-  },
-
-
-  comboTitleContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  comboTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    flex: 1,
-    marginRight: 8
-  },
-
-
-  detailText: {
-
-    fontSize: 15,
-    color: COLORS.primary,
-    fontWeight: "bold"
-  },
-
-  section: {
-    marginBottom: 24
-  },
-
-  sectionBox: {
-    borderWidth: 1,
-    borderColor: COLORS.gray,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-  },
-
-
-  badgesContainer: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-
-  badge: {
-    borderWidth: 1,
-    borderColor: COLORS.gray,
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginRight: 8,
-    backgroundColor: COLORS.white,
-  },
-
-  badgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: COLORS.gray,
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.gray,
-    marginBottom: 12,
-  },
-
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-
-  statusButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  statusButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginRight: 4,
-    color: COLORS.black,
-  },
-
-  buttontextoption: {
-    width: 100,
-    height: 30,
-    fontSize: 14,
-    fontWeight: "bold",
-    justifyContent: '',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    marginBottom: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.gray,
-    marginRight: 8,
-  },
-
-
-  statusText: {
-    fontSize: 12,
-    color: COLORS.gray,
-    marginBottom: 8
-  },
-
-
-  dateScroll:
-    { flexGrow: 0 },
-
-  dateButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.gray,
-    marginRight: 8,
-  },
-  dateButtonSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  dateButtonText: { fontSize: 14, color: COLORS.gray },
-  dateButtonTextSelected: { color: COLORS.white },
-  quantityRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  quantityLabel: { fontSize: 14, fontWeight: "bold", flex: 1 },
-  priceText: { fontSize: 14, color: COLORS.black, width: 100, textAlign: "right" },
-  quantityControls: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  quantityButton: {
-    paddingHorizontal: 8,
-  },
-  quantityValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginHorizontal: 8,
-    minWidth: 20,
-    textAlign: "center",
-  },
-  footer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    bottom: 30,
-    borderTopColor: COLORS.gray,
-    backgroundColor: COLORS.white,
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  totalPrice: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.black,
-  },
-  rewardBadge: {
-    backgroundColor: '#C5F1C5', // xanh lá nhạt
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  rewardText: {
-    color: '#008000', // xanh đậm
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  bookNowButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 12,
-    borderRadius: 24,
-    alignItems: 'center',
-    width: '100%',
-  },
-  bookNowButtonText: {
-    color: COLORS.white,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  datePickerButton: {
-    borderWidth: 1,
-    borderColor: '#4A90E2', // Viền xanh nhẹ
-    backgroundColor: '#E6F0FA', // Nền xanh nhạt
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-start', // Hoặc 'center' nếu bạn muốn căn giữa toàn bộ
-    marginTop: 8,
-  },
-
-  datePickerText: {
-    color: '#000',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  datePickerSelected: {
-    backgroundColor: '#D8EBFF', // xanh nhạt hơn khi đã chọn
-  }
-
-
-
-
-});

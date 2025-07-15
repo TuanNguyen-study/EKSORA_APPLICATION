@@ -15,21 +15,41 @@ import { useRouter } from 'expo-router';
 import { useCart } from '../../../store/CartContext'; 
 import CartItem from './components/CartItem';
 
+// Helper function để định dạng tiền tệ
 const formatCurrency = (amount) => {
-  return `đ ${amount?.toLocaleString('vi-VN') || '0'}`;
+  if (typeof amount !== 'number') return '0 đ';
+  return `${amount.toLocaleString('vi-VN')} đ`;
 };
 
 const ShoppingCartScreen = () => {
+  // Hooks
   const { cartItems, removeFromCart } = useCart();
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState([]);
 
-  // Đồng bộ selectedIds khi cartItems thay đổi
+  // Đồng bộ hóa các sản phẩm được chọn khi giỏ hàng thay đổi
   useEffect(() => {
     setSelectedIds(cartItems.map((item) => item.id) || []);
   }, [cartItems]);
 
-  // Xử lý chọn/bỏ chọn sản phẩm
+  // Tính toán tổng tiền và tổng giảm giá của các sản phẩm được chọn
+  const { total, totalDiscount } = useMemo(() => {
+    return cartItems.reduce(
+      (acc, item) => {
+        if (selectedIds.includes(item.id)) {
+          const price = item.price || 0;
+          const originalPrice = item.originalPrice || price;
+          acc.total += price;
+          acc.totalDiscount += originalPrice - price;
+        }
+        return acc;
+      },
+      { total: 0, totalDiscount: 0 }
+    );
+  }, [cartItems, selectedIds]);
+
+  // --- Các hàm xử lý sự kiện ---
+
   const handleToggleSelect = (id) => {
     setSelectedIds((prevIds) =>
       prevIds.includes(id)
@@ -38,8 +58,7 @@ const ShoppingCartScreen = () => {
     );
   };
 
-  // Xử lý xóa sản phẩm
-  const handleDelete = (id) => {
+  const handleDeleteItem = (id) => {
     Alert.alert(
       'Xóa sản phẩm',
       'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?',
@@ -57,81 +76,90 @@ const ShoppingCartScreen = () => {
     );
   };
 
-  // Xử lý chỉnh sửa
-  const handleEdit = (id) => {
-    Alert.alert('Thông báo', `Chức năng sửa sản phẩm ${id} chưa được phát triển.`);
-  };
-
-  // Xử lý chọn tất cả
   const handleSelectAll = () => {
-    if (selectedIds.length === cartItems.length) {
-      setSelectedIds([]);
+    const allItemIds = cartItems.map((item) => item.id);
+    if (selectedIds.length === allItemIds.length) {
+      setSelectedIds([]); // Bỏ chọn tất cả
     } else {
-      setSelectedIds(cartItems.map((item) => item.id) || []);
+      setSelectedIds(allItemIds); // Chọn tất cả
     }
   };
 
-  // Tính tổng giá và giảm giá
-  const { total, totalDiscount } = useMemo(() => {
-    return (cartItems || []).reduce(
-      (acc, item) => {
-        if (selectedIds.includes(item.id)) {
-          acc.total += item.price || 0;
-          acc.totalDiscount += (item.originalPrice || 0) - (item.price || 0);
-        }
-        return acc;
-      },
-      { total: 0, totalDiscount: 0 }
-    );
-  }, [cartItems, selectedIds]);
+  /**
+   * Xử lý chính: Điều hướng đến màn hình hoàn tất đơn hàng.
+   * Thu thập dữ liệu các sản phẩm đã chọn và truyền qua params.
+   */
+  const handleProceedToCheckout = () => {
+    // 1. Lọc ra các sản phẩm đã được chọn.
+    const selectedItems = cartItems.filter((item) => selectedIds.includes(item.id));
 
+    // 2. Kiểm tra điều kiện trước khi điều hướng.
+    if (selectedItems.length === 0) {
+      Alert.alert('Chưa chọn sản phẩm', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
+      return;
+    }
+
+    // 3. Điều hướng và truyền dữ liệu.
+    // Dữ liệu phức tạp (mảng/object) phải được chuyển thành chuỗi JSON.
+    router.push({
+      pathname: '/acount/BookingCompleted', // <-- THAY BẰNG ĐƯỜNG DẪN MÀN HÌNH HOÀN TẤT ĐƠN HÀNG CỦA BẠN
+      params: {
+        totalPrice: total,
+        items: JSON.stringify(selectedItems),
+      },
+    });
+  };
+
+  // --- Render Component ---
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Giỏ hàng ({cartItems?.length || 0})</Text>
+        <Text style={styles.headerTitle}>Giỏ hàng ({cartItems.length})</Text>
         <TouchableOpacity onPress={handleSelectAll}>
           <Text style={styles.headerActionText}>
-            {selectedIds.length === (cartItems?.length || 0) ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+            {selectedIds.length === cartItems.length && cartItems.length > 0
+              ? 'Bỏ chọn tất cả'
+              : 'Chọn tất cả'}
           </Text>
         </TouchableOpacity>
       </View>
 
+      {/* Danh sách sản phẩm */}
       <FlatList
-        data={cartItems || []}
+        data={cartItems}
         renderItem={({ item }) => (
           <CartItem
             item={item}
             isSelected={selectedIds.includes(item.id)}
-            onToggleSelect={handleToggleSelect}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
+            onToggleSelect={() => handleToggleSelect(item.id)}
+            onDelete={() => handleDeleteItem(item.id)}
           />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>Giỏ hàng của bạn đang trống</Text>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Giỏ hàng của bạn đang trống</Text>
+          </View>
         }
       />
 
-      {/* Footer */}
+      {/* Footer chứa nút thanh toán */}
       <View style={styles.footer}>
-        <View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Tổng cộng ({selectedIds.length} Đơn vị)</Text>
-          </View>
-          <View style={styles.totalRow}>
+        <View style={styles.totalInfo}>
+          <Text style={styles.totalLabel}>Tổng cộng ({selectedIds.length} sản phẩm)</Text>
+          <View style={styles.priceContainer}>
             <Text style={styles.totalPrice}>{formatCurrency(total)}</Text>
             {totalDiscount > 0 && (
               <Text style={styles.totalDiscount}>
-                Giảm {formatCurrency(totalDiscount)}
+                (Giảm {formatCurrency(totalDiscount)})
               </Text>
             )}
           </View>
@@ -142,7 +170,7 @@ const ShoppingCartScreen = () => {
             selectedIds.length === 0 && styles.checkoutButtonDisabled,
           ]}
           disabled={selectedIds.length === 0}
-          onPress={() => Alert.alert('Thông báo', 'Chức năng thanh toán đang phát triển.')}
+          onPress={handleProceedToCheckout}
         >
           <Text style={styles.checkoutButtonText}>Thanh toán</Text>
         </TouchableOpacity>
