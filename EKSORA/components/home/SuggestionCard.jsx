@@ -3,36 +3,47 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
 
-// Lấy kích thước màn hình
 const { width } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.43;
+const IMAGE_HEIGHT = CARD_WIDTH * (2.5 / 4);
 
-// Cập nhật CARD_WIDTH và IMAGE_HEIGHT để linh hoạt với kích thước màn hình
-const CARD_WIDTH = width * 0.43;  
-const IMAGE_HEIGHT = CARD_WIDTH * (2.5 / 4); 
+const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/300';
 
-const SuggestionCard = ({ item, onPress }) => (
-  <TouchableOpacity style={styles.card} onPress={() => onPress(item)}>
-    {/* Chỉ hiển thị hình ảnh đầu tiên trong mảng */}
-    <Image source={{ uri: item.image }} style={styles.cardImage} />
+const SuggestionCard = ({ item, onPress }) => {
+  // đảm bảo image luôn là string
+  let imageUrl = PLACEHOLDER_IMAGE;
+  if (item?.image) {
+    if (Array.isArray(item.image)) {
+      imageUrl = item.image[0] || PLACEHOLDER_IMAGE;
+    } else if (typeof item.image === 'string') {
+      imageUrl = item.image;
+    }
+  }
 
-    {item.discount && (
-      <View style={styles.discountBadge}>
-        <Text style={styles.discountText}>{item.discount}%</Text>
+  return (
+    <TouchableOpacity style={styles.card} onPress={() => onPress(item)}>
+      <Image source={{ uri: imageUrl }} style={styles.cardImage} />
+
+      {item.discount && (
+        <View style={styles.discountBadge}>
+          <Text style={styles.discountText}>{item.discount}%</Text>
+        </View>
+      )}
+      <View style={styles.infoContainer}>
+        <Text style={styles.title} numberOfLines={3}>{item.name}</Text>
+
+        <View style={styles.ratingContainer}>
+          <Ionicons name="star" size={16} color="#FACC15" />
+          <Text style={styles.ratingText}>{item.rating}</Text>
+        </View>
+
+        <Text style={styles.currentPrice}>
+          Từ {item.price ? item.price.toLocaleString('vi-VN') : '0'}đ
+        </Text>
       </View>
-    )}
-    <View style={styles.infoContainer}>
-      <Text style={styles.title} numberOfLines={3}>{item.name}</Text>
-      {/* <Text style={styles.description} numberOfLines={2}>{item.description}</Text> */}
-
-      <View style={styles.ratingContainer}>
-        <Ionicons name="star" size={16} color="#FACC15" />
-        <Text style={styles.ratingText}>{item.rating}</Text>
-      </View>
-
-      <Text style={styles.currentPrice}>Từ {item.price.toLocaleString('vi-VN')}đ</Text>
-    </View>
-  </TouchableOpacity>
-);
+    </TouchableOpacity>
+  );
+};
 
 const styles = StyleSheet.create({
   card: {
@@ -47,11 +58,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     overflow: 'hidden',
-    width: CARD_WIDTH, 
+    width: CARD_WIDTH,
   },
   cardImage: {
     width: '100%',
-    height: IMAGE_HEIGHT, 
+    height: IMAGE_HEIGHT,
   },
   discountBadge: {
     position: 'absolute',
@@ -61,6 +72,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 5,
+  },
+  discountText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   infoContainer: {
     paddingTop: 8,
@@ -72,12 +88,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.text,
     marginBottom: 4,
-  },
-  description: {
-    fontSize: 13,
-    color: COLORS.textLight,
-    marginBottom: 8,
-    minHeight: 32,
   },
   ratingContainer: {
     flexDirection: 'row',
