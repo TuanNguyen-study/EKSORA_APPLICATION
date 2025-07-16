@@ -5,13 +5,13 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../../../../constants/colors";
+import BookingModalContent from "./Modal";
 import { useCart } from "../../../../store/CartContext";
-
-import BookingScreenModal from "./BookingScreenModal";
+import { Alert } from 'react-native';
 
 
 const StickyBookingFooter = ({
@@ -32,32 +32,31 @@ const StickyBookingFooter = ({
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const priceAdult = priceInfo.current || 0;
-  const priceChild = priceAdult / 2;
   const handleBookNow = () => {
-    setModalVisible(true);
-  };
-  const handleAddToCart = () => {
-    const tourItem = {
-      id: tourInfo._id || 'default_id',
-      name: tourName || 'Tên tour không xác định',
-      price: (priceInfo.current || 0) * 1000,
-      image: tourInfo.image?.[0] || 'https://via.placeholder.com/80',
-      description: tourInfo.description || 'Không có mô tả',
-      duration: tourInfo.duration,
-      location: tourInfo.location,
-      rating: tourInfo.rating,
-      services: tourInfo.services || [],
-      selectedOptions: currentSelectedPackages || {},
-    };
-    //console.log('Thêm vào giỏ hàng:', tourItem); 
-    addToCart(tourItem);
-    router.push('/ShoppingCartScreen');
-    if (onAddToCart) {
-      onAddToCart();
+    if (onBookNow) {
+      onBookNow(selectedVoucher);
+    } else {
+      router.push("/account/bookingScreen");
     }
+  };
 
+const handleAddToCart = () => {
+  if (!tourInfo) {
+    Alert.alert("Lỗi", "Không có thông tin tour để thêm vào giỏ hàng.");
+    return;
+  }
+
+  const tourItem = {
+    id: tourInfo._id || 'default_id',
+    name: tourName || 'Tên tour không xác định',
+    price: (priceInfo.current || 0) * 1000,
+    image: tourInfo.image?.[0] || 'https://via.placeholder.com/80',
+    description: tourInfo.description || 'Không có mô tả',
+    duration: tourInfo.duration,
+    location: tourInfo.location,
+    rating: tourInfo.rating,
+    services: tourInfo.services || [],
+    selectedOptions: currentSelectedPackages || {},
   };
 
   addToCart(tourItem);
@@ -152,19 +151,6 @@ const StickyBookingFooter = ({
             </Text>
           </TouchableOpacity>
         </View>
-
-      </View>
-      <BookingScreenModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        priceInfo={priceInfo}
-        tourName={tourName}
-        tourInfo={tourInfo}
-        currentSelectedPackages={currentSelectedPackages}
-        priceAdult={priceInfo.current || 0}
-        priceChild={(priceInfo.current || 0) / 2}
-      />
-    </>
 
       </View>
     </View>

@@ -22,20 +22,21 @@ import { COLORS } from '../../../constants/colors';
 import BookingItem from './BookingItem';
 
 const filterTabs = [
-  { status: 'pending', title: 'Đang chờ thanh toán' },
+  { status: 'pending', title: 'Đang chờ xác nhận' },
+  { status: 'confirmed', title: 'Đã giữ chỗ' },
   { status: 'paid', title: 'Đã thanh toán' },
   { status: 'ongoing', title: 'Đang diễn ra' },
   { status: 'completed', title: 'Hoàn thành' },
   { status: 'canceled', title: 'Đã hủy' },
-  // { status: 'refund_requested', title: 'Yêu cầu hoàn tiền' },
-  // { status: 'refunded', title: 'Đã hoàn tiền' },
+  { status: 'refund_requested', title: 'Yêu cầu hoàn tiền' },
+  { status: 'refunded', title: 'Đã hoàn tiền' },
   { status: 'expired', title: 'Hết hạn thanh toán' },
 ];
 
 export default function MyBookingsScreen() {
   const router = useRouter();
   const [bookings, setBookings] = useState([]);
-  const [selectedStatus, setSelectedStatus] = useState('pending');
+  const [selectedStatus, setSelectedStatus] = useState('confirmed');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);

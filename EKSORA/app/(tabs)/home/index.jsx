@@ -4,14 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
-  Image,
   Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
 import {
@@ -20,13 +19,13 @@ import {
   getToursByLocation,
 } from "../../../API/services/serverCategories";
 import DestinationChip from "../../../components/home/DestinationChip";
-import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
 import ImageCarouselCard from "../../../components/home/ImageCarouselCard";
-import PromoBanner from "../../../components/home/PromoBanner";
 import SuggestionCard from "../../../components/home/SuggestionCard";
+import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
+import PromoBanner from "../../../components/home/PromoBanner";
 import LoadingScreen from "../../../components/LoadingScreen";
 import { COLORS } from "../../../constants/colors";
-
+import { Image } from "react-native";
 
 const { width: screenWidth } = Dimensions.get("window");
 
