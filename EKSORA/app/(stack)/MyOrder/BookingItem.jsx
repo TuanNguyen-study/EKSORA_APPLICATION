@@ -27,15 +27,16 @@ const BookingItem = ({ item, onPress }) => {
 
   const imageUrl = tour_id.image?.[0];
   const statusConfig = {
-  paid: { text: 'ĐÃ XÁC NHẬN', color: COLORS.success, icon: 'check-circle' },
-  pending: { text: 'ĐANG CHỜ XÁC NHẬN', color: COLORS.warning, icon: 'clock-time-eight' },
-  confirmed: { text: 'ĐÃ GIỮ CHỖ', color: COLORS.success, icon: 'calendar-check' },
+  paid: { text: 'ĐÃ THANH TOÁN', color: COLORS.success, icon: 'check-circle' },
+  pending: { text: 'ĐANG CHỜ THANH TOÁN', color: COLORS.warning, icon: 'clock-time-eight' },
   canceled: { text: 'ĐÃ HỦY', color: COLORS.danger, icon: 'close-circle' },
-  refund_requested: { text: 'YÊU CẦU HOÀN TIỀN', color: COLORS.warning, icon: 'cash-refund' },
-  refunded: { text: 'ĐÃ HOÀN TIỀN', color: COLORS.success, icon: 'cash-multiple' },
+  ongoing: { text: 'ĐANG DIỄN RA', color: COLORS.primary, icon: 'run' },
+  completed: { text: 'HOÀN THÀNH', color: COLORS.success, icon: 'check-circle-outline' },
+  // refund_requested: { text: 'YÊU CẦU HOÀN TIỀN', color: COLORS.warning, icon: 'cash-refund' },
+  // refunded: { text: 'ĐÃ HOÀN TIỀN', color: COLORS.success, icon: 'cash-multiple' },
   expired: { text: 'HẾT HẠN', color: COLORS.grey, icon: 'calendar-remove' },
-  failed: { text: 'THANH TOÁN LỖI', color: COLORS.danger, icon: 'alert-circle-outline' }, // chỉ thêm nếu dùng
-  default: { text: 'KHÔNG RÕ', color: COLORS.grey, icon: 'help-circle' },
+  // failed: { text: 'THANH TOÁN LỖI', color: COLORS.danger, icon: 'alert-circle-outline' }, // chỉ thêm nếu dùng
+  // default: { text: 'KHÔNG RÕ', color: COLORS.grey, icon: 'help-circle' },
 };
 
   const currentStatus = statusConfig[status?.toLowerCase()] || statusConfig.default;
@@ -71,7 +72,7 @@ const BookingItem = ({ item, onPress }) => {
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="account-multiple" size={18} color={COLORS.primary} />
           <Text style={styles.infoText}>
-            Người lớn: {quantity_nguoiLon} x {formatPrice(price_nguoiLon)} | Trẻ em: {quantity_treEm} x {formatPrice(price_treEm)}
+            Người lớn: {quantity_nguoiLon}  | Trẻ em: {quantity_treEm} 
           </Text>
         </View>
 

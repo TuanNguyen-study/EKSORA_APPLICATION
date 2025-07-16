@@ -7,7 +7,7 @@ export const getFavoriteToursByUser = async (userId) => {
     const response = await AxiosInstance.get(`/api/favorites/${userId}`);
     return response;
   } catch (error) {
-    console.error(' Lỗi khi lấy danh sách tour yêu thích:', error);
+    // console.error(' Lỗi khi lấy danh sách tour yêu thích:', error);
     throw error;
   }
 };

@@ -1,7 +1,6 @@
 
-import React from 'react';
-import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '../../../../constants/colors';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -12,15 +11,16 @@ const StarRatingDisplay = ({ rating, size = 12, color = COLORS.warning }) => {
   const stars = [];
   for (let i = 1; i <= 5; i++) {
     if (i <= rating) {
-      stars.push(<Ionicons key={i} name="star" size={size} color={color} />);
+      stars.push(<Ionicons key={`full-${i}`} name="star" size={size} color={color} />);
     } else if (i - 0.5 <= rating) {
-      stars.push(<Ionicons key={i} name="star-half-sharp" size={size} color={color} />);
+      stars.push(<Ionicons key={`half-${i}`} name="star-half-sharp" size={size} color={color} />);
     } else {
-      stars.push(<Ionicons key={i} name="star-outline" size={size} color={color} />);
+      stars.push(<Ionicons key={`empty-${i}`} name="star-outline" size={size} color={color} />);
     }
   }
   return <View style={{ flexDirection: 'row' }}>{stars}</View>;
 };
+
 
 
 const ReviewItem = ({ review, style }) => { 

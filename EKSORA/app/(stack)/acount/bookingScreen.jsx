@@ -1,40 +1,69 @@
 import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
   Image,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from "react-native";
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useSelector } from 'react-redux';
 import { createBooking } from "../../../API/services/booking";
 import { COLORS } from "../../../constants/colors";
-export default function BookingScreen() {
+
+export default function BookingScreen({
+  isModal = false,
+  onClose,
+  tourName,
+  priceInfo,
+  tourInfo,
+  currentSelectedPackages,
+  priceAdult = 0,
+  priceChild = 0,
+}) {
 
   const router = useRouter();
   const params = useLocalSearchParams();
-  const [showPicker, setShowPicker] = useState(false);
-  const image = typeof params.image === 'string' ? decodeURIComponent(params.image) : '';
-  const tour_id = params.tour_id;
-  const tour_title = typeof params.tour_title === 'string' ? decodeURIComponent(params.tour_title) : '';
-  const total_price = Number(params.total_price || '0');
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
+  const showDatePicker = () => setDatePickerVisibility(true);
+  const hideDatePicker = () => setDatePickerVisibility(false);
+
+  const handleConfirm = (date) => {
+    const d = new Date(date);
+    const formatted = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+    setSelectedDate(formatted);
+    hideDatePicker();
+  };
+  const image = Array.isArray(params.image)
+    ? decodeURIComponent(params.image[0])
+    : typeof params.image === 'string'
+      ? decodeURIComponent(params.image)
+      : '';
+  const tour_id = tourInfo?._id || params?.tour_id;
+
+  console.log("tour_id:", tour_id);
+  const tour_title = tourName || (typeof params.tour_title === 'string' ? decodeURIComponent(params.tour_title) : '');
+  const total_price = priceInfo?.current || Number(params.total_price || '0');
+
   const selectedOptions = typeof params.selectedOptions === 'string' ? JSON.parse(params.selectedOptions) : {};
+  const voucher_id = params.voucher_id || null;
+  const discount = Number(params.discount || '0'); // Vẫn giữ để truyền sang BookingCompleted
   const userId = useSelector(state => state.auth.user?.id);
 
   console.log('▶️ tour_title:', tour_title);
   console.log('▶️ total_price:', total_price);
   console.log('▶️ selectedOptions:', selectedOptions);
-  const [selectedDate, setSelectedDate] = useState(null); // ✅ Ban đầu chưa chọn
-  const [quantityAdult, setQuantityAdult] = useState(0); // ✅ Default = 1
+  console.log('▶️ voucher_id:', voucher_id);
+  console.log('▶️ discount:', discount);
+
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [quantityAdult, setQuantityAdult] = useState(0);
   const [quantityChild, setQuantityChild] = useState(0);
-  const DEFAULT_ADULT_PRICE = 3000;//300000
-  const DEFAULT_CHILD_PRICE = 1500;//150000
 
   const incrementAdult = () => setQuantityAdult((q) => q + 1);
   const decrementAdult = () => setQuantityAdult((q) => (q > 0 ? q - 1 : q));
@@ -44,8 +73,10 @@ export default function BookingScreen() {
   const formatPrice = (price) =>
     price.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 
+  // Tính giá cuối cùng: chỉ thêm giá người lớn và trẻ em
   const finalPrice =
-    total_price + (quantityAdult * DEFAULT_ADULT_PRICE) + (quantityChild * DEFAULT_CHILD_PRICE);
+
+    (quantityAdult * priceAdult) + (quantityChild * priceChild);
 
   const handleBooking = async () => {
     if (!selectedDate) {
@@ -58,26 +89,27 @@ export default function BookingScreen() {
       return;
     }
 
-    // ✅ Convert ngày dd/mm/yyyy -> yyyy-mm-dd
-    const [day, month, year] = selectedDate.split('/');
-    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     if (!userId) {
       Alert.alert("Lỗi", "Không tìm thấy user. Vui lòng đăng nhập lại.");
       return;
     }
+
+    // Convert ngày dd/mm/yyyy -> yyyy-mm-dd
+    const [day, month, year] = selectedDate.split('/');
+    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+
     const bookingData = {
       user_id: userId,
-      tour_id,
+      tour_id: tourInfo?._id || tour_id,
       travel_date: formattedDate,
       quantity_nguoiLon: quantityAdult,
       quantity_treEm: quantityChild,
-      price_nguoiLon: DEFAULT_ADULT_PRICE,
-      price_treEm: DEFAULT_CHILD_PRICE,
-      optionServices: Object.values(selectedOptions).map(id => ({
-        option_service_id: id
-      })),
+      price_nguoiLon: priceAdult,
+      price_treEm: priceChild,
+      selectedOptions: selectedOptions,
       coin: 0,
-      voucher_id: null,
+      voucher_id: voucher_id || null,
+      discount: discount || 0,
     };
 
     console.log("📤 bookingData sắp gửi:", JSON.stringify(bookingData, null, 2));
@@ -95,10 +127,14 @@ export default function BookingScreen() {
       }
 
       // 👉 Gửi sang trang BookingCompleted
+      if (isModal && typeof onClose === 'function') {
+        onClose(); // ✅ Đóng modal nếu đang dùng modal
+      }
+
       router.push({
         pathname: "/acount/BookingCompleted",
         params: {
-          bookingId, // ✅ đảm bảo là chuỗi
+          bookingId,
           title: tour_title,
           quantityAdult: quantityAdult.toString(),
           quantityChild: quantityChild.toString(),
@@ -111,12 +147,19 @@ export default function BookingScreen() {
       console.error("❌ Lỗi khi tạo booking:", error.message || error);
       Alert.alert("Lỗi", "Đặt tour thất bại. Vui lòng thử lại.");
     }
+
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => {
+          if (isModal && onClose) {
+            onClose();
+          } else {
+            router.back();
+          }
+        }} style={styles.backButton}>
           <Ionicons name="chevron-back-outline" size={24} color={COLORS.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tùy chọn đơn hàng</Text>
@@ -140,10 +183,9 @@ export default function BookingScreen() {
           </Text>
           <TouchableOpacity onPress={() => { }} style={styles.detailButton}>
             <Text style={styles.detailText}>Chi tiết</Text>
-            <Ionicons name="chevron-forward-outline" size={16} color={COLORS.primary} />
+            <Ionicons name="chevron-forward-outline" size={20} color={COLORS.primary} />
           </TouchableOpacity>
         </View>
-
 
         <View style={styles.badgesContainer}>
           <TouchableOpacity style={styles.badge} onPress={() => { }}>
@@ -156,50 +198,72 @@ export default function BookingScreen() {
 
         <View style={styles.sectionBox}>
           <View style={styles.badgesContainer}>
-            <Text style={[styles.badgeText, { fontWeight: 'bold', color: 'black', fontSize: 20 }]}> Xin chọn ngày tham gia
-            </Text>
-
+            <Text style={[styles.badgeText, { fontWeight: 'bold', color: 'black', fontSize: 20 }]}>Xin chọn ngày tham gia</Text>
           </View>
-
           <View style={styles.divider} />
-
           <View style={styles.statusRow}>
-            <Text style={[styles.sectionLabel, { fontWeight: 'bold', color: 'black', fontSize: 16 }]}>Xem trạng thái dịch vụ</Text>
+            <Text style={[styles.sectionLabel, { fontWeight: 'bold', color: 'black', fontSize: 16 }]}>
+              Xem trạng thái dịch vụ
+            </Text>
+            <TouchableOpacity onPress={showDatePicker} style={styles.datePickerButton}>
+              <Text style={styles.datePickerText}>
+                {selectedDate || "Chọn ngày"}
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            onPress={() => setShowPicker(true)}
-            style={[
-              styles.datePickerButton,
-              selectedDate && styles.datePickerSelected,
-            ]}
-          >
-            <Text style={styles.datePickerText}>
-              {selectedDate ? selectedDate : "Chọn ngày"}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.dateBoxesWrapper}>
+          </View>
 
-          {showPicker && (
-            <DateTimePicker
-              value={new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, date) => {
-                setShowPicker(false);
-                if (date) {
-                  const d = new Date(date);
-                  const formatted = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-                  setSelectedDate(formatted);
-                }
-              }}
-            />
-          )}
+
+          {/* {showPicker && (
+            Platform.OS === 'android' ? (
+              <DateTimePicker
+                value={new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowPicker(false);
+                  if (event.type === 'set' && date) {
+                    const d = new Date(date);
+                    const formatted = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+                    setSelectedDate(formatted);
+                  }
+                }}
+              />
+            ) : (
+              <View style={{ backgroundColor: '#fff', marginTop: 12, borderRadius: 8 }}>
+                <DateTimePicker
+                  value={new Date()}
+                  mode="date"
+                  display="spinner"
+                  onChange={(event, date) => {
+                    if (date) {
+                      const d = new Date(date);
+                      const formatted = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+                      setSelectedDate(formatted);
+                    }
+                  }}
+                  style={{ backgroundColor: '#fff' }}
+                />
+                <TouchableOpacity
+                  style={{ padding: 12 }}
+                  onPress={() => setShowPicker(false)}
+                >
+                  <Text style={{ color: '#007aff', textAlign: 'center', fontWeight: 'bold' }}>
+                    Xong
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )
+          )} */}
         </View>
+
         <View style={styles.sectionBox}>
           <View style={styles.section}>
             <View style={styles.quantityRow}>
               <Text style={styles.quantityLabel}>Người lớn</Text>
-              <Text style={styles.priceText}>{formatPrice(DEFAULT_ADULT_PRICE)}</Text>
+              <Text style={styles.priceText}>{formatPrice(priceAdult)}</Text>
               <View style={styles.quantityControls}>
                 <TouchableOpacity onPress={decrementAdult} style={styles.quantityButton}>
                   <Ionicons name="remove-circle-outline" size={24} color={COLORS.black} />
@@ -210,10 +274,9 @@ export default function BookingScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-
             <View style={styles.quantityRow}>
               <Text style={styles.quantityLabel}>Trẻ em(5-8)</Text>
-              <Text style={styles.priceText}>{formatPrice(DEFAULT_CHILD_PRICE)}</Text>
+              <Text style={styles.priceText}>{formatPrice(priceChild)}</Text>
               <View style={styles.quantityControls}>
                 <TouchableOpacity onPress={decrementChild} style={styles.quantityButton}>
                   <Ionicons name="remove-circle-outline" size={24} color={COLORS.black} />
@@ -226,7 +289,9 @@ export default function BookingScreen() {
             </View>
           </View>
         </View>
+
       </ScrollView>
+
 
       <View style={styles.footer}>
         <View style={styles.topRow}>
@@ -234,8 +299,15 @@ export default function BookingScreen() {
           <View style={styles.rewardBadge}>
             <Text style={styles.rewardText}>EKSORA Xu +28</Text>
           </View>
-        </View>
 
+        </View>
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
+          locale="vi-VN"
+        />
 
 
 
@@ -248,8 +320,10 @@ export default function BookingScreen() {
         </TouchableOpacity>
       </View>
 
+
     </View>
   );
+
 }
 
 const styles = StyleSheet.create({
@@ -302,10 +376,13 @@ const styles = StyleSheet.create({
 
 
   detailText: {
-
-    fontSize: 15,
+    fontSize: 16,
     color: COLORS.primary,
-    fontWeight: "bold"
+    fontWeight: "bold",
+  },
+  detailButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   section: {
@@ -474,26 +551,56 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   datePickerButton: {
-    borderWidth: 1,
-    borderColor: '#4A90E2', // Viền xanh nhẹ
-    backgroundColor: '#E6F0FA', // Nền xanh nhạt
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+
+
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-start', // Hoặc 'center' nếu bạn muốn căn giữa toàn bộ
-    marginTop: 8,
+    marginTop: 4,
+    marginRight: 8,
   },
 
   datePickerText: {
-    color: '#000',
+    color: '#000000',
     fontWeight: 'bold',
     fontSize: 16,
   },
   datePickerSelected: {
-    backgroundColor: '#D8EBFF', // xanh nhạt hơn khi đã chọn
-  }
+
+  },
+
+  dateBoxesWrapper: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: COLORS.white,
+  },
+
+  dateBoxesTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 8,
+    color: COLORS.black,
+  },
+
+  dateBoxesContainer: {
+
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+
+  dateBox: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginRight: 8,
+  },
+
+  dateBoxText: {
+    fontSize: 14,
+    color: '#000',
+  },
 
 
 

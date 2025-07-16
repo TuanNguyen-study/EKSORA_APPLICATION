@@ -69,7 +69,7 @@ export default function BookingCompleted() {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => setUseSavedUser(false)}
               style={[
                 styles.optionBox,
@@ -78,7 +78,7 @@ export default function BookingCompleted() {
               <Text style={[styles.optionText, !useSavedUser && styles.optionTextSelected]}>
                 + Thêm
               </Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
 
@@ -100,9 +100,9 @@ export default function BookingCompleted() {
                 <Text style={styles.userLabel}>Email address</Text>
                 <Text style={styles.userValue}>{newUser?.email || user?.email}</Text>
               </View>
-              <TouchableOpacity style={styles.editButton}>
+              {/* <TouchableOpacity style={styles.editButton}>
                 <Text style={styles.editText}>Chỉnh sửa</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
 
           ) : (
@@ -148,7 +148,7 @@ export default function BookingCompleted() {
             </>
           )}
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.confirmButton}
             onPress={() => {
               const { firstName, lastName, phone, email } = contactInfo;
@@ -162,7 +162,7 @@ export default function BookingCompleted() {
             }}
           >
             <Text style={styles.confirmButtonText}>Xác nhận</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
 
@@ -207,7 +207,6 @@ export default function BookingCompleted() {
                 fullName: `${newUser?.lastName || user?.lastName} ${newUser?.firstName || user?.firstName}`,
                 phone: newUser?.phone || user?.phone,
                 email: newUser?.email || user?.email,
-                image,
               }
             });
             console.log("🔁 image gửi đi:", image);

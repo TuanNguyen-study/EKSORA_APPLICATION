@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../../constants/colors';
 
 const { width } = Dimensions.get('window');

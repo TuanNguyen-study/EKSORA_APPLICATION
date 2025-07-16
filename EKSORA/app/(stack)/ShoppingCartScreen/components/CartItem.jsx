@@ -16,7 +16,7 @@ const CartItem = ({ item, isSelected, onToggleSelect, onDelete, onEdit }) => {
     return null;
   }
 
-  console.log('Dữ liệu item trong CartItem:', item);
+  //console.log('Dữ liệu item trong CartItem:', item);
 
   const discountAmount = item.originalPrice ? item.originalPrice - (item.price || 0) : 0;
   const discountPercent = item.discountPercent || 0;
