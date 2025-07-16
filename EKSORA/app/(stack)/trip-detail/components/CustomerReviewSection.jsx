@@ -67,7 +67,7 @@ const handleViewAllPress = () => {
       <FlatList
         data={reviews}
         renderItem={({ item }) => <ReviewItem review={item} />}
-        keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
+        keyExtractor={(item) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.reviewsCarouselContent}
