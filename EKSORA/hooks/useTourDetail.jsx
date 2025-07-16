@@ -1,5 +1,3 @@
-// Custom Hook này chứa toàn bộ state và logic cho màn hình chi tiết tour.
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { fetchTourDetail } from '../API/services/tourService';
@@ -36,7 +34,7 @@ export const useTourDetail = (productId) => {
     const totalBeforeDiscount = basePrice + optionTotal;
     const finalPrice = formatPrice(totalBeforeDiscount, voucher);
     setCurrentTotalPrice(finalPrice);
-  }, [productData]); // Phụ thuộc vào productData để lấy giá gốc và các gói dịch vụ
+  }, [productData]); 
 
   // Logic tải dữ liệu tour
   const loadTourDetails = useCallback(async (id) => {
@@ -135,7 +133,7 @@ export const useTourDetail = (productId) => {
     router.push('/(stack)/ShowReview');
   };
 
-  const onBookNow = () => {
+const onBookNow = () => {
     if (!productData) return;
     
     const basePriceForBooking = productData.price.current || 0;
@@ -146,8 +144,13 @@ export const useTourDetail = (productId) => {
         }
         return sum;
     }, 0);
-    const totalBeforeDiscount = basePriceForBooking + optionTotal;
-    const discount = selectedVoucher?.voucher_id?.discount && totalBeforeDiscount >= (selectedVoucher.voucher_id.min_order_value || 0) ? (totalBeforeDiscount * selectedVoucher.voucher_id.discount) / 100 : 0;
+
+    // Đây là giá cho 1 người lớn đã bao gồm tất cả các tùy chọn
+    const finalPricePerAdult = basePriceForBooking + optionTotal;
+    
+    const discount = selectedVoucher?.voucher_id?.discount && finalPricePerAdult >= (selectedVoucher.voucher_id.min_order_value || 0) 
+        ? (finalPricePerAdult * selectedVoucher.voucher_id.discount) / 100 
+        : 0;
     
     const selectedOptionsDetails = Object.entries(currentSelectedPackages).map(([packageId, optionId]) => {
         const pkg = productData.availableServicePackages.find((p) => p.id === packageId);
@@ -164,7 +167,8 @@ export const useTourDetail = (productId) => {
     const query = new URLSearchParams({
         tour_id: productData._id,
         tour_title: productData.name,
-        total_price: basePriceForBooking.toString(),
+        // SỬA Ở ĐÂY: Truyền đi giá cuối cùng cho 1 người lớn
+        total_price: finalPricePerAdult.toString(),
         selectedOptions: JSON.stringify(currentSelectedPackages),
         selectedOptionsDetails: JSON.stringify(selectedOptionsDetails),
         image: productData.images[0]?.uri ? encodeURIComponent(productData.images[0].uri) : '',
@@ -173,7 +177,7 @@ export const useTourDetail = (productId) => {
     }).toString();
 
     router.push(`/acount/bookingScreen?${query}`);
-  };
+};
 
   // Trả về tất cả state và hàm mà UI component cần
   return {

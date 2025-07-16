@@ -79,30 +79,24 @@ const ShoppingCartScreen = () => {
   const handleSelectAll = () => {
     const allItemIds = cartItems.map((item) => item.id);
     if (selectedIds.length === allItemIds.length) {
-      setSelectedIds([]); // Bỏ chọn tất cả
+      setSelectedIds([]); 
     } else {
-      setSelectedIds(allItemIds); // Chọn tất cả
+      setSelectedIds(allItemIds); 
     }
   };
 
-  /**
-   * Xử lý chính: Điều hướng đến màn hình hoàn tất đơn hàng.
-   * Thu thập dữ liệu các sản phẩm đã chọn và truyền qua params.
-   */
   const handleProceedToCheckout = () => {
-    // 1. Lọc ra các sản phẩm đã được chọn.
     const selectedItems = cartItems.filter((item) => selectedIds.includes(item.id));
 
-    // 2. Kiểm tra điều kiện trước khi điều hướng.
+
     if (selectedItems.length === 0) {
       Alert.alert('Chưa chọn sản phẩm', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
       return;
     }
 
-    // 3. Điều hướng và truyền dữ liệu.
-    // Dữ liệu phức tạp (mảng/object) phải được chuyển thành chuỗi JSON.
+
     router.push({
-      pathname: '/acount/BookingCompleted', // <-- THAY BẰNG ĐƯỜNG DẪN MÀN HÌNH HOÀN TẤT ĐƠN HÀNG CỦA BẠN
+      pathname: '/acount/BookingCompleted', 
       params: {
         totalPrice: total,
         items: JSON.stringify(selectedItems),
@@ -240,7 +234,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   checkoutButtonDisabled: {
-    backgroundColor: '#FFCBA4',
+    backgroundColor: '#bfbfc6ff',
   },
   checkoutButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
 });

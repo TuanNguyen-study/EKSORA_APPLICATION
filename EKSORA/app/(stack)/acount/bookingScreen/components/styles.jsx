@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { COLORS } from "../../../constants/colors";
+import { COLORS } from "../../../../../constants/colors";
 
 export default StyleSheet.create({
   container: {
@@ -100,7 +100,7 @@ export default StyleSheet.create({
   },
   dateButtonSelected: {
     backgroundColor: COLORS.white,
-    borderColor: '#FF7F50',
+    borderColor: '#2a6ee4ff',
     borderWidth: 1.5,
   },
   dateButtonText: {
@@ -109,7 +109,7 @@ export default StyleSheet.create({
     fontWeight: '500',
   },
   dateButtonTextSelected: {
-    color: '#FF7F50',
+    color: '#2a6ee4ff',
     fontWeight: 'bold',
   },
   dateButtonDisabled: {
@@ -202,7 +202,6 @@ export default StyleSheet.create({
     fontWeight: 'bold',
     color: 'green',
   },
-  // --- FOOTER STYLES  ---
   footer: {
     paddingHorizontal: 16,
     paddingTop: 12,
