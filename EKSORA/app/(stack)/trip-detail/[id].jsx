@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { fetchTourDetail } from '../../../API/services/tourService';
-import { useReviewContext } from '../../../store/ReviewContext';
+
+import { useTourDetail } from '../../../hooks/useTourDetail'; 
 import { COLORS } from '../../../constants/colors';
 import CustomerReviewSection from './components/CustomerReviewSection';
 import NoteContactSection from './components/NoteContactSection';
@@ -23,219 +23,28 @@ import StickyBookingFooter from './components/StickyBookingFooter';
 import DescriptionSection from './components/DescriptionSection';
 import TripHighlightsSection from './components/TripHighlightsSection';
 
-// CÁC HÀM HELPER
-const prepareProductInfo = (tour, services, highlights, reviews) => {
-  return {
-    name: tour.name,
-    departurePoint: tour.province,
-    rating: {
-      stars: tour.rating || 0,
-      count: reviews.length,
-      detailsText: `${reviews.length} Đánh giá`,
-    },
-    tags: [
-      { label: 'Lịch sử', isSpecial: false },
-      { label: 'Văn hóa', isSpecial: false },
-      { label: 'Ẩm thực', isSpecial: true },
-    ],
-    summaryHighlight: {
-      items: highlights.map((item) => item.location_name),
-    },
-    offers: services.map((service) => ({
-      label: service.name || service.title,
-      icon: 'pricetag-outline',
-      bgColor: '#E6F0FA',
-      textColor: '#1E88E5',
-    })),
-  };
-};
-
-const parseDescription = (htmlString) => {
-  if (!htmlString) return [];
-
-  const result = [];
-  let idCounter = 0;
-  const seenDescriptions = new Set();
-
-  // Đoạn giới thiệu
-  const introMatch = htmlString.match(/<p>(.*?)<\/p>/);
-  if (introMatch) {
-    result.push({ id: `desc-${idCounter++}`, type: 'text', content: introMatch[1].replace(/<[^>]*>?/gm, '') });
-  }
-
-  // Các đoạn hình ảnh và mô tả
-  const figureMatches = htmlString.matchAll(/<figure class="image"><img[^>]+src="([^"]+)"[^>]*><\/figure><blockquote><p>(.*?)<\/p><\/blockquote>/g);
-  for (const match of figureMatches) {
-    const image = match[1];
-    const content = match[2].replace(/<[^>]*>?/gm, '');
-    if (!seenDescriptions.has(content)) {
-      seenDescriptions.add(content);
-      result.push({ id: `desc-${idCounter++}`, type: 'image-text', image, content });
-    }
-  }
-
-  // Đoạn lưu ý
-  const noteMatch = htmlString.match(/<h3><strong>Xin lưu ý:.*?(<ul>.*?<\/ul>)/s);
-  if (noteMatch) {
-    result.push({
-      id: `desc-${idCounter++}`,
-      type: 'text',
-      content: `Xin lưu ý: Sẽ áp dụng phụ phí nếu ngày tham gia của bạn trùng với ngày lễ, thanh toán tại chỗ (Vui lòng kiểm tra chi tiết gói để tham khảo).${noteMatch[1]}`,
-    });
-  }
-
-  // Nếu không có kết quả nào được phân tích, trả về một đoạn text mặc định
-  if (result.length === 0) {
-    result.push({ id: `desc-${idCounter++}`, type: 'text', content: htmlString.replace(/<[^>]*>?/gm, '') });
-  }
-
-  return result;
-};
-
-const formatPrice = (price, selectedVoucher) => {
-  const value = typeof price === 'number' ? price : parseFloat(price);
-  if (isNaN(value)) return 0;
-  let finalPrice = value;
-  if (selectedVoucher?.voucher_id?.discount) {
-    const discount = selectedVoucher.voucher_id.discount;
-    const minOrderValue = selectedVoucher.voucher_id.min_order_value || 0;
-    if (value >= minOrderValue) {
-      finalPrice = value - (value * discount) / 100;
-    } else {
-      Alert.alert('Thông báo', `Đơn hàng phải từ ${minOrderValue.toLocaleString('vi-VN')}đ để áp dụng voucher này.`);
-    }
-  }
-  return Math.max(0, finalPrice);
-};
-
-
 export default function TripDetailScreen() {
   const router = useRouter();
   const { id: productId } = useLocalSearchParams();
-  const { setReviewData } = useReviewContext();
-  const mappedReviewsRef = useRef([]);
 
-  // STATE VÀ LOGIC
-  const [productData, setProductData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [currentSelectedPackages, setCurrentSelectedPackages] = useState({});
-  const [currentTotalPrice, setCurrentTotalPrice] = useState(0);
-  const [selectedVoucher, setSelectedVoucher] = useState(null);
+  // Gọi custom hook để lấy tất cả state và logic
+  const {
+    productData,
+    loading,
+    error,
+    refreshing,
+    currentTotalPrice,
+    currentSelectedPackages,
+    selectedVoucher,
+    loadTourDetails,
+    onRefresh,
+    handleApplyVoucher,
+    handleSelectionUpdate,
+    onSeeAllReviews,
+    onBookNow,
+  } = useTourDetail(productId);
 
-  const handleApplyVoucher = (voucher) => {
-    setSelectedVoucher(voucher);
-    recalculateTotalPrice(currentSelectedPackages, voucher);
-  };
-
-  const recalculateTotalPrice = (packagesMap, voucher) => {
-    if (!productData) return;
-    const basePrice = productData.price.current;
-    const optionTotal = Object.values(packagesMap).reduce((sum, optId) => {
-      for (const pkg of productData.availableServicePackages) {
-        const option = pkg.options.find((opt) => opt.id === optId);
-        if (option) return sum + (option.price || 0);
-      }
-      return sum;
-    }, 0);
-    const totalBeforeDiscount = basePrice + optionTotal;
-    const finalPrice = formatPrice(totalBeforeDiscount, voucher);
-    setCurrentTotalPrice(finalPrice);
-  };
-
-  const loadTourDetails = useCallback(async (id) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { tour, services = [], highlights = [], reviews = [] } = await fetchTourDetail(id);
-      if (!tour || !tour._id) throw new Error('Dữ liệu tour không hợp lệ.');
-      const availableServicePackages = services.map((svc) => ({
-        id: svc._id,
-        title: svc.title || svc.name,
-        options: (svc.options || []).map((opt) => ({
-          id: opt._id,
-          name: opt.name,
-          description: opt.description,
-          price: opt.price_extra,
-        })),
-      }));
-      const mappedReviews = reviews.map((r) => {
-        const hasValidName = (r.user?.first_name && r.user?.first_name.trim()) || (r.user?.last_name && r.user?.last_name.trim());
-        return {
-          _id: r._id,
-          userName: hasValidName ? `${r.user?.first_name?.trim() || ''} ${r.user?.last_name?.trim() || ''}`.trim() : r.user_name || 'Khách ẩn danh',
-          userAvatar: r.user?.avatarUrl || null,
-          rating: r.rating,
-          comment: r.comment,
-          date: new Date(r.created_at).toLocaleDateString('vi-VN'),
-        };
-      });
-      mappedReviewsRef.current = mappedReviews;
-      // Giờ đây descriptionContent sẽ có các phần tử với id duy nhất
-      const descriptionContent = parseDescription(tour.description || '');
-      const productInfo = prepareProductInfo(tour, services, highlights, reviews);
-      const mappedProductData = {
-        ...tour,
-        images: (tour.image || []).map((uri, i) => ({ id: `img_${i}`, uri })),
-        price: { current: tour.price ?? 0, original: tour.price ?? 0, currency: 'đ', unit: 'người' },
-        rating: { stars: tour.rating ?? 0, count: mappedReviews.length },
-        availableServicePackages,
-        availableDateFilters: [],
-        descriptionContent,
-        reviews: mappedReviews,
-        tripNotes: tour.tripNotes || null,
-        contactInformation: { supplier: tour.supplier_id || null },
-        services,
-        highlights,
-        productInfo,
-      };
-      setProductData(mappedProductData);
-      setCurrentTotalPrice(mappedProductData.price.current);
-    } catch (e) {
-      console.error('Lỗi khi lấy chi tiết tour:', e);
-      setError(e.message || 'Đã xảy ra lỗi khi tải dữ liệu.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (productId) loadTourDetails(productId);
-  }, [productId, loadTourDetails]);
-
-  const onRefresh = () => {
-    if (productId) {
-      setRefreshing(true);
-      loadTourDetails(productId);
-    }
-  };
-
-  const onBookNow = () => {
-    const basePrice = productData?.price?.current || 0;
-    const optionTotal = Object.values(currentSelectedPackages).reduce((sum, optId) => {
-      for (const pkg of productData.availableServicePackages) {
-        const option = pkg.options.find((opt) => opt.id === optId);
-        if (option) return sum + (option.price || 0);
-      }
-      return sum;
-    }, 0);
-    const totalBeforeDiscount = basePrice + optionTotal;
-    const discount = selectedVoucher?.voucher_id?.discount && totalBeforeDiscount >= (selectedVoucher.voucher_id.min_order_value || 0) ? (totalBeforeDiscount * selectedVoucher.voucher_id.discount) / 100 : 0;
-    const total_price = formatPrice(totalBeforeDiscount, selectedVoucher);
-    const query = new URLSearchParams({
-      tour_id: productData._id,
-      tour_title: productData.name,
-      total_price: total_price.toString(),
-      selectedOptions: JSON.stringify(currentSelectedPackages),
-      voucher_id: selectedVoucher ? selectedVoucher._id : '',
-      discount: discount.toString(),
-    }).toString();
-    router.push(`/acount/bookingScreen?${query}`);
-  };
-
-  // MÀN HÌNH LOADING VÀ LỖI
+  // Màn hình Loading
   if (loading && !productData) {
     return (
       <View style={styles.centered}>
@@ -245,6 +54,7 @@ export default function TripDetailScreen() {
     );
   }
 
+  // Màn hình Lỗi
   if (error && !productData) {
     return (
       <View style={styles.centered}>
@@ -258,7 +68,7 @@ export default function TripDetailScreen() {
     );
   }
 
-  // PHẦN HIỂN THỊ CHÍNH
+  // Màn hình chính
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -267,32 +77,26 @@ export default function TripDetailScreen() {
         data={[{ key: 'main-content' }]}
         keyExtractor={(item) => item.key}
         showsVerticalScrollIndicator={false}
-
         ListHeaderComponent={
-          <View style={{ paddingTop: 16 }}>
-            <ProductImageCarousel
-              images={productData.images}
-              tourId={productData._id}
-              onBackPress={() =>
-                router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
-              }
-              onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
-              onFavoritePress={() => console.log('Đã nhấn nút yêu thích.')}
-            />
-          </View>
+          <ProductImageCarousel
+            images={productData.images}
+            tourId={productData._id}
+            onBackPress={() =>
+              router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
+            }
+            onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
+            onFavoritePress={() => console.log('Đã nhấn nút yêu thích.')}
+          />
         }
-
         renderItem={() => (
           <View style={styles.mainContentContainer}>
             <ProductBasicInfo
               productInfo={productData.productInfo}
-              onSeeAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
+              onSeeAllReviews={onSeeAllReviews}
               onApplyVoucher={handleApplyVoucher}
               selectedVoucher={selectedVoucher}
             />
-
             <View style={styles.separator} />
-
             <TripHighlightsSection
               title="Điểm nổi bật của chuyến đi"
               highlights={productData.highlights.map((highlight) => ({
@@ -302,46 +106,29 @@ export default function TripDetailScreen() {
                 description: highlight.description || 'Mô tả điểm nổi bật của chuyến đi.',
               }))}
             />
-
             <ProductOptionSelector
               servicePackages={productData.availableServicePackages}
               dateFilters={productData.availableDateFilters}
               initialTotalPrice={productData.price.current}
-              onSelectionUpdate={(map, totalExtra) => {
-                setCurrentSelectedPackages(map);
-                recalculateTotalPrice(map, selectedVoucher);
-              }}
+              onSelectionUpdate={handleSelectionUpdate}
             />
-
             <CustomerReviewSection
               reviews={productData.reviews}
               averageRating={productData.rating.stars}
               totalReviewsCount={productData.rating.count}
-              onSeeAllReviews={() => {
-                setReviewData({
-                  reviews: mappedReviewsRef.current,
-                  rating: productData.rating.stars,
-                  count: mappedReviewsRef.current.length,
-                });
-                router.push('/(stack)/ShowReview');
-              }}
-
+              onSeeAllReviews={onSeeAllReviews}
             />
-
             <DescriptionSection
               title="Thông tin chi tiết"
               descriptionData={productData.descriptionContent}
             />
-
             <NoteContactSection
               tripNotes={productData.tripNotes}
               contactInformation={productData.contactInformation}
             />
           </View>
         )}
-
         ListFooterComponent={<View style={{ height: 100 }} />}
-
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -364,11 +151,9 @@ export default function TripDetailScreen() {
         tourInfo={productData}
         onBookNow={onBookNow}
       />
-
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
