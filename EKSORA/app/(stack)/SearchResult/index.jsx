@@ -12,13 +12,26 @@ import {
   Dimensions,
   Platform,
   ActivityIndicator,
+  SafeAreaView,
+  StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getTours } from "../../../API/services/serverCategories";
 import { COLORS } from "../../../constants/colors";
 
-
 const { width } = Dimensions.get("window");
+
+const cardShadow = Platform.select({
+  ios: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  android: {
+    elevation: 3,
+  },
+});
 
 export default function SearchResult() {
   const { query } = useLocalSearchParams();
@@ -52,7 +65,7 @@ export default function SearchResult() {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => handleSelectTour(item)}>
-      <View style={styles.card}>
+      <View style={[styles.card, cardShadow]}>
         <Image source={{ uri: item.image[0] }} style={styles.cardImage} />
         <TouchableOpacity style={styles.heartIcon}>
           <Ionicons name="heart-outline" size={20} color="#444" />
@@ -84,20 +97,10 @@ export default function SearchResult() {
 
   const ListHeader = () => (
     <>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabRow}>
-        {["Tất cả", "Tour & Trải nghiệm", "Vé tham quan"].map((tab, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.tab, selectedTab === tab && styles.activeTab]}
-            onPress={() => setSelectedTab(tab)}
-          >
-            <Text style={selectedTab === tab ? styles.activeTabText : styles.tabText}>{tab}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      
 
       {filteredTours[0] && (
-        <View style={styles.cityCard}>
+        <View style={[styles.cityCard, cardShadow]}>
           <Image source={{ uri: filteredTours[0]?.image[0] }} style={styles.cityImage} />
           <View style={{ flex: 1 }}>
             <Text style={styles.cityTitle}>{filteredTours[0]?.province}</Text>
@@ -112,62 +115,74 @@ export default function SearchResult() {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push("/(stack)/search")} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <TextInput
-          style={styles.searchInput}
-          placeholder={query}
-          placeholderTextColor="#999"
-        />
-        <Ionicons name="cart-outline" size={20} color="#333" style={styles.iconRight} />
-        <Ionicons name="ellipsis-vertical" size={20} color="#333" style={styles.iconRight} />
-      </View>
-
-      {loading ? (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <ActivityIndicator size="large" color="#FF5722" />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.push("/(stack)/search")} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <TextInput
+            style={styles.searchInput}
+            placeholder={query}
+            placeholderTextColor="#999"
+          />
+          <Ionicons name="cart-outline" size={20} color="#333" style={styles.iconRight} />
+          <Ionicons name="ellipsis-vertical" size={20} color="#333" style={styles.iconRight} />
         </View>
-      ) : filteredTours.length === 0 ? (
-        <FlatList
-          data={allTours.slice(0, 10)}
-          keyExtractor={(item) => item._id}
-          renderItem={renderItem}
-          ListHeaderComponent={
-            <>
-              <ListHeader />
-              <View style={styles.emptyContainer}>
-                <Ionicons name="search-outline" size={60} color="#FF5722" style={styles.emptyIcon} />
-                <Text style={styles.emptyTitle}>Rất tiếc, không có kết quả phù hợp.</Text>
-                <Text style={styles.emptyDesc}>Vui lòng thử lại với từ khoá khác.</Text>
-                <Text style={styles.suggestTitle}>Xem thêm gợi ý khác?</Text>
-              </View>
-            </>
-          }
-          contentContainerStyle={{ paddingBottom: 40 }}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <FlatList
-          data={filteredTours}
-          keyExtractor={(item) => item._id}
-          renderItem={renderItem}
-          ListHeaderComponent={<ListHeader />}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 40 }}
-        />
-      )}
-    </View>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FF5722" />
+          </View>
+        ) : filteredTours.length === 0 ? (
+          <FlatList
+            data={allTours.slice(0, 10)}
+            keyExtractor={(item) => item._id}
+            renderItem={renderItem}
+            ListHeaderComponent={
+              <>
+                <ListHeader />
+                <View style={styles.emptyContainer}>
+                  <Ionicons name="search-outline" size={60} color="#FF5722" style={styles.emptyIcon} />
+                  <Text style={styles.emptyTitle}>Rất tiếc, không có kết quả phù hợp.</Text>
+                  <Text style={styles.emptyDesc}>Vui lòng thử lại với từ khoá khác.</Text>
+                  <Text style={styles.suggestTitle}>Xem thêm gợi ý khác?</Text>
+                </View>
+              </>
+            }
+            contentContainerStyle={{ paddingBottom: 40 }}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          <FlatList
+            data={filteredTours}
+            keyExtractor={(item) => item._id}
+            renderItem={renderItem}
+            ListHeaderComponent={<ListHeader />}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 40 }}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
     paddingHorizontal: 12,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
     flexDirection: "row",
@@ -211,14 +226,13 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     fontSize: 14,
-    color:  COLORS.primaryAction,
+    color: COLORS.primaryAction,
     fontWeight: "bold",
   },
   cityCard: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#eee",
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 10,
     marginBottom: 12,
@@ -267,19 +281,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     marginBottom: 16,
     overflow: "hidden",
-    ...Platform.select({
-      android: { elevation: 3 },
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-    }),
   },
   cardImage: {
     width: "100%",
-    height: 180,
+    height: width * 0.5,
   },
   heartIcon: {
     position: "absolute",

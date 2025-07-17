@@ -80,6 +80,7 @@ const BodySignUp = () => {
       <TextInput
          style={[styles.input, errors.email && styles.errorBorder]}
         placeholder= "Nhập email"
+        placeholderTextColor="#666"
         keyboardType="email-address"
         value={form.email}
         onChangeText={text => setForm(prev => ({ ...prev, email: text }))}
@@ -90,6 +91,7 @@ const BodySignUp = () => {
         <TextInput
           style={[styles.input, { flex: 1, marginBottom: 0 }, errors.password&& styles.errorBorder]}
           placeholder="nhập mật khẩu"
+          placeholderTextColor="#666"
           secureTextEntry={!passwordVisible}
           value={form.password}
           onChangeText={text => setForm(prev => ({ ...prev, password: text }))}
@@ -110,18 +112,21 @@ const BodySignUp = () => {
       <TextInput
         style={[styles.input, errors.first_name && styles.errorBorder]}
         placeholder="Nhập tên"
+        placeholderTextColor="#666"
         value={form.first_name}
         onChangeText={text => setForm(prev => ({ ...prev, first_name: text }))}
       />
       <TextInput
       style={[styles.input, errors.last_name && styles.errorBorder]}
         placeholder="Nhập họ"
+        placeholderTextColor="#666"
         value={form.last_name}
         onChangeText={text => setForm(prev => ({ ...prev, last_name: text }))}
       />
       <TextInput
         style={[styles.input, errors.phone && styles.errorBorder]}
         placeholder="Nhập số điện thoại"
+        placeholderTextColor="#666"
         keyboardType="phone-pad"
         value={form.phone}
         onChangeText={text => setForm(prev => ({ ...prev, phone: text }))}
@@ -129,6 +134,7 @@ const BodySignUp = () => {
       <TextInput
           style={[styles.input, errors.address && styles.errorBorder]}
         placeholder="Nhập địa chỉ "
+        placeholderTextColor="#666"
         value={form.address}
         onChangeText={text => setForm(prev => ({ ...prev, address: text }))}
       />

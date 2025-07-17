@@ -2,10 +2,8 @@ import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import TripHeader from '../ScheduleTrip/Component/TripHeader';
-import TripTabs from '../ScheduleTrip/Component/TripTabs';
 import ItineraryList from '../ScheduleTrip/Component/ItineraryList';
 import TripInfoSection from '../ScheduleTrip/Component/TripInfoSection';
-import PriceFooter from '../ScheduleTrip/Component/PriceFooter';
 
 export default function TripDetailScreen() {
   const params = useLocalSearchParams();
@@ -39,11 +37,9 @@ export default function TripDetailScreen() {
     <View style={styles.container}>
       <ScrollView>
         <TripHeader />
-        <TripTabs />
         <ItineraryList data={itineraryData} tourImages={images} />
         <TripInfoSection />
       </ScrollView>
-      <PriceFooter />
     </View>
   );
 }

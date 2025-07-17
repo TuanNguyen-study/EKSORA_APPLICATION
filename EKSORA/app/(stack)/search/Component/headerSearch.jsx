@@ -66,7 +66,7 @@ export default function HeaderSearch() {
         <TextInput
           style={styles.input}
           placeholder="Tìm Kiếm"
-          placeholderTextColor={COLORS.gradientBackground}
+          placeholderTextColor='#666'
           value={searchText}
           onChangeText={setSearchText}
           onSubmitEditing={() => handleSearch(searchText)}
