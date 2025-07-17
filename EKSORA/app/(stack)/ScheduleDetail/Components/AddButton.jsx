@@ -4,11 +4,8 @@ import React from 'react';
 
   export default function AddButton() {
     return (
-      <TouchableOpacity style={styles.button} onPress={() => {
-          Alert.alert('Thành công', 'Bạn đã bắt đầu đi theo lịch trình ');
-          router.replace('/(tabs)/home'); 
-      }}>
-        <Text style={styles.text}>Bắt đầu theo lịch trình</Text>
+      <TouchableOpacity style={styles.button}>
+        <Text style={styles.text}>Thêm địa điểm </Text>
       </TouchableOpacity>
     );
   }

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function TimelineConnector() {
+export default function timelineConnector() {
   return (
     <View style={styles.container}>
       <View style={styles.line} />
@@ -13,11 +13,11 @@ export default function TimelineConnector() {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: 8,
+    marginVertical: 10,
   },
   line: {
     width: 2,
-    height: 20,
+    height: 40,
     backgroundColor: '#007BFF',
     marginBottom: 4,
   },

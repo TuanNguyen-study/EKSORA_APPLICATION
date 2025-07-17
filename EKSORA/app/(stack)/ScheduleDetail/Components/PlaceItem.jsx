@@ -1,19 +1,36 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+  Platform,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 
-export default function PlaceItem({ item }) {
+const { width } = Dimensions.get('window');
+export default function PlaceItem({ item}) {
+  const {time} = useLocalSearchParams();
   return (
     <View style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.image} />
-      <View style={styles.info}>
-        <View style={styles.row}>
-          <Text style={styles.name}>{item.name}</Text>
-          <TouchableOpacity>
-            <Ionicons name="close" size={20} color="gray" />
-          </TouchableOpacity>
+      <View style={styles.horizontal}>
+        <Image source={{ uri: item.image }} style={styles.image} />
+
+        <View style={styles.info}>
+          <View style={styles.row}>
+            <Text style={styles.name}>{item.name}</Text>
+            <TouchableOpacity>
+              <Ionicons name="close" size={20} color="gray" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.visitTime}>
+             Thời gian tham quan:  
+            <Text style={styles.time}> {time}</Text>
+          </Text>
         </View>
-        <Text style={styles.visitTime}>Thời gian tham quan: <Text style={styles.time}>{item.startTime}</Text></Text>
       </View>
     </View>
   );
@@ -22,46 +39,55 @@ export default function PlaceItem({ item }) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 12,
     marginVertical: 8,
     marginHorizontal: 16,
     overflow: 'hidden',
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  horizontal: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   image: {
-    width: '100%',
-    height: 150,
+    width: width * 0.3,
+    height: width * 0.3,
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
   },
   info: {
-    padding: 12,
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: '',
   },
   name: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: width < 360 ? 14 : 16,
+    fontWeight: '600',
+    flexShrink: 1,
+    paddingRight: 8,
   },
   visitTime: {
     marginTop: 4,
     color: 'gray',
+    fontSize: width < 360 ? 12 : 14,
   },
   time: {
-    fontWeight: 'bold',
-    color: '#007BFF',
-  },
-  actions: {
-    flexDirection: 'row',
-    marginTop: 8,
-  },
-  link: {
-    marginRight: 16,
-    color: '#007BFF',
-  },
-  timeLabel: {
-    marginTop: 8,
     fontWeight: 'bold',
     color: '#007BFF',
   },
