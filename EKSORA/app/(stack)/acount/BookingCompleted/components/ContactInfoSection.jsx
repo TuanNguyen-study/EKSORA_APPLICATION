@@ -1,10 +1,8 @@
-// File: screens/BookingCompleted/ContactInfoSection.js
 import React from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../../../../constants/colors';
 
-// -- COMPONENT CON NỘI BỘ --
 
 const ContactForm = ({ contactInfo, onInputChange, onConfirm }) => (
   <View style={styles.formContainer}>

@@ -88,7 +88,7 @@ export default function BookingScreen() {
           <View style={styles.serviceStatusRow}>
             <Text style={styles.serviceStatusText}>Xem trạng thái dịch vụ</Text>
             <TouchableOpacity onPress={() => setDatePickerVisible(true)} style={styles.dateRangeButton}>
-              <Text style={styles.dateRangeText}>15/7 - 31/12</Text>
+              <Text style={styles.dateRangeText}>Xem Thêm</Text>
               <Ionicons name="chevron-forward-outline" size={18} color={COLORS.darkGray || '#666'} />
             </TouchableOpacity>
           </View>

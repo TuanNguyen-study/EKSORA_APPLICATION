@@ -1,4 +1,3 @@
-// File: screens/BookingCompleted/BookingSummaryCard.js
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,13 +36,11 @@ const BookingSummaryCard = ({ image, title, travelDate, quantityAdult, quantityC
 );
 
 const styles = StyleSheet.create({
-  // Card container
   card: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
     marginTop: 16,
     marginBottom: 16,
-    // Shadow for iOS
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -51,7 +48,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    // Shadow for Android
     elevation: 3,
   },
   cardImage: {
@@ -70,7 +66,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 
-  // Detail Section
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -80,7 +75,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.gray,
     marginLeft: 12,
-    flex: 1, // Để label chiếm không gian còn lại
+    flex: 1, 
   },
   detailValue: {
     fontSize: 14,
@@ -88,7 +83,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Divider and Total
+
   divider: {
     height: 1,
     backgroundColor: '#F4F5F7',

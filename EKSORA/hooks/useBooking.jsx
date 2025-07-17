@@ -91,7 +91,7 @@ const handleAddToCart = () => {
 
     if (existingItem) {
       Alert.alert('Thông báo', 'Tour này với ngày đã chọn đã có trong giỏ hàng của bạn.');
-      return; // Dừng hàm tại đây
+      return; 
     }
 
     // Nếu chưa tồn tại, tiến hành thêm mới
