@@ -1,27 +1,20 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import {FontAwesome, MaterialIcons, Entypo } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons, Entypo } from '@expo/vector-icons';
 
 export default function TripInfoSection() {
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Bao gồm</Text>
-      <View style={styles.row}>
-        <Entypo name="ticket" size={18} color="#000" style={styles.icon}  />
-        <View style={styles.infoText}>
-          <Text style={styles.infoTitle}>Chuyến đi </Text>
-          <Text style={styles.infoSub}>1 vé tham quan</Text>
-        </View>
-      </View>
 
+      <View style={styles.includesBox}>
+        <Text style={styles.sectionTitle}>Bao gồm</Text>
+        <Text style={styles.includesText}>Chưa có dịch vụ nào cho chuyến đi của bạn.</Text>
+      </View>
 
       <View style={styles.memberHeader}>
         <Text style={styles.sectionTitle}>Thành viên</Text>
-        <View style={styles.memberIcons}>
-          <FontAwesome name="users" size={18} color="#007AFF" style={styles.iconRight} />
-          <MaterialIcons name="chat-bubble-outline" size={18} color="#FF3B5C" style={styles.iconRight} />
-        </View>
       </View>
+
 
       <View style={styles.row}>
         <Image
@@ -89,5 +82,12 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  includesBox: {
+    marginTop: 16,
+  },
+  includesText: {
+    fontSize: 14,
+    color: '#555',
   },
 });

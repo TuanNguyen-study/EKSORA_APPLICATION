@@ -294,8 +294,8 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   headerActionsContainer: {
-    position: "absolute",
-    top: 10,
+    position: 'absolute',
+    top: 35,
     left: 10,
     right: 10,
     flexDirection: "row",

@@ -1,198 +1,151 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { Feather, AntDesign } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons'; 
 
+// Hàm định dạng tiền tệ
 const formatCurrency = (amount) => {
-  return amount?.toLocaleString('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    minimumFractionDigits: 0,
-  }) || '0 đ';
+  return `${amount?.toLocaleString('vi-VN') || '0'} đ`;
 };
+
 
 const CartItem = ({ item, isSelected, onToggleSelect, onDelete, onEdit }) => {
   if (!item) {
-    console.log('Item không tồn tại:', item);
-    return null;
+    return null; 
   }
 
-  //console.log('Dữ liệu item trong CartItem:', item);
-
-  const discountAmount = item.originalPrice ? item.originalPrice - (item.price || 0) : 0;
-  const discountPercent = item.discountPercent || 0;
-  const ratingStars = item.rating?.stars || 0;
-
   return (
-    <View style={styles.container}>
+    <View style={styles.card}>
       {/* Checkbox */}
-      <TouchableOpacity
-        style={styles.checkboxBase}
-        onPress={() => onToggleSelect(item.id)}
-      >
-        {isSelected && (
-          <View style={styles.checkboxChecked}>
-            <AntDesign name="check" size={14} color="white" />
-          </View>
-        )}
+      <TouchableOpacity onPress={() => onToggleSelect(item.id)} style={styles.checkboxContainer}>
+        <Ionicons
+          name={isSelected ? 'checkbox' : 'square-outline'}
+          size={24}
+          color={isSelected ? '#00639B' : '#888'}
+        />
       </TouchableOpacity>
 
       {/* Image */}
       <Image
         source={{ uri: item.image || 'https://via.placeholder.com/80' }}
-        style={styles.itemImage}
+        style={styles.image}
       />
 
-      {/* Details */}
-      <View style={styles.detailsContainer}>
-        <Text style={styles.itemTitle}>{item.name || 'Tên tour không xác định'}</Text>
-        {/* Hiển thị mô tả */}
-        {item.description && (
-          <Text style={styles.itemDescription} numberOfLines={2} ellipsizeMode="tail">
-            {item.description || 'Không có mô tả'}
-          </Text>
-        )}
-        {/* Hiển thị thời lượng và địa điểm */}
-        {item.duration || item.location ? (
-          <Text style={styles.itemSubInfo}>
-            {item.duration ? `${item.duration} - ` : ''}{item.location || 'Địa điểm không xác định'}
-          </Text>
-        ) : null}
-        {/* Hiển thị đánh giá */}
-        {item.rating && (
-          <Text style={styles.itemRating}>
-            Đánh giá: {ratingStars} ★
-          </Text>
-        )}
-        {/* Hiển thị tùy chọn dịch vụ */}
-        {Object.keys(item.selectedOptions || {}).length > 0 && (
-          <Text style={styles.itemDescription}>
-            Tùy chọn: {Object.values(item.selectedOptions || {})
-              .map((optId) => {
-                const serviceOption = item.services?.flatMap(s => s.options).find(opt => opt._id === optId);
-                return serviceOption ? serviceOption.name : 'Không rõ';
-              })
-              .join(', ')}
-          </Text>
-        )}
-        <View style={styles.priceSection}>
-          {discountPercent > 0 && (
-            <View style={styles.discountTag}>
-              <Text style={styles.discountText}>Giảm {discountPercent}%</Text>
-            </View>
-          )}
-          <View style={styles.priceRow}>
-            <Text style={styles.itemPrice}>{formatCurrency(item.price)}</Text>
-            {discountAmount > 0 && (
-              <Text style={styles.discountAmountText}>
-                Giảm {formatCurrency(discountAmount)}
+      {/* Details - Phần này đã được cập nhật hoàn toàn */}
+      <View style={styles.infoContainer}>
+        <Text style={styles.title} numberOfLines={2}>{item.name || 'Tên tour không xác định'}</Text>
+        
+        {/* Hiển thị ngày đi */}
+        <View style={styles.detailRow}>
+          <Ionicons name="calendar-outline" size={14} color="#555" />
+          <Text style={styles.detailText}>Ngày đi: {item.travelDate}</Text>
+        </View>
+
+        {/* Hiển thị số lượng người */}
+        <View style={styles.detailRow}>
+          <Ionicons name="people-outline" size={14} color="#555" />
+          <Text style={styles.detailText}>{item.adults} Người lớn, {item.children} Trẻ em</Text>
+        </View>
+
+        {/* Hiển thị các tùy chọn dịch vụ đã chọn (nếu có) */}
+        {item.selectedOptions && item.selectedOptions.length > 0 && (
+          <View style={styles.optionsContainer}>
+            {item.selectedOptions.map((opt, index) => (
+              <Text key={index} style={styles.optionText} numberOfLines={1}>
+                + {opt.optionName}
               </Text>
-            )}
+            ))}
+          </View>
+        )}
+
+        <View style={styles.footerRow}>
+          <Text style={styles.price}>{formatCurrency(item.price)}</Text>
+          <View style={styles.actionsContainer}>
+              {/* Nút Xóa */}
+              <TouchableOpacity onPress={() => onDelete(item.id)} style={styles.actionButton}>
+                  <Ionicons name="trash-outline" size={20} color="#D9534F" />
+              </TouchableOpacity>
           </View>
         </View>
-      </View>
-
-      {/* Actions */}
-      <View style={styles.actionsContainer}>
-        <TouchableOpacity onPress={() => onDelete(item.id)}>
-          <Feather name="trash-2" size={20} color="#888" />
-        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
+
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
+  card: {
     backgroundColor: 'white',
-    padding: 16,
-    marginHorizontal: 16,
-    marginTop: 16,
     borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    flexDirection: 'row',
     alignItems: 'flex-start',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  checkboxBase: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: '#00639B', 
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    marginTop: 2,
+  checkboxContainer: {
+    paddingRight: 12,
+    paddingTop: 4, 
   },
-  checkboxChecked: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#00639B',
-    borderRadius: 4.5,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  itemImage: {
+  image: {
     width: 80,
     height: 80,
     borderRadius: 8,
+    backgroundColor: '#EEE',
   },
-  detailsContainer: {
+  infoContainer: {
     flex: 1,
     marginLeft: 12,
   },
-  itemTitle: {
+  title: {
     fontSize: 15,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 8,
     color: '#333',
   },
-  itemDescription: {
-    fontSize: 13,
-    color: '#666',
-    marginBottom: 4,
-  },
-  itemSubInfo: {
-    fontSize: 12,
-    color: '#888',
-    marginBottom: 4,
-  },
-  itemRating: {
-    fontSize: 12,
-    color: '#00639B',
-    marginBottom: 4,
-  },
-  priceSection: {
-    marginTop: 8,
-  },
-  discountTag: {
-    backgroundColor: '#FFEFE0',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
-    marginBottom: 6,
-  },
-  discountText: {
-    color: '#FF6F00',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  priceRow: {
+  detailRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    marginBottom: 5,
   },
-  itemPrice: {
+  detailText: {
+    fontSize: 13,
+    color: '#555',
+    marginLeft: 6,
+  },
+  optionsContainer: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  optionText: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+    marginBottom: 2,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  price: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#111',
-  },
-  discountAmountText: {
-    fontSize: 12,
-    color: '#FF6F00',
-    marginLeft: 8,
+    color: '#00639B',
   },
   actionsContainer: {
-    marginLeft: 16,
-    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  actionButton: {
+    padding: 4,
+    marginLeft: 12,
   },
 });
 
