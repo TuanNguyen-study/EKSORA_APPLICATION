@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -10,18 +10,24 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { fetchTourDetail } from '../../../API/services/tourService';
-import { useReviewContext } from '../../../store/ReviewContext';
-import { COLORS } from '../../../constants/colors';
-import CustomerReviewSection from './components/CustomerReviewSection';
-import NoteContactSection from './components/NoteContactSection';
-import ProductBasicInfo from './components/ProductBasicInfo';
-import ProductImageCarousel from './components/ProductImageCarousel';
-import ProductOptionSelector from './components/ProductOptionSelector';
-import StickyBookingFooter from './components/StickyBookingFooter';
-import DescriptionSection from './components/DescriptionSection';
-import TripHighlightsSection from './components/TripHighlightsSection';
+  Share,
+  Linking,
+} from "react-native";
+import { fetchTourDetail } from "../../../API/services/tourService";
+import { useReviewContext } from "../../../store/ReviewContext";
+import { COLORS } from "../../../constants/colors";
+import CustomerReviewSection from "./components/CustomerReviewSection";
+import NoteContactSection from "./components/NoteContactSection";
+import ProductBasicInfo from "./components/ProductBasicInfo";
+import ProductImageCarousel from "./components/ProductImageCarousel";
+import ProductOptionSelector from "./components/ProductOptionSelector";
+import StickyBookingFooter from "./components/StickyBookingFooter";
+import DescriptionSection from "./components/DescriptionSection";
+import TripHighlightsSection from "./components/TripHighlightsSection";
+// import SocialShareSection from "./components/SocialShareSection";
+// import SocialShareTest from "./components/SocialShareTest";
+// import IconDebug from "./components/IconDebug";
+// import SocialShareAlternative from "./components/SocialShareAlternative";
 
 // CÁC HÀM HELPER
 const prepareProductInfo = (tour, services, highlights, reviews) => {
@@ -34,18 +40,18 @@ const prepareProductInfo = (tour, services, highlights, reviews) => {
       detailsText: `${reviews.length} Đánh giá`,
     },
     tags: [
-      { label: 'Lịch sử', isSpecial: false },
-      { label: 'Văn hóa', isSpecial: false },
-      { label: 'Ẩm thực', isSpecial: true },
+      { label: "Lịch sử", isSpecial: false },
+      { label: "Văn hóa", isSpecial: false },
+      { label: "Ẩm thực", isSpecial: true },
     ],
     summaryHighlight: {
       items: highlights.map((item) => item.location_name),
     },
     offers: services.map((service) => ({
       label: service.name || service.title,
-      icon: 'pricetag-outline',
-      bgColor: '#E6F0FA',
-      textColor: '#1E88E5',
+      icon: "pricetag-outline",
+      bgColor: "#E6F0FA",
+      textColor: "#1E88E5",
     })),
   };
 };
@@ -60,40 +66,57 @@ const parseDescription = (htmlString) => {
   // Đoạn giới thiệu
   const introMatch = htmlString.match(/<p>(.*?)<\/p>/);
   if (introMatch) {
-    result.push({ id: `desc-${idCounter++}`, type: 'text', content: introMatch[1].replace(/<[^>]*>?/gm, '') });
+    result.push({
+      id: `desc-${idCounter++}`,
+      type: "text",
+      content: introMatch[1].replace(/<[^>]*>?/gm, ""),
+    });
   }
 
   // Các đoạn hình ảnh và mô tả
-  const figureMatches = htmlString.matchAll(/<figure class="image"><img[^>]+src="([^"]+)"[^>]*><\/figure><blockquote><p>(.*?)<\/p><\/blockquote>/g);
+  const figureMatches = htmlString.matchAll(
+    /<figure class="image"><img[^>]+src="([^"]+)"[^>]*><\/figure><blockquote><p>(.*?)<\/p><\/blockquote>/g
+  );
   for (const match of figureMatches) {
     const image = match[1];
-    const content = match[2].replace(/<[^>]*>?/gm, '');
+    const content = match[2].replace(/<[^>]*>?/gm, "");
     if (!seenDescriptions.has(content)) {
       seenDescriptions.add(content);
-      result.push({ id: `desc-${idCounter++}`, type: 'image-text', image, content });
+      result.push({
+        id: `desc-${idCounter++}`,
+        type: "image-text",
+        image,
+        content,
+      });
     }
   }
 
   // Đoạn lưu ý
-  const noteMatch = htmlString.match(/<h3><strong>Xin lưu ý:.*?(<ul>.*?<\/ul>)/s);
+  const noteMatch = htmlString.match(
+    /<h3><strong>Xin lưu ý:.*?(<ul>.*?<\/ul>)/s
+  );
   if (noteMatch) {
     result.push({
       id: `desc-${idCounter++}`,
-      type: 'text',
+      type: "text",
       content: `Xin lưu ý: Sẽ áp dụng phụ phí nếu ngày tham gia của bạn trùng với ngày lễ, thanh toán tại chỗ (Vui lòng kiểm tra chi tiết gói để tham khảo).${noteMatch[1]}`,
     });
   }
 
   // Nếu không có kết quả nào được phân tích, trả về một đoạn text mặc định
   if (result.length === 0) {
-    result.push({ id: `desc-${idCounter++}`, type: 'text', content: htmlString.replace(/<[^>]*>?/gm, '') });
+    result.push({
+      id: `desc-${idCounter++}`,
+      type: "text",
+      content: htmlString.replace(/<[^>]*>?/gm, ""),
+    });
   }
 
   return result;
 };
 
 const formatPrice = (price, selectedVoucher) => {
-  const value = typeof price === 'number' ? price : parseFloat(price);
+  const value = typeof price === "number" ? price : parseFloat(price);
   if (isNaN(value)) return 0;
   let finalPrice = value;
   if (selectedVoucher?.voucher_id?.discount) {
@@ -102,12 +125,14 @@ const formatPrice = (price, selectedVoucher) => {
     if (value >= minOrderValue) {
       finalPrice = value - (value * discount) / 100;
     } else {
-      Alert.alert('Thông báo', `Đơn hàng phải từ ${minOrderValue.toLocaleString('vi-VN')}đ để áp dụng voucher này.`);
+      Alert.alert(
+        "Thông báo",
+        `Đơn hàng phải từ ${minOrderValue.toLocaleString("vi-VN")}đ để áp dụng voucher này.`
+      );
     }
   }
   return Math.max(0, finalPrice);
 };
-
 
 export default function TripDetailScreen() {
   const router = useRouter();
@@ -148,8 +173,13 @@ export default function TripDetailScreen() {
     setLoading(true);
     setError(null);
     try {
-      const { tour, services = [], highlights = [], reviews = [] } = await fetchTourDetail(id);
-      if (!tour || !tour._id) throw new Error('Dữ liệu tour không hợp lệ.');
+      const {
+        tour,
+        services = [],
+        highlights = [],
+        reviews = [],
+      } = await fetchTourDetail(id);
+      if (!tour || !tour._id) throw new Error("Dữ liệu tour không hợp lệ.");
       const availableServicePackages = services.map((svc) => ({
         id: svc._id,
         title: svc.title || svc.name,
@@ -161,24 +191,38 @@ export default function TripDetailScreen() {
         })),
       }));
       const mappedReviews = reviews.map((r) => {
-        const hasValidName = (r.user?.first_name && r.user?.first_name.trim()) || (r.user?.last_name && r.user?.last_name.trim());
+        const hasValidName =
+          (r.user?.first_name && r.user?.first_name.trim()) ||
+          (r.user?.last_name && r.user?.last_name.trim());
         return {
           _id: r._id,
-          userName: hasValidName ? `${r.user?.first_name?.trim() || ''} ${r.user?.last_name?.trim() || ''}`.trim() : r.user_name || 'Khách ẩn danh',
+          userName: hasValidName
+            ? `${r.user?.first_name?.trim() || ""} ${r.user?.last_name?.trim() || ""}`.trim()
+            : r.user_name || "Khách ẩn danh",
           userAvatar: r.user?.avatarUrl || null,
           rating: r.rating,
           comment: r.comment,
-          date: new Date(r.created_at).toLocaleDateString('vi-VN'),
+          date: new Date(r.created_at).toLocaleDateString("vi-VN"),
         };
       });
       mappedReviewsRef.current = mappedReviews;
       // Giờ đây descriptionContent sẽ có các phần tử với id duy nhất
-      const descriptionContent = parseDescription(tour.description || '');
-      const productInfo = prepareProductInfo(tour, services, highlights, reviews);
+      const descriptionContent = parseDescription(tour.description || "");
+      const productInfo = prepareProductInfo(
+        tour,
+        services,
+        highlights,
+        reviews
+      );
       const mappedProductData = {
         ...tour,
         images: (tour.image || []).map((uri, i) => ({ id: `img_${i}`, uri })),
-        price: { current: tour.price ?? 0, original: tour.price ?? 0, currency: 'đ', unit: 'người' },
+        price: {
+          current: tour.price ?? 0,
+          original: tour.price ?? 0,
+          currency: "đ",
+          unit: "người",
+        },
         rating: { stars: tour.rating ?? 0, count: mappedReviews.length },
         availableServicePackages,
         availableDateFilters: [],
@@ -193,8 +237,8 @@ export default function TripDetailScreen() {
       setProductData(mappedProductData);
       setCurrentTotalPrice(mappedProductData.price.current);
     } catch (e) {
-      console.error('Lỗi khi lấy chi tiết tour:', e);
-      setError(e.message || 'Đã xảy ra lỗi khi tải dữ liệu.');
+      console.error("Lỗi khi lấy chi tiết tour:", e);
+      setError(e.message || "Đã xảy ra lỗi khi tải dữ liệu.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -214,25 +258,53 @@ export default function TripDetailScreen() {
 
   const onBookNow = () => {
     const basePrice = productData?.price?.current || 0;
-    const optionTotal = Object.values(currentSelectedPackages).reduce((sum, optId) => {
-      for (const pkg of productData.availableServicePackages) {
-        const option = pkg.options.find((opt) => opt.id === optId);
-        if (option) return sum + (option.price || 0);
-      }
-      return sum;
-    }, 0);
+    const optionTotal = Object.values(currentSelectedPackages).reduce(
+      (sum, optId) => {
+        for (const pkg of productData.availableServicePackages) {
+          const option = pkg.options.find((opt) => opt.id === optId);
+          if (option) return sum + (option.price || 0);
+        }
+        return sum;
+      },
+      0
+    );
     const totalBeforeDiscount = basePrice + optionTotal;
-    const discount = selectedVoucher?.voucher_id?.discount && totalBeforeDiscount >= (selectedVoucher.voucher_id.min_order_value || 0) ? (totalBeforeDiscount * selectedVoucher.voucher_id.discount) / 100 : 0;
+    const discount =
+      selectedVoucher?.voucher_id?.discount &&
+      totalBeforeDiscount >= (selectedVoucher.voucher_id.min_order_value || 0)
+        ? (totalBeforeDiscount * selectedVoucher.voucher_id.discount) / 100
+        : 0;
     const total_price = formatPrice(totalBeforeDiscount, selectedVoucher);
     const query = new URLSearchParams({
       tour_id: productData._id,
       tour_title: productData.name,
       total_price: total_price.toString(),
       selectedOptions: JSON.stringify(currentSelectedPackages),
-      voucher_id: selectedVoucher ? selectedVoucher._id : '',
+      voucher_id: selectedVoucher ? selectedVoucher._id : "",
       discount: discount.toString(),
     }).toString();
     router.push(`/acount/bookingScreen?${query}`);
+  };
+
+  // Hàm chia sẻ tour
+  const handleShareTour = async () => {
+    const shareUrl = `https://eksora.com/tour/${productData._id}`;
+    const shareTitle = `${productData.name} - Chỉ từ ${productData.price?.current?.toLocaleString("vi-VN") || "0"}đ`;
+    const shareText = `Khám phá ${productData.name} tại ${productData.province}. Đặt tour ngay tại EKSORA!`;
+
+    try {
+      const result = await Share.share({
+        message: `${shareTitle}\n\n${shareText}\n\n${shareUrl}`,
+        title: shareTitle,
+        url: shareUrl,
+      });
+
+      if (result.action === Share.sharedAction) {
+        console.log("Tour shared successfully");
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể chia sẻ tour này");
+    }
   };
 
   // MÀN HÌNH LOADING VÀ LỖI
@@ -248,10 +320,17 @@ export default function TripDetailScreen() {
   if (error && !productData) {
     return (
       <View style={styles.centered}>
-        <Stack.Screen options={{ title: 'Lỗi' }} />
-        <Ionicons name="cloud-offline-outline" size={60} color={COLORS.textSecondary} />
+        <Stack.Screen options={{ title: "Lỗi" }} />
+        <Ionicons
+          name="cloud-offline-outline"
+          size={60}
+          color={COLORS.textSecondary}
+        />
         <Text style={styles.errorText}>Lỗi: {error}</Text>
-        <TouchableOpacity onPress={() => loadTourDetails(productId)} style={styles.retryButton}>
+        <TouchableOpacity
+          onPress={() => loadTourDetails(productId)}
+          style={styles.retryButton}
+        >
           <Text style={styles.retryButtonText}>Thử lại</Text>
         </TouchableOpacity>
       </View>
@@ -264,29 +343,30 @@ export default function TripDetailScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <FlatList
-        data={[{ key: 'main-content' }]}
+        data={[{ key: "main-content" }]}
         keyExtractor={(item) => item.key}
         showsVerticalScrollIndicator={false}
-
         ListHeaderComponent={
           <View style={{ paddingTop: 16 }}>
             <ProductImageCarousel
               images={productData.images}
               tourId={productData._id}
+              tourData={productData} // Truyền tourData để sử dụng trong ShareModal
               onBackPress={() =>
-                router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
+                router.canGoBack()
+                  ? router.back()
+                  : router.replace("/(tabs)/home")
               }
-              onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
-              onFavoritePress={() => console.log('Đã nhấn nút yêu thích.')}
+              onSharePress={handleShareTour}
+              onFavoritePress={() => console.log("Đã nhấn nút yêu thích.")}
             />
           </View>
         }
-
         renderItem={() => (
           <View style={styles.mainContentContainer}>
             <ProductBasicInfo
               productInfo={productData.productInfo}
-              onSeeAllReviews={() => Alert.alert('Xem tất cả đánh giá')}
+              onSeeAllReviews={() => Alert.alert("Xem tất cả đánh giá")}
               onApplyVoucher={handleApplyVoucher}
               selectedVoucher={selectedVoucher}
             />
@@ -297,9 +377,10 @@ export default function TripDetailScreen() {
               title="Điểm nổi bật của chuyến đi"
               highlights={productData.highlights.map((highlight) => ({
                 _id: highlight._id,
-                image: highlight.image_url || 'https://via.placeholder.com/150',
-                title: highlight.location_name || 'Điểm nổi bật',
-                description: highlight.description || 'Mô tả điểm nổi bật của chuyến đi.',
+                image: highlight.image_url || "https://via.placeholder.com/150",
+                title: highlight.location_name || "Điểm nổi bật",
+                description:
+                  highlight.description || "Mô tả điểm nổi bật của chuyến đi.",
               }))}
             />
 
@@ -323,9 +404,8 @@ export default function TripDetailScreen() {
                   rating: productData.rating.stars,
                   count: mappedReviewsRef.current.length,
                 });
-                router.push('/(stack)/ShowReview');
+                router.push("/(stack)/ShowReview");
               }}
-
             />
 
             <DescriptionSection
@@ -333,15 +413,17 @@ export default function TripDetailScreen() {
               descriptionData={productData.descriptionContent}
             />
 
+            <View style={styles.separator} />
+
+            {/* <SocialShareSection tourData={productData} /> */}
+
             <NoteContactSection
               tripNotes={productData.tripNotes}
               contactInformation={productData.contactInformation}
             />
           </View>
         )}
-
         ListFooterComponent={<View style={{ height: 100 }} />}
-
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -364,19 +446,17 @@ export default function TripDetailScreen() {
         tourInfo={productData}
         onBookNow={onBookNow}
       />
-
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background || '#f5f5f5',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.background || "#f5f5f5",
     padding: 20,
   },
   loadingText: {
@@ -387,7 +467,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     color: COLORS.danger,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 10,
   },
   retryButton: {
@@ -400,7 +480,7 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   mainContentContainer: {
     paddingHorizontal: 16,
