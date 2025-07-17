@@ -1,115 +1,148 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
+import React, { useEffect, useState } from "react";
+import { 
+  Alert, 
+  FlatList, 
+  ScrollView, 
+  StyleSheet, 
+  Text, 
+  TouchableOpacity, 
+  View, 
+  SafeAreaView 
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../../../constants/colors";
 
-
+// Dữ liệu phương thức thanh toán
 const paymentMethods = [
-  { id: "Payos", label: "Payos" },
-  { id: "atm", label: "ATM by MoMo", note: "Hoàn tiền không áp dụng cho lựa chọn thanh toán của bạn" },
-  { id: "credit", label: "Thêm/Quản lý Thẻ tín dụng" },
-  { id: "googlepay", label: "Google Pay" },
+  { id: "Payos", label: "Ví PayOS", icon: "wallet-outline" },
+  { id: "momo_atm", label: "Thẻ ATM/Internet Banking", icon: "bank-outline" },
+  { id: "credit_card", label: "Thẻ tín dụng/ghi nợ", icon: "credit-card-outline", note: "Visa, Mastercard, JCB" },
+  { id: "google_pay", label: "Google Pay", icon: "google" },
 ];
 
 
-export default function PaymentPage() {
-  const router = useRouter();
-  const [selectedMethod, setSelectedMethod] = useState(null);
-  const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [profile, setProfile] = useState(null);
+// 1. Header của màn hình
+const PaymentHeader = ({ onBackPress }) => (
+  <View style={styles.header}>
+    <TouchableOpacity onPress={onBackPress} style={styles.headerButton}>
+      <Ionicons name="arrow-back" size={24} color={COLORS.black} />
+    </TouchableOpacity>
+    <Text style={styles.headerTitle}>Thanh toán</Text>
+    <View style={styles.headerButton} />
+  </View>
+);
 
-  const { bookingId, title, quantityAdult, quantityChild, totalPrice, travelDate, image } = useLocalSearchParams();
-  const params = useLocalSearchParams();
-  useEffect(() => {
-  (async () => {
-    if (!bookingId) {
-      const savedId = await AsyncStorage.getItem("PENDING_BOOKING_ID");
-      if (savedId) {
-        params.bookingId = savedId; // fallback gán lại
-      } else {
-        Alert.alert("Lỗi", "Không tìm thấy mã booking. Vui lòng đặt lại.");
-      }
-    }
-  })();
-}, []);
-
-  console.log('🧾 Params nhận được:', params);
-  console.log("📷 image param:", image);
-
+// 2. Card hiển thị thông tin đơn hàng 
+const OrderSummaryCard = ({ params, profile }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { title, quantityAdult, quantityChild, totalPrice, travelDate } = params;
   const totalAmount = Number(totalPrice || 0);
 
-  const bankIcons = {
-    momo: "microsoft-xbox-controller-menu",
-    atm: "bank-outline",
-    credit: "credit-card-outline",
-    googlepay: "google",
-  };
+  return (
+    <View style={styles.card}>
+      <TouchableOpacity style={styles.cardHeader} onPress={() => setIsExpanded(!isExpanded)}>
+        <Text style={styles.cardTitle}>Thông tin đơn hàng</Text>
+        <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={22} color={COLORS.primary} />
+      </TouchableOpacity>
+      {isExpanded && (
+        <View style={styles.cardContent}>
+          <Text style={styles.detailTitle}>{title || 'Chi tiết đơn hàng'}</Text>
+          <Text style={styles.detailText}>Ngày đi: {travelDate}</Text>
+          <Text style={styles.detailText}>Số lượng: {quantityAdult} người lớn, {quantityChild} trẻ em</Text>
+          <View style={styles.separator} />
+          <Text style={styles.detailTitle}>Thông tin liên lạc</Text>
+          <Text style={styles.detailText}>{profile?.lastName} {profile?.firstName}</Text>
+          <Text style={styles.detailText}>{profile?.email}</Text>
+          <Text style={styles.detailText}>{profile?.phone}</Text>
+        </View>
+      )}
+    </View>
+  );
+};
+
+// 3. Một dòng phương thức thanh toán
+const PaymentMethodItem = ({ item, isSelected, onSelect }) => (
+  <TouchableOpacity 
+    style={[styles.methodRow, isSelected && styles.methodRowSelected]} 
+    onPress={onSelect}
+  >
+    <MaterialCommunityIcons name={item.icon} size={24} color={COLORS.primary} style={styles.methodIcon} />
+    <View style={styles.methodInfo}>
+      <Text style={styles.methodLabel}>{item.label}</Text>
+      {item.note && <Text style={styles.methodNote}>{item.note}</Text>}
+    </View>
+    <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
+      {isSelected && <Ionicons name="checkmark-sharp" size={14} color={COLORS.white} />}
+    </View>
+  </TouchableOpacity>
+);
+
+// 4. Footer cố định dưới màn hình
+const PaymentFooter = ({ totalAmount, onPayPress }) => {
+  const insets = useSafeAreaInsets(); 
+  return (
+    <View style={[styles.footer, { paddingBottom: insets.bottom || 16 }]}>
+      <View>
+        <Text style={styles.footerTotalLabel}>Tổng cộng</Text>
+        <Text style={styles.footerTotalAmount}>
+          {totalAmount.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+        </Text>
+      </View>
+      <TouchableOpacity style={styles.payButton} onPress={onPayPress}>
+        <Text style={styles.payButtonText}>Thanh toán</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+
+// --- COMPONENT CHÍNH ---
+export default function PaymentPage() {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const { bookingId } = params;
+
+  const [selectedMethod, setSelectedMethod] = useState(paymentMethods[0].id); 
+  const [profile, setProfile] = useState(null);
+
   useEffect(() => {
+    // Lấy thông tin người dùng từ AsyncStorage
     (async () => {
       const profStr = await AsyncStorage.getItem('USER_PROFILE');
-      if (profStr) {
-        try {
-          setProfile(JSON.parse(profStr));
-        } catch {
-          console.warn('USER_PROFILE không phải JSON hợp lệ');
-        }
-      }
+      if (profStr) setProfile(JSON.parse(profStr));
     })();
-  }, []);
-  const [showOrderDetails, setShowOrderDetails] = useState(false);
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.methodRow}
-      onPress={() => setSelectedMethod(item.id)}
-    >
-      <View style={styles.methodInfo}>
-        <MaterialCommunityIcons name={bankIcons[item.id]} size={24} color={COLORS.primary} style={{ marginRight: 12 }} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.methodLabel}>{item.label}</Text>
-          {item.note && <Text style={styles.methodNote}>{item.note}</Text>}
-        </View>
-      </View>
-      <View style={styles.radioCircle}>
-        {selectedMethod === item.id && <View style={styles.selectedRb} />}
-      </View>
-    </TouchableOpacity>
-  );
+    // Kiểm tra bookingId, nếu không có thì lấy từ PENDING
+    if (!bookingId) {
+      (async () => {
+        const savedId = await AsyncStorage.getItem("PENDING_BOOKING_ID");
+        if (savedId) params.bookingId = savedId;
+        else Alert.alert("Lỗi", "Không tìm thấy mã booking. Vui lòng đặt lại.");
+      })();
+    }
+  }, []);
+
+  const totalAmount = Number(params.totalPrice || 0);
 
   const handlePayment = async () => {
-    if (!profile) {
-      Alert.alert('Lỗi', 'Không có thông tin người dùng.');
-      return;
-    }
-    if (!selectedMethod) {
-      Alert.alert('Thông báo', 'Vui lòng chọn phương thức thanh toán');
+    if (!profile || !bookingId) {
+      Alert.alert('Lỗi', 'Thiếu thông tin đơn hàng hoặc người dùng. Vui lòng thử lại.');
       return;
     }
 
     const payload = {
       amount: totalAmount,
-      description: `Thanh toán đơn hàng ${title || 'không tên'}`,
+      description: `Thanh toán đơn hàng: ${params.title || 'Tour du lịch'}`,
       buyerName: `${profile.firstName} ${profile.lastName}`,
       buyerEmail: profile.email,
       buyerPhone: profile.phone,
-      buyerAddress: profile.address,
       booking_id: bookingId,
     };
-    await AsyncStorage.setItem("PENDING_BOOKING_ID", bookingId);
-
     
-
-    console.log('🔀 Dữ liệu gửi sang API tạo thanh toán:');
-    console.log('💰 Amount:', payload.amount);
-    console.log('📄 Description:', payload.description);
-    console.log('👤 Name:', payload.buyerName);
-    console.log('📧 Email:', payload.buyerEmail);
-    console.log('📞 Phone:', payload.buyerPhone);
-    console.log('🏠 Address:', payload.buyerAddress);
-    console.log('🆔 Booking ID:', payload.booking_id);
+    await AsyncStorage.setItem("PENDING_BOOKING_ID", bookingId);
 
     try {
       const response = await fetch('http://160.250.246.76:3000/api/create-payment-link', {
@@ -118,312 +151,209 @@ export default function PaymentPage() {
         body: JSON.stringify(payload),
       });
 
-      console.log('📤 HTTP status:', response.status);
-
-      const contentType = response.headers.get('content-type');
-      const rawText = await response.text();
-
-      let data;
-      if (contentType && contentType.includes('application/json')) {
-        try {
-          data = JSON.parse(rawText);
-        } catch (err) {
-          console.error('❌ Không parse được JSON:', err);
-          return Alert.alert('Lỗi', 'Dữ liệu phản hồi không hợp lệ từ server.');
-        }
-      } else {
-        console.error('❌ Server trả về không phải JSON:', rawText);
-        return Alert.alert('Lỗi', rawText || 'Lỗi không xác định từ server.');
-      }
+      const data = await response.json();
 
       if (!response.ok) {
-        const msg = data?.message || rawText;
-        console.error(`❌ API lỗi ${response.status}:`, msg);
-        return Alert.alert(`Lỗi ${response.status}`, msg);
+        throw new Error(data.message || 'Lỗi từ server');
       }
-      
 
-      // if (!data.url) {
-      //   console.error('❌ Không tìm thấy URL trong phản hồi:', data);
-      //   return Alert.alert('Lỗi', 'Phản hồi không hợp lệ từ server.');
-      // }
       if (data.url) {
         router.push({
-         pathname: "/acount/payment-webview",
-          params: {
-            checkoutUrl: data.url
-          }
+          pathname: "/acount/payment-webview",
+          params: { checkoutUrl: data.url }
         });
+      } else {
+        throw new Error('Không nhận được URL thanh toán.');
       }
-
-      console.log('✅ Mở URL thanh toán:', data.url);
-      console.log('🆔 Booking ID:', data.booking_id);
-      // Linking.openURL(data.url);
-
     } catch (err) {
-      console.error('🔥 Exception khi tạo payment link:', err);
-      Alert.alert('Lỗi', 'Đã xảy ra lỗi khi tạo thanh toán.');
-      console.error('❌ Lỗi tạo thanh toán:', err.message);
+      Alert.alert('Lỗi', err.message || 'Đã xảy ra lỗi khi tạo thanh toán.');
     }
-
-  }
-
-
-
+  };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
-        <Ionicons name="close" size={24} color={COLORS.white} />
-      </TouchableOpacity>
-
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 100 }}
+    <SafeAreaView style={styles.safeArea}>
+      <PaymentHeader onBackPress={() => router.back()} />
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.totalAmount}>
-          {totalAmount.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
-        </Text>
+        <OrderSummaryCard params={params} profile={profile} />
 
-        <TouchableOpacity
-          style={styles.dropdown}
-          onPress={() => setShowOrderDetails(!showOrderDetails)}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", flex: 1 }}>
-            <Text style={styles.dropdownText}>Thông tin đơn hàng</Text>
-            <Ionicons name={showOrderDetails ? "chevron-up" : "chevron-down"} size={20} color={COLORS.white} />
-          </View>
-        </TouchableOpacity>
-        {showOrderDetails && (
-          <View style={styles.orderDetailsContainer}>
-            {/* {image && (
-            <View style={{ alignItems: "center", marginBottom: 12 }}>
-              <Image
-                source={{ uri: image }}
-                style={styles.tourImage}
-                resizeMode="cover"
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Chọn phương thức thanh toán</Text>
+          <FlatList
+            data={paymentMethods}
+            renderItem={({ item }) => (
+              <PaymentMethodItem
+                item={item}
+                isSelected={selectedMethod === item.id}
+                onSelect={() => setSelectedMethod(item.id)}
               />
-            </View>
-          )} */}
-
-            <Text style={styles.sectionTitle}>Thông tin liên lạc:</Text>
-            <Text style={styles.orderInfo}>
-              {`${profile?.firstName ?? ''} ${profile?.lastName ?? ''}`}
-            </Text>
-            <Text style={styles.orderInfo}>{`${profile?.phone ?? ''}`}</Text>
-            <Text style={styles.orderInfo}>{`${profile?.email ?? ''}`}</Text>
-            {/* <Text style={styles.orderInfo}>{profile?.address}</Text> */}
-
-            <View style={styles.separator} />
-
-            <Text style={styles.sectionTitle}>{`${title ?? ''}`}</Text>
-            <Text style={styles.orderInfo}>{`${travelDate ?? ''}`}</Text> {/* Có thể truyền selectedDate nếu muốn */}
-            <Text style={styles.orderInfo}>
-              {`${quantityAdult} x Người lớn, ${quantityChild} x Trẻ em (5-8)`}
-            </Text>
-
-            <Text style={styles.orderPrice}>₫ {totalAmount.toLocaleString("vi-VN")}</Text>
-
-            <View style={styles.separator} />
-
-
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Tổng cộng</Text>
-              <Text style={styles.totalAmountBold}>₫ {totalAmount.toLocaleString("vi-VN")}</Text>
-            </View>
-          </View>
-        )}
-
-
-        <TouchableOpacity style={styles.discountButton}>
-          <Text style={styles.discountButtonText}>Sử dụng ưu đãi thanh toán</Text>
-          <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
-        </TouchableOpacity>
-
-        <FlatList
-          data={paymentMethods}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          style={styles.methodList}
-          scrollEnabled={false}
-        />
+            )}
+            keyExtractor={(item) => item.id}
+            scrollEnabled={false}
+          />
+        </View>
       </ScrollView>
-
-      <TouchableOpacity
-        style={styles.payNowButton}
-        onPress={handlePayment}
-      >
-        <Text style={styles.payNowButtonText}>Thanh toán ngay</Text>
-      </TouchableOpacity>
-    </View>
+      <PaymentFooter totalAmount={totalAmount} onPayPress={handlePayment} />
+    </SafeAreaView>
   );
 }
 
+// --- STYLESHEET  ---
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background, 
+  },
   container: {
     flex: 1,
-    backgroundColor: "#004080",
-    paddingTop: 40,
+  },
+  contentContainer: {
     paddingHorizontal: 16,
+    paddingBottom: 120, 
   },
-  closeButton: {
-    position: "absolute",
-    top: 25,
-    left: 10,
-    zIndex: 10,
-  },
-  totalAmount: {
-    color: COLORS.white,
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-    alignSelf: "center",
-  },
-  dropdown: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: COLORS.primary,
-    borderWidth: 1,
-    borderColor: COLORS.white,
-    borderRadius: 6,
-    padding: 12,
-    marginBottom: 12,
-  },
-  dropdownText: {
-    color: COLORS.white,
-    fontSize: 16,
-  },
-  discountButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 20,
-    alignSelf: "center",
-  },
-  discountButtonText: {
-    color: COLORS.primary,
-    fontWeight: "bold",
-    marginRight: 8,
-  },
-  methodList: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    paddingVertical: 8,
-  },
-  methodRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray,
-  },
-  methodInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  radioCircle: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  selectedRb: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: COLORS.primary,
-  },
-  methodLabel: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  methodNote: {
-    fontSize: 12,
-    color: COLORS.gray,
-  },
-  payNowButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 24,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 20,
-    bottom: 10
-  },
-  payNowButtonText: {
-    color: COLORS.white,
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  orderDetailsContainer: {
     backgroundColor: COLORS.white,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  orderText: {
-    fontSize: 14,
-    color: COLORS.primary,
-    marginBottom: 4,
+  headerButton: {
+    width: 40,
   },
-  tourImage: {
-    width: "100%",
-    height: 180,
-    borderRadius: 12,
-  },
-  sectionTitle: {
-    fontWeight: "bold",
-    fontSize: 16,
-    marginBottom: 4,
-    color: COLORS.black,
-  },
-
-  orderInfo: {
-    fontSize: 14,
-    color: COLORS.black,
-    marginBottom: 4,
-  },
-
-  orderPrice: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: COLORS.black,
-    marginBottom: 4,
-  },
-
-  separator: {
-    height: 1,
-    backgroundColor: COLORS.gray,
-    marginVertical: 8,
-  },
-
-  totalAmountBold: {
+  headerTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "right",
+    fontWeight: '600',
     color: COLORS.black,
-    marginTop: 8,
   },
-  totalRow: {
+  card: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    marginTop: 16,
+  },
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
   },
-
-  totalLabel: {
-    fontSize: 14,
-
+  cardTitle: {
+    paddingHorizontal: 8,
+    paddingBottom: 8,
+    fontSize: 16,
+    fontWeight: 'bold',
     color: COLORS.black,
   },
-
+  cardContent: {
+    paddingTop: 16,
+  },
+  detailTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.black,
+    marginTop: 8,
+  },
+  detailText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    lineHeight: 20,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: 12,
+  },
+  methodRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  methodRowSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
+  },
+  methodIcon: {
+    marginRight: 16,
+  },
+  methodInfo: {
+    flex: 1,
+  },
+  methodLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.black,
+  },
+  methodNote: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  radioCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioCircleSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 10,
+  },
+  footerTotalLabel: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  footerTotalAmount: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  payButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 28,
+  },
+  payButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

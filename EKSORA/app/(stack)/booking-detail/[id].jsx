@@ -13,8 +13,8 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { cancelBookingById, getBookingDetailById } from '../../API/services/bookingdetailService';
-import { COLORS } from '../../constants/colors';
+import { cancelBookingById, getBookingDetailById } from '../../../API/services/bookingdetailService';
+import { COLORS } from '../../../constants/colors';
 
 export default function BookingDetailScreen() {
     const { id } = useLocalSearchParams();
