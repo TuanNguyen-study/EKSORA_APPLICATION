@@ -1,3 +1,4 @@
+
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
@@ -10,18 +11,21 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
 
+  Share,
+  Linking,
+} from "react-native";
+import { fetchTourDetail } from "../../../API/services/tourService";
+import { COLORS } from "../../../constants/colors";
+import CustomerReviewSection from "./components/CustomerReviewSection";
+import NoteContactSection from "./components/NoteContactSection";
+import ProductBasicInfo from "./components/ProductBasicInfo";
+import ProductImageCarousel from "./components/ProductImageCarousel";
+import ProductOptionSelector from "./components/ProductOptionSelector";
+import StickyBookingFooter from "./components/StickyBookingFooter";
+import DescriptionSection from "./components/DescriptionSection";
+import TripHighlightsSection from "./components/TripHighlightsSection";
 import { useTourDetail } from '../../../hooks/useTourDetail'; 
-import { COLORS } from '../../../constants/colors';
-import CustomerReviewSection from './components/CustomerReviewSection';
-import NoteContactSection from './components/NoteContactSection';
-import ProductBasicInfo from './components/ProductBasicInfo';
-import ProductImageCarousel from './components/ProductImageCarousel';
-import ProductOptionSelector from './components/ProductOptionSelector';
-import StickyBookingFooter from './components/StickyBookingFooter';
-import DescriptionSection from './components/DescriptionSection';
-import TripHighlightsSection from './components/TripHighlightsSection';
 
 export default function TripDetailScreen() {
   const router = useRouter();
@@ -44,7 +48,29 @@ export default function TripDetailScreen() {
     onBookNow,
   } = useTourDetail(productId);
 
-  // Màn hình Loading
+
+  // Hàm chia sẻ tour
+  const handleShareTour = async () => {
+    const shareUrl = `https://eksora.com/tour/${productData._id}`;
+    const shareTitle = `${productData.name} - Chỉ từ ${productData.price?.current?.toLocaleString("vi-VN") || "0"}đ`;
+    const shareText = `Khám phá ${productData.name} tại ${productData.province}. Đặt tour ngay tại EKSORA!`;
+
+    try {
+      const result = await Share.share({
+        message: `${shareTitle}\n\n${shareText}\n\n${shareUrl}`,
+        title: shareTitle,
+        url: shareUrl,
+      });
+
+      if (result.action === Share.sharedAction) {
+        console.log("Tour shared successfully");
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể chia sẻ tour này");
+    }
+  };
+
+  
   if (loading && !productData) {
     return (
       <View style={styles.centered}>
@@ -58,10 +84,17 @@ export default function TripDetailScreen() {
   if (error && !productData) {
     return (
       <View style={styles.centered}>
-        <Stack.Screen options={{ title: 'Lỗi' }} />
-        <Ionicons name="cloud-offline-outline" size={60} color={COLORS.textSecondary} />
+        <Stack.Screen options={{ title: "Lỗi" }} />
+        <Ionicons
+          name="cloud-offline-outline"
+          size={60}
+          color={COLORS.textSecondary}
+        />
         <Text style={styles.errorText}>Lỗi: {error}</Text>
-        <TouchableOpacity onPress={() => loadTourDetails(productId)} style={styles.retryButton}>
+        <TouchableOpacity
+          onPress={() => loadTourDetails(productId)}
+          style={styles.retryButton}
+        >
           <Text style={styles.retryButtonText}>Thử lại</Text>
         </TouchableOpacity>
       </View>
@@ -74,19 +107,24 @@ export default function TripDetailScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <FlatList
-        data={[{ key: 'main-content' }]}
+        data={[{ key: "main-content" }]}
         keyExtractor={(item) => item.key}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
-          <ProductImageCarousel
-            images={productData.images}
-            tourId={productData._id}
-            onBackPress={() =>
-              router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
-            }
-            onSharePress={() => Alert.alert('Chia sẻ', 'Tính năng đang phát triển')}
-            onFavoritePress={() => console.log('Đã nhấn nút yêu thích.')}
-          />
+          <View style={{ paddingTop: 16 }}>
+            <ProductImageCarousel
+              images={productData.images}
+              tourId={productData._id}
+              tourData={productData} // Truyền tourData để sử dụng trong ShareModal
+              onBackPress={() =>
+                router.canGoBack()
+                  ? router.back()
+                  : router.replace("/(tabs)/home")
+              }
+              onSharePress={handleShareTour}
+              onFavoritePress={() => console.log("Đã nhấn nút yêu thích.")}
+            />
+          </View>
         }
         renderItem={() => (
           <View style={styles.mainContentContainer}>
@@ -101,9 +139,10 @@ export default function TripDetailScreen() {
               title="Điểm nổi bật của chuyến đi"
               highlights={productData.highlights.map((highlight) => ({
                 _id: highlight._id,
-                image: highlight.image_url || 'https://via.placeholder.com/150',
-                title: highlight.location_name || 'Điểm nổi bật',
-                description: highlight.description || 'Mô tả điểm nổi bật của chuyến đi.',
+                image: highlight.image_url || "https://via.placeholder.com/150",
+                title: highlight.location_name || "Điểm nổi bật",
+                description:
+                  highlight.description || "Mô tả điểm nổi bật của chuyến đi.",
               }))}
             />
             <ProductOptionSelector
@@ -159,9 +198,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background || '#f5f5f5',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.background || "#f5f5f5",
     padding: 20,
   },
   loadingText: {
@@ -172,7 +211,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     color: COLORS.danger,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 10,
   },
   retryButton: {
@@ -185,7 +224,7 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   mainContentContainer: {
     paddingHorizontal: 16,
