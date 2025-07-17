@@ -60,6 +60,7 @@
                       totalPrice: item?.totalPrice?.toString() || '0',
                       cateID: item?.tour_id?.cateID,
                       time:item?.tour_id?.opening_time,
+                      close:item?.tour_id?.closing_time,
                     }
                   })}
                 >

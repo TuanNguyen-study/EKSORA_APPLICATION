@@ -12,8 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 
 const { width } = Dimensions.get('window');
-export default function PlaceItem({ item}) {
-  const {time} = useLocalSearchParams();
+export default function PlaceItem({ item, onRemove}) {
+  const {time, close} = useLocalSearchParams();
   return (
     <View style={styles.card}>
       <View style={styles.horizontal}>
@@ -22,13 +22,17 @@ export default function PlaceItem({ item}) {
         <View style={styles.info}>
           <View style={styles.row}>
             <Text style={styles.name}>{item.name}</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={onRemove}>
               <Ionicons name="close" size={20} color="gray" />
             </TouchableOpacity>
           </View>
           <Text style={styles.visitTime}>
-             Thời gian tham quan:  
+             Thời gian mở cửa:  
             <Text style={styles.time}> {time}</Text>
+          </Text>
+           <Text style={styles.visitTime}>
+             Thời gian đóng cửa:  
+            <Text style={styles.time}> {close}</Text>
           </Text>
         </View>
       </View>

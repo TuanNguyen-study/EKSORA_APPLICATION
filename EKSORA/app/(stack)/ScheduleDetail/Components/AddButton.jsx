@@ -4,7 +4,7 @@ import React from 'react';
 
   export default function AddButton() {
     return (
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={() => router.push('/(stack)/ScheduleDetail/Addbutton')}>
         <Text style={styles.text}>Thêm địa điểm </Text>
       </TouchableOpacity>
     );

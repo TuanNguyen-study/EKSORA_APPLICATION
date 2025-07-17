@@ -12,13 +12,12 @@ export default function timelineConnector() {
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    marginVertical: 10,
+    marginVertical: 5,
+    marginLeft: 50,
   },
   line: {
     width: 2,
     height: 40,
     backgroundColor: '#007BFF',
-    marginBottom: 4,
   },
 });
