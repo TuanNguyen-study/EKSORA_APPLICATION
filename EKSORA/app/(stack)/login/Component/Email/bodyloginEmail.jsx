@@ -69,6 +69,7 @@ function BodyLoginEmail() {
         <FontAwesome name="envelope" size={18} style={styles.icon} />
         <TextInput
           placeholder="Địa chỉ email"
+          placeholderTextColor="#666"
           value={form.email}
           onChangeText={text => {
             setForm({ ...form, email: text });
@@ -82,6 +83,7 @@ function BodyLoginEmail() {
         <FontAwesome name="lock" size={18} style={styles.icon} />
         <TextInput
           placeholder="Mật khẩu"
+          placeholderTextColor="#666"
           secureTextEntry={!showPassword}
           value={form.password}
           onChangeText={text => {

@@ -1,5 +1,6 @@
+import React from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../../constants/colors';
 
 const { width } = Dimensions.get('window');
@@ -9,7 +10,7 @@ const IMAGE_HEIGHT = CARD_WIDTH * (2.5 / 4);
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/300';
 
 const SuggestionCard = ({ item, onPress }) => {
-  // đảm bảo image luôn là string
+  // ép kiểu image luôn là string
   let imageUrl = PLACEHOLDER_IMAGE;
   if (item?.image) {
     if (Array.isArray(item.image)) {

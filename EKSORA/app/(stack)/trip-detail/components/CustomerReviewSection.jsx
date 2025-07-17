@@ -5,10 +5,8 @@ import { COLORS } from '../../../../constants/colors';
 import ReviewItem from './ReviewItem';
 import { useReviewContext } from '../../../../store/ReviewContext'; 
 
-
 const { width: screenWidth } = Dimensions.get('window');
 
-// Component hiển thị sao
 const StarRatingDisplay = ({ rating, size = 20, color = COLORS.warning }) => {
   const stars = [];
   for (let i = 1; i <= 5; i++) {
@@ -23,10 +21,7 @@ const StarRatingDisplay = ({ rating, size = 20, color = COLORS.warning }) => {
   return <View style={{ flexDirection: 'row' }}>{stars}</View>;
 };
 
-const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount }) => {
-  const router = useRouter();
-  const { setReviewData } = useReviewContext(); // dùng context
-
+const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount, onSeeAllReviews }) => {
   if (!reviews || reviews.length === 0) {
     return (
       <View style={styles.container}>
@@ -39,11 +34,6 @@ const CustomerReviewSection = ({ reviews, averageRating, totalReviewsCount }) =>
     );
   }
 
-const handleViewAllPress = () => {
-  setReviewData({ reviews, averageRating, totalReviewsCount });
-  router.push('/(stack)/ShowReview');
-};
-
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
@@ -51,7 +41,6 @@ const handleViewAllPress = () => {
         <Text style={styles.sectionTitle}>Đánh giá</Text>
       </View>
 
-      {/* Thông tin Đánh giá Tổng quan */}
       <View style={styles.overallRatingContainer}>
         <Text style={styles.averageRatingText}>
           {averageRating?.toFixed(1)}
@@ -63,20 +52,18 @@ const handleViewAllPress = () => {
         </View>
       </View>
 
-      {/* Carousel Đánh giá Nổi bật */}
       <FlatList
         data={reviews}
         renderItem={({ item }) => <ReviewItem review={item} />}
-        keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
+        keyExtractor={(item) => item._id} 
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.reviewsCarouselContent}
       />
 
-      {/* Nút Đọc tất cả bài đánh giá */}
       <TouchableOpacity
         style={styles.viewAllButton}
-        onPress={handleViewAllPress}
+        onPress={onSeeAllReviews} 
       >
         <Text style={styles.viewAllButtonText}>Đọc tất cả bài đánh giá</Text>
       </TouchableOpacity>

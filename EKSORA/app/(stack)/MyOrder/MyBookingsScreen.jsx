@@ -1,16 +1,15 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native'; // ✅ thêm
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
+  Alert,
   ActivityIndicator,
   FlatList,
-  Platform,
-  Pressable, // ✅ thêm
+  Pressable,
   SafeAreaView,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -22,20 +21,15 @@ import { COLORS } from '../../../constants/colors';
 import BookingItem from './BookingItem';
 
 const filterTabs = [
-  { status: 'pending', title: 'Đang chờ thanh toán' },
+  { status: 'waiting', title: 'Đang chờ' },
   { status: 'paid', title: 'Đã thanh toán' },
-  { status: 'ongoing', title: 'Đang diễn ra' },
-  { status: 'completed', title: 'Hoàn thành' },
   { status: 'canceled', title: 'Đã hủy' },
-  // { status: 'refund_requested', title: 'Yêu cầu hoàn tiền' },
-  // { status: 'refunded', title: 'Đã hoàn tiền' },
-  { status: 'expired', title: 'Hết hạn thanh toán' },
 ];
 
 export default function MyBookingsScreen() {
   const router = useRouter();
   const [bookings, setBookings] = useState([]);
-  const [selectedStatus, setSelectedStatus] = useState('pending');
+  const [selectedStatus, setSelectedStatus] = useState('waiting');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -73,10 +67,21 @@ export default function MyBookingsScreen() {
   };
 
   const filteredBookings = useMemo(() => {
-    return bookings.filter((booking) => {
-      const st = (booking.status || '').toLowerCase().trim();
-      return st === selectedStatus;
-    });
+    const waitingStatuses = ['pending', 'confirmed', 'ongoing'];
+    const paidStatuses = ['paid', 'completed'];
+    const canceledStatuses = ['canceled', 'refund_requested', 'refunded', 'expired'];
+
+    // Lọc danh sách đơn hàng dựa trên tab đang được chọn
+    switch (selectedStatus) {
+      case 'waiting':
+        return bookings.filter(booking => waitingStatuses.includes(booking.status?.toLowerCase().trim()));
+      case 'paid':
+        return bookings.filter(booking => paidStatuses.includes(booking.status?.toLowerCase().trim()));
+      case 'canceled':
+        return bookings.filter(booking => canceledStatuses.includes(booking.status?.toLowerCase().trim()));
+      default:
+        return []; 
+    }
   }, [bookings, selectedStatus]);
 
   const handleItemPress = async (item) => {
@@ -87,7 +92,7 @@ export default function MyBookingsScreen() {
         params: { bookingData: JSON.stringify(detail) }
       });
     } catch (error) {
-      alert('Không thể lấy dữ liệu chi tiết đơn hàng!');
+      Alert.alert('Lỗi', 'Không thể lấy dữ liệu chi tiết đơn hàng!');
     }
   };
 
@@ -105,61 +110,58 @@ export default function MyBookingsScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.primaryDark} />
+            <Ionicons name="arrow-back" size={24} color={COLORS.black} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Đơn hàng của tôi</Text>
-          <View style={{ width: 24 }} />
+          <View style={{ width: 40 }} />
         </View>
 
-        {/* Tabs lọc */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterContainer}
-        >
-          {filterTabs.map(tab => (
-            <Pressable
-              key={tab.status}
-              style={[
-                styles.filterButton,
-                selectedStatus === tab.status && styles.filterButtonActive,
-              ]}
-              onPress={() => setSelectedStatus(tab.status)}
-            >
-              <Text
+        {/* Tabs lọc  */}
+        <View style={styles.filterWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterContainer}
+          >
+            {filterTabs.map(tab => (
+              <Pressable
+                key={tab.status}
                 style={[
-                  styles.filterText,
-                  selectedStatus === tab.status && styles.filterTextActive,
+                  styles.filterButton,
+                  selectedStatus === tab.status && styles.filterButtonActive,
                 ]}
+                onPress={() => setSelectedStatus(tab.status)}
               >
-                {tab.title}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
+                <Text
+                  style={[
+                    styles.filterText,
+                    selectedStatus === tab.status && styles.filterTextActive,
+                  ]}
+                >
+                  {tab.title}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+        
         {/* Danh sách đơn hàng */}
         {loading ? (
           <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
         ) : error ? (
-          <Text style={{ color: 'red', textAlign: 'center', marginTop: 20 }}>{error}</Text>
+          <Text style={styles.errorText}>{error}</Text>
         ) : (
           <FlatList
             data={filteredBookings}
             renderItem={({ item }) => (
-              <BookingItem item={item} onPress={handleItemPress} />
+              <BookingItem item={item} onPress={() => handleItemPress(item)} />
             )}
             keyExtractor={item => item._id}
-            contentContainerStyle={[
-              styles.listContent,
-              { flexGrow: 1, justifyContent: 'flex-start' },
-            ]}
-
+            contentContainerStyle={styles.listContent}
             ListEmptyComponent={renderEmptyList}
             refreshing={refreshing}
             onRefresh={onRefresh}
           />
-
         )}
       </View>
     </SafeAreaView>
@@ -169,76 +171,84 @@ export default function MyBookingsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
   },
   header: {
-    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: COLORS.border,
   },
   backButton: {
-    padding: 4,
+    width: 40,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.primaryDark,
-    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.black,
+  },
+  filterWrapper: {
+    backgroundColor: COLORS.white,
+    paddingBottom: 4,
   },
   filterContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   filterButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    marginRight: 10,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: COLORS.background,
+    marginRight: 12,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
   filterButtonActive: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
+    borderColor: COLORS.primary,
   },
   filterText: {
-    color: COLORS.primary,
+    color: COLORS.textSecondary,
     fontWeight: '600',
   },
   filterTextActive: {
-    color: COLORS.white,
+    color: COLORS.primary,
   },
   listContent: {
-    paddingTop: 8,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
-
   emptyContainer: {
-    marginTop: 24,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 60,
   },
   emptyText: {
     marginTop: 16,
     fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.grey,
+    color: COLORS.textSecondary,
   },
   emptySubText: {
-    marginTop: 4,
+    marginTop: 8,
     fontSize: 14,
     color: COLORS.grey,
+    textAlign: 'center',
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });

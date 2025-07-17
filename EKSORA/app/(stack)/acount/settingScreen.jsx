@@ -7,12 +7,27 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
+  SafeAreaView,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useNavigation } from "expo-router";
 import { getUser } from "../../../API/services/servicesUser";
 import { COLORS } from "../../../constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const cardShadow = Platform.select({
+  ios: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  android: {
+    elevation: 2,
+  },
+});
 
 export default function SettingScreen() {
   const router = useRouter();
@@ -21,7 +36,6 @@ export default function SettingScreen() {
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Fetch user data
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -35,14 +49,12 @@ export default function SettingScreen() {
     fetchUserData();
   }, []);
 
-  // Settings data
   const settingsData = [
     { id: "1", name: "Cài đặt tài khoản", route: "/(stack)/UpdateUser" },
     { id: "2", name: "Về Eksora", route: "/MyOrder/HelpScreen" },
     { id: "3", name: "Đăng xuất", route: "/logout" },
   ];
 
-  // Handlers
   const handlePress = useCallback(
     (item) => {
       if (item.route === "/logout") setModalVisible(true);
@@ -63,13 +75,12 @@ export default function SettingScreen() {
   }, [router]);
 
   const handleCancel = useCallback(() => setModalVisible(false), []);
-
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
   const renderSection = (title, items) => (
     <View style={styles.sectionContainer}>
       <Text style={styles.sectionHeader}>{title}</Text>
-      <View style={styles.cardContainer}>
+      <View style={[styles.cardContainer, cardShadow]}>
         {items.map((item, index) => (
           <TouchableOpacity
             key={item.id}
@@ -91,14 +102,12 @@ export default function SettingScreen() {
     if (loading) {
       return <ActivityIndicator size="large" color={COLORS.primary} />;
     }
-
     return (
       <View>
         {renderSection("Cài đặt", [settingsData[0]])}
         {renderSection("Khác", [settingsData[1]])}
-
         <TouchableOpacity
-          style={styles.logoutContainer}
+          style={[styles.logoutContainer, cardShadow]}
           onPress={() => handlePress(settingsData[2])}
         >
           <Text style={styles.logoutText}>{settingsData[2].name}</Text>
@@ -108,69 +117,75 @@ export default function SettingScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.black} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Cài đặt</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color={COLORS.black} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Cài đặt</Text>
+          <View style={{ width: 24 }} />
+        </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {renderContent()}
-      </ScrollView>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {renderContent()}
+        </ScrollView>
 
-      <Modal
-        transparent
-        visible={modalVisible}
-        animationType="fade"
-        onRequestClose={handleCancel}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalText}>Bạn có chắc muốn đăng xuất?</Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.button} onPress={handleCancel}>
-                <Text style={styles.buttonText}>Hủy</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.confirmButton]}
-                onPress={handleLogout}
-              >
-                <Text style={[styles.buttonText, styles.confirmButtonText]}>
-                  Xác nhận
-                </Text>
-              </TouchableOpacity>
+        <Modal
+          transparent
+          visible={modalVisible}
+          animationType="fade"
+          onRequestClose={handleCancel}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, cardShadow]}>
+              <Text style={styles.modalText}>Bạn có chắc muốn đăng xuất?</Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity style={styles.button} onPress={handleCancel}>
+                  <Text style={styles.buttonText}>Hủy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.confirmButton]}
+                  onPress={handleLogout}
+                >
+                  <Text style={[styles.buttonText, styles.confirmButtonText]}>
+                    Xác nhận
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background || "#F5F5F5",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
     backgroundColor: COLORS.background || "#F5F5F5",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginVertical: 16,
   },
   backButton: { padding: 4 },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     color: COLORS.black,
-    marginLeft: 8,
   },
   scrollContent: {
-    paddingBottom: 16,
+    paddingBottom: 24,
   },
   sectionContainer: {
     marginBottom: 24,
@@ -185,13 +200,7 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: COLORS.white,
     borderRadius: 15,
-    marginHorizontal: 0,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
   },
   item: {
     flexDirection: "row",
@@ -215,21 +224,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     marginTop: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
   },
   logoutText: {
     fontSize: 16,
     color: COLORS.red || "#FF3B30",
     fontWeight: "500",
-  },
-  error: {
-    textAlign: "center",
-    color: COLORS.red,
-    marginTop: 20,
   },
   modalOverlay: {
     flex: 1,
@@ -238,10 +237,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    width: "80%",
+    width: "85%",
     backgroundColor: COLORS.white,
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
   },
   modalText: {
@@ -257,10 +256,10 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    padding: 10,
-    borderRadius: 5,
+    padding: 12,
+    borderRadius: 6,
     alignItems: "center",
-    marginHorizontal: 5,
+    marginHorizontal: 6,
   },
   confirmButton: {
     backgroundColor: COLORS.primary,

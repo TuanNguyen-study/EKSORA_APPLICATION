@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,95 +10,104 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons, AntDesign } from '@expo/vector-icons';
-import ReviewItem from './components/ShowReviewItem';
 import { useReviewContext } from '../../../store/ReviewContext';
 import { useRouter } from 'expo-router';
+import ReviewItem from './components/ShowReviewItem'; 
+import { COLORS } from '../../../constants/colors'; 
+const RatingDistribution = ({ reviews }) => {
+  const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
 
+  // Đếm số lượng review cho mỗi mức sao
+  reviews.forEach(review => {
+    const rating = Math.round(review.rating);
+    if (distribution[rating] !== undefined) {
+      distribution[rating]++;
+    }
+  });
+
+  const totalReviews = reviews.length;
+  if (totalReviews === 0) return null; 
+
+  return (
+    <View style={styles.distributionContainer}>
+      {[5, 4, 3, 2, 1].map((star) => {
+        const count = distribution[star];
+        const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+        return (
+          <View key={star} style={styles.distRow}>
+            <Text style={styles.distStarText}>{star}</Text>
+            <Ionicons name="star" size={16} color={COLORS.warning} style={{ marginHorizontal: 4 }} />
+            <View style={styles.distBarBackground}>
+              <View style={[styles.distBarForeground, { width: `${percentage}%` }]} />
+            </View>
+            <Text style={styles.distCountText}>{count}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
+const ReviewListHeader = ({ averageRating, totalReviewsCount, reviews }) => (
+  <>
+    {/* --- Thẻ thông tin tóm tắt --- */}
+    <View style={styles.summaryCard}>
+      <View style={styles.summaryLeft}>
+        <Text style={styles.mainRating}>{averageRating.toFixed(1)}</Text>
+        <Text style={styles.ratingTotal}>/ 5</Text>
+      </View>
+      <View style={styles.summaryRight}>
+        <RatingDistribution reviews={reviews} />
+      </View>
+    </View>
+    <Text style={styles.basedOnText}>{`Dựa trên ${totalReviewsCount} đánh giá`}</Text>
+
+    {/* --- Phần Sắp xếp và Tiêu đề --- */}
+    <View style={styles.listHeaderContainer}>
+      <Text style={styles.customerReviewsTitle}>Chi tiết đánh giá</Text>
+      <TouchableOpacity style={styles.sortButton}>
+        <Text style={styles.sortButtonText}>Sắp xếp</Text>
+        <AntDesign name="down" size={14} color={COLORS.primary} />
+      </TouchableOpacity>
+    </View>
+  </>
+);
 
 const ShowReview = () => {
-  const [activeFilter, setActiveFilter] = useState('Tất cả');
-
   const { reviewData } = useReviewContext();
+  const router = useRouter();
+
   const reviews = reviewData?.reviews ?? [];
   const averageRating = reviewData?.rating ?? 0;
   const totalReviewsCount = reviewData?.count ?? 0;
-  const router = useRouter();
-
-
-  const renderHeader = () => (
-    <>
-      <View style={styles.summaryContainer}>
-        <Ionicons name="heart" size={40} color="#FF6B6B" style={styles.emoji} />
-        <View style={styles.ratingSummary}>
-          <Text style={styles.mainRating}>{averageRating.toFixed(1)}</Text>
-          <Text style={styles.ratingTotal}>/5</Text>
-        </View>
-        <View>
-          <Text style={styles.satisfactionText}>Hài lòng</Text>
-          <Text style={styles.reviewCount}>{totalReviewsCount} Đánh giá</Text>
-        </View>
-      </View>
-
-      <Text style={styles.customerReviewsTitle}>Đánh giá của khách</Text>
-
-      <View style={styles.sortFilterContainer}>
-        <View style={styles.sortSection}>
-          <Text style={styles.filterLabel}>Sắp xếp theo:</Text>
-          <TouchableOpacity style={styles.sortButton}>
-            <Text style={styles.sortButtonText}>Đánh giá phù hợp nhất</Text>
-            <AntDesign name="down" size={14} color="#FF6B6B" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.filterSection}>
-          <Text style={styles.filterLabel}>Lọc theo:</Text>
-          <View style={styles.filterButtons}>
-            {['Tất cả', 'Có hình ảnh', 'Chỉ tiếng Việt'].map((filter) => (
-              <TouchableOpacity
-                key={filter}
-                style={[
-                  styles.filterButton,
-                  activeFilter === filter && styles.activeFilterButton,
-                ]}
-                onPress={() => setActiveFilter(filter)}
-              >
-                <Text
-                  style={[
-                    styles.filterButtonText,
-                    activeFilter === filter && styles.activeFilterButtonText,
-                  ]}
-                >
-                  {filter}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </View>
-    </>
-  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <View style={styles.container}>
-        {/* Thêm paddingTop nếu Android */}
-        <View style={{ paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="close" size={28} color="black" />
-            </TouchableOpacity>
-
-            <Text style={styles.headerTitle}>Đánh giá</Text>
-            <View style={{ width: 28 }} />
-          </View>
+        {/* --- Header chính của màn hình --- */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
+            <Ionicons name="close" size={28} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Đánh giá của khách hàng</Text>
+          <View style={{ width: 40 }} /> 
         </View>
 
+        {/*  Danh sách đánh giá  */}
         <FlatList
           data={reviews}
+          keyExtractor={(item) => item._id} 
           renderItem={({ item }) => <ReviewItem review={item} />}
-          keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
-          ListHeaderComponent={renderHeader}
+          ListHeaderComponent={
+            <ReviewListHeader
+              averageRating={averageRating}
+              totalReviewsCount={totalReviewsCount}
+              reviews={reviews}
+            />
+          }
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 30 }}
         />
       </View>
     </SafeAreaView>
@@ -108,7 +117,7 @@ const ShowReview = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F7F8FA',
   },
   container: {
     flex: 1,
@@ -117,105 +126,120 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     paddingVertical: 12,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#ECEFF1',
+  },
+  closeButton: {
+    padding: 5,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#263238',
   },
-  summaryContainer: {
+  // --- Thẻ thông tin tổng quan ---
+  summaryCard: {
     flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 20,
     alignItems: 'center',
-    paddingVertical: 20,
+    // Đổ bóng để tạo chiều sâu
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  emoji: {
-    fontSize: 40,
-    marginRight: 10,
-  },
-  ratingSummary: {
+  summaryLeft: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginRight: 10,
+    marginRight: 20,
   },
   mainRating: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#4A00E0',
-  },
-  ratingTotal: {
-    fontSize: 18,
-    color: '#888',
-    marginLeft: 2,
-  },
-  satisfactionText: {
-    fontSize: 16,
-    fontWeight: 'bold',
     color: '#333',
   },
-  reviewCount: {
+  ratingTotal: {
+    fontSize: 24,
+    color: '#B0BEC5',
+    fontWeight: '500',
+    marginLeft: 2,
+  },
+  summaryRight: {
+    flex: 1,
+  },
+  basedOnText: {
     fontSize: 14,
-    color: '#888',
+    color: '#78909C',
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  // --- Tiêu đề danh sách và nút sắp xếp ---
+  listHeaderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 18,
+    marginBottom: 10,
   },
   customerReviewsTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  sortFilterContainer: {
-    marginBottom: 10,
-  },
-  sortSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  filterSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  filterLabel: {
-    fontSize: 16,
-    color: '#555',
-    marginRight: 10,
+    color: '#263238',
   },
   sortButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#FF6B6B',
+    backgroundColor: '#fff',
+    borderColor: '#CFD8DC',
     borderWidth: 1,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 20,
   },
   sortButtonText: {
-    color: '#FF6B6B',
-    marginRight: 5,
+    color: COLORS.primary,
+    fontWeight: '600',
+    marginRight: 6,
   },
-  filterButtons: {
+  // --- Styles cho Biểu đồ Phân bổ ---
+  distributionContainer: {
+    flex: 1,
+  },
+  distRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
   },
-  filterButton: {
-    backgroundColor: '#F0F0F0',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 10,
+  distStarText: {
+    width: 15,
+    fontSize: 14,
+    color: '#546E7A',
   },
-  activeFilterButton: {
-    backgroundColor: '#FFF0F0',
-    borderColor: '#FF6B6B',
-    borderWidth: 1,
+  distBarBackground: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#ECEFF1',
+    borderRadius: 4,
+    marginHorizontal: 8,
   },
-  filterButtonText: {
-    color: '#555',
+  distBarForeground: {
+    height: '100%',
+    backgroundColor: COLORS.warning, // Màu vàng cho thanh progress
+    borderRadius: 4,
   },
-  activeFilterButtonText: {
-    color: '#FF6B6B',
-    fontWeight: 'bold',
+  distCountText: {
+    width: 30,
+    textAlign: 'right',
+    fontSize: 14,
+    color: '#546E7A',
   },
 });
 

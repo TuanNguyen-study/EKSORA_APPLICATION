@@ -8,9 +8,6 @@ export default function ItineraryList({ data, tourImages }) {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Lịch trình</Text>
-        <TouchableOpacity>
-          <Text style={styles.viewAll}>Tất cả</Text>
-        </TouchableOpacity>
       </View>
 
       <FlatList

@@ -23,25 +23,9 @@ export default function TripHeader() {
       />
 
       <View style={styles.topIcons}>
-        <TouchableOpacity onPress={() => router.replace('/(stack)/Schedule')}>
+        <TouchableOpacity onPress={() => router.back('')}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-
-        <View style={styles.rightIcons}>
-          <TouchableOpacity onPress={toggleFavorite} style={styles.iconButton}>
-            <Ionicons
-              name={isFavorite ? 'heart' : 'heart-outline'}
-              size={24}
-              color={isFavorite ? '#ff4d4d' : '#fff'}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Feather name="share-2" size={22} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Feather name="more-horizontal" size={22} color="#fff" />
-          </TouchableOpacity>
-        </View>
       </View>
 
       <View style={styles.infoBox}>

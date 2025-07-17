@@ -69,7 +69,7 @@ const DescriptionSection = ({ title, descriptionData }) => {
       <FlatList
         data={descriptionData}
         renderItem={({ item }) => <DescriptionCard item={item} />}
-        keyExtractor={(item, index) => `desc_${index}`}
+        keyExtractor={(item) => item.id} 
         ListHeaderComponent={ListHeader} 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{

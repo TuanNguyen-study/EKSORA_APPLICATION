@@ -17,7 +17,6 @@ const ProductOptionSelector = ({
   onPromotionChange,
   onOptionSelect,
   onSelectionUpdate,
-  title = 'Các dịch vụ cần thiết',
 
 }) => {
   const defaultDate = dateFilters.find(df => df.isDefault)?.id || dateFilters[0]?.id;
