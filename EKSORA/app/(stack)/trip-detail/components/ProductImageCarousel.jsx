@@ -10,7 +10,7 @@ import {
   View,
   Alert,
 } from "react-native";
-import { useRouter } from "expo-router"; // Import useRouter
+import { useRouter } from "expo-router"; 
 import { FavoriteContext } from "../../../../store/FavoriteContext";
 import ShareModal from "./ShareModal";
 
@@ -21,7 +21,7 @@ const SNAP_INTERVAL = ITEM_WIDTH;
 const ProductImageCarousel = ({
   images = [],
   tourId,
-  tourData, // Thêm tourData prop để truyền vào ShareModal
+  tourData,
   onBackPress,
   onSharePress,
   onFavoritePress,

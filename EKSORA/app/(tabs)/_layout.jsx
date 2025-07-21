@@ -30,11 +30,12 @@ const TabArr = [
   },
   {
     route: "trips/index",
-    label: "Chuyến đi",
+    label: "Vé",
     type: Ionicons,
-    activeIcon: "airplane",
-    inActiveIcon: "airplane-outline",
+    activeIcon: "ticket",
+    inActiveIcon: "ticket-outline",
   },
+
   {
     route: "account/index",
     label: "Tài khoản",

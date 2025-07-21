@@ -11,11 +11,8 @@ import {
   Text,
   TouchableOpacity,
   View,
-
   Share,
-  Linking,
 } from "react-native";
-import { fetchTourDetail } from "../../../API/services/tourService";
 import { COLORS } from "../../../constants/colors";
 import CustomerReviewSection from "./components/CustomerReviewSection";
 import NoteContactSection from "./components/NoteContactSection";
@@ -111,7 +108,6 @@ export default function TripDetailScreen() {
         keyExtractor={(item) => item.key}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
-          <View style={{ paddingTop: 16 }}>
             <ProductImageCarousel
               images={productData.images}
               tourId={productData._id}
@@ -124,7 +120,6 @@ export default function TripDetailScreen() {
               onSharePress={handleShareTour}
               onFavoritePress={() => console.log("Đã nhấn nút yêu thích.")}
             />
-          </View>
         }
         renderItem={() => (
           <View style={styles.mainContentContainer}>
@@ -233,7 +228,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 30,
-    paddingTop: 16,
   },
   separator: {
     height: 1,

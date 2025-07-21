@@ -167,7 +167,7 @@ const onBookNow = () => {
     const query = new URLSearchParams({
         tour_id: productData._id,
         tour_title: productData.name,
-        // SỬA Ở ĐÂY: Truyền đi giá cuối cùng cho 1 người lớn
+
         total_price: finalPricePerAdult.toString(),
         selectedOptions: JSON.stringify(currentSelectedPackages),
         selectedOptionsDetails: JSON.stringify(selectedOptionsDetails),
@@ -176,7 +176,7 @@ const onBookNow = () => {
         discount: discount.toString(),
     }).toString();
 
-    router.push(`/acount/bookingScreen?${query}`);
+    router.push(`/acount/bookingModal?${query}`);
 };
 
   // Trả về tất cả state và hàm mà UI component cần

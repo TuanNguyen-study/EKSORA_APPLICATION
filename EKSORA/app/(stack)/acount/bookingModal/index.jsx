@@ -9,7 +9,7 @@ import QuantitySelector from './components/QuantitySelector';
 import styles from './components/styles';
 import { useBooking } from '../../../../hooks/useBooking';
 
-export default function BookingScreen() {
+export default function BookingModal() {
   const {
     image,
     tour_title,

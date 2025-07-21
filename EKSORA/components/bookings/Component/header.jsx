@@ -41,7 +41,7 @@ export default function Header({ scrollY }) {
           },
         ]}
       >
-        Chuyến đi
+        Vé của bạn
       </Animated.Text>
     </View>
   );

@@ -241,9 +241,6 @@ export default function HomeScreen() {
     router.push(`/trip-detail/${tourId}`);
   };
 
-  const handlePressCategory = async (item) => {
-    console.log("Chọn danh mục:", item.label);
-  };
 
   // Gọi API lấy danh mục
   useEffect(() => {
