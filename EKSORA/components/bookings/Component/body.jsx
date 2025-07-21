@@ -73,14 +73,6 @@
                 <Text style={styles.info}>
                   Ngày đi: {new Date(item.travel_date).toLocaleDateString('vi-VN')}
                 </Text>
-                <Text style={[
-                  styles.status,
-                  item.status === 'pending' ? styles.statusPending :
-                    item.status === 'canceled' ? styles.statusCanceled :
-                      styles.statusConfirmed
-                ]}>
-                  Trạng Thái: {item.status}
-                </Text>
               </View>
             </View>
           )}
