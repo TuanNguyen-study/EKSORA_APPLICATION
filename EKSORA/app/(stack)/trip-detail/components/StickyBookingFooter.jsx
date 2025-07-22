@@ -1,5 +1,3 @@
-import { useRouter } from "expo-router";
-import React from "react";
 import {
   StyleSheet,
   Text,
@@ -9,7 +7,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../../../../constants/colors";
 
-// Hàm định dạng tiền tệ
+// Hàm định dạng tiền tệ 
 const formatPrice = (price) => {
   const value = typeof price === "number" ? price : parseFloat(price);
   if (isNaN(value)) return "0 đ";
@@ -19,18 +17,9 @@ const formatPrice = (price) => {
 const StickyBookingFooter = ({
   priceInfo,
   selectedVoucher,
-  onBookNow,
+  onBookNow, 
 }) => {
-  const router = useRouter();
   const insets = useSafeAreaInsets(); 
-
-  const handleBookNow = () => {
-    if (onBookNow) {
-      onBookNow();
-    } else {
-      router.push("/account/bookingScreen");
-    }
-  };
 
   return (
     <View
@@ -63,7 +52,7 @@ const StickyBookingFooter = ({
         {/* --- Nút "Đặt ngay" nổi bật bên phải --- */}
         <TouchableOpacity
           style={styles.bookNowButton}
-          onPress={handleBookNow}
+          onPress={onBookNow} 
         >
           <Text style={styles.bookNowButtonText}>
             Đặt ngay
@@ -74,7 +63,7 @@ const StickyBookingFooter = ({
   );
 };
 
-// Stylesheet 
+
 const styles = StyleSheet.create({
   outerContainer: {
     position: "absolute",

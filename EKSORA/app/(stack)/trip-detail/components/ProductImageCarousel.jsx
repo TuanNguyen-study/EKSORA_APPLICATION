@@ -1,6 +1,6 @@
 import { COLORS } from "../../../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef, useState, useCallback, useContext } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import {
   Dimensions,
   FlatList,
