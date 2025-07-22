@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Animated } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+  SafeAreaView,
+  Platform,
+} from "react-native";
+import { LinearGradient } from 'expo-linear-gradient';
+
 
 export default function Header({ scrollY }) {
   const [textWidth, setTextWidth] = useState(0);
@@ -7,55 +16,70 @@ export default function Header({ scrollY }) {
 
   const scale = scrollY.interpolate({
     inputRange: [0, 100],
-    outputRange: [1, 0.8],
+    outputRange: [1, 0.85],
     extrapolate: "clamp",
   });
 
   const offsetX = scrollY.interpolate({
     inputRange: [0, 100],
-    outputRange: [0, (1 - 0.8) * textWidth * -0.5],
+    outputRange: [0, (1 - 0.85) * textWidth * -0.5],
     extrapolate: "clamp",
   });
 
   const offsetY = scrollY.interpolate({
     inputRange: [0, 100],
-    outputRange: [0, (1 - 0.8) * textHeight * -0.5],
+    outputRange: [0, (1 - 0.85) * textHeight * -0.5],
     extrapolate: "clamp",
   });
 
   return (
-    <View style={styles.header}>
-      <Animated.Text
-        onLayout={(e) => {
-          setTextWidth(e.nativeEvent.layout.width);
-          setTextHeight(e.nativeEvent.layout.height);
-        }}
-        style={[
-          styles.title,
-          {
-            transform: [
-              { translateX: offsetX },
-              { translateY: offsetY },
-              { scale },
-            ],
-          },
-        ]}
+    <SafeAreaView>
+      <LinearGradient
+        colors={["#e0f7fa", "#ffffff"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
       >
-        Vé của bạn
-      </Animated.Text>
-    </View>
+        <Animated.Text
+          onLayout={(e) => {
+            setTextWidth(e.nativeEvent.layout.width);
+            setTextHeight(e.nativeEvent.layout.height);
+          }}
+          style={[
+            styles.title,
+            {
+              transform: [
+                { translateX: offsetX },
+                { translateY: offsetY },
+                { scale },
+              ],
+            },
+          ]}
+        >
+          Vé của bạn
+        </Animated.Text>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    padding: 16,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    paddingTop: Platform.OS === "android" ? 30 : 16,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 6,
   },
   title: {
-    fontSize: 26,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: "700",
     color: "#005c8b",
+    letterSpacing: 0.5,
   },
 });

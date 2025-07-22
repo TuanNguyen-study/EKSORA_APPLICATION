@@ -1,221 +1,183 @@
-  import AsyncStorage from '@react-native-async-storage/async-storage';
-  import { useEffect, useState } from 'react';
-  import { ActivityIndicator, FlatList, Image, StyleSheet, Text, View, SafeAreaView, Platform } from 'react-native';
-  import { getTrips } from '../../../API/services/servicesBooking';
-  import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  View,
+  Platform,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
+import { getTrips } from '../../../API/services/servicesBooking'; // Giữ nguyên API call của bạn
+import TripItem from '../TripItem'; // Quan trọng: Đảm bảo TripItem được thiết kế dạng Card
+import EmptyTrips from '../Component/EmptyTrips';
 
-  export default function Body() {
-    const [loading, setLoading] = useState(true);
-    const [trips, setTrips] = useState([]);
+// Component Tab không đổi, đã rất tốt
+const Tab = ({ title, active, onPress }) => (
+  <TouchableOpacity onPress={onPress} style={[styles.tab, active && styles.activeTab]}>
+    <Text style={[styles.tabText, active && styles.activeTabText]}>{title}</Text>
+  </TouchableOpacity>
+);
 
-    useEffect(() => {
-      const fetchTrips = async () => {
-        try {
-          const userId = await AsyncStorage.getItem('USER_ID');
-          console.log('userId từ AsyncStorage:', userId);
-          if (userId) {
-            const data = await getTrips(userId);
-            setTrips(data);
-          } else {
-            console.warn('Không tìm thấy userId');
-          }
-        } catch (error) {
-          console.error('Lỗi khi tải chuyến đi:', error);
-        } finally {
-          setLoading(false);
+// Component phân cách giữa các item trong FlatList
+const Separator = () => <View style={styles.separator} />;
+
+export default function Body() {
+  const [loading, setLoading] = useState(true);
+  const [activeTrips, setActiveTrips] = useState([]);
+  const [activeTab, setActiveTab] = useState('all');
+
+  useEffect(() => {
+    const fetchTrips = async () => {
+      setLoading(true); // Bắt đầu loading
+      try {
+        const userId = await AsyncStorage.getItem('USER_ID');
+        if (userId) {
+          const allTripsFromApi = await getTrips(userId);
+          const filteredActiveTrips = allTripsFromApi.filter(
+            (trip) => trip.status !== 'canceled'
+          );
+          setActiveTrips(filteredActiveTrips);
+        } else {
+          console.warn('Không tìm thấy userId');
         }
-      };
+      } catch (error) {
+        console.error('Lỗi khi tải chuyến đi:', error);
+      } finally {
+        setLoading(false); // Kết thúc loading
+      }
+    };
 
-      fetchTrips();
-    }, []);
+    fetchTrips();
+  }, []);
 
+  const getDisplayedTrips = () => {
+    if (activeTab === 'all') {
+      return activeTrips;
+    }
+    return activeTrips.filter((trip) => trip.status === activeTab);
+  };
+
+  const displayedTrips = getDisplayedTrips();
+
+  // === CẢI TIẾN UX: Tách phần render nội dung ra khỏi khung chính ===
+  const renderContent = () => {
     if (loading) {
+      // Chỉ hiển thị loading ở khu vực nội dung
       return (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#007bff" />
+        <View style={styles.contentCenter}>
+          <ActivityIndicator size="large" color="#007AFF" />
         </View>
       );
     }
 
     return (
-      <SafeAreaView style={styles.safe}>
-        <FlatList
-          data={trips}
-          renderItem={({ item }) => (
-            <View style={styles.tripItem}>
-              <View style={styles.imageContainer}>
-                <Image
-                  source={{ uri: item?.tour_id?.image?.[0] }}
-                  style={styles.image}
-                />
-                <Text
-                  style={styles.link}
-                  onPress={() => router.push({
-                    pathname: '/(stack)/ScheduleDetail',
-                    params: {
-                      tourName: item?.tour_id?.name,
-                      nguoiLon: item?.quantity_nguoiLon?.toString() || '1',
-                      treEm: item?.quantity_treEm?.toString() || '0',
-                      tourImages: JSON.stringify(item?.tour_id?.image || []),
-                      totalPrice: item?.totalPrice?.toString() || '0',
-                      cateID: item?.tour_id?.cateID,
-                      time:item?.tour_id?.opening_time,
-                      close:item?.tour_id?.closing_time,
-                    }
-                  })}
-                >
-                  Lịch trình đề xuất
-                </Text>
-              </View>
-              <View style={styles.textContainer}>
-                <Text style={styles.title}>{item?.tour_id?.name}</Text>
-                <Text style={styles.location}>{item?.tour_id?.location}</Text>
-                <Text style={styles.info}>
-                  Ngày đi: {new Date(item.travel_date).toLocaleDateString('vi-VN')}
-                </Text>
-                <Text style={[
-                  styles.status,
-                  item.status === 'pending' ? styles.statusPending :
-                    item.status === 'canceled' ? styles.statusCanceled :
-                      styles.statusConfirmed
-                ]}>
-                  Trạng Thái: {item.status}
-                </Text>
-              </View>
-            </View>
-          )}
-          keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
-          contentContainerStyle={[
-            trips.length === 0 ? styles.noResultsContainer : styles.listContainer,
-          ]}
-          ListEmptyComponent={
-            <View style={styles.noResultsContent}>
-              <Image
-                source={require('../../../assets/images/tripsImage.png')}
-                style={styles.emptyImage}
-                resizeMode="contain"
-              />
-              <Text style={styles.noResults}>Chưa có chuyến đi sắp tới...!</Text>
-            </View>
-          }
-          ListFooterComponent={<View style={styles.footerSpacing} />}
-        />
-      </SafeAreaView>
+      <FlatList
+        data={displayedTrips}
+        renderItem={({ item }) => <TripItem item={item} />}
+        keyExtractor={(item) => item._id}
+        // Thêm khoảng cách và padding cho nội dung list
+        contentContainerStyle={styles.listContentContainer}
+        // Dùng component phân cách để code sạch hơn
+        ItemSeparatorComponent={Separator}
+        ListEmptyComponent={
+          <View style={styles.contentCenter}>
+            <EmptyTrips />
+            <Text style={styles.emptyText}>Bạn không có vé nào trong mục này.</Text>
+          </View>
+        }
+      />
     );
-  }
+  };
 
-  const styles = StyleSheet.create({
-    safe: {
-      flex: 1,
-      backgroundColor: '#fff',
-      paddingTop: Platform.OS === 'android' ? 24 : 0,
-    },
-    listContainer: {
-      padding: 16,
-    },
-    footerSpacing: {
-      height: 140,
-    },
-    tripItem: {
-      flexDirection: 'row',
-      backgroundColor: '#fff',
-      borderRadius: 20,
-      marginVertical: 10,
-      marginHorizontal: 4,
-      borderWidth: 1,
-      borderColor: '#E0E0E0',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 4,
-      elevation: 3,
-      overflow: 'hidden',
-    },
-    imageContainer: {
-      alignItems: 'center',
-      width: 130,
-      paddingVertical: 10,
-    },
-    image: {
-      width: 120,
-      height: 120,
-      borderRadius: 20,
-      resizeMode: 'cover',
-    },
-    link: {
-      marginTop: 8,
-      fontSize: 13,
-      color: '#2196F3',
-      fontStyle: 'italic',
-      opacity: 0.95,
-      fontWeight: '500',
-    },
-    textContainer: {
-      flex: 1,
-      padding: 14,
-      justifyContent: 'space-between',
-    },
-    title: {
-      fontSize: 17,
-      fontWeight: 'bold',
-      color: '#333',
-      marginBottom: 4,
-    },
-    location: {
-      fontSize: 14,
-      color: '#777',
-      marginBottom: 6,
-    },
-    info: {
-      fontSize: 13,
-      color: '#555',
-      marginBottom: 4,
-    },
-    status: {
-      fontSize: 13,
-      color: '#fff',
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-      borderRadius: 12,
-      alignSelf: 'flex-start',
-      marginTop: 8,
-      textTransform: 'capitalize',
-      overflow: 'hidden',
-    },
-    statusPending: {
-      backgroundColor: '#FFA500',
-    },
-    statusCanceled: {
-      backgroundColor: '#B00020',
-    },
-    statusConfirmed: {
-      backgroundColor: '#4CAF50',
-    },
-    noResultsContainer: {
-      flexGrow: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 32,
-    },
-    noResultsContent: {
-      alignItems: 'center',
-      marginTop: 32,
-    },
-    emptyImage: {
-      width: 200,
-      height: 150,
-      marginBottom: 16,
-    },
-    noResults: {
-      fontSize: 20,
-      fontWeight: "bold",
-      textAlign: "center",
-      color: "#999",
-    },
-    center: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 24,
-    },
-  });
+  return (
+    <SafeAreaView style={styles.safe}>
+
+      {/* Thanh Tab */}
+      <View style={styles.tabContainer}>
+        <Tab title="Tất cả" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
+        <Tab title="Đang chờ" active={activeTab === 'pending'} onPress={() => setActiveTab('pending')} />
+        <Tab title="Đã xác nhận" active={activeTab === 'confirmed'} onPress={() => setActiveTab('confirmed')} />
+      </View>
+
+      {/* Khu vực nội dung chính */}
+      {renderContent()}
+    </SafeAreaView>
+  );
+}
+
+// === CẢI TIẾN GIAO DIỆN: Cập nhật và bổ sung StyleSheet ===
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: '#f4f6f8', // Màu nền dịu mắt
+    paddingTop: Platform.OS === 'android' ? 24 : 0,
+  },
+  // --- Header Styles ---
+  headerContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+    backgroundColor: '#f4f6f8', // Đồng bộ màu nền
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  // --- Tab Styles ---
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start', // Bắt đầu từ bên trái cho đẹp hơn
+    gap: 12, // Khoảng cách giữa các tab
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#f4f6f8', // Đồng bộ màu nền
+  },
+  tab: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#e9ecef', // Màu nền cho tab không active
+  },
+  activeTab: {
+    backgroundColor: '#007AFF',
+    shadowColor: '#007AFF', // Thêm đổ bóng cho tab active
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#495057',
+    fontWeight: '600',
+  },
+  activeTabText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  // --- List & Content Styles ---
+  contentCenter: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    marginTop: -50, // Kéo lên một chút để cân đối hơn
+  },
+  listContentContainer: {
+    paddingHorizontal: 16, // Padding hai bên cho các card
+    paddingVertical: 20, // Padding trên dưới
+  },
+  separator: {
+    height: 16, // Khoảng cách giữa các card
+  },
+  emptyText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6c757d',
+    textAlign: 'center',
+  },
+});
