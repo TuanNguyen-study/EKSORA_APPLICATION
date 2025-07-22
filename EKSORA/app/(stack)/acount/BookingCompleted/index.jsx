@@ -104,7 +104,7 @@ export default function BookingCompleted() {
     
     // Chuyển tiếp tất cả params nhận được, cộng thêm thông tin liên lạc
     router.push({
-      pathname: "/acount/paymentPage",
+      pathname: "/paymentPage",
       params: {
         ...params, 
         fullName: `${effectiveContact.lastName} ${effectiveContact.firstName}`,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20, // Thêm padding cho bottom safe area
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20, 
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
     backgroundColor: COLORS.white,

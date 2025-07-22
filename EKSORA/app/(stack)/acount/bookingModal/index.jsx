@@ -49,6 +49,17 @@ export default function BookingModal({ onClose, bookingDetails }) {
   if (!bookingDetails) {
     return null; 
   }
+  // TẠO HÀM MỚI Ở ĐÂY
+  const handleBookNowAndClose = () => {
+    // BƯỚC 1: Gọi onClose() để báo cho component cha đóng modal
+    onClose();
+
+    // BƯỚC 2: Đợi một chút để animation đóng chạy rồi mới thực hiện logic đặt vé
+    // Việc này giúp trải nghiệm người dùng mượt mà hơn rất nhiều trên iOS
+    setTimeout(() => {
+      handleBooking(); // Gọi hàm gốc từ hook useBooking
+    }, 300); // 300ms là duration của animation đóng modal
+  };
 
   return (
     <SafeAreaView style={[styles.container, { height: '100%' }]}>
@@ -182,7 +193,7 @@ export default function BookingModal({ onClose, bookingDetails }) {
       <BookingFooter
         totalPrice={formatPrice(finalPrice)}
         onAddToCart={handleAddToCart}
-        onBookNow={handleBooking}
+        onBookNow={handleBookNowAndClose}
       />
     </SafeAreaView>
   );
