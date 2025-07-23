@@ -26,19 +26,30 @@ export default function TripItem({ item }) {
     return null;
   }
 
-  // HÀM CŨ: Chuyển qua trang Lịch trình gợi ý (ScheduleDetail)
-  const handlePressSchedule = () => {
-    router.push({
-      pathname: '/(stack)/ScheduleDetail',
-      params: { bookingData: JSON.stringify(item) },
-    });
-  };
+const handlePressSchedule = () => {
+  // Gửi các tham số một cách tường minh 
+  router.push({
+    pathname: '/(stack)/ScheduleDetail',
+    params: {
+      // Lấy các dữ liệu cần thiết từ `item` và gửi đi
+      tourName: item?.tour_id?.name,
+      nguoiLon: item?.quantity_nguoiLon?.toString() || '1',
+      treEm: item?.quantity_treEm?.toString() || '0',
+      tourImages: JSON.stringify(item?.tour_id?.image || []),
+      totalPrice: item?.totalPrice?.toString() || '0',
+      cateID: item?.tour_id?.cateID, // <--- GỬI LẠI cateID
+      time: item?.tour_id?.opening_time,
+      close: item?.tour_id?.closing_time,
+      // Thêm bookingData nếu trang kia vẫn cần
+      bookingData: JSON.stringify(item), 
+    },
+  });
+};
 
   // HÀM MỚI: Chuyển qua trang Chi tiết Tour (TripDetailScreen)
-  // Nó sẽ điều hướng đến một route động có dạng /tour/[id]
   const handleNavigateToDetail = () => {
     router.push({
-      pathname: `(stack)/trip-detail/${item.tour_id._id}`, // <--- RẤT QUAN TRỌNG: Đường dẫn này phải khớp với cấu trúc file của bạn
+      pathname: `(stack)/trip-detail/${item.tour_id._id}`, 
     });
   };
 
@@ -53,9 +64,8 @@ export default function TripItem({ item }) {
   const qrValue = item.order_code ? String(item.order_code) : String(item._id);
 
   return (
-    // THÊM SỰ KIỆN onPress VÀO ĐÂY để nhấn vào cả thẻ
     <TouchableOpacity 
-      onPress={handleNavigateToDetail} // <--- GỌI HÀM ĐIỀU HƯỚNG MỚI
+      onPress={handleNavigateToDetail}
       style={styles.cardContainer}
       activeOpacity={0.8}
     >
@@ -90,10 +100,9 @@ export default function TripItem({ item }) {
 
         {/* ===== PHẦN CHÂN VÉ (QR & ACTION) ===== */}
         <View style={styles.cardFooter}>
-          {/* Nút này vẫn giữ chức năng cũ: Xem gợi ý lịch trình */}
           <TouchableOpacity 
             style={[styles.actionButton, { backgroundColor: currentStatus.color }]}
-            onPress={handlePressSchedule} // <--- Gọi hàm xem lịch trình
+            onPress={handlePressSchedule} 
           >
             <Text style={styles.actionButtonText}>Xem gợi ý lịch trình</Text>
             <Ionicons name="arrow-forward-circle" size={22} color="#fff" />
@@ -111,7 +120,7 @@ export default function TripItem({ item }) {
 }
 
 
-// STYLES (Không thay đổi)
+// STYLES 
 const styles = StyleSheet.create({
     cardContainer: {
       marginHorizontal: 16,

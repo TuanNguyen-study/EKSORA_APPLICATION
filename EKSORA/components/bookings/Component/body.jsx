@@ -10,43 +10,56 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
-import { getTrips } from '../../../API/services/servicesBooking'; // Giữ nguyên API call của bạn
-import TripItem from '../TripItem'; // Quan trọng: Đảm bảo TripItem được thiết kế dạng Card
+import { LinearGradient } from 'expo-linear-gradient'; // Import LinearGradient
+import { getTrips } from '../../../API/services/servicesBooking';
+import TripItem from '../TripItem';
 import EmptyTrips from '../Component/EmptyTrips';
 
-// Component Tab không đổi, đã rất tốt
-const Tab = ({ title, active, onPress }) => (
-  <TouchableOpacity onPress={onPress} style={[styles.tab, active && styles.activeTab]}>
-    <Text style={[styles.tabText, active && styles.activeTabText]}>{title}</Text>
-  </TouchableOpacity>
-);
+// --- Component Tab đã được thiết kế lại hoàn toàn ---
+const Tab = ({ title, active, onPress }) => {
+  if (active) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+        <LinearGradient
+          colors={['#56CCF2', '#2F80ED']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.filterChip, styles.activeFilterChip]}
+        >
+          <Text style={[styles.filterChipText, styles.activeFilterChipText]}>{title}</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }
 
-// Component phân cách giữa các item trong FlatList
-const Separator = () => <View style={styles.separator} />;
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.filterChip}>
+      <Text style={styles.filterChipText}>{title}</Text>
+    </TouchableOpacity>
+  );
+};
 
 export default function Body() {
   const [loading, setLoading] = useState(true);
-  const [activeTrips, setActiveTrips] = useState([]);
+  const [allTrips, setAllTrips] = useState([]); // Lưu tất cả trips ở đây
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     const fetchTrips = async () => {
-      setLoading(true); // Bắt đầu loading
+      setLoading(true);
       try {
         const userId = await AsyncStorage.getItem('USER_ID');
         if (userId) {
           const allTripsFromApi = await getTrips(userId);
-          const filteredActiveTrips = allTripsFromApi.filter(
-            (trip) => trip.status !== 'canceled'
-          );
-          setActiveTrips(filteredActiveTrips);
+          // Không lọc 'canceled' ở đây nữa, để tab có thể xử lý
+          setAllTrips(allTripsFromApi); 
         } else {
           console.warn('Không tìm thấy userId');
         }
       } catch (error) {
         console.error('Lỗi khi tải chuyến đi:', error);
       } finally {
-        setLoading(false); // Kết thúc loading
+        setLoading(false);
       }
     };
 
@@ -54,21 +67,25 @@ export default function Body() {
   }, []);
 
   const getDisplayedTrips = () => {
-    if (activeTab === 'all') {
-      return activeTrips;
+    switch (activeTab) {
+      case 'all':
+        // Lọc ra những vé không bị hủy cho tab "Tất cả"
+        return allTrips.filter((trip) => trip.status !== 'canceled');
+      case 'pending':
+      case 'confirmed':
+        return allTrips.filter((trip) => trip.status === activeTab);
+      default:
+        return [];
     }
-    return activeTrips.filter((trip) => trip.status === activeTab);
   };
 
   const displayedTrips = getDisplayedTrips();
 
-  // === CẢI TIẾN UX: Tách phần render nội dung ra khỏi khung chính ===
   const renderContent = () => {
     if (loading) {
-      // Chỉ hiển thị loading ở khu vực nội dung
       return (
         <View style={styles.contentCenter}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color="#2F80ED" />
         </View>
       );
     }
@@ -78,10 +95,8 @@ export default function Body() {
         data={displayedTrips}
         renderItem={({ item }) => <TripItem item={item} />}
         keyExtractor={(item) => item._id}
-        // Thêm khoảng cách và padding cho nội dung list
+        // Bỏ ItemSeparatorComponent vì đã có margin trong TripItem
         contentContainerStyle={styles.listContentContainer}
-        // Dùng component phân cách để code sạch hơn
-        ItemSeparatorComponent={Separator}
         ListEmptyComponent={
           <View style={styles.contentCenter}>
             <EmptyTrips />
@@ -94,7 +109,6 @@ export default function Body() {
 
   return (
     <SafeAreaView style={styles.safe}>
-
       {/* Thanh Tab */}
       <View style={styles.tabContainer}>
         <Tab title="Tất cả" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
@@ -108,55 +122,44 @@ export default function Body() {
   );
 }
 
-// === CẢI TIẾN GIAO DIỆN: Cập nhật và bổ sung StyleSheet ===
+// --- TOÀN BỘ STYLESHEET ĐÃ ĐƯỢC CẬP NHẬT ---
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#f4f6f8', // Màu nền dịu mắt
+    backgroundColor: '#F8F9FA', // Màu nền sáng sủa, làm nổi bật thẻ
     paddingTop: Platform.OS === 'android' ? 24 : 0,
   },
-  // --- Header Styles ---
-  headerContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
-    backgroundColor: '#f4f6f8', // Đồng bộ màu nền
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-  },
-  // --- Tab Styles ---
+  // --- Tab/Filter Styles ---
   tabContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-start', // Bắt đầu từ bên trái cho đẹp hơn
-    gap: 12, // Khoảng cách giữa các tab
     paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F8F9FA',
+  },
+  filterChip: {
     paddingVertical: 10,
-    backgroundColor: '#f4f6f8', // Đồng bộ màu nền
-  },
-  tab: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     borderRadius: 20,
-    backgroundColor: '#e9ecef', // Màu nền cho tab không active
+    backgroundColor: '#E9EEF2', // Màu nền cho chip không được chọn
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  activeTab: {
-    backgroundColor: '#007AFF',
-    shadowColor: '#007AFF', // Thêm đổ bóng cho tab active
-    shadowOffset: { width: 0, height: 2 },
+  activeFilterChip: {
+    // Không cần backgroundColor vì đã có LinearGradient
+    shadowColor: '#2F80ED',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowRadius: 5,
+    elevation: 6,
   },
-  tabText: {
+  filterChipText: {
     fontSize: 14,
-    color: '#495057',
+    color: '#4A6A8A', // Màu chữ xám xanh cho dễ nhìn
     fontWeight: '600',
   },
-  activeTabText: {
-    color: '#fff',
+  activeFilterChipText: {
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   // --- List & Content Styles ---
@@ -165,19 +168,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    marginTop: -50, // Kéo lên một chút để cân đối hơn
+    marginTop: 50, // Đẩy nội dung xuống một chút
   },
   listContentContainer: {
-    paddingHorizontal: 16, // Padding hai bên cho các card
-    paddingVertical: 20, // Padding trên dưới
-  },
-  separator: {
-    height: 16, // Khoảng cách giữa các card
+    paddingHorizontal: 8, // Giảm padding ngang vì thẻ đã có margin
+    paddingBottom: 100, // Thêm khoảng trống dưới cùng của list
   },
   emptyText: {
-    marginTop: 16,
-    fontSize: 16,
+    marginTop: 24,
+    fontSize: 17,
+    fontWeight: '600',
     color: '#6c757d',
     textAlign: 'center',
+    lineHeight: 24,
   },
 });
