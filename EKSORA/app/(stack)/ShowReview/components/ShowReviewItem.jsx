@@ -1,7 +1,4 @@
-// components/ReviewItem.js
-import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 
 const ShowReviewItem = ({ review }) => {
   if (!review) return null;
@@ -13,6 +10,13 @@ const ShowReviewItem = ({ review }) => {
   const ratingText = `Đánh giá: ${rating}/5`;
   const comment = review.comment?.trim() || '(Không có nội dung)';
   const images = Array.isArray(review.images) && review.images.length > 0 ? review.images : [];
+  
+  // Log thông tin ngắn gọn
+  if (images.length > 0) {
+    console.log(`Dữ liệu review - User: ${name}, Images: ${images.length} ảnh (Ví dụ đầu tiên: ${images[0].substring(0, 10)}...)`);
+  } else {
+    console.log(`Dữ liệu review - User: ${name}, Images: Không có ảnh`);
+  }
 
   return (
     <View style={styles.container}>
@@ -38,8 +42,12 @@ const ShowReviewItem = ({ review }) => {
 
       {images.length > 0 && (
         <View style={styles.imageGrid}>
-          {images.slice(0, 5).map((uri, index) => (
-            <Image key={index} source={{ uri }} style={styles.image} />
+          {images.slice(0, 2).map((uri, index) => (
+            <Image
+              key={index}
+              source={{ uri: uri.startsWith('http') ? uri : `data:image/jpeg;base64,${uri}` }}
+              style={styles.thumbnail}
+            />
           ))}
         </View>
       )}
@@ -89,33 +97,19 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   ratingText: {
-    color: '#28a745', // Màu xanh lá cây
+    color: '#28a745',
     fontSize: 14,
     marginBottom: 4,
   },
   ratingBox: {
-    backgroundColor: '#E6F3FF', // Màu xanh dương nhạt
+    backgroundColor: '#E6F3FF',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
   },
   ratingNumber: {
-    color: '#007BFF', // Màu xanh dương đậm
+    color: '#007BFF',
     fontWeight: 'bold',
-  },
-  reviewForContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F7F7F7',
-    padding: 8,
-    borderRadius: 6,
-    marginBottom: 12,
-  },
-  reviewForText: {
-    color: '#666',
-    flex: 1,
-    marginRight: 8,
   },
   reviewContent: {
     fontSize: 15,
@@ -123,19 +117,13 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 12,
   },
-  originalReviewLink: {
-    color: '#333',
-    textDecorationLine: 'underline',
-    marginBottom: 16,
-  },
   imageGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    // justifyContent: 'space-between', // Nếu muốn các ảnh cách đều
   },
-  image: {
-    width: '32%', // ~1/3 màn hình trừ đi khoảng cách
-    aspectRatio: 1, // Để ảnh vuông
+  thumbnail: {
+    width: 60,
+    height: 60,
     borderRadius: 8,
     marginBottom: '2%',
     marginRight: '2%',

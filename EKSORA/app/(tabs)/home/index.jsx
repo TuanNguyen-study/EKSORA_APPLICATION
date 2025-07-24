@@ -227,7 +227,7 @@ const handleFindNearbyTours = (location) => {
         contentContainerStyle={{ paddingBottom: 60 }}
       >
         <LinearGradient
-          colors={['#00639B', '#0087CA', '#E6F3FA', '#FFFFFF']}
+          colors={[ '#2F80ED','#56CCF2','#FFFFFF']}
           locations={[0, 0.3, 0.8, 1]}
           style={styles.gradientSection}
         >

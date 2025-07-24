@@ -17,7 +17,7 @@ export const useTourDetail = (productId) => {
   const [currentSelectedPackages, setCurrentSelectedPackages] = useState({});
   const [selectedVoucher, setSelectedVoucher] = useState(null);
   const [bookingDetails, setBookingDetails] = useState(null);
-  
+
   //  Tách state giá thành 2 phần
   const [priceBeforeDiscount, setPriceBeforeDiscount] = useState(0); // Giá gốc + options
   const [currentTotalPrice, setCurrentTotalPrice] = useState(0); // Giá cuối cùng sau khi giảm
@@ -25,7 +25,7 @@ export const useTourDetail = (productId) => {
   // THAY ĐỔI 2: Sửa lại hàm tính giá để cập nhật cả 2 state
   const recalculateTotalPrice = useCallback((packagesMap, voucher) => {
     if (!productData) return;
-    
+
     const basePrice = productData.price.current;
     const optionTotal = Object.values(packagesMap).reduce((sum, optId) => {
       for (const pkg of productData.availableServicePackages) {
@@ -34,7 +34,7 @@ export const useTourDetail = (productId) => {
       }
       return sum;
     }, 0);
-    
+
     // Luôn tính và cập nhật giá trước khi giảm
     const totalBeforeDiscount = basePrice + optionTotal;
     setPriceBeforeDiscount(totalBeforeDiscount);
@@ -43,7 +43,7 @@ export const useTourDetail = (productId) => {
     const finalPrice = formatPrice(totalBeforeDiscount, voucher);
     setCurrentTotalPrice(finalPrice);
 
-  }, [productData]); 
+  }, [productData]);
 
   // Các hàm và hook 
   const loadTourDetails = useCallback(async (id) => {
@@ -72,6 +72,7 @@ export const useTourDetail = (productId) => {
           userAvatar: r.user?.avatarUrl || null,
           rating: r.rating,
           comment: r.comment,
+          images: r.images || [], 
           date: new Date(r.created_at).toLocaleDateString('vi-VN'),
         };
       });
@@ -79,7 +80,7 @@ export const useTourDetail = (productId) => {
 
       const descriptionContent = parseDescription(tour.description || '');
       const productInfo = prepareProductInfo(tour, services, highlights, reviews);
-      
+
       const mappedProductData = {
         ...tour,
         images: (tour.image || []).map((uri, i) => ({ id: `img_${i}`, uri })),
@@ -149,7 +150,7 @@ export const useTourDetail = (productId) => {
       return sum;
     }, 0);
     const pricePerAdultWithOptions = basePrice + optionTotal;
-    
+
     // 2. Tính số tiền thực tế đã giảm
     // `currentTotalPrice` là giá đã giảm, `pricePerAdultWithOptions` là giá gốc
     const discountAmount = pricePerAdultWithOptions - currentTotalPrice;
@@ -187,7 +188,7 @@ export const useTourDetail = (productId) => {
   };
 
   return {
-    productData, loading, error, refreshing,  priceBeforeDiscount,
+    productData, loading, error, refreshing, priceBeforeDiscount,
     currentTotalPrice,
     currentSelectedPackages, selectedVoucher, bookingDetails,
     loadTourDetails, onRefresh, handleApplyVoucher,

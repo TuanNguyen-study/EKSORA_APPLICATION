@@ -7,7 +7,7 @@ export default function Header({ scrollY }) {
   // --- ANIMATION CHO TIÊU ĐỀ CHÍNH (TITLE) ---
   const headerTitleScale = scrollY.interpolate({
     inputRange: [0, 200],
-    outputRange: [1, 0.99], 
+    outputRange: [1, 0.99],
     extrapolate: 'clamp',
   });
 
@@ -26,7 +26,7 @@ export default function Header({ scrollY }) {
 
   const subElementsTranslateY = scrollY.interpolate({
     inputRange: [0, 50],
-    outputRange: [0, -20], 
+    outputRange: [0, -20],
     extrapolate: 'clamp',
   });
 
@@ -34,17 +34,17 @@ export default function Header({ scrollY }) {
     <SafeAreaView style={styles.safeArea}>
       <Animated.View>
         <LinearGradient
-          colors={['#56CCF2', '#2F80ED']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          colors={['#2F80ED', '#479DEB', '#56CCF2']}
+          locations={[0, 0.3, 0.8, 1]}
           style={styles.headerContainer}
         >
+
           {/* ---- Nhóm các thành phần phụ để dễ dàng animate ---- */}
           <Animated.View style={[
             styles.subtitleContainer,
-            { 
+            {
               opacity: subElementsOpacity,
-              transform: [{ translateY: subElementsTranslateY }] 
+              transform: [{ translateY: subElementsTranslateY }]
             }
           ]}>
             <MaterialCommunityIcons name="ticket-confirmation-outline" size={26} color="rgba(255, 255, 255, 0.8)" />
@@ -73,7 +73,7 @@ export default function Header({ scrollY }) {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: '#ffffff', 
+    backgroundColor: '#ffffff',
   },
   headerContainer: {
     paddingHorizontal: 24,
@@ -99,8 +99,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   title: {
-    fontSize: 36, 
-    fontWeight: 'bold', 
+    fontSize: 36,
+    fontWeight: 'bold',
     color: '#ffffff',
     textShadowColor: 'rgba(0, 0, 0, 0.15)',
     textShadowOffset: { width: 0, height: 2 },

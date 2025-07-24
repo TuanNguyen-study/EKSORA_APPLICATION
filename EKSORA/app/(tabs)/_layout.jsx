@@ -113,7 +113,7 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#00639B"
+    backgroundColor: "#2F80ED"
   },
   tabBar: {
     backgroundColor: COLORS.white,
