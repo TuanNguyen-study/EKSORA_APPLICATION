@@ -10,6 +10,7 @@ import {
   Alert,
   SafeAreaView,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useSelector } from 'react-redux';
 
@@ -47,7 +48,6 @@ export default function BookingCompleted() {
     }
 
     // TRƯỜNG HỢP 2: Dữ liệu đến từ Đặt ngay (props riêng lẻ)
-
     const singleItem = {
       id: params.bookingId, 
       title: params.title,
@@ -125,42 +125,53 @@ export default function BookingCompleted() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={styles.contentContainer} contentContainerStyle={{ paddingBottom: 20 }}>
-        {/* Render danh sách các Card, dù là 1 hay nhiều */}
-        {displayItems.map((item) => (
-          <BookingSummaryCard
-            key={item.id}
-            title={item.title}
-            travelDate={item.travelDate}
-            quantityAdult={item.quantityAdult}
-            quantityChild={item.quantityChild}
-            totalPrice={item.totalPrice} 
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <ScrollView 
+          style={styles.contentContainer} 
+          contentContainerStyle={styles.scrollContentContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Render danh sách các Card, dù là 1 hay nhiều */}
+          {displayItems.map((item) => (
+            <BookingSummaryCard
+              key={item.id}
+              title={item.title}
+              travelDate={item.travelDate}
+              quantityAdult={item.quantityAdult}
+              quantityChild={item.quantityChild}
+              totalPrice={item.totalPrice} 
+            />
+          ))}
+          
+          {/* Phần thông tin liên lạc  */}
+          <ContactInfoSection
+            isUsingSavedInfo={isUsingSavedInfo}
+            setIsUsingSavedInfo={setIsUsingSavedInfo}
+            contactToDisplay={contactToDisplay}
+            formInfo={formInfo}
+            handleFormInputChange={handleFormInputChange}
+            handleConfirmNewContact={handleConfirmNewContact}
           />
-        ))}
+        </ScrollView>
         
-        {/* Phần thông tin liên lạc  */}
-        <ContactInfoSection
-          isUsingSavedInfo={isUsingSavedInfo}
-          setIsUsingSavedInfo={setIsUsingSavedInfo}
-          contactToDisplay={contactToDisplay}
-          formInfo={formInfo}
-          handleFormInputChange={handleFormInputChange}
-          handleConfirmNewContact={handleConfirmNewContact}
-        />
-      </ScrollView>
-      
-      {/* Footer  */}
-      <View style={styles.footer}>
-        <View>
-          <Text style={styles.footerLabel}>Tổng cộng</Text>
-          <Text style={styles.footerPrice}>
-            {finalTotalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
-          </Text>
+        {/* Footer  */}
+        <View style={styles.footer}>
+          <View>
+            <Text style={styles.footerLabel}>Tổng cộng</Text>
+            <Text style={styles.footerPrice}>
+              {finalTotalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
+            <Text style={styles.payButtonText}>Thanh toán</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
-          <Text style={styles.payButtonText}>Thanh toán</Text>
-        </TouchableOpacity>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -170,9 +181,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffffff', 
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   contentContainer: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  scrollContentContainer: {
+    paddingBottom: 20,
+    flexGrow: 1,
   },
   header: {
     flexDirection: "row",
@@ -197,9 +215,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20, // Thêm padding cho bottom safe area
-    borderTopWidth: 1,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 10 : 9,
+    borderTopWidth: 5,
     borderTopColor: '#f0f0f0',
     backgroundColor: COLORS.white,
     flexDirection: 'row',
@@ -209,6 +227,7 @@ const styles = StyleSheet.create({
   footerLabel: {
     fontSize: 14,
     color: COLORS.gray,
+   
   },
   footerPrice: {
     fontSize: 20,

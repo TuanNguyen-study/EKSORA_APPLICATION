@@ -34,7 +34,7 @@ export default function MyBookingsScreen() {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  //  Hàm fetch API dùng lại cho cả focus và refresh
+  // Hàm fetch API dùng lại cho cả focus và refresh
   const fetchBookings = async () => {
     try {
       const token = await AsyncStorage.getItem("ACCESS_TOKEN");
@@ -44,7 +44,11 @@ export default function MyBookingsScreen() {
         return;
       }
       const data = await getUserBookings(userId, token);
-      setBookings(data);
+
+      // ✅ Sắp xếp booking mới nhất lên trên
+      const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      setBookings(sortedData);
     } catch (err) {
       setError('Lỗi khi tải danh sách đơn hàng');
       console.error('Lỗi API:', err);
@@ -71,17 +75,22 @@ export default function MyBookingsScreen() {
     const paidStatuses = ['paid', 'completed'];
     const canceledStatuses = ['canceled', 'refund_requested', 'refunded', 'expired'];
 
-    // Lọc danh sách đơn hàng dựa trên tab đang được chọn
+    let filtered = [];
     switch (selectedStatus) {
       case 'waiting':
-        return bookings.filter(booking => waitingStatuses.includes(booking.status?.toLowerCase().trim()));
+        filtered = bookings.filter(booking => waitingStatuses.includes(booking.status?.toLowerCase().trim()));
+        break;
       case 'paid':
-        return bookings.filter(booking => paidStatuses.includes(booking.status?.toLowerCase().trim()));
+        filtered = bookings.filter(booking => paidStatuses.includes(booking.status?.toLowerCase().trim()));
+        break;
       case 'canceled':
-        return bookings.filter(booking => canceledStatuses.includes(booking.status?.toLowerCase().trim()));
+        filtered = bookings.filter(booking => canceledStatuses.includes(booking.status?.toLowerCase().trim()));
+        break;
       default:
-        return []; 
+        filtered = [];
     }
+     return filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  
   }, [bookings, selectedStatus]);
 
   const handleItemPress = async (item) => {
@@ -116,7 +125,7 @@ export default function MyBookingsScreen() {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Tabs lọc  */}
+        {/* Tabs lọc */}
         <View style={styles.filterWrapper}>
           <ScrollView
             horizontal
@@ -144,7 +153,7 @@ export default function MyBookingsScreen() {
             ))}
           </ScrollView>
         </View>
-        
+
         {/* Danh sách đơn hàng */}
         {loading ? (
           <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
