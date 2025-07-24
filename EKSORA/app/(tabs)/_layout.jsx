@@ -30,11 +30,12 @@ const TabArr = [
   },
   {
     route: "trips/index",
-    label: "Chuyến đi",
+    label: "Vé",
     type: Ionicons,
-    activeIcon: "airplane",
-    inActiveIcon: "airplane-outline",
+    activeIcon: "ticket",
+    inActiveIcon: "ticket-outline",
   },
+
   {
     route: "account/index",
     label: "Tài khoản",
@@ -112,7 +113,7 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#00639B"
+    backgroundColor: "#2F80ED"
   },
   tabBar: {
     backgroundColor: COLORS.white,

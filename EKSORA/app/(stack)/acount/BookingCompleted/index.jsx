@@ -1,40 +1,43 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
+  Platform,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Alert,
-  SafeAreaView,
-  Platform,
 } from "react-native";
 import { useSelector } from 'react-redux';
 
+import { updateUserProfile } from '../../../../API/services/servicesProfile';
 import { COLORS } from "../../../../constants/colors";
-import BookingSummaryCard from "./components/BookingCard";
 import ContactInfoSection from "./components/ContactInfoSection";
+import BookingSummaryCard from "./components/BookingCard";
 
 export default function BookingCompleted() {
   const router = useRouter();
-  const params = useLocalSearchParams(); 
+  const params = useLocalSearchParams();
 
+  // Lấy thông tin người dùng đã đăng nhập từ Redux
   const loggedInUser = useSelector((state) => state.auth.user);
 
-  //  Xử lý dữ liệu từ cả 2 nguồn 
+  // Xử lý và chuẩn hóa dữ liệu booking từ params bằng useMemo để tối ưu hiệu năng
   const { displayItems, finalTotalPrice } = useMemo(() => {
-    // TRƯỜNG HỢP 1: Dữ liệu đến từ Giỏ hàng
+    // Trường hợp 1: Dữ liệu từ giỏ hàng (một mảng items)
     if (params.items && typeof params.items === 'string') {
       try {
         const parsedItems = JSON.parse(params.items);
         const itemsForDisplay = parsedItems.map(item => ({
           ...item,
-          title: item.name, 
-          totalPrice: item.price, 
-          quantityAdult: item.adults, 
-          quantityChild: item.children, 
+          title: item.name,
+          totalPrice: item.price,
+          quantityAdult: item.adults,
+          quantityChild: item.children,
         }));
         return {
           displayItems: itemsForDisplay,
@@ -42,14 +45,13 @@ export default function BookingCompleted() {
         };
       } catch (e) {
         console.error("Lỗi parse JSON từ giỏ hàng:", e);
-        return { displayItems: [], finalTotalPrice: 0 }; 
+        return { displayItems: [], finalTotalPrice: 0 };
       }
     }
 
-    // TRƯỜNG HỢP 2: Dữ liệu đến từ Đặt ngay (props riêng lẻ)
-
+    // Trường hợp 2: Dữ liệu từ một booking đơn lẻ
     const singleItem = {
-      id: params.bookingId, 
+      id: params.bookingId,
       title: params.title,
       quantityAdult: params.quantityAdult,
       quantityChild: params.quantityChild,
@@ -60,73 +62,156 @@ export default function BookingCompleted() {
       displayItems: [singleItem],
       finalTotalPrice: Number(params.totalPrice),
     };
+  }, [params]);
 
-  }, [params]); 
+  // ----- STATE MANAGEMENT CHO THÔNG TIN LIÊN LẠC -----
 
-  // State và các hàm xử lý cho ContactInfoSection 
+  // State quyết định hiển thị tab "Thông tin của tôi" hay form chỉnh sửa
   const [isUsingSavedInfo, setIsUsingSavedInfo] = useState(true);
-  const [customInfo, setCustomInfo] = useState(null);
+
+  // State chứa dữ liệu để *hiển thị* cho người dùng trong tab "Thông tin của tôi"
+  const [contactToDisplay, setContactToDisplay] = useState(loggedInUser || {});
+
+  // State chứa dữ liệu của form nhập liệu (khi chỉnh sửa hoặc nhập mới)
   const [formInfo, setFormInfo] = useState({
-    lastName: "",
-    firstName: "",
-    phone: "",
-    email: "",
+    lastName: loggedInUser?.lastName || "",
+    firstName: loggedInUser?.firstName || "",
+    phone: loggedInUser?.phone || "",
+    email: loggedInUser?.email || "",
   });
 
-  const effectiveContact = useMemo(() => {
-    if (isUsingSavedInfo) {
-      return customInfo || loggedInUser;
-    }
-    return null;
-  }, [isUsingSavedInfo, customInfo, loggedInUser]);
+  // State cho trạng thái loading khi gọi API
+  const [loading, setLoading] = useState(false);
 
-  const contactToDisplay = customInfo || loggedInUser;
+  // useEffect để lấy thông tin người dùng từ API nếu trong Redux không có
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (loggedInUser) {
+        setContactToDisplay(loggedInUser);
+        setFormInfo({
+          lastName: loggedInUser.lastName || "",
+          firstName: loggedInUser.firstName || "",
+          phone: loggedInUser.phone || "",
+          email: loggedInUser.email || "",
+        });
+        return;
+      }
+      // Nếu không, gọi API
+      try {
+        const token = await AsyncStorage.getItem("ACCESS_TOKEN");
+        if (token) {
+          const userProfile = await updateUserProfile(token, {});
+          setContactToDisplay(userProfile);
+          setFormInfo({
+            lastName: userProfile.lastName || "",
+            firstName: userProfile.firstName || "",
+            phone: userProfile.phone || "",
+            email: userProfile.email || "",
+          });
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin người dùng:', error);
+      }
+    };
 
+    fetchUserProfile();
+  }, [loggedInUser]);
+
+  // ----- CÁC HÀM XỬ LÝ SỰ KIỆN -----
+
+  // Cập nhật state của form khi người dùng nhập liệu
   const handleFormInputChange = (field, value) => {
     setFormInfo((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleConfirmNewContact = () => {
-    const { firstName, lastName, phone, email } = formInfo;
-    if (!firstName || !lastName || !phone || !email) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin.");
-      return;
-    }
-    setCustomInfo(formInfo);
-    setIsUsingSavedInfo(true);
+  // Xử lý khi người dùng nhấn nút "Chỉnh sửa"
+  const handleEditContact = () => {
+    setIsUsingSavedInfo(false); // Chuyển sang giao diện form
+    setFormInfo({
+      lastName: contactToDisplay.lastName || '',
+      firstName: contactToDisplay.firstName || '',
+      phone: contactToDisplay.phone || '',
+      email: contactToDisplay.email || '',
+    });
   };
 
-  const handlePayment = () => {
-    if (!effectiveContact) {
-      Alert.alert("Thiếu thông tin", "Vui lòng xác nhận thông tin liên lạc để tiếp tục.");
+  // Xử lý khi người dùng nhấn nút "Xác nhận" trên form
+  const handleConfirmNewContact = async () => {
+    const { firstName, lastName, phone, email } = formInfo;
+    if (!firstName || !lastName || !phone || !email) {
+      Alert.alert("Thiếu thông tin", "Vui lòng điền đầy đủ tất cả các trường.");
       return;
     }
-    
-    // Chuyển tiếp tất cả params nhận được, cộng thêm thông tin liên lạc
+
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("ACCESS_TOKEN");
+      if (!token) throw new Error("Không tìm thấy token xác thực.");
+
+      // 1. Gọi API để cập nhật thông tin trên server
+      await updateUserProfile(token, formInfo);
+
+      // 2. Cập nhật lại state hiển thị bằng chính thông tin vừa nhập
+      setContactToDisplay(formInfo);
+
+      // 3. Chuyển về lại tab "Thông tin của tôi"
+      setIsUsingSavedInfo(true);
+
+      Alert.alert('Thành công', 'Thông tin của bạn đã được cập nhật!');
+    } catch (error) {
+      console.error('Lỗi khi cập nhật thông tin:', error);
+      Alert.alert('Lỗi', 'Không thể cập nhật thông tin. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Xử lý khi nhấn nút "Thanh toán"
+  const handlePayment = () => {
+    // 1. Kiểm tra xem có thông tin liên lạc hay không
+    if (!contactToDisplay.firstName || !contactToDisplay.phone) {
+      Alert.alert(
+        "Thiếu thông tin",
+        "Vui lòng xác nhận thông tin liên lạc của bạn để tiếp tục."
+      );
+      handleEditContact();
+      return;
+    }
+
     router.push({
-      pathname: "/acount/paymentPage",
+      pathname: "/paymentPage",
+
+      // params chính là gói dữ liệu bạn gửi đi
       params: {
-        ...params, 
-        fullName: `${effectiveContact.lastName} ${effectiveContact.firstName}`,
-        phone: effectiveContact.phone,
-        email: effectiveContact.email,
+        ...params,
+        fullName: `${contactToDisplay.lastName} ${contactToDisplay.firstName}`,
+        phone: contactToDisplay.phone,
+        email: contactToDisplay.email,
+
+        // Gửi lại thông tin đơn hàng để màn hình thanh toán hiển thị
+        items: JSON.stringify(displayItems),
+        totalPrice: finalTotalPrice,
       },
     });
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header  */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
           <Ionicons name="chevron-back" size={24} color={COLORS.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hoàn tất đơn hàng</Text>
-        <View style={{ width: 40 }} />
+        <View style={styles.headerButton} />
       </View>
 
-      <ScrollView style={styles.contentContainer} contentContainerStyle={{ paddingBottom: 20 }}>
-        {/* Render danh sách các Card, dù là 1 hay nhiều */}
+      <ScrollView
+        style={styles.contentContainer}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Render danh sách Card booking */}
         {displayItems.map((item) => (
           <BookingSummaryCard
             key={item.id}
@@ -134,22 +219,25 @@ export default function BookingCompleted() {
             travelDate={item.travelDate}
             quantityAdult={item.quantityAdult}
             quantityChild={item.quantityChild}
-            totalPrice={item.totalPrice} 
+            totalPrice={item.totalPrice}
           />
         ))}
-        
-        {/* Phần thông tin liên lạc  */}
+
+        {/* Phần thông tin liên lạc */}
         <ContactInfoSection
           isUsingSavedInfo={isUsingSavedInfo}
           setIsUsingSavedInfo={setIsUsingSavedInfo}
           contactToDisplay={contactToDisplay}
           formInfo={formInfo}
+          setFormInfo={setFormInfo}
           handleFormInputChange={handleFormInputChange}
           handleConfirmNewContact={handleConfirmNewContact}
+          handleEditContact={handleEditContact}
+          loading={loading}
         />
       </ScrollView>
-      
-      {/* Footer  */}
+
+      {/* Footer */}
       <View style={styles.footer}>
         <View>
           <Text style={styles.footerLabel}>Tổng cộng</Text>
@@ -157,7 +245,11 @@ export default function BookingCompleted() {
             {finalTotalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
           </Text>
         </View>
-        <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
+        <TouchableOpacity
+          style={[styles.payButton, (loading || !contactToDisplay.firstName) && styles.payButtonDisabled]}
+          onPress={handlePayment}
+          disabled={loading || !contactToDisplay.firstName}
+        >
           <Text style={styles.payButtonText}>Thanh toán</Text>
         </TouchableOpacity>
       </View>
@@ -165,10 +257,11 @@ export default function BookingCompleted() {
   );
 }
 
+// ----- STYLES -----
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffffff', 
+    backgroundColor: '#F4F5F7', 
   },
   contentContainer: {
     flex: 1,
@@ -188,7 +281,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "flex-start", 
   },
   headerTitle: {
     fontSize: 18,
@@ -198,7 +291,7 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20, // Thêm padding cho bottom safe area
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
     backgroundColor: COLORS.white,
@@ -220,6 +313,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 28,
+  },
+  payButtonDisabled: {
+    backgroundColor: COLORS.gray_2,
   },
   payButtonText: {
     color: COLORS.white,

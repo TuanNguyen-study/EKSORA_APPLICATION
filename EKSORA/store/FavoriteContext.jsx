@@ -73,34 +73,22 @@ const removeFavorite = async (tourId) => {
     const token = await AsyncStorage.getItem('ACCESS_TOKEN');
     if (!userId || !token || !tourId) {
       console.warn('[FavoriteContext] Thiếu userId, token hoặc tourId');
-      Alert.alert('Lỗi', 'Vui lòng đăng nhập để xóa tour yêu thích');
       return;
     }
-    //console.log('[FavoriteContext] Gọi deleteFavoriteTour, tourId:', tourId, 'userId:', userId);
-    const response = await deleteFavoriteTour(userId, tourId, token);
-    //console.log('[FavoriteContext] deleteFavoriteTour response:', response);
+    
+    // Gọi API để xóa trên server
+    await deleteFavoriteTour(userId, tourId, token);
 
-    // Cập nhật trạng thái và chờ lưu AsyncStorage
+    // Chỉ cập nhật trạng thái local và AsyncStorage. KHÔNG fetch lại.
     setLikedTours(prev => {
       const newTours = prev.filter(id => id !== tourId);
-      //console.log('[FavoriteContext] new likedTours:', newTours);
-      AsyncStorage.setItem('likedTours', JSON.stringify(newTours))
-        .then(() => console.log('[FavoriteContext] Đã lưu AsyncStorage thành công'))
-        .catch(err => console.error('[FavoriteContext] Lỗi lưu AsyncStorage:', err));
+      AsyncStorage.setItem('likedTours', JSON.stringify(newTours));
       return newTours;
     });
 
-    // Tải lại từ server để xác nhận
-    await loadFavorites();
-    //console.log('[FavoriteContext] Đã tải lại favorites sau khi xóa');
   } catch (error) {
-    console.error('[FavoriteContext] Lỗi khi xóa favorite:', error.message, 'status:', error.response?.status);
-    if (error.response?.status === 404) {
-      //console.log('[FavoriteContext] Lỗi 404, reload favorites từ server');
-      await loadFavorites();
-    } else {
-      Alert.alert('Lỗi', 'Không thể xóa tour yêu thích. Vui lòng thử lại.');
-    }
+    console.error('[FavoriteContext] Lỗi khi xóa favorite:', error.message);
+
   }
 };
 

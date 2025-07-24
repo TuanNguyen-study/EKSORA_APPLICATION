@@ -1,7 +1,5 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,27 +9,23 @@ import {
   Text,
   TouchableOpacity,
   View,
-
   Share,
-  Linking,
-} from "react-native";
-import { fetchTourDetail } from "../../../API/services/tourService";
-import { COLORS } from "../../../constants/colors";
-import CustomerReviewSection from "./components/CustomerReviewSection";
-import NoteContactSection from "./components/NoteContactSection";
-import ProductBasicInfo from "./components/ProductBasicInfo";
-import ProductImageCarousel from "./components/ProductImageCarousel";
-import ProductOptionSelector from "./components/ProductOptionSelector";
-import StickyBookingFooter from "./components/StickyBookingFooter";
-import DescriptionSection from "./components/DescriptionSection";
-import TripHighlightsSection from "./components/TripHighlightsSection";
-import { useTourDetail } from '../../../hooks/useTourDetail'; 
+} from 'react-native';
+import { COLORS } from '../../../constants/colors';
+import CustomerReviewSection from './components/CustomerReviewSection';
+import NoteContactSection from './components/NoteContactSection';
+import ProductBasicInfo from './components/ProductBasicInfo';
+import ProductImageCarousel from './components/ProductImageCarousel';
+import ProductOptionSelector from './components/ProductOptionSelector';
+import StickyBookingFooter from './components/StickyBookingFooter';
+import DescriptionSection from './components/DescriptionSection';
+import TripHighlightsSection from './components/TripHighlightsSection';
+import BookingModalWrapper from '../acount/bookingModal/components/BookingModalWrapper';
+import { useTourDetail } from '../../../hooks/useTourDetail';
 
 export default function TripDetailScreen() {
   const router = useRouter();
   const { id: productId } = useLocalSearchParams();
-
-  // Gọi custom hook để lấy tất cả state và logic
   const {
     productData,
     loading,
@@ -45,14 +39,15 @@ export default function TripDetailScreen() {
     handleApplyVoucher,
     handleSelectionUpdate,
     onSeeAllReviews,
-    onBookNow,
+    onBookNow, // Lấy hàm chuẩn bị data
+    bookingDetails, // Lấy state chứa data
+    clearBookingDetails,
+    priceBeforeDiscount, // Lấy hàm để đóng modal và xóa data
   } = useTourDetail(productId);
 
-
-  // Hàm chia sẻ tour
   const handleShareTour = async () => {
     const shareUrl = `https://eksora.com/tour/${productData._id}`;
-    const shareTitle = `${productData.name} - Chỉ từ ${productData.price?.current?.toLocaleString("vi-VN") || "0"}đ`;
+    const shareTitle = `${productData.name} - Chỉ từ ${productData.price?.current?.toLocaleString('vi-VN') || '0'}đ`;
     const shareText = `Khám phá ${productData.name} tại ${productData.province}. Đặt tour ngay tại EKSORA!`;
 
     try {
@@ -63,14 +58,13 @@ export default function TripDetailScreen() {
       });
 
       if (result.action === Share.sharedAction) {
-        console.log("Tour shared successfully");
+        console.log('Tour shared successfully');
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể chia sẻ tour này");
+      Alert.alert('Lỗi', 'Không thể chia sẻ tour này');
     }
   };
 
-  
   if (loading && !productData) {
     return (
       <View style={styles.centered}>
@@ -80,51 +74,43 @@ export default function TripDetailScreen() {
     );
   }
 
-  // Màn hình Lỗi
   if (error && !productData) {
     return (
       <View style={styles.centered}>
-        <Stack.Screen options={{ title: "Lỗi" }} />
-        <Ionicons
-          name="cloud-offline-outline"
-          size={60}
-          color={COLORS.textSecondary}
-        />
+        <Stack.Screen options={{ title: 'Lỗi' }} />
+        <Ionicons name="cloud-offline-outline" size={60} color={COLORS.textSecondary} />
         <Text style={styles.errorText}>Lỗi: {error}</Text>
-        <TouchableOpacity
-          onPress={() => loadTourDetails(productId)}
-          style={styles.retryButton}
-        >
+        <TouchableOpacity onPress={() => loadTourDetails(productId)} style={styles.retryButton}>
           <Text style={styles.retryButtonText}>Thử lại</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // Màn hình chính
+  // Nếu vì lý do nào đó productData chưa có thì không render gì cả
+  if (!productData) {
+    return null; 
+  }
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <FlatList
-        data={[{ key: "main-content" }]}
+        data={[{ key: 'main-content' }]}
         keyExtractor={(item) => item.key}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
-          <View style={{ paddingTop: 16 }}>
-            <ProductImageCarousel
-              images={productData.images}
-              tourId={productData._id}
-              tourData={productData} // Truyền tourData để sử dụng trong ShareModal
-              onBackPress={() =>
-                router.canGoBack()
-                  ? router.back()
-                  : router.replace("/(tabs)/home")
-              }
-              onSharePress={handleShareTour}
-              onFavoritePress={() => console.log("Đã nhấn nút yêu thích.")}
-            />
-          </View>
+          <ProductImageCarousel
+            images={productData.images}
+            tourId={productData._id}
+            tourData={productData}
+            onBackPress={() =>
+              router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
+            }
+            onSharePress={handleShareTour}
+            onFavoritePress={() => console.log('Đã nhấn nút yêu thích.')}
+          />
         }
         renderItem={() => (
           <View style={styles.mainContentContainer}>
@@ -139,10 +125,9 @@ export default function TripDetailScreen() {
               title="Điểm nổi bật của chuyến đi"
               highlights={productData.highlights.map((highlight) => ({
                 _id: highlight._id,
-                image: highlight.image_url || "https://via.placeholder.com/150",
-                title: highlight.location_name || "Điểm nổi bật",
-                description:
-                  highlight.description || "Mô tả điểm nổi bật của chuyến đi.",
+                image: highlight.image_url || 'https://via.placeholder.com/150',
+                title: highlight.location_name || 'Điểm nổi bật',
+                description: highlight.description || 'Mô tả điểm nổi bật của chuyến đi.',
               }))}
             />
             <ProductOptionSelector
@@ -182,6 +167,7 @@ export default function TripDetailScreen() {
         priceInfo={{
           ...productData.price,
           current: currentTotalPrice,
+          original: priceBeforeDiscount,
         }}
         eksoraPoints={28}
         tourName={productData.name}
@@ -190,17 +176,22 @@ export default function TripDetailScreen() {
         tourInfo={productData}
         onBookNow={onBookNow}
       />
+
+      <BookingModalWrapper
+        visible={!!bookingDetails}
+        onClose={clearBookingDetails}
+        bookingDetails={bookingDetails}
+      />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
   centered: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: COLORS.background || "#f5f5f5",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background || '#f5f5f5',
     padding: 20,
   },
   loadingText: {
@@ -211,7 +202,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     color: COLORS.danger,
-    textAlign: "center",
+    textAlign: 'center',
     marginTop: 10,
   },
   retryButton: {
@@ -224,7 +215,7 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   mainContentContainer: {
     paddingHorizontal: 16,
@@ -233,7 +224,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 30,
-    paddingTop: 16,
   },
   separator: {
     height: 1,
