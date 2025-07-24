@@ -3,19 +3,20 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   SafeAreaView,
   StyleSheet,
-  View,
-  Platform,
   Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; // Import LinearGradient
-import { getTrips } from '../../../API/services/servicesBooking';
-import TripItem from '../TripItem';
-import EmptyTrips from '../Component/EmptyTrips';
+import { LinearGradient } from 'expo-linear-gradient';
 
-// --- Component Tab đã được thiết kế lại hoàn toàn ---
+import { getTrips } from '../../../API/services/servicesBooking';
+import EmptyTrips from '../Component/EmptyTrips';
+import TripItem from '../TripItem';
+
+// --- Component Tab  ---
 const Tab = ({ title, active, onPress }) => {
   if (active) {
     return (
@@ -51,7 +52,12 @@ export default function Body() {
         const userId = await AsyncStorage.getItem('USER_ID');
         if (userId) {
           const allTripsFromApi = await getTrips(userId);
-          // Không lọc 'canceled' ở đây nữa, để tab có thể xử lý
+          
+          if (Array.isArray(allTripsFromApi) && allTripsFromApi.length > 0) {
+            allTripsFromApi.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          }
+
+
           setAllTrips(allTripsFromApi); 
         } else {
           console.warn('Không tìm thấy userId');
@@ -95,7 +101,6 @@ export default function Body() {
         data={displayedTrips}
         renderItem={({ item }) => <TripItem item={item} />}
         keyExtractor={(item) => item._id}
-        // Bỏ ItemSeparatorComponent vì đã có margin trong TripItem
         contentContainerStyle={styles.listContentContainer}
         ListEmptyComponent={
           <View style={styles.contentCenter}>
@@ -122,14 +127,13 @@ export default function Body() {
   );
 }
 
-// --- TOÀN BỘ STYLESHEET ĐÃ ĐƯỢC CẬP NHẬT ---
+// --- Stylesheet không thay đổi ---
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#F8F9FA', // Màu nền sáng sủa, làm nổi bật thẻ
+    backgroundColor: '#F8F9FA',
     paddingTop: Platform.OS === 'android' ? 24 : 0,
   },
-  // --- Tab/Filter Styles ---
   tabContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
@@ -140,13 +144,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
-    backgroundColor: '#E9EEF2', // Màu nền cho chip không được chọn
+    backgroundColor: '#E9EEF2',
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   activeFilterChip: {
-    // Không cần backgroundColor vì đã có LinearGradient
     shadowColor: '#2F80ED',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -155,24 +158,23 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: 14,
-    color: '#4A6A8A', // Màu chữ xám xanh cho dễ nhìn
+    color: '#4A6A8A',
     fontWeight: '600',
   },
   activeFilterChipText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
-  // --- List & Content Styles ---
   contentCenter: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    marginTop: 50, // Đẩy nội dung xuống một chút
+    marginTop: 50,
   },
   listContentContainer: {
-    paddingHorizontal: 8, // Giảm padding ngang vì thẻ đã có margin
-    paddingBottom: 100, // Thêm khoảng trống dưới cùng của list
+    paddingHorizontal: 8,
+    paddingBottom: 100,
   },
   emptyText: {
     marginTop: 24,
