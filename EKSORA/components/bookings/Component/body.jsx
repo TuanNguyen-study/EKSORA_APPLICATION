@@ -1,21 +1,64 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, Image, Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+
 import { getTrips } from '../../../API/services/servicesBooking';
+import EmptyTrips from '../Component/EmptyTrips';
+import TripItem from '../TripItem';
+
+// --- Component Tab  ---
+const Tab = ({ title, active, onPress }) => {
+  if (active) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+        <LinearGradient
+          colors={['#56CCF2', '#2F80ED']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.filterChip, styles.activeFilterChip]}
+        >
+          <Text style={[styles.filterChipText, styles.activeFilterChipText]}>{title}</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.filterChip}>
+      <Text style={styles.filterChipText}>{title}</Text>
+    </TouchableOpacity>
+  );
+};
 
 export default function Body() {
   const [loading, setLoading] = useState(true);
-  const [trips, setTrips] = useState([]);
+  const [allTrips, setAllTrips] = useState([]); // Lưu tất cả trips ở đây
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     const fetchTrips = async () => {
+      setLoading(true);
       try {
         const userId = await AsyncStorage.getItem('USER_ID');
-        console.log('userId từ AsyncStorage:', userId);
         if (userId) {
-          const data = await getTrips(userId);
-          setTrips(data);
+          const allTripsFromApi = await getTrips(userId);
+          
+          if (Array.isArray(allTripsFromApi) && allTripsFromApi.length > 0) {
+            allTripsFromApi.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          }
+
+
+          setAllTrips(allTripsFromApi); 
         } else {
           console.warn('Không tìm thấy userId');
         }
@@ -29,247 +72,116 @@ export default function Body() {
     fetchTrips();
   }, []);
 
-  if (loading) {
+  const getDisplayedTrips = () => {
+    switch (activeTab) {
+      case 'all':
+        // Lọc ra những vé không bị hủy cho tab "Tất cả"
+        return allTrips.filter((trip) => trip.status !== 'canceled');
+      case 'pending':
+      case 'confirmed':
+        return allTrips.filter((trip) => trip.status === activeTab);
+      default:
+        return [];
+    }
+  };
+
+  const displayedTrips = getDisplayedTrips();
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.contentCenter}>
+          <ActivityIndicator size="large" color="#2F80ED" />
+        </View>
+      );
+    }
+
     return (
-
-      <SafeAreaView style={styles.safe}>
-        <FlatList
-          data={trips}
-          renderItem={({ item }) => (
-            <View style={styles.tripItem}>
-              <View style={styles.imageContainer}>
-                <Image
-                  source={{ uri: item?.tour_id?.image?.[0] }}
-                  style={styles.image}
-                />
-                <Text
-                  style={styles.link}
-                  onPress={() => router.push({
-                    pathname: '/(stack)/ScheduleDetail',
-                    params: {
-                      tourName: item?.tour_id?.name,
-                      nguoiLon: item?.quantity_nguoiLon?.toString() || '1',
-                      treEm: item?.quantity_treEm?.toString() || '0',
-                      tourImages: JSON.stringify(item?.tour_id?.image || []),
-                      totalPrice: item?.totalPrice?.toString() || '0',
-                      cateID: item?.tour_id?.cateID,
-                      time:item?.tour_id?.opening_time,
-                      close:item?.tour_id?.closing_time,
-                    }
-                  })}
-                >
-                  Lịch trình đề xuất
-                </Text>
-              </View>
-              <View style={styles.textContainer}>
-                <Text style={styles.title}>{item?.tour_id?.name}</Text>
-                <Text style={styles.location}>{item?.tour_id?.location}</Text>
-                <Text style={styles.info}>
-                  Ngày đi: {new Date(item.travel_date).toLocaleDateString('vi-VN')}
-                </Text>
-              </View>
-            </View>
-          )}
-          keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
-          contentContainerStyle={[
-            trips.length === 0 ? styles.noResultsContainer : styles.listContainer,
-          ]}
-          ListEmptyComponent={
-            <View style={styles.noResultsContent}>
-              <Image
-                source={require('../../../assets/images/tripsImage.png')}
-                style={styles.emptyImage}
-                resizeMode="contain"
-              />
-              <Text style={styles.noResults}>Chưa có chuyến đi sắp tới...!</Text>
-            </View>
-          }
-          ListFooterComponent={<View style={styles.footerSpacing} />}
-        />
-      </SafeAreaView>
-
+      <FlatList
+        data={displayedTrips}
+        renderItem={({ item }) => <TripItem item={item} />}
+        keyExtractor={(item) => item._id}
+        contentContainerStyle={styles.listContentContainer}
+        ListEmptyComponent={
+          <View style={styles.contentCenter}>
+            <EmptyTrips />
+            <Text style={styles.emptyText}>Bạn không có vé nào trong mục này.</Text>
+          </View>
+        }
+      />
     );
-  }
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
-      <FlatList
-        data={trips}
-        renderItem={({ item }) => (
-          <View style={styles.tripItem}>
-            <View style={styles.imageContainer}>
-              <Image
-                source={{ uri: item?.tour_id?.image?.[0] }}
-                style={styles.image}
-              />
-              <Text
-                style={styles.link}
-                onPress={() => router.push({
-                  pathname: '/(stack)/ScheduleDetail',
-                  params: {
-                    tourName: item?.tour_id?.name,
-                    nguoiLon: item?.quantity_nguoiLon?.toString() || '1',
-                    treEm: item?.quantity_treEm?.toString() || '0',
-                    tourImages: JSON.stringify(item?.tour_id?.image || []),
-                    totalPrice: item?.totalPrice?.toString() || '0',
-                    cateID: item?.tour_id?.cateID,
-                    time: item?.tour_id?.opening_time,
-                    close: item?.tour_id?.closing_time,
-                  }
-                })}
-              >
-                Lịch trình đề xuất
-              </Text>
-            </View>
-            <View style={styles.textContainer}>
-              <Text style={styles.title}>{item?.tour_id?.name}</Text>
-              <Text style={styles.location}>{item?.tour_id?.location}</Text>
-              <Text style={styles.info}>
-                Ngày đi: {new Date(item.travel_date).toLocaleDateString('vi-VN')}
-              </Text>
-              <Text style={[
-                styles.status,
-                item.status === 'pending' ? styles.statusPending :
-                  item.status === 'canceled' ? styles.statusCanceled :
-                    styles.statusConfirmed
-              ]}>
-                Trạng Thái: {item.status}
-              </Text>
-            </View>
-          </View>
-        )}
-        keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
-        contentContainerStyle={[
-          trips.length === 0 ? styles.noResultsContainer : styles.listContainer,
-        ]}
-        ListEmptyComponent={
-          <View style={styles.noResultsContent}>
-            <Image
-              source={require('../../../assets/images/tripsImage.png')}
-              style={styles.emptyImage}
-              resizeMode="contain"
-            />
-            <Text style={styles.noResults}>Chưa có chuyến đi sắp tới...!</Text>
-          </View>
-        }
-        ListFooterComponent={<View style={styles.footerSpacing} />}
-      />
+      {/* Thanh Tab */}
+      <View style={styles.tabContainer}>
+        <Tab title="Tất cả" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
+        <Tab title="Đang chờ" active={activeTab === 'pending'} onPress={() => setActiveTab('pending')} />
+        <Tab title="Đã xác nhận" active={activeTab === 'confirmed'} onPress={() => setActiveTab('confirmed')} />
+      </View>
+
+      {/* Khu vực nội dung chính */}
+      {renderContent()}
     </SafeAreaView>
   );
 }
 
+// --- Stylesheet không thay đổi ---
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8F9FA',
     paddingTop: Platform.OS === 'android' ? 24 : 0,
   },
-  listContainer: {
-    padding: 16,
-  },
-  footerSpacing: {
-    height: 140,
-  },
-  tripItem: {
+  tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    marginVertical: 10,
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
-    overflow: 'hidden',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F8F9FA',
   },
-  imageContainer: {
-    alignItems: 'center',
-    width: 130,
+  filterChip: {
     paddingVertical: 10,
-  },
-  image: {
-    width: 120,
-    height: 120,
+    paddingHorizontal: 20,
     borderRadius: 20,
-    resizeMode: 'cover',
-  },
-  link: {
-    marginTop: 8,
-    fontSize: 13,
-    color: '#2196F3',
-    fontStyle: 'italic',
-    opacity: 0.95,
-    fontWeight: '500',
-  },
-  textContainer: {
-    flex: 1,
-    padding: 14,
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  location: {
-    fontSize: 14,
-    color: '#777',
-    marginBottom: 6,
-  },
-  info: {
-    fontSize: 13,
-    color: '#555',
-    marginBottom: 4,
-  },
-  status: {
-    fontSize: 13,
-    color: '#fff',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginTop: 8,
-    textTransform: 'capitalize',
-    overflow: 'hidden',
-  },
-  statusPending: {
-    backgroundColor: '#FFA500',
-  },
-  statusCanceled: {
-    backgroundColor: '#B00020',
-  },
-  statusConfirmed: {
-    backgroundColor: '#4CAF50',
-  },
-  noResultsContainer: {
-    flexGrow: 1,
+    backgroundColor: '#E9EEF2',
+    marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
   },
-  noResultsContent: {
-    alignItems: 'center',
-    marginTop: 32,
+  activeFilterChip: {
+    shadowColor: '#2F80ED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
   },
-  emptyImage: {
-    width: 200,
-    height: 150,
-    marginBottom: 16,
+  filterChipText: {
+    fontSize: 14,
+    color: '#4A6A8A',
+    fontWeight: '600',
   },
-  noResults: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#999",
+  activeFilterChipText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
-  center: {
+  contentCenter: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+    marginTop: 50,
+  },
+  listContentContainer: {
+    paddingHorizontal: 8,
+    paddingBottom: 100,
+  },
+  emptyText: {
+    marginTop: 24,
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#6c757d',
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });

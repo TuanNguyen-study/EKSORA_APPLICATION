@@ -30,7 +30,7 @@ const PromoBanner = () => {
       {/* Gọi CouponModal */}
       <CouponModal
         visible={modalVisible}
-        onClose={() => setModalVisible(false)} // Đóng Modal
+        onClose={() => setModalVisible(false)} 
       />
     </>
   );
