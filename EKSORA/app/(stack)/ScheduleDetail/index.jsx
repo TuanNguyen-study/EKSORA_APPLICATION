@@ -166,7 +166,6 @@ const Index = () => {
           );
         }}
       />
-        <AddButton />
     </View>
   );
 };
