@@ -30,7 +30,7 @@ const SuggestionCard = ({ item, onPress }) => {
         </View>
       )}
       <View style={styles.infoContainer}>
-        <Text style={styles.title} numberOfLines={3}>{item.name}</Text>
+        <Text style={styles.title} numberOfLines={2}>{item.name}</Text>
 
         <View style={styles.ratingContainer}>
           <Ionicons name="star" size={16} color="#FACC15" />

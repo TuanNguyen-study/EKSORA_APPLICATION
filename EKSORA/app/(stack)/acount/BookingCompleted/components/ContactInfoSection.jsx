@@ -1,65 +1,89 @@
 import React from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
+  ActivityIndicator, 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../../../../constants/colors';
 
-
-const ContactForm = ({ contactInfo, onInputChange, onConfirm }) => (
-  <View style={styles.formContainer}>
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>Họ</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nguyễn Văn"
-        value={contactInfo.lastName}
-        placeholderTextColor="#A9A9A9"
-        onChangeText={(text) => onInputChange("lastName", text)}
-      />
-    </View>
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>Tên</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="An"
-        placeholderTextColor="#A9A9A9"
-        value={contactInfo.firstName}
-        onChangeText={(text) => onInputChange("firstName", text)}
-      />
-    </View>
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>Số điện thoại</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="09xxxxxxxx"
-        keyboardType="phone-pad"
-        placeholderTextColor="#A9A9A9"
-        value={contactInfo.phone}
-        onChangeText={(text) => onInputChange("phone", text)}
-      />
-    </View>
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="example@email.com"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        placeholderTextColor="#A9A9A9"
-        value={contactInfo.email}
-        onChangeText={(text) => onInputChange("email", text)}
-      />
-    </View>
-    <TouchableOpacity style={styles.confirmButton} onPress={onConfirm}>
-      <Text style={styles.confirmButtonText}>Xác nhận</Text>
-    </TouchableOpacity>
-  </View>
+// -- COMPONENT FORM NHẬP LIỆU  --
+const ContactForm = ({ contactInfo, onInputChange, onConfirm, loading }) => (
+  <KeyboardAvoidingView
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    style={styles.formContainer}
+  >
+    <ScrollView showsVerticalScrollIndicator={false}>
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Họ</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nguyễn Văn"
+          value={contactInfo.lastName}
+          placeholderTextColor="#A9A9A9"
+          onChangeText={(text) => onInputChange('lastName', text)}
+        />
+      </View>
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Tên</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="An"
+          value={contactInfo.firstName}
+          placeholderTextColor="#A9A9A9"
+          onChangeText={(text) => onInputChange('firstName', text)}
+        />
+      </View>
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Số điện thoại</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="09xxxxxxxx"
+          keyboardType="phone-pad"
+          value={contactInfo.phone}
+          placeholderTextColor="#A9A9A9"
+          onChangeText={(text) => onInputChange('phone', text)}
+        />
+      </View>
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="example@email.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={contactInfo.email}
+          placeholderTextColor="#A9A9A9"
+          onChangeText={(text) => onInputChange('email', text)}
+        />
+      </View>
+      <TouchableOpacity
+        style={[styles.confirmButton, { opacity: loading ? 0.7 : 1 }]}
+        onPress={onConfirm}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color={COLORS.white} />
+        ) : (
+          <Text style={styles.confirmButtonText}>Xác nhận</Text>
+        )}
+      </TouchableOpacity>
+    </ScrollView>
+  </KeyboardAvoidingView>
 );
 
+// -- COMPONENT HIỂN THỊ THÔNG TIN  --
 const UserInfoDisplay = ({ user, onEdit }) => (
   <View style={styles.userInfoContainer}>
     <View style={styles.userInfoRow}>
       <Text style={styles.userInfoLabel}>Họ và Tên</Text>
-      <Text style={styles.userInfoValue}>{`${user?.lastName || ''} ${user?.firstName || ''}`}</Text>
+      <Text style={styles.userInfoValue} numberOfLines={1}>{`${user?.lastName || ''} ${user?.firstName || ''}`.trim()}</Text>
     </View>
     <View style={styles.userInfoRow}>
       <Text style={styles.userInfoLabel}>Số điện thoại</Text>
@@ -78,56 +102,78 @@ const UserInfoDisplay = ({ user, onEdit }) => (
 
 
 // -- COMPONENT CHÍNH --
-
 const ContactInfoSection = ({
   isUsingSavedInfo,
   setIsUsingSavedInfo,
   contactToDisplay,
   formInfo,
+  setFormInfo, 
   handleFormInputChange,
   handleConfirmNewContact,
-}) => (
-  <View style={styles.card}>
-    <Text style={styles.cardTitle}>Thông tin liên lạc</Text>
-    
-    <View style={styles.segmentControl}>
-      <TouchableOpacity
-        style={[styles.segmentButton, isUsingSavedInfo && styles.segmentButtonActive]}
-        onPress={() => setIsUsingSavedInfo(true)}>
-        <Text style={[styles.segmentText, isUsingSavedInfo && styles.segmentTextActive]}>Thông tin của tôi</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.segmentButton, !isUsingSavedInfo && styles.segmentButtonActive]}
-        onPress={() => setIsUsingSavedInfo(false)}>
-        <Text style={[styles.segmentText, !isUsingSavedInfo && styles.segmentTextActive]}>Dùng thông tin khác</Text>
-      </TouchableOpacity>
-    </View>
+  handleEditContact,
+  loading,
+}) => {
 
-    <View style={styles.content}>
-      {isUsingSavedInfo ? (
-        <UserInfoDisplay user={contactToDisplay} onEdit={() => setIsUsingSavedInfo(false)} />
-      ) : (
-        <ContactForm
-          contactInfo={formInfo}
-          onInputChange={handleFormInputChange}
-          onConfirm={handleConfirmNewContact}
-        />
-      )}
-    </View>
-  </View>
-);
 
+  // Hàm này để xử lý khi người dùng muốn nhập thông tin mới hoàn toàn
+  const handleUseOtherInfo = () => {
+    setIsUsingSavedInfo(false);
+    setFormInfo({
+      lastName: '',
+      firstName: '',
+      phone: '',
+      email: '',
+    });
+  };
+
+  return (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>Thông tin liên lạc</Text>
+      
+      <View style={styles.segmentControl}>
+        <TouchableOpacity
+          style={[styles.segmentButton, isUsingSavedInfo && styles.segmentButtonActive]}
+          onPress={() => setIsUsingSavedInfo(true)}
+        >
+          <Text style={[styles.segmentText, isUsingSavedInfo && styles.segmentTextActive]}>
+            Thông tin của tôi
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.segmentButton, !isUsingSavedInfo && styles.segmentButtonActive]}
+          onPress={handleUseOtherInfo}
+        >
+          <Text style={[styles.segmentText, !isUsingSavedInfo && styles.segmentTextActive]}>
+            Dùng thông tin khác
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.content}>
+        {isUsingSavedInfo ? (
+          <UserInfoDisplay user={contactToDisplay} onEdit={handleEditContact} />
+        ) : (
+          <ContactForm
+            contactInfo={formInfo}
+            onInputChange={handleFormInputChange}
+            onConfirm={handleConfirmNewContact}
+            loading={loading}
+          />
+        )}
+      </View>
+    </View>
+  );
+};
+
+// -- STYLES  --
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -140,10 +186,11 @@ const styles = StyleSheet.create({
   },
   content: {
     marginTop: 20,
+    minHeight: 200, 
   },
   segmentControl: {
     flexDirection: 'row',
-    backgroundColor: '#F4F5F7', 
+    backgroundColor: '#F4F5F7',
     borderRadius: 50,
     padding: 4,
   },
@@ -156,7 +203,7 @@ const styles = StyleSheet.create({
   },
   segmentButtonActive: {
     backgroundColor: COLORS.white,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
     shadowRadius: 2,
@@ -190,7 +237,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.black,
     fontWeight: '600',
-    maxWidth: '60%', 
+    maxWidth: '60%',
     textAlign: 'right',
   },
   editButton: {
@@ -205,9 +252,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 6,
   },
-
   formContainer: {
     paddingHorizontal: 4,
+    flex: 1,
   },
   inputGroup: {
     marginBottom: 16,
@@ -220,7 +267,7 @@ const styles = StyleSheet.create({
   },
   input: {
     color: COLORS.black,
-    fontWeight: '500', 
+    fontWeight: '500',
     borderWidth: 1,
     borderColor: '#EAECEE',
     borderRadius: 12,

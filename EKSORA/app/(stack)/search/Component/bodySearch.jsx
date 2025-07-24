@@ -132,11 +132,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 11,
     color: COLORS.black,
     paddingBottom: 6,
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
+    marginHorizontal: 10,
   },
   activeTab: {
     color: COLORS.primaryAction,
