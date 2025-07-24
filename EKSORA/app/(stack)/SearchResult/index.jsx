@@ -8,7 +8,6 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  ScrollView,
   Dimensions,
   Platform,
   ActivityIndicator,
