@@ -11,7 +11,7 @@ import {
   ActivityIndicator, 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+// import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../../../../../constants/colors';
 
 // -- COMPONENT FORM NHẬP LIỆU  --
