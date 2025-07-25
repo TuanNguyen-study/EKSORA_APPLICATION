@@ -78,7 +78,7 @@ export default function Body() {
         // Lọc ra những vé không bị hủy cho tab "Tất cả"
         return allTrips.filter((trip) => trip.status !== 'canceled');
       case 'pending':
-      case 'confirmed':
+      case 'paid':
         return allTrips.filter((trip) => trip.status === activeTab);
       default:
         return [];
@@ -118,7 +118,7 @@ export default function Body() {
       <View style={styles.tabContainer}>
         <Tab title="Tất cả" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
         <Tab title="Đang chờ" active={activeTab === 'pending'} onPress={() => setActiveTab('pending')} />
-        <Tab title="Đã xác nhận" active={activeTab === 'confirmed'} onPress={() => setActiveTab('confirmed')} />
+        <Tab title="Đã xác nhận" active={activeTab === 'paid'} onPress={() => setActiveTab('paid')} />
       </View>
 
       {/* Khu vực nội dung chính */}

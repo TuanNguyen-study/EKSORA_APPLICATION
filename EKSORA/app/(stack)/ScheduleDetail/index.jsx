@@ -105,9 +105,11 @@ const Index = () => {
           // 2. Gọi API lấy danh sách tour đã đặt
           const bookings = await getUserBookings(userId);
 
+
           // 3. Lấy danh sách các tour đã đặt
-          const bookedIds = bookings.map(booking => booking.tour?._id);
+          const bookedIds = bookings.map(booking => booking.tour_id?._id);
           setBookedTourIds(bookedIds);
+
 
           // 4. Gán data + trạng thái
           const newData = randomTours.flatMap((tour, index) => {

@@ -55,7 +55,7 @@ const handlePressSchedule = () => {
 
   const statusMap = {
     pending: { text: 'ĐANG CHỜ XỬ LÝ', color: '#F5A623', icon: 'clock-outline' },
-    confirmed: { text: 'VÉ HỢP LỆ', color: '#7ED321', icon: 'check-circle-outline' },
+    paid: { text: 'VÉ HỢP LỆ', color: '#7ED321', icon: 'check-circle-outline' },
   };
 
   const currentStatus = statusMap[item.status] || { text: 'KHÔNG RÕ', color: '#9E9E9E', icon: 'help-circle-outline' };
