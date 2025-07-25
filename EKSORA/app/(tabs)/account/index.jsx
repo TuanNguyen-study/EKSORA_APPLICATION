@@ -16,19 +16,20 @@ export default function AccountScreen() {
       <View style={styles.gradientContainer}>
         <LinearGradient
           colors={[
-            '#00639B',
-            '#007BB5',
-            '#0087CA',
-            '#00AEEB',
-            '#B2E4F9',
-            '#FFFFFF',
-            '#FFFFFF'
+            '#2F80ED',   // xanh đậm
+            '#479DEB',
+            '#56CCF2',   // xanh tươi
+            '#A3DFF7',   // xanh rất nhạt
+            '#FFFFFF',   // trắng bắt đầu
+            '#FFFFFF',   // trắng phủ hoàn toàn
           ]}
-          locations={[0, 0.15, 0.3, 0.45, 0.65, 0.85,1]}
-          start={{  x: 0.5, y: 0}}
-          end={{  x: 0.5, y: 1 }}
+          locations={[0, 0.2, 0.4, 0.65, 0.8, 1]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
           style={styles.gradientBackground}
         />
+
+
 
         <View style={[styles.spot, { top: 60, left: 30, opacity: 0.15 }]} />
         <View style={[styles.spot, { top: 100, right: 50, opacity: 0.1 }]} />

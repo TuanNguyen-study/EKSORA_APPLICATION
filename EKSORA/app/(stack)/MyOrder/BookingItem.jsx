@@ -2,12 +2,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '../../../constants/colors';
 
-// const statusConfig = {
-//   confirmed: { text: 'ĐÃ XÁC NHẬN', color: COLORS.success, icon: 'check-circle' },
-//   pending: { text: 'ĐANG CHỜ XỬ LÝ', color: COLORS.warning, icon: 'clock-time-eight' },
-//   cancelled: { text: 'ĐÃ HỦY', color: COLORS.danger, icon: 'close-circle' },
-//   default: { text: 'KHÔNG RÕ', color: COLORS.grey, icon: 'help-circle' },
-// };
 
 const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 const formatDate = (dateString) => new Date(dateString).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -71,7 +65,7 @@ const BookingItem = ({ item, onPress }) => {
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="account-multiple" size={18} color={COLORS.primary} />
           <Text style={styles.infoText}>
-            Người lớn: {quantity_nguoiLon} x {formatPrice(price_nguoiLon)} | Trẻ em: {quantity_treEm} x {formatPrice(price_treEm)}
+            Người lớn: {quantity_nguoiLon} | Trẻ em: {quantity_treEm} 
           </Text>
         </View>
 

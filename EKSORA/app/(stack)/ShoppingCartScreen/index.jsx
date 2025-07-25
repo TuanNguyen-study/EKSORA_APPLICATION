@@ -9,11 +9,14 @@ import {
   FlatList,
   Platform,
   Alert,
+  ActivityIndicator, 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../../store/CartContext'; 
 import CartItem from './components/CartItem';
+import { createBooking } from '../../../API/services/booking';
+import { useSelector } from 'react-redux';
 
 // Helper function để định dạng tiền tệ
 const formatCurrency = (amount) => {
@@ -22,25 +25,27 @@ const formatCurrency = (amount) => {
 };
 
 const ShoppingCartScreen = () => {
-  // Hooks
+  // --- Hooks và State ---
   const { cartItems, removeFromCart } = useCart();
   const router = useRouter();
+  const loggedInUser = useSelector((state) => state.auth.user); 
+  
   const [selectedIds, setSelectedIds] = useState([]);
+  const [isLoading, setIsLoading] = useState(false); 
 
-  // Đồng bộ hóa các sản phẩm được chọn khi giỏ hàng thay đổi
+  // Tự động chọn tất cả sản phẩm khi giỏ hàng thay đổi
   useEffect(() => {
     setSelectedIds(cartItems.map((item) => item.id) || []);
   }, [cartItems]);
 
-  // Tính toán tổng tiền và tổng giảm giá của các sản phẩm được chọn
+  // Tính toán tổng tiền của các sản phẩm được chọn
   const { total, totalDiscount } = useMemo(() => {
     return cartItems.reduce(
       (acc, item) => {
         if (selectedIds.includes(item.id)) {
-          const price = item.price || 0;
-          const originalPrice = item.originalPrice || price;
-          acc.total += price;
-          acc.totalDiscount += originalPrice - price;
+          acc.total += item.price || 0;
+          const originalPrice = item.originalPrice || item.price || 0;
+          acc.totalDiscount += originalPrice - (item.price || 0);
         }
         return acc;
       },
@@ -66,10 +71,7 @@ const ShoppingCartScreen = () => {
         { text: 'Hủy', style: 'cancel' },
         {
           text: 'Xóa',
-          onPress: () => {
-            removeFromCart(id);
-            setSelectedIds((prevIds) => prevIds.filter((itemId) => itemId !== id));
-          },
+          onPress: () => removeFromCart(id),
           style: 'destructive',
         },
       ]
@@ -85,38 +87,96 @@ const ShoppingCartScreen = () => {
     }
   };
 
-  const handleProceedToCheckout = () => {
-    const selectedItems = cartItems.filter((item) => selectedIds.includes(item.id));
+  const handleProceedToCheckout = async () => {
+    // Ngăn người dùng bấm nhiều lần khi đang xử lý
+    if (isLoading) return; 
 
+    const selectedItems = cartItems.filter((item) => selectedIds.includes(item.id));
 
     if (selectedItems.length === 0) {
       Alert.alert('Chưa chọn sản phẩm', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
       return;
     }
 
+    if (!loggedInUser || !loggedInUser.id) {
+      Alert.alert('Lỗi', 'Thông tin người dùng không hợp lệ. Vui lòng đăng nhập lại.');
+      return;
+    }
 
-    router.push({
-      pathname: '/acount/BookingCompleted', 
-      params: {
-        totalPrice: total,
-        items: JSON.stringify(selectedItems),
-      },
-    });
+    setIsLoading(true); // Bắt đầu xử lý, bật trạng thái loading
+
+    try {
+      const createdItems = [];
+      for (const item of selectedItems) {
+        const [day, month, year] = item.travelDate.split('/');
+        const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        const bookingData = {
+          user_id: loggedInUser.id,
+          tour_id: item.tour_id,
+          travel_date: formattedDate,
+          quantity_nguoiLon: item.adults,
+          quantity_treEm: item.children,
+          price_nguoiLon: item.adultPrice,
+          price_treEm: item.childPrice,
+          optionServices: (item.selectedOptions || []).map(option => ({ option_service_id: option.id })),
+          coin: 0,
+          voucher_id: item.voucher_id || null,
+          discount: item.discount || 0,
+        };
+
+        const res = await createBooking(bookingData);
+        const individualBookingId = res?.booking_id || res?.booking?._id;
+        if (!individualBookingId) throw new Error(`Không tạo được booking cho tour: ${item.name}`);
+        
+        createdItems.push({ ...item, bookingId: individualBookingId });
+      }
+
+      if (createdItems.length === 0) throw new Error("Không có đơn hàng nào được tạo thành công.");
+      
+      const representativeBookingId = createdItems[0].bookingId;
+
+      const checkoutParams = {
+        totalPrice: total.toString(),
+        items: JSON.stringify(createdItems),
+        bookingId: representativeBookingId,
+        fullName: `${loggedInUser.lastName} ${loggedInUser.firstName}`,
+        email: loggedInUser.email,
+        phone: loggedInUser.phone,
+        buyerAddress: loggedInUser.address || 'Chưa có địa chỉ',
+      };
+      
+      // 1. Điều hướng người dùng đi trước
+      router.push({
+        pathname: '/acount/BookingCompleted',
+        params: checkoutParams,
+      });
+
+      // 2. Xóa các sản phẩm đã thanh toán khỏi giỏ hàng ở dưới nền
+      selectedItems.forEach(item => {
+          removeFromCart(item.id);
+      });
+
+    } catch (error) {
+      console.error('Lỗi khi tạo đơn hàng:', error.message || error);
+      Alert.alert('Lỗi', `Đặt tour thất bại: ${error.message}`);
+    } finally {
+      setIsLoading(false); // Dù thành công hay thất bại, luôn tắt loading
+    }
   };
 
-  // --- Render Component ---
 
+  // --- Render Component ---
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} disabled={isLoading}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Giỏ hàng ({cartItems.length})</Text>
-        <TouchableOpacity onPress={handleSelectAll}>
+        <TouchableOpacity onPress={handleSelectAll} disabled={isLoading}>
           <Text style={styles.headerActionText}>
             {selectedIds.length === cartItems.length && cartItems.length > 0
               ? 'Bỏ chọn tất cả'
@@ -134,6 +194,7 @@ const ShoppingCartScreen = () => {
             isSelected={selectedIds.includes(item.id)}
             onToggleSelect={() => handleToggleSelect(item.id)}
             onDelete={() => handleDeleteItem(item.id)}
+            disabled={isLoading} // Vô hiệu hóa các item khi đang loading
           />
         )}
         keyExtractor={(item) => item.id.toString()}
@@ -161,18 +222,23 @@ const ShoppingCartScreen = () => {
         <TouchableOpacity
           style={[
             styles.checkoutButton,
-            selectedIds.length === 0 && styles.checkoutButtonDisabled,
+            (selectedIds.length === 0 || isLoading) && styles.checkoutButtonDisabled,
           ]}
-          disabled={selectedIds.length === 0}
+          disabled={selectedIds.length === 0 || isLoading}
           onPress={handleProceedToCheckout}
         >
-          <Text style={styles.checkoutButtonText}>Thanh toán</Text>
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={styles.checkoutButtonText}>Thanh toán</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
 
+// --- Stylesheet ---
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -189,26 +255,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EEE',
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold' },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   headerActionText: { fontSize: 14, color: '#555' },
-  listContent: { paddingBottom: 150 },
-  emptyText: { textAlign: 'center', marginTop: 50, fontSize: 16, color: '#888' },
-  fab: {
-    position: 'absolute',
-    bottom: 100,
-    left: 16,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
+  listContent: { paddingBottom: 120 },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 },
+  emptyText: { fontSize: 16, color: '#888' },
   footer: {
     position: 'absolute',
     bottom: 0,
@@ -217,24 +268,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    paddingBottom: 30,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 12,
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: '#EEE',
   },
-  totalRow: { flexDirection: 'row', alignItems: 'center' },
+  totalInfo: { flex: 1, marginRight: 12 },
   totalLabel: { fontSize: 14, color: '#666' },
-  totalPrice: { fontSize: 20, fontWeight: 'bold' },
+  priceContainer: { flexDirection: 'row', alignItems: 'baseline', marginTop: 2 },
+  totalPrice: { fontSize: 20, fontWeight: 'bold', color: '#00639B' },
   totalDiscount: { fontSize: 12, color: '#FF6F00', marginLeft: 8 },
   checkoutButton: {
     backgroundColor: '#00639B',
     paddingVertical: 14,
     paddingHorizontal: 30,
     borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 120,
   },
   checkoutButtonDisabled: {
-    backgroundColor: '#bfbfc6ff',
+    backgroundColor: '#A9A9A9', 
   },
   checkoutButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
 });

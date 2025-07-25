@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Platform, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
 import { useRouter } from 'expo-router';
@@ -12,15 +12,13 @@ const HeaderSearchBar = () => {
       <TouchableOpacity
         style={styles.searchContainer}
         onPress={() => router.push('/(stack)/search')}>
-
         <Ionicons name="search" size={20} color={COLORS.black} style={styles.searchIcon} />
-        <TextInput
-          placeholder="Search something..."
-          placeholderTextColor={COLORS.black || '#A0DFFF'}
-          style={styles.searchInput}
-        />
+        <Text style={styles.searchInput}>
+          Search something...
+        </Text>
       </TouchableOpacity>
-      <TouchableOpacity 
+
+      <TouchableOpacity
         style={styles.iconButton}
         onPress={() => router.push('/(stack)/ShoppingCartScreen')}>
         <Ionicons name="cart-outline" size={26} color={COLORS.white} />

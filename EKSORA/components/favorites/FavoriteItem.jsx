@@ -3,7 +3,8 @@ import React, { useState, useContext } from 'react';
 import { Swipeable } from 'react-native-gesture-handler';
 import { AntDesign, FontAwesome } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
-import { FavoriteContext } from '../../store/FavoriteContext'; 
+import { FavoriteContext } from '../../store/FavoriteContext';
+import { parseDescription } from '../../utils/tourDetailHelpers';
 
 export default function FavoriteItem({
   id,
@@ -16,12 +17,19 @@ export default function FavoriteItem({
   description
 }) {
   const [isVisible, setIsVisible] = useState(true);
-  const { removeFavorite } = useContext(FavoriteContext); 
+  const { removeFavorite } = useContext(FavoriteContext);
+
+  const parsedDescription = parseDescription(description);
+  const shortDescription = parsedDescription
+    .filter(item => item.type === 'text')
+    .map(item => item.content)
+    .join(' ')
+    .trim();
 
   const handleRemoveFavorite = async () => {
     try {
-      await removeFavorite(id); 
-      setIsVisible(false);      
+      await removeFavorite(id);
+      setIsVisible(false);
     } catch (error) {
       console.error("Lỗi khi xoá yêu thích:", error);
     }
@@ -55,7 +63,7 @@ export default function FavoriteItem({
                 {title}
               </Text>
               <Text style={styles.description} numberOfLines={2}>
-                {description}
+                {shortDescription || 'Không có mô tả.'}
               </Text>
               <View style={styles.ratingContainer}>
                 <FontAwesome name="star" size={14} color="#FFB800" />

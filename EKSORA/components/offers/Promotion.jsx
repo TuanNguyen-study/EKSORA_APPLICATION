@@ -8,13 +8,13 @@ import {
   TouchableOpacity,
   ImageBackground,
   Dimensions,
+  Alert, // Thêm Alert để sử dụng
 } from "react-native";
 import { getToursByLocation } from "../../API/services/serverCategories";
 import { router } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 import { getPromotion } from "../../API/services/servicesPromotion";
 import { FavoriteContext } from "../../store/FavoriteContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Promotions() {
   const { width } = Dimensions.get("window");
@@ -22,39 +22,39 @@ export default function Promotions() {
   const IMAGE_HEIGHT = CARD_WIDTH * (3 / 4);
 
   const [loading, setLoading] = useState(true);
-  const [tourId, setId] = useState([]);
   const [promotions, setPromotions] = useState([]);
 
   const { likedTours, addFavorite, removeFavorite } = useContext(FavoriteContext);
 
   useEffect(() => {
-    const fetchPromotions = async () => {
+    const fetchAllData = async () => {
+      setLoading(true); // Bắt đầu loading
       try {
-        const response = await getPromotion();
-        const filtered = response.filter((item) => item.tour_id);
-        setPromotions(filtered);
-      } catch (err) {
-        console.error("Lỗi khi lấy danh sách Promotion", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPromotions();
-  }, []);
+        // Chạy song song cả hai yêu cầu API
+        const [promotionResponse] = await Promise.all([
+          getPromotion(),
+          // getToursByLocation(), // API này có vẻ không được sử dụng, bạn có thể bỏ đi nếu không cần
+        ]);
 
-  useEffect(() => {
-    const fetchToursByLocation = async () => {
-      try {
-        const response = await getToursByLocation();
-        setId(response);
+        // Lọc ra các promotion hợp lệ ngay từ đầu
+        const validPromotions = promotionResponse.filter(
+          (item) =>
+            item.tour_id &&
+            Array.isArray(item.tour_id.image) &&
+            item.tour_id.image.length > 0 &&
+            item.tour_id.price
+        );
+
+        setPromotions(validPromotions);
       } catch (err) {
-        console.error("Lỗi khi lấy chi tiết", err);
+        console.error("Lỗi khi lấy dữ liệu Promotions:", err);
       } finally {
-        setLoading(false);
+        setLoading(false); // Kết thúc loading sau khi tất cả hoàn tất
       }
     };
-    fetchToursByLocation();
-  }, []);
+
+    fetchAllData();
+  }, []); // Chỉ chạy một lần khi component mount
 
   const handleToggleLike = async (tourId) => {
     try {
@@ -63,13 +63,16 @@ export default function Promotions() {
       } else {
         await addFavorite(tourId);
       }
-      console.log('Toggle like completed, likedTours:', likedTours);
     } catch (error) {
       console.error('Lỗi khi toggle like:', error);
       Alert.alert('Lỗi', 'Không thể thay đổi trạng thái yêu thích.');
     }
   };
 
+  if (loading) {
+    // Có thể thêm một component loading ở đây
+    return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Loading...</Text></View>;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
@@ -85,8 +88,6 @@ export default function Promotions() {
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 120 }}
           renderItem={({ item }) => {
             const tour = item.tour_id;
-            if (!tour || !Array.isArray(tour.image) || !tour.image[0] || !tour.price) return null;
-
             const discount = item.discount || 0;
             const discountPrice = (
               tour.price - (tour.price * discount) / 100
@@ -122,7 +123,7 @@ export default function Promotions() {
                   </TouchableOpacity>
                 </ImageBackground>
 
-                <Text style={styles.cardTitle}>{tour.name}</Text>
+                <Text style={styles.cardTitle} numberOfLines={2}>{tour.name}</Text>
 
                 <View style={styles.priceColumn}>
                   <View style={styles.saleBox}>
@@ -134,7 +135,8 @@ export default function Promotions() {
               </TouchableOpacity>
             );
           }}
-          keyExtractor={(item, index) => item._id || index.toString()}
+          // SỬA LỖI QUAN TRỌNG NHẤT LÀ Ở ĐÂY
+          keyExtractor={(item) => item.tour_id._id}
         />
       </View>
     </View>
@@ -193,15 +195,20 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   heartIcon: {
-    alignSelf: "flex-end",
-    borderRadius: 12,
-    padding: 4,
+    position: 'absolute', // Để icon không đẩy các content khác
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.3)', // Thêm nền mờ để icon nổi bật hơn
+    borderRadius: 15,
+    padding: 5,
   },
   cardTitle: {
     fontSize: 12,
     fontWeight: "bold",
-    padding: 6,
+    paddingHorizontal: 8,
+    paddingTop: 8,
     color: "#333",
+    height: 32, // Giới hạn chiều cao để các card đều nhau
   },
   priceColumn: {
     flexDirection: "column",

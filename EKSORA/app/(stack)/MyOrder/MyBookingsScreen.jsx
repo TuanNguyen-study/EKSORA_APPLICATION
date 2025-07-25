@@ -34,26 +34,28 @@ export default function MyBookingsScreen() {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Hàm fetch API dùng lại cho cả focus và refresh
-  const fetchBookings = async () => {
-    try {
-      const token = await AsyncStorage.getItem("ACCESS_TOKEN");
-      const userId = await AsyncStorage.getItem("USER_ID");
-      if (!userId || !token) {
-        setError('Không tìm thấy người dùng hoặc token');
-        return;
-      }
-      const data = await getUserBookings(userId, token);
-
-      // ✅ Sắp xếp booking mới nhất lên trên
-      const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-      setBookings(sortedData);
-    } catch (err) {
-      setError('Lỗi khi tải danh sách đơn hàng');
-      console.error('Lỗi API:', err);
+  //  Hàm fetch API dùng lại cho cả focus và refresh
+const fetchBookings = async () => {
+  try {
+    const token = await AsyncStorage.getItem("ACCESS_TOKEN");
+    const userId = await AsyncStorage.getItem("USER_ID");
+    if (!userId || !token) {
+      setError('Không tìm thấy người dùng hoặc token');
+      return;
     }
-  };
+
+    const data = await getUserBookings(userId, token);
+
+    // 👉 SẮP XẾP Ở ĐÂY TRƯỚC KHI SET VÀO STATE
+    const sortedData = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    setBookings(sortedData); //  đã sort
+  } catch (err) {
+    setError('Lỗi khi tải danh sách đơn hàng');
+    console.error('Lỗi API:', err);
+  }
+};
+
 
   // Gọi API khi focus vào màn hình
   useFocusEffect(

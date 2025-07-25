@@ -135,6 +135,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold', 
     color: COLORS.text,
     marginBottom: 4,
+    marginTop: 10,
     lineHeight: 32,
   },
   departureText: {
