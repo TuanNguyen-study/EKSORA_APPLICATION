@@ -5,7 +5,7 @@ import React from 'react';
   export default function AddButton() {
     return (
       <TouchableOpacity style={styles.button}>
-        <Text style={styles.text}>Thêm địa điểm </Text>
+        <Text style={styles.text}>Lưu lịch trình</Text>
       </TouchableOpacity>
     );
   }
