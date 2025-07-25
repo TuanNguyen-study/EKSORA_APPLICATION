@@ -49,7 +49,7 @@ const fetchBookings = async () => {
     // 👉 SẮP XẾP Ở ĐÂY TRƯỚC KHI SET VÀO STATE
     const sortedData = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    setBookings(sortedData); // ✅ đã sort
+    setBookings(sortedData); //  đã sort
   } catch (err) {
     setError('Lỗi khi tải danh sách đơn hàng');
     console.error('Lỗi API:', err);
@@ -77,17 +77,22 @@ const fetchBookings = async () => {
     const paidStatuses = ['paid', 'completed'];
     const canceledStatuses = ['canceled', 'refund_requested', 'refunded', 'expired'];
 
-    // Lọc danh sách đơn hàng dựa trên tab đang được chọn
+    let filtered = [];
     switch (selectedStatus) {
       case 'waiting':
-        return bookings.filter(booking => waitingStatuses.includes(booking.status?.toLowerCase().trim()));
+        filtered = bookings.filter(booking => waitingStatuses.includes(booking.status?.toLowerCase().trim()));
+        break;
       case 'paid':
-        return bookings.filter(booking => paidStatuses.includes(booking.status?.toLowerCase().trim()));
+        filtered = bookings.filter(booking => paidStatuses.includes(booking.status?.toLowerCase().trim()));
+        break;
       case 'canceled':
-        return bookings.filter(booking => canceledStatuses.includes(booking.status?.toLowerCase().trim()));
+        filtered = bookings.filter(booking => canceledStatuses.includes(booking.status?.toLowerCase().trim()));
+        break;
       default:
-        return []; 
+        filtered = [];
     }
+     return filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  
   }, [bookings, selectedStatus]);
 
   const handleItemPress = async (item) => {
@@ -122,7 +127,7 @@ const fetchBookings = async () => {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Tabs lọc  */}
+        {/* Tabs lọc */}
         <View style={styles.filterWrapper}>
           <ScrollView
             horizontal
@@ -150,7 +155,7 @@ const fetchBookings = async () => {
             ))}
           </ScrollView>
         </View>
-        
+
         {/* Danh sách đơn hàng */}
         {loading ? (
           <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
