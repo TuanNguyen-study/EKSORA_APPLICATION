@@ -95,7 +95,7 @@ export default function HomeScreen() {
     if (item.isAllCategory) {
       setSelectedLocation(item._id);
       setSelectedLocationName(item.name);
-      setLocationTours([]); // Xóa các tour theo địa điểm cũ, để hiển thị tour chung
+      setLocationTours([]); 
       return;
     }
 
@@ -122,38 +122,49 @@ export default function HomeScreen() {
   };
 
   // Hàm xử lý khi tìm kiếm tour gần đây
-   const fetchNearbyTours = async (location) => {
+  const fetchNearbyTours = async (location) => {
     setIsFindingNearby(true);
     setNearbyError(null);
     setNearbyTours([]);
+    //console.log("--- Bắt đầu tìm tour gần đây ---");
 
     try {
+      // BƯỚC 1: Lấy địa chỉ từ tọa độ
       const geocodedAddresses = await Location.reverseGeocodeAsync({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
 
+      //console.log("Địa chỉ nhận diện được:", geocodedAddresses[0]);
+
       if (!geocodedAddresses?.length) {
         throw new Error("Không thể xác định được địa chỉ của bạn.");
       }
       
-      const locationName = geocodedAddresses[0].region;
+      // Lấy tên Tỉnh/Thành phố (ưu tiên city, rồi đến region)
+      const locationName = geocodedAddresses[0].city || geocodedAddresses[0].region;
       if (!locationName) {
          throw new Error("Không nhận diện được tỉnh/thành phố.");
       }
 
+      // Xóa chữ "Thành phố" hoặc "Tỉnh" để so khớp dễ hơn
       const cleanedLocationName = locationName.replace(/Thành phố|Tỉnh/i, '').trim();
-      console.log(`Vị trí nhận diện được: ${cleanedLocationName}`);
+      //console.log(`Tên vị trí đã làm sạch: "${cleanedLocationName}"`);
 
+      // BƯỚC 2: Tìm danh mục phù hợp
+      //console.log("Đang so sánh với các danh mục:", categories.map(c => c.name));
       const foundCategory = categories.find(
-        (cat) => !cat.isAllCategory && cat.name.toLowerCase() === cleanedLocationName.toLowerCase()
+        (cat) => !cat.isAllCategory && cleanedLocationName.toLowerCase().includes(cat.name.toLowerCase())
       );
       
       if (!foundCategory) {
+        console.error("Không tìm thấy danh mục nào phù hợp!");
         throw new Error(`Rất tiếc, chúng tôi chưa có tour nào tại ${cleanedLocationName}.`);
       }
 
-      console.log(`Đang tìm tour cho category: ${foundCategory.name} (ID: ${foundCategory._id})`);
+      //console.log(`Đã tìm thấy danh mục: "${foundCategory.name}" (ID: ${foundCategory._id})`);
+
+      // BƯỚC 3: Lấy các tour theo danh mục đã tìm thấy
       const toursData = await getToursByLocation(foundCategory._id);
       
       const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || []).map((tour) => ({
@@ -162,20 +173,21 @@ export default function HomeScreen() {
       }));
 
       if (processedTours.length === 0) {
-        throw new Error(`Không tìm thấy tour nào cho ${cleanedLocationName}.`);
+        throw new Error(`Không tìm thấy tour nào cho ${foundCategory.name}.`);
       }
 
+      //console.log(`Đã tìm thấy ${processedTours.length} tour. Đang cập nhật giao diện.`);
       setNearbyTours(processedTours);
 
     } catch (err) {
-      console.error("Lỗi khi tìm tour gần đây:", err.message);
+      console.error("Lỗi trong quá trình tìm tour gần đây:", err.message);
       setNearbyError(err.message);
-      setNearbyTours([]);
+      setNearbyTours([]); 
     } finally {
       setIsFindingNearby(false);
+      //console.log("--- Kết thúc tìm tour gần đây ---");
     }
   };
-  
   // Hàm logic chính để tìm tour gần đây
 const handleFindNearbyTours = (location) => {
     if (!location) return;
