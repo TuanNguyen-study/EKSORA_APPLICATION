@@ -11,9 +11,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Alert,
-  SafeAreaView,
-  Platform,
   KeyboardAvoidingView,
 } from "react-native";
 import { useSelector } from 'react-redux';
