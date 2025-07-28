@@ -11,6 +11,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useSelector } from 'react-redux';
 
@@ -49,7 +50,7 @@ export default function BookingCompleted() {
       }
     }
 
-    // Trường hợp 2: Dữ liệu từ một booking đơn lẻ
+    // TRƯỜNG HỢP 2: Dữ liệu đến từ Đặt ngay (props riêng lẻ)
     const singleItem = {
       id: params.bookingId,
       title: params.title,
@@ -206,6 +207,11 @@ export default function BookingCompleted() {
         <View style={styles.headerButton} />
       </View>
 
+              <KeyboardAvoidingView 
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
       <ScrollView
         style={styles.contentContainer}
         contentContainerStyle={{ paddingBottom: 20 }}
@@ -253,6 +259,7 @@ export default function BookingCompleted() {
           <Text style={styles.payButtonText}>Thanh toán</Text>
         </TouchableOpacity>
       </View>
+</KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -263,9 +270,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F4F5F7', 
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   contentContainer: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  scrollContentContainer: {
+    paddingBottom: 20,
+    flexGrow: 1,
   },
   header: {
     flexDirection: "row",
@@ -302,6 +316,7 @@ const styles = StyleSheet.create({
   footerLabel: {
     fontSize: 14,
     color: COLORS.gray,
+   
   },
   footerPrice: {
     fontSize: 20,
