@@ -1,15 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import {
   Modal,
-  TouchableWithoutFeedback,
-  KeyboardAvoidingView,
-  Keyboard,
-  Platform,
   View,
   Text,
   FlatList,
   StyleSheet,
   ActivityIndicator,
+  Pressable, 
 } from 'react-native';
 import { useVoucher } from '../../../store/VoucherContext';
 import CouponTicket from './CouponTicket';
@@ -28,9 +25,15 @@ const CouponModal = ({ visible, onClose }) => {
     return `${day}/${month} ${hours}:${minutes < 10 ? '0' : ''}${minutes}`;
   };
 
-  const renderCoupon = useCallback(({ item }) => {
-    const isSaving = savingVoucherId === item.id;
+  const handleToggleStatus = useCallback(async (item) => {
+    if (!item.isSaved && savingVoucherId !== item.id) {
+      setSavingVoucherId(item.id);
+      await saveVoucher(item.id);
+      setSavingVoucherId(null);
+    }
+  }, [savingVoucherId, saveVoucher]);
 
+  const renderCoupon = useCallback(({ item }) => {
     return (
       <CouponTicket
         mainTitle={item.condition}
@@ -38,38 +41,34 @@ const CouponModal = ({ visible, onClose }) => {
         discountAmount={item.discount}
         detailsText={`Mã: ${item.id}`}
         status={item.isSaved ? 'saved' : 'available'}
-        onToggleStatus={async () => {
-          if (!item.isSaved && !isSaving) {
-            setSavingVoucherId(item.id);
-            await saveVoucher(item.id);
-            setSavingVoucherId(null);
-          }
-        }}
-        loading={isSaving}
+        onToggleStatus={() => handleToggleStatus(item)}
+        loading={savingVoucherId === item.id}
       />
     );
-  }, [savingVoucherId, saveVoucher]);
+  }, [handleToggleStatus, savingVoucherId]);
 
   const getItemLayout = (_, index) => ({
-    length: 135,
+    length: 135, 
     offset: 135 * index,
     index,
   });
 
+
   return (
     <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.header}>
-              <Text onPress={onClose} style={styles.closeButtonText}>✕</Text>
-              <Text style={styles.headerTitle}>Quà tặng bạn mới</Text>
-              <Text style={styles.headerSubtitle}>Giảm đến 10%</Text>
-            </View>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Pressable onPress={onClose} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </Pressable>
+            <Text style={styles.headerTitle}>Quà tặng bạn mới</Text>
+            <Text style={styles.headerSubtitle}>Giảm đến hơn 10%</Text>
+          </View>
 
+          {/* Body chứa FlatList */}
+          <View style={styles.listContainer}>
             {loading ? (
               <ActivityIndicator
                 size="large"
@@ -84,30 +83,31 @@ const CouponModal = ({ visible, onClose }) => {
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                  <Text style={{ textAlign: 'center', marginTop: 20 }}>
+                  <Text style={styles.emptyText}>
                     Hiện chưa có mã ưu đãi.
                   </Text>
                 }
-                initialNumToRender={3}
+                initialNumToRender={5} // Tăng nhẹ để lấp đầy màn hình ban đầu
                 maxToRenderPerBatch={5}
-                windowSize={3}
+                windowSize={5}
                 getItemLayout={getItemLayout}
-                removeClippedSubviews={false}
+                removeClippedSubviews={true} // Bật lại để tối ưu bộ nhớ trên Android
               />
             )}
+          </View>
 
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Xem ưu đãi trong Tài khoản của bạn</Text>
-              <View style={styles.termsContainer}>
-                <Text style={styles.footerText}>Điều khoản & Điều kiện</Text>
-                <View style={styles.infoIcon}>
-                  <Text style={styles.infoIconText}>i</Text>
-                </View>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Xem ưu đãi trong Tài khoản của bạn</Text>
+            <View style={styles.termsContainer}>
+              <Text style={styles.footerText}>Điều khoản & Điều kiện</Text>
+              <View style={styles.infoIcon}>
+                <Text style={styles.infoIconText}>i</Text>
               </View>
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
+        </View>
+      </View>
     </Modal>
   );
 };
@@ -122,19 +122,23 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryBlue,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '70%',
+    height: '70%', 
   },
   header: {
     paddingVertical: 20,
     paddingBottom: 40,
     alignItems: 'center',
   },
+  closeButton: {
+    position: 'absolute',
+    left: 10,
+    top: 10,
+    padding: 10,
+    zIndex: 1,
+  },
   closeButtonText: {
     fontSize: 24,
-    color: COLORS.black,
-    position: 'absolute',
-    left: 20,
-    top: 15,
+    color: COLORS.white,
   },
   headerTitle: {
     fontSize: 22,
@@ -146,11 +150,20 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     marginTop: 4,
   },
-  content: {
+
+  listContainer: {
+    flex: 1, 
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+  },
+  content: {
     padding: 20,
-    backgroundColor: COLORS.white,
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 50,
+    color: COLORS.grayText,
   },
   footer: {
     padding: 20,
