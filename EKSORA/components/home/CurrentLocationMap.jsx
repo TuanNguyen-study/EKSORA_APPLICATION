@@ -61,21 +61,27 @@ export default function CurrentLocationMap({ onLocationFound, tourData, onMarker
 
       const markers = [];
       for (const tour of tourData) {
-        // Giả sử location đầu tiên là vị trí chính của tour
+           // 1. Lấy tên địa điểm từ dữ liệu tour
         const mainLocation = tour.location.split(',')[0].trim();
-        if (mainLocation) {
-          try {
-            const geocodedLocations = await Location.geocodeAsync(mainLocation);
+        if (mainLocation && tour.cateID && tour.cateID.name) { // Kiểm tra xem cateID có tồn tại không
+        try {
+            // Tạo chuỗi truy vấn đầy đủ và rõ ràng hơn
+            const fullLocationString = `${mainLocation}, ${tour.cateID.name}`;
+
+            // 2. HÀM QUAN TRỌNG NHẤT: Chuyển tên địa điểm thành tọa độ
+            const geocodedLocations = await Location.geocodeAsync(fullLocationString); 
+            
             if (geocodedLocations && geocodedLocations.length > 0) {
+              // 3. Lấy tọa độ (latitude, longitude) từ kết quả
               const { latitude, longitude } = geocodedLocations[0];
-              
+              // 4. Tạo một đối tượng marker hoàn chỉnh
               markers.push({
                 key: tour._id, 
                 _id: tour._id,
                 latitude,
                 longitude,
                 title: tour.name,
-                imageUrl: tour.image, 
+                imageUrl: tour.image,  
               });
             }
           } catch (e) {

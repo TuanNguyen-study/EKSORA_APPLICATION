@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react'; // Thêm useEffect
 import {
   Alert,
   ActivityIndicator,
@@ -35,27 +35,26 @@ export default function MyBookingsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   //  Hàm fetch API dùng lại cho cả focus và refresh
-const fetchBookings = async () => {
-  try {
-    const token = await AsyncStorage.getItem("ACCESS_TOKEN");
-    const userId = await AsyncStorage.getItem("USER_ID");
-    if (!userId || !token) {
-      setError('Không tìm thấy người dùng hoặc token');
-      return;
+  const fetchBookings = async () => {
+    try {
+      const token = await AsyncStorage.getItem("ACCESS_TOKEN");
+      const userId = await AsyncStorage.getItem("USER_ID");
+      if (!userId || !token) {
+        setError('Không tìm thấy người dùng hoặc token');
+        return;
+      }
+
+      const data = await getUserBookings(userId, token);
+
+      // SẮP XẾP Ở ĐÂY TRƯỚC KHI SET VÀO STATE
+      const sortedData = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      setBookings(sortedData); //  đã sort
+    } catch (err) {
+      setError('Lỗi khi tải danh sách đơn hàng');
+      console.error('Lỗi API:', err);
     }
-
-    const data = await getUserBookings(userId, token);
-
-    // 👉 SẮP XẾP Ở ĐÂY TRƯỚC KHI SET VÀO STATE
-    const sortedData = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    setBookings(sortedData); //  đã sort
-  } catch (err) {
-    setError('Lỗi khi tải danh sách đơn hàng');
-    console.error('Lỗi API:', err);
-  }
-};
-
+  };
 
   // Gọi API khi focus vào màn hình
   useFocusEffect(
@@ -64,6 +63,42 @@ const fetchBookings = async () => {
       fetchBookings().finally(() => setLoading(false));
     }, [])
   );
+
+  // =================    BẮT ĐẦU PHẦN CODE MỚI   =================
+  // Hook để lưu các đơn hàng có trạng thái "paid" vào AsyncStorage
+  useEffect(() => {
+    const savePaidBookingsToStorage = async () => {
+      const paidStatuses = ['paid', 'completed'];
+      const paidBookings = bookings.filter(booking =>
+        paidStatuses.includes(booking.status?.toLowerCase().trim())
+      );
+
+      if (paidBookings.length > 0) {
+        try {
+          const jsonValue = JSON.stringify(paidBookings);
+          await AsyncStorage.setItem('@paid_bookings', jsonValue);
+          console.log('Đã lưu các đơn hàng "paid" vào AsyncStorage.');
+        } catch (e) {
+          console.error('Lỗi khi lưu đơn hàng "paid" vào AsyncStorage:', e);
+        }
+      } else {
+         // Nếu không có đơn hàng paid nào, ta có thể xóa key này đi
+         try {
+            await AsyncStorage.removeItem('@paid_bookings');
+            console.log('Không có đơn hàng "paid", đã xóa key khỏi AsyncStorage.');
+         } catch(e) {
+            console.error('Lỗi khi xóa key "@paid_bookings":', e);
+         }
+      }
+    };
+
+    // Chạy hàm lưu trữ nếu state bookings có dữ liệu
+    if (bookings.length > 0) {
+        savePaidBookingsToStorage();
+    }
+  }, [bookings]); // useEffect sẽ chạy lại mỗi khi state `bookings` thay đổi
+  // =================     KẾT THÚC PHẦN CODE MỚI    =================
+
 
   // Gọi khi người dùng kéo xuống để làm mới
   const onRefresh = async () => {
@@ -92,7 +127,7 @@ const fetchBookings = async () => {
         filtered = [];
     }
      return filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  
+
   }, [bookings, selectedStatus]);
 
   const handleItemPress = async (item) => {

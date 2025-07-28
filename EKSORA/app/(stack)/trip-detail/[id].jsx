@@ -69,7 +69,7 @@ export default function TripDetailScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Đang tải chi tiết chuyến đi...</Text>
+        <Text style={styles.loadingText}>Đang tải chi tiết địa điểm...</Text>
       </View>
     );
   }
