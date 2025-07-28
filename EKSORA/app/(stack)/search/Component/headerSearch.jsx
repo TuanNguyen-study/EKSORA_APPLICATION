@@ -23,7 +23,6 @@ export default function HeaderSearch() {
     "đà nẵng",
     "hạ long",
     "hồ chí minh",
-    "Ninh Bình",
   ];
 
   useEffect(() => {
@@ -108,7 +107,6 @@ export default function HeaderSearch() {
             </View>
           </TouchableOpacity>
         ))}
-        <Ionicons name="chevron-down" size={18} color="#999" />
       </View>
     </View>
   );
