@@ -27,8 +27,7 @@ export default function TourCard({ item, onPress }) {
           <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>
           <Text style={styles.confirm}>Miễn phí huỷ · Xác nhận tức thời</Text>
           <View style={styles.ratingRow}>
-            <Text style={styles.rating}>⭐ {item.rating || "4.6"}</Text>
-            <Text style={styles.review}>({item.reviews || "2,383"})</Text>
+            <Text style={styles.rating}>⭐ {item.rating}</Text>
             <Text style={styles.dot}>•</Text>
             <Text style={styles.booked}>60K+ Đã được đặt</Text>
           </View>

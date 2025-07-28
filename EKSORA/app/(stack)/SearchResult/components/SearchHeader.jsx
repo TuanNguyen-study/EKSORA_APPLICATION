@@ -13,7 +13,9 @@ export default function SearchHeader({ query }) {
         placeholder={query}
         placeholderTextColor="#ccc"
       />
+      <TouchableOpacity onPress={() => router.push('/(stack)/ShoppingCartScreen')}>
       <Ionicons name="cart-outline" size={20} color="#333" style={styles.iconRight} />
+      </TouchableOpacity>
     </View>
   );
 }
