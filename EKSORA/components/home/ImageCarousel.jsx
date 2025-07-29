@@ -1,5 +1,3 @@
-// components/home/ImageCarousel.js
-
 import React, { useEffect, useRef, useState } from "react";
 import { View, FlatList, StyleSheet, Dimensions } from "react-native";
 import ImageCarouselCard from "./ImageCarouselCard";
@@ -7,9 +5,8 @@ import { COLORS } from "../../constants/colors";
 
 const { width: screenWidth } = Dimensions.get("window");
 
-// Dữ liệu và hằng số có thể được di chuyển ra file riêng (vd: constants/data.js)
+// Dữ liệu và hằng số có thể được di chuyển ra file riêng 
 const carouselImages = [
-  // ... (giữ nguyên mảng carouselImages)
   { id: "c1", image: { uri: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop" } },
   { id: "c2", image: { uri: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop" } },
   { id: "c3", image: { uri: "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop" } },

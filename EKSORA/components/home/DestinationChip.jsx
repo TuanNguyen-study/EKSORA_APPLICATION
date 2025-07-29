@@ -7,7 +7,7 @@ const DestinationChip = ({ destination, onPress, isSelected }) => {
       ? typeof destination.image === 'string'
         ? { uri: destination.image }
         : destination.image
-      : require('../../assets/images/icon.png');
+      : require('../../assets/images/64ecbddcd5a89.png');
 
   return (
     <TouchableOpacity

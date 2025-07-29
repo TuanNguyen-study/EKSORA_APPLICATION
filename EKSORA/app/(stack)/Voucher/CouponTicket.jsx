@@ -61,9 +61,11 @@ const styles = StyleSheet.create({
     height: 120,
   },
   ticketMainSection: {
+    borderRadius: 12,
     flex: 2.5,
     padding: 15,
     justifyContent: 'center',
+    backgroundColor: "#F0F8FF"
   },
   ticketDiscountSection: {
     flex: 1.5,
@@ -129,9 +131,11 @@ const styles = StyleSheet.create({
     height: 20,
     width: 20,
     borderRadius: 10,
+    //borderColor: COLORS.black,
     backgroundColor: COLORS.white,
     position: 'absolute',
     top: -10,
+    //borderWidth: 0.3,
     left: -10,
   },
   ticketCutoutBottom: {
