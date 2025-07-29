@@ -14,7 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-export default function PlaceItem({ item, onRemove, isBooked, onMoveUp, onMoveDown, disableUp, disableDown }) {
+export default function PlaceItem({ item, onRemove, onMoveUp, onMoveDown, disableUp, disableDown }) {
   const { time, close } = useLocalSearchParams();
   const router = useRouter();
 
@@ -24,7 +24,7 @@ export default function PlaceItem({ item, onRemove, isBooked, onMoveUp, onMoveDo
         <Image source={{ uri: item.image }} style={styles.image} />
         <View style={styles.info}>
           <View style={styles.row}>
-            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
             <TouchableOpacity onPress={onRemove}>
               <Ionicons name="close" size={20} color="gray" />
             </TouchableOpacity>
@@ -42,7 +42,7 @@ export default function PlaceItem({ item, onRemove, isBooked, onMoveUp, onMoveDo
 
           {/* Góc dưới: Đặt ngay + nút di chuyển */}
           <View style={styles.bottomActions}>
-            {isBooked ? (
+            {item.isBooked ? (
               <Text style={styles.bookedText}>Đã đặt</Text>
             ) : (
               <TouchableOpacity
@@ -56,6 +56,7 @@ export default function PlaceItem({ item, onRemove, isBooked, onMoveUp, onMoveDo
                 <Text style={styles.bookNowText}>Đặt ngay</Text>
               </TouchableOpacity>
             )}
+
 
             {/* Nút di chuyển item */}
             <View style={styles.moveContainer}>

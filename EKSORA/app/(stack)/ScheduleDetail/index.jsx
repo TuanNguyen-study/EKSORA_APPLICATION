@@ -1,13 +1,14 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { getToursByLocation } from '../../../API/services/serverCategories';
 import { getUserBookings } from '../../../API/services/servicesUser';
+import ModalAddTour from '../ScheduleDetail/Components/ModalAddTous';
 import PlaceItem from '../ScheduleDetail/Components/PlaceItem';
 import ScheduleHeader from '../ScheduleDetail/Components/ScheduleHeader';
 import TimelineConnector from '../ScheduleDetail/Components/TimelineConnector';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddButton from './Components/AddButton';
 
 
@@ -16,11 +17,30 @@ const Index = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [bookedTourIds, setBookedTourIds] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [savedTours, setSavedTours] = useState([]);
 
 
+  //Hàm xử lý hiển thị tối đa số Item
+  const limitToursWithConnectors = (data, maxItems) => {
+    const result = [];
+    let count = 0;
+
+    for (let i = 0; i < data.length && count < maxItems; i++) {
+      const item = data[i];
+      result.push(item);
+      if (item.name) {
+        count++;
+      }
+    }
+    return result;
+  };
+
+
+
+  // xử lý nút xoá item
   const handleRemovePlace = (indexToRemove) => {
     const newData = [...data];
-
     // tour là cuối cùng và phía trước là connector thì xoá cả connector
     if (
       indexToRemove === newData.length - 1 &&
@@ -36,12 +56,12 @@ const Index = () => {
     else {
       newData.splice(indexToRemove, 1);
     }
-
     setData(newData);
-
     Alert.alert('Đã xoá', 'Bạn đã xoá tour khỏi lịch trình');
   }
 
+
+  //Nút di chuyển lên
   const moveItemUp = (index) => {
     if (index <= 0) return;
 
@@ -55,10 +75,12 @@ const Index = () => {
       const item = newData.splice(index, 1);
       newData.splice(index - 1, 0, ...item);
     }
-
     setData(newData);
   };
 
+
+
+  //nút di chuyển xuống
   const moveItemDown = (index) => {
     if (index >= data.length - 1) return;
 
@@ -76,6 +98,34 @@ const Index = () => {
   };
 
 
+
+  // hàm thêm tour 
+  const handleAddTour = (newTour) => {
+    const exists = data.some(item => item?.id === newTour._id);
+    if (exists) return;
+
+    const newItem = {
+      id: newTour._id,
+      name: newTour.name,
+      image: Array.isArray(newTour.image) ? newTour.image[0] : newTour.image,
+      isBooked: bookedTourIds.includes(newTour._id),
+    };
+
+    // Nếu đã có phần tử trong data thì chèn thêm connector
+    const newData = [...data];
+    if (newData.length > 0) {
+      newData.push({ connector: true });
+    }
+    newData.push(newItem);
+
+    setData(newData);
+    setModalVisible(false);
+  };
+
+
+
+
+  // Gọi API
   useFocusEffect(
     useCallback(() => {
       const fetchData = async () => {
@@ -88,27 +138,21 @@ const Index = () => {
             Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng');
             return;
           }
-
           // 1. Lấy tất cả tour
           const res = await getToursByLocation(cateID);
           const tours = res.data || res;
-
           // random tour
           const getRandomTours = (array, count) => {
             const filtered = array.filter(t => t.name && t.image && t.image.length > 0);
             const shuffled = [...filtered].sort(() => 0.5 - Math.random());
             return shuffled.slice(0, count);
           };
-
           const randomTours = getRandomTours(tours, 3);
-
           // 2. Gọi API lấy danh sách tour đã đặt
           const bookings = await getUserBookings(userId);
-
           // 3. Lấy danh sách các tour đã đặt
-          const bookedIds = bookings.map(booking => booking.tour?._id);
+          const bookedIds = bookings.map(booking => booking.tour_id?._id);
           setBookedTourIds(bookedIds);
-
           // 4. Gán data + trạng thái
           const newData = randomTours.flatMap((tour, index) => {
             const isBooked = bookedIds.includes(tour._id);
@@ -122,7 +166,6 @@ const Index = () => {
               ? [item, { connector: true }]
               : [item];
           });
-
           setData(newData);
         } catch (e) {
           console.error('Lỗi khi load tour theo cateID:', e);
@@ -130,10 +173,12 @@ const Index = () => {
           setLoading(false);
         }
       };
-
       fetchData();
     }, [cateID])
   );
+
+
+
   return (
     <View style={styles.container}>
       <ScheduleHeader />
@@ -142,7 +187,7 @@ const Index = () => {
       </View>
 
       <FlatList
-        data={data}
+        data={limitToursWithConnectors(data, 5)}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item, index }) => {
           // Nếu item rỗng thì không render gì cả
@@ -166,6 +211,16 @@ const Index = () => {
           );
         }}
       />
+      <AddButton onPress={() => setModalVisible(true)} />
+
+      <ModalAddTour
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onAddTour={handleAddTour}
+        cateID={cateID} // truyền cateID vào để modal tự fetch tour theo danh mục
+        existingTourIds={savedTours.map(t => t._id)} // lọc những tour đã có 
+      />
+
     </View>
   );
 };

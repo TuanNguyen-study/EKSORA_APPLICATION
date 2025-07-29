@@ -14,7 +14,7 @@ const HeaderSearchBar = () => {
         onPress={() => router.push('/(stack)/search')}>
         <Ionicons name="search" size={20} color={COLORS.black} style={styles.searchIcon} />
         <Text style={styles.searchInput}>
-          Search something...
+          Tìm kiếm tour...
         </Text>
       </TouchableOpacity>
 
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: COLORS.black,
+    color: '#ccc',
     fontSize: 15,
   },
   iconButton: {
