@@ -11,7 +11,7 @@ import {
   Alert
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import * as Location from 'expo-location'; 
+import * as Location from 'expo-location';
 
 // API Services
 import {
@@ -72,11 +72,14 @@ export default function HomeScreen() {
         const allCategory = { _id: 'all', name: 'Tất cả', isAllCategory: true };
         const categoriesWithAll = [allCategory, ...(Array.isArray(categoriesData) ? categoriesData : categoriesData.data || [])];
         setCategories(categoriesWithAll);
-        
-        const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || []).map((tour) => ({
+
+        const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || [])
+          .filter(tour => tour.price > 0) // 👉 Lọc bỏ tour có giá 0đ
+          .map((tour) => ({
             ...tour,
             image: tour.image?.[0] || "https://via.placeholder.com/300",
-        }));
+          }));
+
         setTours(processedTours);
         setError(null);
       } catch (err) {
@@ -89,7 +92,8 @@ export default function HomeScreen() {
 
     fetchData();
   }, []);
-  
+
+
   // Xử lý khi người dùng chọn một địa điểm
   const handlePressDestination = async (item) => {
     if (item.isAllCategory) {
@@ -122,7 +126,7 @@ export default function HomeScreen() {
   };
 
   // Hàm xử lý khi tìm kiếm tour gần đây
-   const fetchNearbyTours = async (location) => {
+  const fetchNearbyTours = async (location) => {
     setIsFindingNearby(true);
     setNearbyError(null);
     setNearbyTours([]);
@@ -136,10 +140,10 @@ export default function HomeScreen() {
       if (!geocodedAddresses?.length) {
         throw new Error("Không thể xác định được địa chỉ của bạn.");
       }
-      
+
       const locationName = geocodedAddresses[0].region;
       if (!locationName) {
-         throw new Error("Không nhận diện được tỉnh/thành phố.");
+        throw new Error("Không nhận diện được tỉnh/thành phố.");
       }
 
       const cleanedLocationName = locationName.replace(/Thành phố|Tỉnh/i, '').trim();
@@ -148,14 +152,14 @@ export default function HomeScreen() {
       const foundCategory = categories.find(
         (cat) => !cat.isAllCategory && cat.name.toLowerCase() === cleanedLocationName.toLowerCase()
       );
-      
+
       if (!foundCategory) {
         throw new Error(`Rất tiếc, chúng tôi chưa có tour nào tại ${cleanedLocationName}.`);
       }
 
       console.log(`Đang tìm tour cho category: ${foundCategory.name} (ID: ${foundCategory._id})`);
       const toursData = await getToursByLocation(foundCategory._id);
-      
+
       const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || []).map((tour) => ({
         ...tour,
         image: tour.image?.[0] || 'https://via.placeholder.com/300',
@@ -175,15 +179,15 @@ export default function HomeScreen() {
       setIsFindingNearby(false);
     }
   };
-  
+
   // Hàm logic chính để tìm tour gần đây
-const handleFindNearbyTours = (location) => {
+  const handleFindNearbyTours = (location) => {
     if (!location) return;
 
     // Hiển thị hộp thoại hỏi người dùng
     Alert.alert(
-      "Tìm Tour Gần Đây?", 
-      "Chúng tôi đã tìm thấy vị trí của bạn. Bạn có muốn xem các tour ở gần đây không?", 
+      "Tìm Tour Gần Đây?",
+      "Chúng tôi đã tìm thấy vị trí của bạn. Bạn có muốn xem các tour ở gần đây không?",
       [
         {
           text: "Để sau",
@@ -227,14 +231,14 @@ const handleFindNearbyTours = (location) => {
         contentContainerStyle={{ paddingBottom: 60 }}
       >
         <LinearGradient
-          colors={[ '#2F80ED','#56CCF2','#FFFFFF']}
+          colors={['#2F80ED', '#56CCF2', '#FFFFFF']}
           locations={[0, 0.3, 0.8, 1]}
           style={styles.gradientSection}
         >
           <HeaderSearchBar />
           <ImageCarousel />
         </LinearGradient>
-        
+
         <View>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Ưu đãi tuyệt vời!</Text>
@@ -246,26 +250,26 @@ const handleFindNearbyTours = (location) => {
           <PromoBanner />
         </View>
 
-        <DestinationSection 
+        <DestinationSection
           categories={categories}
           selectedLocation={selectedLocation}
           onPressDestination={handlePressDestination}
         />
 
-        <SuggestionTabs 
+        <SuggestionTabs
           // Props cho tab "Đề xuất"
           tours={tours}
           locationTours={locationTours}
           selectedLocation={selectedLocation}
           selectedLocationName={selectedLocationName}
           isLoading={loading}
-          
+
           // Props cho tab "Gần đây"
           onFindNearby={handleFindNearbyTours}
           nearbyTours={nearbyTours}
           isFindingNearby={isFindingNearby}
           nearbyError={nearbyError}
-          
+
           // Prop chung
           onPressSuggestion={handlePressSuggestion}
         />
