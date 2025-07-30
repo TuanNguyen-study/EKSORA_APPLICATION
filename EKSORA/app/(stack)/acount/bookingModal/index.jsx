@@ -49,7 +49,6 @@ export default function BookingModal({ onClose, bookingDetails }) {
   if (!bookingDetails) {
     return null; 
   }
-  // TẠO HÀM MỚI Ở ĐÂY
   const handleBookNowAndClose = () => {
     // BƯỚC 1: Gọi onClose() để báo cho component cha đóng modal
     onClose();

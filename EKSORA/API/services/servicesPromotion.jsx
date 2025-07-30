@@ -1,5 +1,6 @@
 import AxiosInstance from '../AxiosInstance';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// Không cần import AsyncStorage ở đây nữa
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const getPromotion = async () => {
   try {
@@ -10,7 +11,6 @@ export const getPromotion = async () => {
     throw error;
   }
 };
-
 
 export const saveUserVoucher = async (userId, voucherId) => {
   try {
@@ -38,11 +38,10 @@ export const getUserSavedVouchers = async (userId) => {
 export const getVouchersByUserId = async (userId) => {
   try {
     const response = await AxiosInstance().get(`/api/user-vouchers/user/${userId}`);
-    //console.log('📡 Full API response:', response);
-
     const data = response.data || response;
     if (!data || (Array.isArray(data) && data.length === 0)) {
-      throw new Error('Dữ liệu trả về từ API là undefined, rỗng hoặc không hợp lệ');
+      // Không ném lỗi ở đây nữa để tránh log không cần thiết khi user chưa lưu voucher nào
+      return [];
     }
     return Array.isArray(data) ? data : [];
   } catch (error) {
@@ -55,28 +54,3 @@ export const getVouchersByUserId = async (userId) => {
   }
 };
 
-
-
-const SAVED_VOUCHERS_KEY = 'SAVED_VOUCHERS';
-
-export const getSavedVoucherIds = async () => {
-  try {
-    const data = await AsyncStorage.getItem(SAVED_VOUCHERS_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (error) {
-    console.error('Lỗi khi lấy saved vouchers:', error);
-    return [];
-  }
-};
-
-export const saveVoucherId = async (voucherId) => {
-  try {
-    const saved = await getSavedVoucherIds();
-    if (!saved.includes(voucherId)) {
-      saved.push(voucherId);
-      await AsyncStorage.setItem(SAVED_VOUCHERS_KEY, JSON.stringify(saved));
-    }
-  } catch (error) {
-    console.error('Lỗi khi lưu voucher:', error);
-  }
-};

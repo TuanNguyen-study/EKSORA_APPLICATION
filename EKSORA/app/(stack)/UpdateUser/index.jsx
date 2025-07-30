@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, Modal, Platform
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -8,9 +8,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { getUserProfile, updateUserProfile } from '../../../API/services/servicesProfile';
 import { provinces } from './provinces';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 export default function PersonalInfoScreen() {
   const [userInfo, setUserInfo] = useState({
@@ -25,9 +25,12 @@ export default function PersonalInfoScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [currentField, setCurrentField] = useState('');
   const [tempValue, setTempValue] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  
+  //  Đổi tên state để quản lý việc hiển thị modal lịch
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
 
   useEffect(() => {
+    // ... (Hàm loadData không thay đổi)
     const loadData = async () => {
       try {
         const localAvatar = await AsyncStorage.getItem('LOCAL_AVATAR_URI');
@@ -41,7 +44,7 @@ export default function PersonalInfoScreen() {
         setUserInfo({
           name: user.first_name || '',
           title: user.last_name || '',
-          birth: localBirth || '',
+          birth: localBirth || user.birth_day || '', 
           country: user.address || '',
           phoneEmail: user.phone || user.email || '',
         });
@@ -54,8 +57,9 @@ export default function PersonalInfoScreen() {
   }, []);
 
   const handleOpenModal = (field, currentValue) => {
+    //  Khi nhấn vào ngày sinh, chỉ cần set state để mở modal lịch
     if (field === 'birth') {
-      setShowDatePicker(true);
+      setDatePickerVisible(true);
     } else {
       setCurrentField(field);
       setTempValue(currentValue);
@@ -64,12 +68,14 @@ export default function PersonalInfoScreen() {
   };
 
   const handleModalSave = async () => {
+    // Nếu là ngày sinh, không làm gì ở đây vì đã xử lý ở `handleConfirmDate`
+    if(currentField === 'birth') {
+        setModalVisible(false);
+        return;
+    }
+    
     const updatedInfo = { ...userInfo, [currentField]: tempValue };
     setUserInfo(updatedInfo);
-
-    if (currentField === 'birth') {
-      await AsyncStorage.setItem('LOCAL_BIRTH', tempValue);
-    }
 
     const token = await AsyncStorage.getItem('ACCESS_TOKEN');
     if (!token) return;
@@ -85,20 +91,51 @@ export default function PersonalInfoScreen() {
     }
 
     if (Object.keys(payload).length > 0) {
-      await updateUserProfile(token, payload);
+      try {
+        await updateUserProfile(token, payload);
+        alert('Cập nhật thành công!');
+      } catch(e) {
+        alert('Cập nhật thất bại.');
+      }
     }
 
     setModalVisible(false);
-    alert('Cập nhật thành công!');
+  };
+  
+  //  Hàm mới để xử lý khi người dùng chọn một ngày từ modal lịch
+  const handleConfirmDate = async (date) => {
+    setDatePickerVisible(false); // Đóng modal lịch lại
+    
+    // Định dạng ngày thành chuỗi YYYY-MM-DD
+    const formattedDate = date.toISOString().split('T')[0];
+    
+    // Cập nhật giao diện ngay lập tức
+    const updatedInfo = { ...userInfo, birth: formattedDate };
+    setUserInfo(updatedInfo);
+    
+    // Lưu vào AsyncStorage
+    await AsyncStorage.setItem('LOCAL_BIRTH', formattedDate);
+    
+    // Cập nhật lên server
+    const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+    if (token) {
+        try {
+            await updateUserProfile(token, { birth_day: formattedDate });
+            alert('Cập nhật ngày sinh thành công!');
+        } catch(e) {
+            alert('Cập nhật ngày sinh thất bại.');
+        }
+    }
   };
 
+
   const pickImage = async () => {
+
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       alert('Bạn cần cấp quyền truy cập ảnh.');
       return;
     }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -106,21 +143,10 @@ export default function PersonalInfoScreen() {
       quality: 0.7,
       base64: true,
     });
-
     if (!result.canceled && result.assets?.length > 0) {
       const uri = `data:image/jpeg;base64,${result.assets[0].base64}`;
       setAvatarUri(uri);
       await AsyncStorage.setItem('LOCAL_AVATAR_URI', uri);
-    }
-  };
-
-  const onChangeDate = (event, selectedDate) => {
-    setShowDatePicker(Platform.OS === 'ios'); // iOS giữ mở picker
-    if (selectedDate) {
-      const formatted = selectedDate.toISOString().split('T')[0];
-      setTempValue(formatted);
-      setCurrentField('birth');
-      setModalVisible(true); // mở modal lưu
     }
   };
 
@@ -159,8 +185,8 @@ export default function PersonalInfoScreen() {
           </TouchableOpacity>
         </ScrollView>
 
-        {/* Modal chỉnh sửa country hoặc input thông thường */}
-        <Modal visible={modalVisible} transparent animationType="slide">
+        {/* Modal chỉnh sửa các trường thông thường */}
+        <Modal visible={modalVisible && currentField !== 'birth'} transparent animationType="slide">
           <View style={styles.modalContainer}>
             <View style={[styles.modalContent, {
               height: currentField === 'country' ? '70%' : '30%'
@@ -188,27 +214,37 @@ export default function PersonalInfoScreen() {
                   onChangeText={setTempValue}
                 />
               )}
-              <TouchableOpacity style={styles.modalSaveButton} onPress={handleModalSave}>
-                <Text style={styles.modalSaveButtonText}>Lưu</Text>
-              </TouchableOpacity>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity style={styles.modalCancelButton} onPress={() => setModalVisible(false)}>
+                    <Text style={styles.modalCancelButtonText}>Hủy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.modalSaveButton} onPress={handleModalSave}>
+                    <Text style={styles.modalSaveButtonText}>Lưu</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
 
-        {/* DateTime Picker native */}
-        {showDatePicker && (
-          <DateTimePicker
-            value={userInfo.birth ? new Date(userInfo.birth) : new Date()}
-            mode="date"
-            display="default"
-            maximumDate={new Date()}
-            onChange={onChangeDate}
-          />
-        )}
+        {/*  Gọi DateTimePickerModal */}
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirmDate}
+          onCancel={() => setDatePickerVisible(false)}
+          locale="vi_VN"
+          confirmTextIOS="Xác nhận"
+          cancelTextIOS="Hủy"
+          // Đặt ngày tối đa là hôm nay để người dùng không chọn ngày trong tương lai
+          maximumDate={new Date()} 
+          // Đặt ngày mặc định là ngày đã lưu hoặc ngày hôm nay
+          date={userInfo.birth ? new Date(userInfo.birth) : new Date()}
+        />
     </SafeAreaView>
   );
 }
 
+// Các component con và hàm tiện ích 
 function Item({ label, inputValue, valueComponent, isEditable, isInfoVisible }) {
   return (
     <View style={styles.itemWrapper}>
