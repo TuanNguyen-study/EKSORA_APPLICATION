@@ -140,7 +140,7 @@ const ShoppingCartScreen = () => {
       };
       
       router.push({
-        pathname: '/acount/BookingCompleted',
+        pathname: '/BookingCompleted',
         params: checkoutParams,
       });
 

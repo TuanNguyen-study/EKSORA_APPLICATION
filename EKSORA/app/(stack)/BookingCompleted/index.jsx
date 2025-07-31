@@ -1,24 +1,24 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  KeyboardAvoidingView,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSelector } from 'react-redux';
 
-import { updateUserProfile } from '../../../../API/services/servicesProfile';
-import { COLORS } from "../../../../constants/colors";
-import ContactInfoSection from "./components/ContactInfoSection";
+import { updateUserProfile } from '../../../API/services/servicesProfile';
+import { COLORS } from "../../../constants/colors";
 import BookingSummaryCard from "./components/BookingCard";
+import ContactInfoSection from "./components/ContactInfoSection";
 
 export default function BookingCompleted() {
   const router = useRouter();

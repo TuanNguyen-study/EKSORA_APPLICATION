@@ -238,7 +238,7 @@ export default function PersonalInfoScreen() {
           // Đặt ngày tối đa là hôm nay để người dùng không chọn ngày trong tương lai
           maximumDate={new Date()} 
           // Đặt ngày mặc định là ngày đã lưu hoặc ngày hôm nay
-          date={userInfo.birth ? new Date(userInfo.birth) : new Date()}
+            date={new Date()}
         />
     </SafeAreaView>
   );

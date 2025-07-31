@@ -20,10 +20,10 @@ export const useBooking = (initialDetails) => {
   const [tourData, setTourData] = useState(null);
   const [isDatePickerVisible, setDatePickerVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
- 
+
 
   // Thay đổi giá trị mặc định của quantityAdult 
-  const [quantityAdult, setQuantityAdult] = useState(0); 
+  const [quantityAdult, setQuantityAdult] = useState(0);
   const [quantityChild, setQuantityChild] = useState(0);
 
   const [availableDates, setAvailableDates] = useState([]);
@@ -44,15 +44,13 @@ export const useBooking = (initialDetails) => {
         discount: initialDetails.discount,
       });
 
-  
       setQuantityAdult(0);
       setQuantityChild(0);
-      
 
       // Tạo một danh sách các ngày trong 30 ngày tới
       const today = new Date();
       const dates = [];
-      for (let i = 0; i < 30; i++) { // Tạo 30 ngày để cuộn
+      for (let i = 0; i < 30; i++) { 
         const date = new Date(today);
         date.setDate(today.getDate() + i);
         // Định dạng ngày thành "dd/mm/yyyy"
@@ -60,7 +58,7 @@ export const useBooking = (initialDetails) => {
         dates.push(formatted);
       }
       setAvailableDates(dates);
-      
+
       // Chọn ngày đầu tiên trong danh sách làm ngày mặc định
       if (dates.length > 0) {
         setSelectedDate(dates[0]);
@@ -75,41 +73,68 @@ export const useBooking = (initialDetails) => {
       const finalTotal = totalBeforeDiscount - tourData.discount;
       setFinalPrice(Math.max(0, finalTotal));
     } else {
-      setFinalPrice(0); 
+      setFinalPrice(0);
     }
   }, [quantityAdult, quantityChild, tourData]);
 
 
   // --- Các hàm xử lý (Handlers) ---
   const incrementAdult = () => setQuantityAdult((q) => q + 1);
-  
+
   // Sửa lại logic decrement để có thể giảm về 0
-  const decrementAdult = () => setQuantityAdult((q) => (q > 0 ? q - 1 : 0)); 
-  
+  const decrementAdult = () => setQuantityAdult((q) => (q > 0 ? q - 1 : 0));
+
   const incrementChild = () => setQuantityChild((q) => q + 1);
   const decrementChild = () => setQuantityChild((q) => (q > 0 ? q - 1 : 0));
 
+
+  const parseDateString = (dateString) => {
+    const [day, month, year] = dateString.split('/').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const handleConfirmDate = (date) => {
+    setDatePickerVisible(false);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (date < today) {
+      Alert.alert(
+        "Ngày không hợp lệ",
+        "Bạn không thể đặt lịch cho một ngày trong quá khứ. Vui lòng chọn lại.",
+        [{ text: "Đồng ý" }]
+      );
+      return;
+    }
+
     const formatted = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
     setSelectedDate(formatted);
+
     if (!availableDates.includes(formatted)) {
-       setAvailableDates(prev => [formatted, ...prev.filter(d => d !== formatted)].sort());
+      setAvailableDates(prev => {
+        const newDates = [formatted, ...prev.filter(d => d !== formatted)];
+
+        // Sắp xếp mảng bằng cách so sánh các đối tượng Date đã được chuyển đổi
+        newDates.sort((a, b) => parseDateString(a) - parseDateString(b));
+
+        return newDates;
+      });
     }
-    setDatePickerVisible(false);
   };
-  
+
   const handleAddToCart = () => {
     // Thêm điều kiện kiểm tra số lượng
     if (quantityAdult === 0 && quantityChild === 0) {
       Alert.alert('Thông báo', 'Vui lòng chọn số lượng người lớn hoặc trẻ em.');
       return;
     }
-    
+
     if (!tourData) return;
     const cartItemId = `${tourData.tour_id}_${selectedDate}`;
     if (cartItems.find(item => item.id === cartItemId)) {
       Alert.alert('Thông báo', 'Tour này với ngày đã chọn đã có trong giỏ hàng.');
-      return; 
+      return;
     }
 
     const cartItem = {
@@ -163,9 +188,9 @@ export const useBooking = (initialDetails) => {
       const res = await createBooking(bookingData);
       const bookingId = res?.booking_id || res?.booking?._id;
       if (!bookingId) throw new Error('Không nhận được mã đơn hàng.');
-      
+
       router.push({
-        pathname: '/acount/BookingCompleted',
+        pathname: '/BookingCompleted',
         params: {
           bookingId,
           title: tourData.tour_title,

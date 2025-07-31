@@ -1,18 +1,17 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Platform,
-  KeyboardAvoidingView,
-  ScrollView,
-  ActivityIndicator, 
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import {
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 // import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { COLORS } from '../../../../../constants/colors';
+import { COLORS } from '../../../../constants/colors';
 
 // -- COMPONENT FORM NHẬP LIỆU  --
 const ContactForm = ({ contactInfo, onInputChange, onConfirm, loading }) => (

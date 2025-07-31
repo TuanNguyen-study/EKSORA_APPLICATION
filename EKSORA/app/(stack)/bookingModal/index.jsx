@@ -1,25 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
 import {
-  Image,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    Image,
+    SafeAreaView,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { COLORS } from '../../../../constants/colors';
+import { COLORS } from '../../../constants/colors';
+import { useBooking } from '../../../hooks/useBooking';
 import BookingFooter from './components/BookingFooter';
 import DateSelector from './components/DateSelector';
 import QuantitySelector from './components/QuantitySelector';
 import styles from './components/styles';
-import { useBooking } from '../../../../hooks/useBooking';
 
 //  Nhận thêm prop bookingDetails
 export default function BookingModal({ onClose, bookingDetails }) {
   
-  //  Truyền `bookingDetails` vào hook `useBooking`
   const {
     image,
     tour_title,
@@ -50,14 +48,11 @@ export default function BookingModal({ onClose, bookingDetails }) {
     return null; 
   }
   const handleBookNowAndClose = () => {
-    // BƯỚC 1: Gọi onClose() để báo cho component cha đóng modal
     onClose();
 
-    // BƯỚC 2: Đợi một chút để animation đóng chạy rồi mới thực hiện logic đặt vé
-    // Việc này giúp trải nghiệm người dùng mượt mà hơn rất nhiều trên iOS
     setTimeout(() => {
-      handleBooking(); // Gọi hàm gốc từ hook useBooking
-    }, 300); // 300ms là duration của animation đóng modal
+      handleBooking(); 
+    }, 300); 
   };
 
   return (
@@ -160,6 +155,7 @@ export default function BookingModal({ onClose, bookingDetails }) {
           locale="vi_VN"
           confirmTextIOS="Xác nhận"
           cancelTextIOS="Hủy"
+          date={new Date()}
         />
 
         <View style={styles.sectionBox}>

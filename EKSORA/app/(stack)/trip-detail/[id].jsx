@@ -20,7 +20,7 @@ import ProductOptionSelector from './components/ProductOptionSelector';
 import StickyBookingFooter from './components/StickyBookingFooter';
 import DescriptionSection from './components/DescriptionSection';
 import TripHighlightsSection from './components/TripHighlightsSection';
-import BookingModalWrapper from '../acount/bookingModal/components/BookingModalWrapper';
+import BookingModalWrapper from '../bookingModal/components/BookingModalWrapper';
 import { useTourDetail } from '../../../hooks/useTourDetail';
 
 export default function TripDetailScreen() {
