@@ -74,7 +74,7 @@ export default function HomeScreen() {
         setCategories(categoriesWithAll);
 
         const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || [])
-          .filter(tour => tour.price > 0) // 👉 Lọc bỏ tour có giá 0đ
+          // .filter(tour => tour.price > 0) // 👉 Lọc bỏ tour có giá 0đ
           .map((tour) => ({
             ...tour,
             image: tour.image?.[0] || "https://via.placeholder.com/300",

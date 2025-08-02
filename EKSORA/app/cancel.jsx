@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { COLORS } from '../../../constants/colors';
+import { COLORS } from '../constants/colors';
 
 export default function CancelPaymentScreen() {
   const router = useRouter();
