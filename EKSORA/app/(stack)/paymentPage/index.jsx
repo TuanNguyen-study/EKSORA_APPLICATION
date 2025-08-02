@@ -1,22 +1,22 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState, useMemo } from "react"; 
-import { 
-  Alert, 
-  FlatList, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  View, 
-  SafeAreaView 
+import { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  FlatList,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
 } from "react-native";
 import { COLORS } from "../../../constants/colors";
 
 // --- IMPORT CÁC COMPONENT CON ---
-import PaymentHeader from "./components/PaymentHeader";
 import OrderSummaryCard from "./components/OrderSummaryCard";
-import PaymentMethodItem from "./components/PaymentMethodItem";
 import PaymentFooter from "./components/PaymentFooter";
+import PaymentHeader from "./components/PaymentHeader";
+import PaymentMethodItem from "./components/PaymentMethodItem";
 
 // Dữ liệu phương thức thanh toán
 const paymentMethods = [

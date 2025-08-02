@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { COLORS } from "../../../constants/colors";
+import { COLORS } from "../constants/colors";
 
 export default function SuccessScreen() {
   const router = useRouter();
@@ -12,7 +12,7 @@ export default function SuccessScreen() {
 
       {/* Ảnh minh hoạ */}
       <Image
-        source={require("../../../assets/images/Logo.png")} // 👈 Bạn thay bằng ảnh của bạn hoặc vẽ SVG
+        source={require("../assets/images/Logo.png")} // 👈 Bạn thay bằng ảnh của bạn hoặc vẽ SVG
         style={styles.image}
         resizeMode="contain"
       />
