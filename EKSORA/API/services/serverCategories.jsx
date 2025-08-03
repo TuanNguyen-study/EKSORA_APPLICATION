@@ -39,3 +39,21 @@ export const getToursByLocation = async (cateID) => {
     throw error;
   }
 };
+
+// API lấy danh sách tất cả các tour theo category ID
+export const getAllToursByLocation = async (cateID) => {
+  try {
+    console.log('Gọi API với cateID:', cateID);
+    const response = await AxiosInstance().get('/api/categories/tours-by-location/all', {
+      params: {
+        cateID: cateID,
+      },
+    });
+    //console.log('Response đầy đủ:', response);
+    //console.log('Data từ API:', response);
+    return response; 
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách tour theo cateID:', error);
+    throw error;
+  }
+};

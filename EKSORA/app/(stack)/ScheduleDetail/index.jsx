@@ -218,7 +218,7 @@ const Index = () => {
         onClose={() => setModalVisible(false)}
         onAddTour={handleAddTour}
         cateID={cateID} // truyền cateID vào để modal tự fetch tour theo danh mục
-        existingTourIds={savedTours.map(t => t._id)} // lọc những tour đã có 
+        existingTourIds={data.filter(item => item?.id).map(t => t.id)}// lọc những tour đã có 
       />
 
     </View>

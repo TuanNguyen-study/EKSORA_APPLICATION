@@ -7,7 +7,7 @@ import SearchHeader from "../SearchResult/components/SearchHeader";
 import TourCard from "../SearchResult/components/TourCard";
 import CityCard from "../SearchResult/components/CityCard";
 import EmptyResult from "../SearchResult/components/EmptyResult";
-
+import {COLORS} from '../../../constants/colors'
 export default function index (){
 
   const { query } = useLocalSearchParams(); 
@@ -44,7 +44,7 @@ export default function index (){
         <SearchHeader query={query} />
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FF5722" />
+            <ActivityIndicator size="large" />
           </View>
         ) : filteredTours.length === 0 ? (
           <FlatList
@@ -91,5 +91,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    color: COLORS.primaryDark
   },
 });
