@@ -22,10 +22,13 @@ export const extractErrorMessage = (err, defaultMessage = 'Có lỗi xảy ra') 
 export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData, { rejectWithValue }) => {
+    console.log('[Register] Sending data:', userData);
     try {
       const res = await AxiosInstance.post('/api/Register', userData);
+      console.log('[Register] Response:', res.data);
       return res.data;
     } catch (err) {
+      console.error('[Register] Error:', err.response?.data || err.message);
       return rejectWithValue(err.response?.data?.message || 'Đăng ký thất bại');
     }
   }
@@ -35,28 +38,32 @@ export const registerUser = createAsyncThunk(
 export const loginUser = createAsyncThunk(
   'auth/login',
   async (userData, { rejectWithValue }) => {
+    console.log('[Login Email] Sending data:', userData);
     try {
       const res = await AxiosInstance.post('/api/login-email', userData);
+      console.log('[Login Email] Response:', res.data);
+
       const token = res.data?.token;
       const userId = res.data?.userId;
       const user = res.data?.user;
 
       if (token) {
         await AsyncStorage.setItem('ACCESS_TOKEN', token);
+        console.log('[Login Email] Token stored:', token);
       }
       if (userId) {
         await AsyncStorage.setItem('USER_ID', userId);
+        console.log('[Login Email] UserId stored:', userId);
       }
       if (user) {
         await AsyncStorage.setItem('USER_PROFILE', JSON.stringify(user));
+        console.log('[Login Email] User stored:', user);
       }
 
       return res.data;
     } catch (err) {
-      console.error('Lỗi loginUser:', err);
-      return rejectWithValue(
-        extractErrorMessage(err, 'Đăng nhập thất bại')
-      );
+      console.error('[Login Email] Error:', err.response?.data || err.message);
+      return rejectWithValue(extractErrorMessage(err, 'Đăng nhập thất bại'));
     }
   }
 );
@@ -65,21 +72,27 @@ export const loginUser = createAsyncThunk(
 export const loginphone = createAsyncThunk(
   'auth/phone-login',
   async (userData, { rejectWithValue }) => {
+    console.log('[Login Phone] Sending data:', userData);
     try {
       const res = await AxiosInstance.post('/api/login-phone', userData);
+      console.log('[Login Phone] Response:', res.data);
+
       const token = res.data?.token;
       const userId = res.data?.userId;
+
       if (token) {
         await AsyncStorage.setItem('ACCESS_TOKEN', token);
+        console.log('[Login Phone] Token stored:', token);
       }
       if (userId) {
         await AsyncStorage.setItem('USER_ID', userId);
+        console.log('[Login Phone] UserId stored:', userId);
       }
+
       return res.data;
     } catch (err) {
-      return rejectWithValue(
-        extractErrorMessage(err, 'Đăng nhập thất bại')
-      );
+      console.error('[Login Phone] Error:', err.response?.data || err.message);
+      return rejectWithValue(extractErrorMessage(err, 'Đăng nhập thất bại'));
     }
   }
 );
@@ -88,16 +101,14 @@ export const loginphone = createAsyncThunk(
 export const sendotp = createAsyncThunk(
   'auth/send-otp',
   async (email, { rejectWithValue }) => {
+    console.log('[Send OTP] Email:', email);
     try {
       const res = await AxiosInstance.post('/api/password/send-otp', { email });
-      if (res.status !== 200) {
-        throw new Error('Gửi OTP thất bại');
-      }
+      console.log('[Send OTP] Response:', res.data);
       return res.data;
     } catch (err) {
-      return rejectWithValue(
-        extractErrorMessage(err, 'Gửi OTP thất bại')
-      );
+      console.error('[Send OTP] Error:', err.response?.data || err.message);
+      return rejectWithValue(extractErrorMessage(err, 'Gửi OTP thất bại'));
     }
   }
 );
@@ -106,13 +117,14 @@ export const sendotp = createAsyncThunk(
 export const verifyOtp = createAsyncThunk(
   'auth/verify-otp',
   async ({ email, otp }, { rejectWithValue }) => {
+    console.log('[Verify OTP] Sending:', { email, otp });
     try {
       const res = await AxiosInstance.post('/api/password/verify-otp', { email, otp });
+      console.log('[Verify OTP] Response:', res.data);
       return res.data;
     } catch (err) {
-      return rejectWithValue(
-        extractErrorMessage(err, 'Xác thực OTP thất bại')
-      );
+      console.error('[Verify OTP] Error:', err.response?.data || err.message);
+      return rejectWithValue(extractErrorMessage(err, 'Xác thực OTP thất bại'));
     }
   }
 );
@@ -122,11 +134,13 @@ export const resetPassword = createAsyncThunk(
   'auth/resetPassword',
   async ({ newPassword }, { getState, rejectWithValue }) => {
     const state = getState();
-    if (!state || !state.auth) {
-      return rejectWithValue('Redux state is undefined');
+    const resetToken = state?.auth?.resetToken;
+
+    console.log('[Reset Password] State:', state?.auth);
+    if (!resetToken) {
+      console.warn('[Reset Password] Missing reset token!');
+      return rejectWithValue('Không có token để reset mật khẩu');
     }
-    const resetToken = state.auth.resetToken;
-    if (!resetToken) return rejectWithValue('Không có token để reset mật khẩu');
 
     try {
       const res = await AxiosInstance.post(
@@ -140,10 +154,11 @@ export const resetPassword = createAsyncThunk(
           },
         }
       );
+      console.log('[Reset Password] Response:', res.data);
       return res.data;
     } catch (err) {
-
-      return rejectWithValue(err.response?.data?.message || 'đặt lại mật khẩu thất bại');
+      console.error('[Reset Password] Error:', err.response?.data || err.message);
+      return rejectWithValue(err.response?.data?.message || 'Đặt lại mật khẩu thất bại');
     }
   }
 );
@@ -152,13 +167,14 @@ export const resetPassword = createAsyncThunk(
 AxiosInstance.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('ACCESS_TOKEN');
-    //console.log('[Interceptor] ACCESS_TOKEN từ AsyncStorage:', token);
+    console.log('[Interceptor] ACCESS_TOKEN:', token);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    //console.log('[Interceptor] Headers gửi đi:', config.headers);
-    //console.log('[Interceptor] URL:', config.baseURL + config.url);
+
+    console.log('[Interceptor] Request Headers:', config.headers);
+    console.log('[Interceptor] Request URL:', config.baseURL + config.url);
     return config;
   },
   (error) => Promise.reject(error)

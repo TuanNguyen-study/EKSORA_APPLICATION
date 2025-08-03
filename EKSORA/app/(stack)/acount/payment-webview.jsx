@@ -17,9 +17,9 @@ export default function PaymentWebview() {
       renderLoading={() => <ActivityIndicator size="large" color="blue" />}
       onNavigationStateChange={nav => {
         if (nav.url.includes("success")) {
-          router.replace("/acount/SuccessScreen");
+          router.replace("return");
         } else if (nav.url.includes("cancel")) {
-         router.replace("/acount/CancelPaymentScreen");
+         router.replace("cancel");
         }
       }}
     />
