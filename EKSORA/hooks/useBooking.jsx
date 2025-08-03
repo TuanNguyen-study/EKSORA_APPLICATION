@@ -3,8 +3,6 @@ import { Alert } from 'react-native';
 import { useSelector } from 'react-redux';
 import { createBooking } from '../API/services/booking';
 import { useCart } from '../store/CartContext';
-import { useRouter } from 'expo-router';
-
 const formatPrice = (price) => {
   const value = typeof price === 'number' ? price : 0;
   return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
@@ -237,7 +235,7 @@ useEffect(() => {
         },
       });
     } catch (error) {
-      console.error(' [BOOKING ERROR]:', error?.response?.data || error.message || error); 
+      console.error(' [BOOKING ERROR]:', error?.response?.data || error.message || error); // 📌
       Alert.alert('Lỗi', 'Đặt tour thất bại. Vui lòng thử lại.');
     }
   };

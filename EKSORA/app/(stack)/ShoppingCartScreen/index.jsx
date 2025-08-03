@@ -118,7 +118,6 @@ const ShoppingCartScreen = () => {
           discount: item.discount || 0,
         };
 
-        console.log('Sending booking data:', JSON.stringify(bookingData, null, 2));
         const res = await createBooking(bookingData);
         const individualBookingId = res?.booking_id || res?.booking?._id;
         if (!individualBookingId) throw new Error(`Không tạo được booking cho tour: ${item.name}`);
