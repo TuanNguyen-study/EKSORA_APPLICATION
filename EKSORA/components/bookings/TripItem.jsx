@@ -45,12 +45,9 @@ const handlePressSchedule = () => {
   });
 };
 
-  //  Chuyển qua trang Chi tiết Tour (TripDetailScreen)
-  const handleNavigateToDetail = () => {
-    router.push({
-      pathname: `(stack)/trip-detail/${item.tour_id._id}`, 
-    });
-  };
+const handleNavigateToDetail = () => {
+    router.push(`/(stack)/BookingDetailScreen/${item._id}`);
+};
 
   const statusMap = {
     pending: { text: 'ĐANG CHỜ XỬ LÝ', color: '#F5A623', icon: 'clock-outline' },

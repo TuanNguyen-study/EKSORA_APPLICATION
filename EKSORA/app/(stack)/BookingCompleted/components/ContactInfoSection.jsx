@@ -1,61 +1,79 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Platform,
-  KeyboardAvoidingView,
-  ScrollView,
-  ActivityIndicator, 
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { COLORS } from '../../../../../constants/colors';
+import React, { useState } from 'react';
+import {
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { COLORS } from '../../../../constants/colors';
 
-// -- COMPONENT FORM NHẬP LIỆU  --
-const ContactForm = ({ contactInfo, onInputChange, onConfirm, loading }) => (
+import {
+    formatEmail,
+    formatName,
+    formatPhoneNumber,
+    validateEmail,
+    validateName,
+    validatePhoneNumber,
+} from '../../../../utils/validators'; 
+
+const ContactForm = ({ contactInfo, onInputChange, onConfirm, loading, errors }) => (
   <KeyboardAvoidingView
     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     style={styles.formContainer}
   >
     <ScrollView showsVerticalScrollIndicator={false}>
+      {/* --- Ô NHẬP HỌ --- */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Họ</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.lastName && styles.inputError]}
           placeholder="Nguyễn Văn"
           value={contactInfo.lastName}
           placeholderTextColor="#A9A9A9"
           onChangeText={(text) => onInputChange('lastName', text)}
         />
+        {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
       </View>
+
+      {/* --- Ô NHẬP TÊN --- */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Tên</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.firstName && styles.inputError]}
           placeholder="An"
           value={contactInfo.firstName}
           placeholderTextColor="#A9A9A9"
           onChangeText={(text) => onInputChange('firstName', text)}
         />
+        {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
       </View>
+
+      {/* --- Ô NHẬP SỐ ĐIỆN THOẠI --- */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Số điện thoại</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.phone && styles.inputError]}
           placeholder="09xxxxxxxx"
           keyboardType="phone-pad"
           value={contactInfo.phone}
           placeholderTextColor="#A9A9A9"
           onChangeText={(text) => onInputChange('phone', text)}
+          maxLength={10} 
         />
+        {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
       </View>
+
+      {/* --- Ô NHẬP EMAIL --- */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Email</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.email && styles.inputError]}
           placeholder="example@email.com"
           keyboardType="email-address"
           autoCapitalize="none"
@@ -63,7 +81,9 @@ const ContactForm = ({ contactInfo, onInputChange, onConfirm, loading }) => (
           placeholderTextColor="#A9A9A9"
           onChangeText={(text) => onInputChange('email', text)}
         />
+        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
       </View>
+
       <TouchableOpacity
         style={[styles.confirmButton, { opacity: loading ? 0.7 : 1 }]}
         onPress={onConfirm}
@@ -79,7 +99,6 @@ const ContactForm = ({ contactInfo, onInputChange, onConfirm, loading }) => (
   </KeyboardAvoidingView>
 );
 
-// -- COMPONENT HIỂN THỊ THÔNG TIN  --
 const UserInfoDisplay = ({ user, onEdit }) => (
   <View style={styles.userInfoContainer}>
     <View style={styles.userInfoRow}>
@@ -101,40 +120,112 @@ const UserInfoDisplay = ({ user, onEdit }) => (
   </View>
 );
 
-
-// -- COMPONENT CHÍNH --
 const ContactInfoSection = ({
   isUsingSavedInfo,
   setIsUsingSavedInfo,
   contactToDisplay,
   formInfo,
-  setFormInfo, 
-  handleFormInputChange,
-  handleConfirmNewContact,
+  setFormInfo,
+  handleConfirmNewContact, // Hàm xử lý khi form hợp lệ và được xác nhận
   handleEditContact,
   loading,
 }) => {
+  // State để quản lý và hiển thị lỗi trên form
+  const [formErrors, setFormErrors] = useState({
+    lastName: null,
+    firstName: null,
+    phone: null,
+    email: null,
+  });
 
+  // Hàm xóa tất cả các lỗi hiện có
+  const resetErrors = () => {
+    setFormErrors({ lastName: null, firstName: null, phone: null, email: null });
+  };
 
-  // Hàm này để xử lý khi người dùng muốn nhập thông tin mới hoàn toàn
+  // Hàm xử lý thay đổi input, kết hợp định dạng và kiểm tra lỗi tức thì
+  const handleInputChange = (field, value) => {
+    let formattedValue = value;
+    let error = null;
+
+    // Định dạng và kiểm tra lỗi dựa trên loại trường (field)
+    switch (field) {
+      case 'lastName':
+        formattedValue = formatName(value);
+        error = validateName(formattedValue, 'Họ');
+        break;
+      case 'firstName':
+        formattedValue = formatName(value);
+        error = validateName(formattedValue, 'Tên');
+        break;
+      case 'phone':
+        formattedValue = formatPhoneNumber(value);
+        error = validatePhoneNumber(formattedValue);
+        break;
+      case 'email':
+        formattedValue = formatEmail(value);
+        error = validateEmail(formattedValue);
+        break;
+      default:
+        break;
+    }
+
+    // Cập nhật giá trị đã định dạng vào state của form
+    setFormInfo((prevInfo) => ({
+      ...prevInfo,
+      [field]: formattedValue,
+    }));
+
+    // Cập nhật lỗi (nếu có) vào state lỗi
+    setFormErrors((prevErrors) => ({
+      ...prevErrors,
+      [field]: error,
+    }));
+  };
+
+  // Hàm kiểm tra toàn bộ form trước khi gửi đi
+  const validateAndConfirm = () => {
+    const lastNameError = validateName(formInfo.lastName, 'Họ');
+    const firstNameError = validateName(formInfo.firstName, 'Tên');
+    const phoneError = validatePhoneNumber(formInfo.phone);
+    const emailError = validateEmail(formInfo.email);
+
+    // Nếu có bất kỳ lỗi nào, hiển thị tất cả lỗi và dừng lại
+    if (lastNameError || firstNameError || phoneError || emailError) {
+      setFormErrors({
+        lastName: lastNameError,
+        firstName: firstNameError,
+        phone: phoneError,
+        email: emailError,
+      });
+      return;
+    }
+
+    // Nếu không có lỗi, gọi hàm xác nhận từ component cha
+    handleConfirmNewContact(formInfo);
+  };
+
+  // Xử lý khi người dùng chọn tab "Thông tin của tôi"
+  const handleUseMyInfo = () => {
+    setIsUsingSavedInfo(true);
+    resetErrors(); 
+  };
+
+  // Xử lý khi người dùng chọn tab "Dùng thông tin khác"
   const handleUseOtherInfo = () => {
     setIsUsingSavedInfo(false);
-    setFormInfo({
-      lastName: '',
-      firstName: '',
-      phone: '',
-      email: '',
-    });
+    resetErrors();
+
   };
 
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Thông tin liên lạc</Text>
-      
+
       <View style={styles.segmentControl}>
         <TouchableOpacity
           style={[styles.segmentButton, isUsingSavedInfo && styles.segmentButtonActive]}
-          onPress={() => setIsUsingSavedInfo(true)}
+          onPress={handleUseMyInfo}
         >
           <Text style={[styles.segmentText, isUsingSavedInfo && styles.segmentTextActive]}>
             Thông tin của tôi
@@ -156,9 +247,10 @@ const ContactInfoSection = ({
         ) : (
           <ContactForm
             contactInfo={formInfo}
-            onInputChange={handleFormInputChange}
-            onConfirm={handleConfirmNewContact}
+            onInputChange={handleInputChange} 
+            onConfirm={validateAndConfirm}    
             loading={loading}
+            errors={formErrors}              
           />
         )}
       </View>
@@ -166,7 +258,6 @@ const ContactInfoSection = ({
   );
 };
 
-// -- STYLES  --
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
@@ -187,7 +278,6 @@ const styles = StyleSheet.create({
   },
   content: {
     marginTop: 20,
-    minHeight: 200, 
   },
   segmentControl: {
     flexDirection: 'row',
@@ -277,6 +367,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#FDFEFE',
   },
+  inputError: {
+    borderColor: COLORS.red, 
+  },
+  errorText: {
+    color: COLORS.red, 
+    fontSize: 12,
+    marginTop: 6,
+    marginLeft: 4,
+  },
+
   confirmButton: {
     backgroundColor: COLORS.primary,
     paddingVertical: 14,

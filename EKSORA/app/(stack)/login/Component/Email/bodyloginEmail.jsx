@@ -1,112 +1,166 @@
+import React, { useState } from 'react';
+import { 
+  StyleSheet, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  View, 
+  Alert,
+  ActivityIndicator 
+} from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useDispatch } from 'react-redux';
+
 import { loginUser } from '../../../../../API/services/AxiosInstance';
+import { useVoucher } from '../../../../../store/VoucherContext';
 
 function BodyLoginEmail() {
+  // State quản lý form input
   const [form, setForm] = useState({ email: '', password: '' });
-  const [, setLoading] = useState(false);
+  // State quản lý các lỗi của form
+  const [errors, setErrors] = useState({ email: '', password: '' });
+  // State quản lý trạng thái loading
+  const [isLoading, setIsLoading] = useState(false);
+  // State quản lý việc hiển thị mật khẩu
   const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState(false);
-  const [passwordError, setPasswordError] = useState(false);
+
   const dispatch = useDispatch();
   const router = useRouter();
+  
+  // Lấy hàm fetchPromotions từ VoucherContext
+  const { fetchPromotions } = useVoucher();
 
-  const handleLogin = async () => {
-    let hasError = false;
+  // Hàm xử lý khi người dùng thay đổi text input
+  const handleInputChange = (field, value) => {
+    setForm(prevForm => ({
+      ...prevForm,
+      [field]: value,
+    }));
+    // Khi người dùng bắt đầu nhập, xóa thông báo lỗi của trường đó
+    if (errors[field]) {
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        [field]: '',
+      }));
+    }
+  };
 
+  // Hàm kiểm tra dữ liệu form
+  const validateForm = () => {
+    const newErrors = { email: '', password: '' };
+    let isValid = true;
+
+    // Kiểm tra email
     if (!form.email.trim()) {
-      setEmailError(true); hasError = true;
+      newErrors.email = 'Vui lòng nhập địa chỉ email';
+      isValid = false;
     } else {
-      setEmailError(false);
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.email)) {
+        newErrors.email = 'Địa chỉ email không hợp lệ';
+        isValid = false;
+      }
     }
 
+    // Kiểm tra mật khẩu
     if (!form.password.trim()) {
-      setPasswordError(true); hasError = true;
-    } else {
-      setPasswordError(false);
+      newErrors.password = 'Vui lòng nhập mật khẩu';
+      isValid = false;
     }
+    
+    setErrors(newErrors);
+    return isValid;
+  };
+  
+  // Hàm xử lý đăng nhập
+  const handleLogin = async () => {
+    // Nếu đang trong quá trình đăng nhập thì không cho nhấn lại
+    if (isLoading) return;
 
-    if (hasError) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ email và mật khẩu');
+    // Kiểm tra dữ liệu, nếu không hợp lệ thì dừng lại
+    if (!validateForm()) {
       return;
     }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) {
-      setEmailError(true);
-      Alert.alert('Lỗi', 'Email không hợp lệ');
-      return;
-    } else {
-      setEmailError(false);
-    }
-
+    
+    setIsLoading(true);
     try {
-      setLoading(true);
       await dispatch(loginUser(form)).unwrap();
+      //    Hàm này sẽ đọc `USER_ID` mới lưu và tải danh sách voucher tương ứng.
+      console.log('Đăng nhập Redux thành công, bắt đầu tải voucher...');
+      await fetchPromotions();
+      console.log('Tải voucher hoàn tất.');
+
+      // 3. Thông báo và chuyển trang
       Alert.alert('Thành công', 'Đăng nhập thành công!');
-      router.push('/(tabs)/home');
+      router.replace('/(tabs)/home'); 
+
     } catch (error) {
-      console.log('Đăng nhập lỗi:', {
-        message: error?.message,
-        response: error?.response,
-        data: error?.response?.data,
-      });
+      console.log('Đăng nhập thất bại:', error);
       Alert.alert(
         'Đăng nhập thất bại',
-        error?.response?.data?.message || error?.message || JSON.stringify(error)
+        error?.message || 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.'
       );
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <View style={{ paddingHorizontal: 20 }}>
-      <View style={[styles.inputContainer, emailError && styles.errorBorder]}>
+    <View style={styles.container}>
+      {/* Input Email */}
+      <View style={[styles.inputContainer, !!errors.email && styles.errorBorder]}>
         <FontAwesome name="envelope" size={18} style={styles.icon} />
         <TextInput
           placeholder="Địa chỉ email"
           placeholderTextColor="#666"
           value={form.email}
-          onChangeText={text => {
-            setForm({ ...form, email: text });
-            if (emailError) setEmailError(false);
-          }}
+          onChangeText={(text) => handleInputChange('email', text)}
           style={styles.input}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
       </View>
+      {/* Hiển thị lỗi nếu có */}
+      {!!errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-      <View style={[styles.inputContainer, passwordError && styles.errorBorder]}>
+      {/* Input Mật khẩu */}
+      <View style={[styles.inputContainer, !!errors.password && styles.errorBorder]}>
         <FontAwesome name="lock" size={18} style={styles.icon} />
         <TextInput
           placeholder="Mật khẩu"
           placeholderTextColor="#666"
           secureTextEntry={!showPassword}
           value={form.password}
-          onChangeText={text => {
-            setForm({ ...form, password: text });
-            if (passwordError) setPasswordError(false);
-          }}
+          onChangeText={(text) => handleInputChange('password', text)}
           style={styles.input}
         />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={18} />
+          <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={18} style={styles.icon} />
         </TouchableOpacity>
       </View>
+      {/* Hiển thị lỗi nếu có */}
+      {!!errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-      {/* Login button */}
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>Đăng nhập</Text>
+
+      {/* Nút Đăng nhập */}
+      <TouchableOpacity 
+        style={[styles.loginButton, isLoading && styles.disabledButton]} 
+        onPress={handleLogin}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.loginButtonText}>Đăng nhập</Text>
+        )}
       </TouchableOpacity>
 
-      <View style={styles.row}>
-        <TouchableOpacity onPress={() => router.replace('/(stack)/signup/Repassword')}>
+      {/* Các liên kết khác */}
+      <View style={styles.linksContainer}>
+        <TouchableOpacity onPress={() => router.push('/(stack)/signup/Repassword')}>
           <Text style={styles.link}>Quên mật khẩu</Text>
         </TouchableOpacity>
-
         <TouchableOpacity onPress={() => router.push('/(stack)/signup')}>
           <Text style={styles.link}>
             Chưa có tài khoản? <Text style={styles.bold}>Đăng ký</Text>
@@ -132,10 +186,16 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     paddingHorizontal: 15,
     paddingVertical: 12,
-    marginBottom: 15,
+    marginTop: 15,
   },
   errorBorder: {
     borderColor: 'red',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 15,
   },
   icon: {
     marginRight: 10,
@@ -144,32 +204,35 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
+    color: '#000',
   },
   loginButton: {
     backgroundColor: '#009DFF',
     paddingVertical: 14,
     borderRadius: 100,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 25,
+  },
+  disabledButton: {
+    backgroundColor: '#A9A9A9',
   },
   loginButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },
-  row: {
+  linksContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 15,
+    marginTop: 20,
     paddingHorizontal: 4,
   },
   link: {
     color: '#000',
     fontSize: 14,
-    textDecorationLine: 'underline',
   },
   bold: {
     fontWeight: 'bold',
-    textDecorationLine: 'underline',
+    color: '#009DFF',
   },
 });

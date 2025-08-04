@@ -69,4 +69,6 @@ export const COLORS = {
   lightBlue: '#E6F3FA',
   grayText: '#666666',
   modalOverlay: 'rgba(0, 0, 0, 0.5)',
+
+
 };

@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { COLORS } from '../../../../../constants/colors';
+import { COLORS } from '../../../../constants/colors';
 import styles from './styles';
 
 const BookingFooter = ({ totalPrice, onAddToCart, onBookNow }) => {

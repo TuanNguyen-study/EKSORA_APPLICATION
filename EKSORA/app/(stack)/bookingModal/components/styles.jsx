@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { COLORS } from "../../../../../constants/colors";
+import { COLORS } from "../../../../constants/colors";
 
 export default StyleSheet.create({
   container: {
@@ -256,4 +256,62 @@ export default StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+  offerHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 8,
+},
+offersContainer: {
+  marginTop: 12,
+  paddingTop: 12,
+  borderTopWidth: 1,
+  borderTopColor: '#f0f0f0',
+},
+offerItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 10,
+},
+offerDetails: {
+  marginLeft: 10,
+  flex: 1,
+},
+offerTitle: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: COLORS.black,
+},
+offerDescription: {
+  fontSize: 12,
+  color: COLORS.darkGray,
+  marginTop: 2,
+},
+voucherButton: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingVertical: 12,
+  paddingHorizontal: 12,
+  backgroundColor: '#FFFFFF', 
+  borderWidth: 1,
+  borderColor: '#E5E7EB', 
+  borderRadius: 8,
+  marginTop: 8, 
+},
+voucherPlaceholder: {
+  fontSize: 16,
+  color: '#6B7280', 
+},
+voucherSelectedText: {
+  fontSize: 16,
+  color: '#F97316', 
+  fontWeight: '600',
+},
+discountText: {
+    fontSize: 16,
+    color: '#16A34A', 
+    fontWeight: '500',
+    marginTop: 4,
+},
 });

@@ -1,7 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../../../../constants/colors';
+import { StyleSheet, Text, View } from 'react-native';
+import { COLORS } from '../../../../constants/colors';
 
 const DetailRow = ({ iconName, label, value }) => (
   <View style={styles.detailRow}>

@@ -1,141 +1,196 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Đảm bảo bạn đã cài đặt @expo/vector-icons
 
-// Hàm helper để định dạng ngày tháng
-const formatDate = (dateString) => {
-  if (!dateString) return 'Không xác định';
-  const date = new Date(dateString);
-  return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+// --- Bảng màu để dễ dàng tùy chỉnh ---
+const COLORS = {
+  primary: '#0087CA',      // Màu xanh dương chủ đạo
+  primaryLight: '#E0F2FE', // Màu xanh dương nhạt cho nền
+  white: '#FFFFFF',
+  text: '#1F2937',        // Màu chữ chính (gần đen)
+  textSecondary: '#6B7280',// Màu chữ phụ (xám)
+  border: '#E5E7EB',      // Màu viền
+  disabled: '#D1D5DB',    // Màu cho trạng thái vô hiệu hóa
+  red: '#EF4444',
 };
 
-const VoucherItem = ({ voucherData, onApply }) => {
+// --- Component VoucherItem được thiết kế lại ---
+const VoucherItem = ({ voucherData, onAction, isSelected, isUsable }) => {
+  // Tránh lỗi nếu không có dữ liệu
   if (!voucherData || !voucherData.voucher_id) {
-    return null; 
+    return null;
   }
 
-  const { code, discount, condition, end_date, min_order_value } = voucherData.voucher_id;
+  const { voucher_id: voucher } = voucherData;
 
-  // Hàm xử lý khi nhấn "Sử dụng"
-  const handleApply = () => {
-    if (onApply) {
-      onApply(voucherData); 
-    }
+  const formatDate = (dateString) => {
+    const d = new Date(dateString);
+    return `HSD: ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   };
 
+  // Thay đổi style của container nếu voucher không thể sử dụng
+  const containerStyle = [
+    styles.container,
+    !isUsable && { backgroundColor: '#F3F4F6' },
+  ];
+
   return (
-    <View style={styles.card}>
-      {/* Phần bên trái */}
-      <View style={styles.leftContainer}>
-        <View style={styles.appOnlyBadge}>
-          <Text style={styles.appOnlyText}>Chỉ áp dụng trên ứng dụng</Text>
-        </View>
-        <Text style={styles.title}>{condition || 'Không có điều kiện'}</Text>
-        <Text style={styles.code}>Mã ưu đãi: {code || 'Không có mã'}</Text>
-        <Text style={styles.expiry}>Hết hạn: {formatDate(end_date)}</Text>
+    <View style={containerStyle}>
+      {/* ===== Phần bên trái (Phần màu) ===== */}
+      <View style={[styles.leftSide, !isUsable && { backgroundColor: COLORS.disabled }]}>
+        <Ionicons name="pricetag" size={32} color={COLORS.white} />
+        <Text style={styles.discountText}>GIẢM</Text>
+        <Text style={styles.discountValue}>{voucher.discount}%</Text>
       </View>
 
-      {/* Đường kẻ đứt */}
-      <View style={styles.dividerContainer}>
-        <View style={styles.divider} />
+      {/* ===== Đường cắt chấm bi trang trí ===== */}
+      <View style={styles.separatorContainer}>
+        <View style={styles.separatorCircleTop} />
+        <View style={styles.separatorLine} />
+        <View style={styles.separatorCircleBottom} />
       </View>
 
-      {/* Phần bên phải */}
-      <View style={styles.rightContainer}>
-        <Text style={styles.discountText}>Giảm {discount ? `${discount}%` : '0%'}</Text>
-        {min_order_value > 0 && (
-          <Text style={styles.minOrderText}>
-            Đơn tối thiểu: {min_order_value.toLocaleString('vi-VN')} VND
+      {/* ===== Phần bên phải (Nội dung) ===== */}
+      <View style={styles.rightSide} pointerEvents={isUsable ? 'auto' : 'none'}>
+        <View style={{ opacity: isUsable ? 1 : 0.5 }}>
+          <Text style={styles.conditionText} numberOfLines={2}>
+            {voucher.condition || `Giảm ${voucher.discount}% cho mọi đơn hàng`}
           </Text>
+          <Text style={styles.minOrderText}>
+            Đơn tối thiểu {Number(voucher.min_order_value / 1000).toFixed(0)}K
+          </Text>
+          <Text style={styles.expiryText}>{formatDate(voucher.end_date)}</Text>
+        </View>
+
+        {/* Nút hành động chỉ hiển thị khi voucher có thể dùng */}
+        {isUsable && (
+          <TouchableOpacity
+            style={[styles.actionButton, isSelected ? styles.selectedButton : styles.applyButton]}
+            onPress={() => onAction(voucherData)}
+          >
+            <Text style={[styles.actionButtonText, isSelected ? styles.selectedButtonText : styles.applyButtonText]}>
+              {isSelected ? 'Bỏ chọn' : 'Áp dụng'}
+            </Text>
+          </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.useButton} onPress={handleApply}>
-          <Text style={styles.useButtonText}>Sử dụng</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginVertical: 8,
-    marginHorizontal: 16,
+  container: {
     flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: '#0087CA',
-    shadowColor: '#0087CA',
-    shadowOffset: { width: 2, height: 1 },
-    shadowOpacity: 0.5,
-    shadowRadius: 2,
-    elevation: 2,
+    height: 120, // Tăng chiều cao một chút
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    overflow: 'hidden', // Quan trọng để hiệu ứng cắt góc hoạt động
   },
-  leftContainer: {
-    flex: 2.5,
-    padding: 16,
-  },
-  rightContainer: {
-    flex: 1.5,
+  leftSide: {
+    width: 100, // Chiều rộng của phần màu
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
-    borderLeftWidth: 1,
-    borderLeftColor: '#FDEEDC',
-    borderStyle: 'dashed',
-  },
-  dividerContainer: {
-
-  },
-  appOnlyBadge: {
-    backgroundColor: '#FFF7ED',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
-  appOnlyText: {
-    color: '#0087CA',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  code: {
-    fontSize: 14,
-    color: '#4B5563',
-    marginBottom: 8,
-  },
-  expiry: {
-    fontSize: 14,
-    color: '#EF4444',
+    padding: 10,
   },
   discountText: {
-    fontSize: 18,
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 6,
+  },
+  discountValue: {
+    color: COLORS.white,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#0087CA',
-    marginBottom: 4,
+  },
+  // --- Hiệu ứng đường cắt ---
+  separatorContainer: {
+    width: 1,
+    height: '100%',
+  },
+  separatorLine: {
+    position: 'absolute',
+    left: -1,
+    top: '10%',
+    height: '80%',
+    width: 2,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  separatorCircleTop: {
+    position: 'absolute',
+    top: -10,
+    left: -10,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#F9FAFB', // Phải khớp với màu nền của Modal
+  },
+  separatorCircleBottom: {
+    position: 'absolute',
+    bottom: -10,
+    left: -10,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#F9FAFB', // Phải khớp với màu nền của Modal
+  },
+  // --- Phần nội dung bên phải ---
+  rightSide: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'space-between', // Đẩy nội dung ra xa nhau
+  },
+  conditionText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.text,
   },
   minOrderText: {
-      fontSize: 11,
-      color: '#6B7280',
-      marginBottom: 12,
-      textAlign: 'center',
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 4,
   },
-  useButton: {
-    backgroundColor: '#0087CA',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+  expiryText: {
+    fontSize: 12,
+    color: COLORS.red,
+    fontStyle: 'italic',
+  },
+  // --- Nút hành động ---
+  actionButton: {
+    position: 'absolute', // Đặt nút ở góc
+    right: 12,
+    bottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
   },
-  useButtonText: {
-    color: '#fff',
+  applyButton: {
+    backgroundColor: COLORS.primary,
+  },
+  selectedButton: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+  },
+  actionButtonText: {
+    fontSize: 13,
     fontWeight: 'bold',
-    fontSize: 14,
+  },
+  applyButtonText: {
+    color: COLORS.white,
+  },
+  selectedButtonText: {
+    color: COLORS.primary,
   },
 });
 

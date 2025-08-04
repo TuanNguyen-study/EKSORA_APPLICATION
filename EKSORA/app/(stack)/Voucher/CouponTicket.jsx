@@ -1,151 +1,165 @@
 import React, { memo } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { COLORS } from '../../../constants/colors';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
+// --- Bảng màu ---
+const COLORS = {
+  primaryBlue: '#0087CA',  // Màu xanh dương chủ đạo (giống Modal)
+  lightBlue: '#E6F3F9',    // Nền xanh dương rất nhạt
+  white: '#FFFFFF',
+  textPrimary: '#1F2937',    // Màu chữ chính (đen đậm)
+  textSecondary: '#6B7280',  // Màu chữ phụ (xám)
+  border: '#E5E7EB',        // Màu viền nhạt
+  disabled: '#F5F5F5',      // Màu nền khi loading
+};
 
 const CouponTicket = ({
-  mainTitle = '',
-  expiryText = '',
-  discountAmount = '',
+  mainTitle = 'Ưu đãi đặc biệt',
+  discountAmount = 'N/A',
   detailsText = '',
-  status = '',
+  expiryText = '',
+  status = 'available', 
   onToggleStatus = () => {},
+  loading = false,
 }) => {
   return (
-    <View style={styles.ticketContainer}>
-      {/* Left section */}
-      <View style={styles.ticketMainSection}>
-        <Text style={styles.ticketMainTitle}>{mainTitle}</Text>
-        {!!expiryText && <Text style={styles.ticketExpiry}>{expiryText}</Text>}
+    <View style={styles.container}>
+      {/* ===== Dải Ribbon màu Xanh Dương ===== */}
+      <View style={styles.ribbon}>
+        <Ionicons name="sparkles" size={16} color={COLORS.white} />
       </View>
 
-      {/* Separator */}
-      <View style={styles.ticketSeparatorContainer}>
-        <View style={styles.ticketCutoutTop} />
-        <View style={styles.ticketSeparator} />
-        <View style={styles.ticketCutoutBottom} />
-      </View>
+      <View style={styles.contentContainer}>
+        {/* --- Phần thông tin chính --- */}
+        <View>
+          <Text style={styles.mainTitle} numberOfLines={2}>{mainTitle}</Text>
+          <Text style={styles.discountText}>Giảm giá {discountAmount}</Text>
+          {!!detailsText && (
+            <Text style={styles.detailsText}>{detailsText}</Text>
+          )}
+        </View>
 
-      {/* Right section */}
-      <View style={styles.ticketDiscountSection}>
-        <Text style={styles.ticketDiscountAmount}>{discountAmount}</Text>
-        {!!detailsText && <Text style={styles.ticketDetails}>{detailsText}</Text>}
-        <Pressable
-          style={[
-            styles.ticketStatusButton,
-            status === 'saved' && styles.ticketStatusButtonSaved,
-          ]}
-          onPress={onToggleStatus}
-        >
-          <Text
-            style={[
-              styles.ticketStatusButtonText,
-              status === 'saved' && styles.ticketStatusButtonTextSaved,
+        {/* --- Phần chân coupon --- */}
+        <View style={styles.bottomContainer}>
+          <Text style={styles.expiryText}>{expiryText}</Text>
+          
+          <Pressable
+            onPress={onToggleStatus}
+            disabled={loading}
+            style={({ pressed }) => [
+              styles.actionButton,
+              status === 'saved' ? styles.savedButton : styles.defaultButton,
+              loading && styles.loadingButton,
+              pressed && !loading && { opacity: 0.8 },
             ]}
           >
-            {status === 'saved' ? 'Đã lưu' : 'Lưu'}
-          </Text>
-        </Pressable>
+            {loading ? (
+              <ActivityIndicator size="small" color={COLORS.primaryBlue} />
+            ) : (
+              <Text style={[
+                styles.actionButtonText,
+                status === 'saved' ? styles.savedButtonText : styles.defaultButtonText
+              ]}>
+                {status === 'saved' ? 'Đã lưu' : 'Lưu'}
+              </Text>
+            )}
+          </Pressable>
+        </View>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  ticketContainer: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.lightBlue,
+  container: {
+    backgroundColor: COLORS.white,
     borderRadius: 12,
-    marginBottom: 15,
     borderWidth: 1,
-    borderColor: COLORS.borderColor,
-    height: 120,
+    borderColor: COLORS.border,
+    marginHorizontal: 16, 
+    marginBottom: 20,
+    minHeight: 140,
+    elevation: 2,
+    shadowColor: '#999',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    overflow: 'hidden',
   },
-  ticketMainSection: {
-    borderRadius: 12,
-    flex: 2.5,
-    padding: 15,
-    justifyContent: 'center',
-    backgroundColor: "#F0F8FF"
+  contentContainer: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'space-between',
   },
-  ticketDiscountSection: {
-    flex: 1.5,
-    padding: 15,
+  ribbon: {
+    position: 'absolute',
+    top: -24,
+    left: -24,
+    width: 48,
+    height: 48,
+    backgroundColor: COLORS.primaryBlue, 
+    transform: [{ rotate: '45deg' }],
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderLeftWidth: 1,
-    borderLeftColor: 'transparent',
+    paddingBottom: 2,
   },
-  ticketMainTitle: {
+  mainTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.black,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+    width: '85%',
   },
-  ticketExpiry: {
+  discountText: {
     fontSize: 14,
-    color: COLORS.primaryBlue,
-    marginTop: 8,
+    fontWeight: '700',
+    color: COLORS.primaryBlue, 
+    marginBottom: 8,
   },
-  ticketDiscountAmount: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primaryBlue,
-    textAlign: 'center',
+  detailsText: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
   },
-  ticketDetails: {
+  bottomContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  expiryText: {
     fontSize: 12,
-    color: COLORS.grayText,
-    textAlign: 'center',
-    marginTop: 4,
+    color: COLORS.textSecondary,
   },
-  ticketStatusButton: {
-    backgroundColor: COLORS.secondaryBlue,
-    borderRadius: 15,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginTop: 8,
+  actionButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    minWidth: 80,
     alignItems: 'center',
   },
-  ticketStatusButtonSaved: {
-    backgroundColor: COLORS.primaryBlue,
+  defaultButton: {
+    backgroundColor: COLORS.lightBlue, 
   },
-  ticketStatusButtonText: {
-    color: COLORS.white,
-    fontSize: 12,
+  savedButton: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  loadingButton: {
+    backgroundColor: COLORS.disabled,
+  },
+  actionButtonText: {
+    fontSize: 14,
     fontWeight: '600',
   },
-  ticketStatusButtonTextSaved: {
-    color: COLORS.white,
+  defaultButtonText: {
+    color: COLORS.primaryBlue, 
   },
-  ticketSeparatorContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  ticketSeparator: {
-    height: '60%',
-    width: 1,
-    borderLeftWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: COLORS.borderColor,
-  },
-  ticketCutoutTop: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
-    //borderColor: COLORS.black,
-    backgroundColor: COLORS.white,
-    position: 'absolute',
-    top: -10,
-    //borderWidth: 0.3,
-    left: -10,
-  },
-  ticketCutoutBottom: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
-    backgroundColor: COLORS.white,
-    position: 'absolute',
-    bottom: -10,
-    left: -10,
+  savedButtonText: {
+    color: COLORS.textSecondary,
   },
 });
 

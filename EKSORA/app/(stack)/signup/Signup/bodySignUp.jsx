@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
-import { registerUser  } from '../../../../API/services/AxiosInstance';
 import { Ionicons } from '@expo/vector-icons';
-import { useDispatch } from 'react-redux';
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { registerUser } from '../../../../API/services/AxiosInstance';
 
-
+import {
+  validateEmail,
+  validatePassword,
+  validateName,
+  validatePhoneNumber,
+  validateRequired,
+} from '../../../../utils/validators'; 
 const BodySignUp = () => {
   const [form, setForm] = useState({
     email: '',
@@ -16,128 +22,152 @@ const BodySignUp = () => {
     address: '',
   });
 
-
+  // State để quản lý lỗi cho từng trường
+  const [errors, setErrors] = useState({});
   const [passwordVisible, setPasswordVisible] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
-  const [errors, setErrors] = useState({});
 
-  
+  // Hàm xử lý input, định dạng và kiểm tra lỗi tức thì
+  const handleInputChange = (field, value) => {
+    // Cập nhật giá trị vào form state
+    setForm((prev) => ({ ...prev, [field]: value }));
 
-
- const handleRegister = async () => {
-  let newErrors = {};
-
-  if (!form.email.trim()) newErrors.email = 'Email không được để trống';
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (form.email && !emailRegex.test(form.email)) {
-    newErrors.email = 'Email không hợp lệ';
-  }
-
-  if (!form.password.trim()) newErrors.password = 'Mật khẩu không được để trống';
-  const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
-  if (form.password && !passwordRegex.test(form.password)) {
-    newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa và 1 ký tự đặc biệt';
-  }
-
-  if (!form.first_name.trim()) newErrors.first_name = 'Vui lòng nhập tên';
-  if (!form.last_name.trim()) newErrors.last_name = 'Vui lòng nhập họ';
-  if (!form.address.trim()) newErrors.address = 'Vui lòng nhập địa chỉ';
-
-  const phoneRegex = /^0\d{9}$/;
-  if (!form.phone.trim()) {
-    newErrors.phone = 'Số điện thoại không được để trống';
-  } else if (!phoneRegex.test(form.phone)) {
-    newErrors.phone = 'Số điện thoại phải bắt đầu bằng 0 và đủ 10 số';
-  }
-
-  if (Object.keys(newErrors).length > 0) {
-    setErrors(newErrors);
-    return;
-  }
-
-  setErrors({}); 
-
-  try {
-    await dispatch(registerUser(form)).unwrap();
-    Alert.alert('Thành công', 'Đăng ký thành công!');
-    router.replace('/(tabs)/home');
-  } catch (error) {
-    let message = 'Đăng ký thất bại';
-    if (error?.message) {
-      message = typeof error.message === 'string'
-        ? error.message
-        : error.message.vi || JSON.stringify(error.message);
+    // Kiểm tra lỗi và cập nhật error state
+    let error = null;
+    switch (field) {
+      case 'email':
+        error = validateEmail(value);
+        break;
+      case 'password':
+        error = validatePassword(value);
+        break;
+      case 'first_name':
+        error = validateName(value, 'Tên');
+        break;
+      case 'last_name':
+        error = validateName(value, 'Họ');
+        break;
+      case 'phone':
+        error = validatePhoneNumber(value);
+        break;
+      case 'address':
+        error = validateRequired(value, 'Địa chỉ');
+        break;
+      default:
+        break;
     }
-    Alert.alert('Lỗi', message);
-  }
-};
+    setErrors((prev) => ({ ...prev, [field]: error }));
+  };
 
+  // Hàm kiểm tra toàn bộ form và thực hiện đăng ký
+  const handleRegister = async () => {
+    // Kiểm tra tất cả các trường một lần cuối
+    const newErrors = {
+      email: validateEmail(form.email),
+      password: validatePassword(form.password),
+      first_name: validateName(form.first_name, 'Tên'),
+      last_name: validateName(form.last_name, 'Họ'),
+      phone: validatePhoneNumber(form.phone),
+      address: validateRequired(form.address, 'Địa chỉ'),
+    };
+    
+    // Lọc ra những trường có lỗi thực sự
+    const validErrors = Object.fromEntries(Object.entries(newErrors).filter(([_, v]) => v != null));
 
-  
+    if (Object.keys(validErrors).length > 0) {
+      setErrors(validErrors); 
+      return; 
+    }
+
+    setErrors({}); 
+
+    try {
+      await dispatch(registerUser(form)).unwrap();
+      Alert.alert('Thành công', 'Đăng ký thành công!');
+      router.replace('/(tabs)/home');
+    } catch (error) {
+      let message = 'Đăng ký thất bại. Vui lòng thử lại.';
+      if (error?.message) {
+        message = typeof error.message === 'string'
+          ? error.message
+          : error.message.vi || JSON.stringify(error.message);
+      }
+      Alert.alert('Lỗi', message);
+    }
+  };
+
   return (
     <View>
+      {/* --- EMAIL --- */}
       <TextInput
-         style={[styles.input, errors.email && styles.errorBorder]}
-        placeholder= "Nhập email"
+        style={[styles.input, errors.email && styles.errorBorder]}
+        placeholder="Nhập email"
         placeholderTextColor="#666"
         keyboardType="email-address"
+        autoCapitalize="none"
         value={form.email}
-        onChangeText={text => setForm(prev => ({ ...prev, email: text }))}
+        onChangeText={(text) => handleInputChange('email', text)}
       />
+      {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-
-      <View style={styles.passwordContainer }>
+      {/* --- MẬT KHẨU --- */}
+      <View style={styles.passwordContainer}>
         <TextInput
-          style={[styles.input, { flex: 1, marginBottom: 0 }, errors.password&& styles.errorBorder]}
-          placeholder="nhập mật khẩu"
+          style={[styles.input, { flex: 1, marginBottom: 0 }, errors.password && styles.errorBorder]}
+          placeholder="Nhập mật khẩu"
           placeholderTextColor="#666"
           secureTextEntry={!passwordVisible}
           value={form.password}
-          onChangeText={text => setForm(prev => ({ ...prev, password: text }))}
+          onChangeText={(text) => handleInputChange('password', text)}
         />
-        <TouchableOpacity
-          onPress={() => setPasswordVisible(!passwordVisible)}
-          style={styles.eyeIcon}
-        >
-          <Ionicons
-            name={passwordVisible ? 'eye' : 'eye-off'}
-            size={20}
-            color="#999"
-          />
+        <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={styles.eyeIcon}>
+          <Ionicons name={passwordVisible ? 'eye' : 'eye-off'} size={20} color="#999" />
         </TouchableOpacity>
       </View>
+      {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
+      {/* --- HỌ --- */}
+      <TextInput
+        style={[styles.input, errors.last_name && styles.errorBorder]}
+        placeholder="Nhập họ"
+        placeholderTextColor="#666"
+        value={form.last_name}
+        onChangeText={(text) => handleInputChange('last_name', text)}
+      />
+      {errors.last_name && <Text style={styles.errorText}>{errors.last_name}</Text>}
 
+      {/* --- TÊN --- */}
       <TextInput
         style={[styles.input, errors.first_name && styles.errorBorder]}
         placeholder="Nhập tên"
         placeholderTextColor="#666"
         value={form.first_name}
-        onChangeText={text => setForm(prev => ({ ...prev, first_name: text }))}
+        onChangeText={(text) => handleInputChange('first_name', text)}
       />
-      <TextInput
-      style={[styles.input, errors.last_name && styles.errorBorder]}
-        placeholder="Nhập họ"
-        placeholderTextColor="#666"
-        value={form.last_name}
-        onChangeText={text => setForm(prev => ({ ...prev, last_name: text }))}
-      />
+      {errors.first_name && <Text style={styles.errorText}>{errors.first_name}</Text>}
+      
+      {/* --- SỐ ĐIỆN THOẠI --- */}
       <TextInput
         style={[styles.input, errors.phone && styles.errorBorder]}
         placeholder="Nhập số điện thoại"
         placeholderTextColor="#666"
         keyboardType="phone-pad"
         value={form.phone}
-        onChangeText={text => setForm(prev => ({ ...prev, phone: text }))}
+        onChangeText={(text) => handleInputChange('phone', text)}
+        maxLength={10}
       />
+      {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+
+      {/* --- ĐỊA CHỈ --- */}
       <TextInput
-          style={[styles.input, errors.address && styles.errorBorder]}
-        placeholder="Nhập địa chỉ "
+        style={[styles.input, errors.address && styles.errorBorder]}
+        placeholder="Nhập địa chỉ"
         placeholderTextColor="#666"
         value={form.address}
-        onChangeText={text => setForm(prev => ({ ...prev, address: text }))}
+        onChangeText={(text) => handleInputChange('address', text)}
       />
+      {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
 
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Đăng ký</Text>
@@ -156,14 +186,14 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    marginBottom: 12,
+    marginTop: 12, 
   },
   button: {
     backgroundColor: '#008CDB',
     paddingVertical: 14,
     borderRadius: 25,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 20, 
   },
   buttonText: {
     color: '#FFF',
@@ -172,16 +202,19 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginTop: 12,
   },
   eyeIcon: {
     position: 'absolute',
     right: 20,
-    top: 12,
   },
-
   errorBorder: {
-  borderColor: 'red',
-},
-
+    borderColor: 'red',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginLeft: 20, 
+    marginTop: 4,
+  },
 });

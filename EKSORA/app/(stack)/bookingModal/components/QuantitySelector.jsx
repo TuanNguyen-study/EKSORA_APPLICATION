@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { COLORS } from '../../../../../constants/colors';
-import styles from './styles'; 
+import { COLORS } from '../../../../constants/colors';
+import styles from './styles';
 
 const QuantitySelector = ({ label, priceText, quantity, onDecrement, onIncrement }) => {
   return (

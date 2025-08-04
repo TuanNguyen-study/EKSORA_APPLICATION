@@ -1,8 +1,9 @@
+import React, { useState } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../../../../constants/colors';
-import VoucherModal from '../../Voucher/components/VoucherModal';
+import CouponModal from '../../Voucher/CouponModal';
+
 
 // Component 1: Hiển thị đánh giá sao
 const StarRating = ({ rating, size = 18, color = COLORS.warning }) => {
@@ -72,11 +73,11 @@ const OffersSection = ({ offers, onApplyVoucher, selectedVoucher }) => {
         </View>
       </TouchableOpacity>
 
-      <VoucherModal
+      {/* THAY ĐỔI 2: Gọi CouponModal thay vì VoucherModal */}
+      {/* Các props onApplyVoucher và selectedVoucher không cần thiết cho CouponModal nên có thể xóa */}
+      <CouponModal
         visible={isModalVisible}
         onClose={handleCloseModal}
-        onApplyVoucher={onApplyVoucher} 
-        selectedVoucher={selectedVoucher} 
       />
     </>
   );

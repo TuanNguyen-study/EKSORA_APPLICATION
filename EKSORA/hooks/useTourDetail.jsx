@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { fetchTourDetail } from '../API/services/tourService';
 import { useReviewContext } from '../store/ReviewContext';
-import { prepareProductInfo, parseDescription, formatPrice } from '../utils/tourDetailHelpers';
+import { prepareProductInfo, parseDescription } from '../utils/tourDetailHelpers';
 
 export const useTourDetail = (productId) => {
   const router = useRouter();
@@ -15,19 +15,17 @@ export const useTourDetail = (productId) => {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [currentSelectedPackages, setCurrentSelectedPackages] = useState({});
-  const [selectedVoucher, setSelectedVoucher] = useState(null);
   const [bookingDetails, setBookingDetails] = useState(null);
 
-  //  Tách state giá thành 2 phần
-  const [priceBeforeDiscount, setPriceBeforeDiscount] = useState(0); // Giá gốc + options
-  const [currentTotalPrice, setCurrentTotalPrice] = useState(0); // Giá cuối cùng sau khi giảm
+  // Chỉ còn một state duy nhất cho giá, đại diện cho giá gốc + options
+  const [pricePerPerson, setPricePerPerson] = useState(0);
 
-  // THAY ĐỔI 2: Sửa lại hàm tính giá để cập nhật cả 2 state
-  const recalculateTotalPrice = useCallback((packagesMap, voucher) => {
+  // Hàm tính giá được đơn giản hóa, không còn tham số voucher
+  const recalculatePricePerPerson = useCallback(() => {
     if (!productData) return;
 
-    const basePrice = productData.price.current;
-    const optionTotal = Object.values(packagesMap).reduce((sum, optId) => {
+    const basePrice = productData.price.current || 0;
+    const optionTotal = Object.values(currentSelectedPackages).reduce((sum, optId) => {
       for (const pkg of productData.availableServicePackages) {
         const option = pkg.options.find((opt) => opt.id === optId);
         if (option) return sum + (option.price || 0);
@@ -35,17 +33,12 @@ export const useTourDetail = (productId) => {
       return sum;
     }, 0);
 
-    // Luôn tính và cập nhật giá trước khi giảm
-    const totalBeforeDiscount = basePrice + optionTotal;
-    setPriceBeforeDiscount(totalBeforeDiscount);
+    // Cập nhật giá cho một người (đã bao gồm options)
+    const finalPricePerPerson = basePrice + optionTotal;
+    setPricePerPerson(finalPricePerPerson);
+  }, [productData, currentSelectedPackages]);
 
-    // Tính giá cuối cùng sau khi áp voucher
-    const finalPrice = formatPrice(totalBeforeDiscount, voucher);
-    setCurrentTotalPrice(finalPrice);
 
-  }, [productData]);
-
-  // Các hàm và hook 
   const loadTourDetails = useCallback(async (id) => {
     setLoading(true);
     setError(null);
@@ -72,7 +65,7 @@ export const useTourDetail = (productId) => {
           userAvatar: r.user?.avatarUrl || null,
           rating: r.rating,
           comment: r.comment,
-          images: r.images || [], 
+          images: r.images || [],
           date: new Date(r.created_at).toLocaleDateString('vi-VN'),
         };
       });
@@ -98,8 +91,8 @@ export const useTourDetail = (productId) => {
       };
 
       setProductData(mappedProductData);
-      setCurrentTotalPrice(mappedProductData.price.current);
-      setPriceBeforeDiscount(mappedProductData.price.current);
+      setPricePerPerson(mappedProductData.price.current);
+
     } catch (e) {
       console.error('Lỗi khi lấy chi tiết tour:', e);
       setError(e.message || 'Đã xảy ra lỗi khi tải dữ liệu.');
@@ -108,25 +101,29 @@ export const useTourDetail = (productId) => {
       setRefreshing(false);
     }
   }, []);
+
   useEffect(() => {
     if (productId) {
       loadTourDetails(productId);
     }
   }, [productId, loadTourDetails]);
+  
+  // Gọi lại hàm tính giá mỗi khi các gói dịch vụ thay đổi
+  useEffect(() => {
+    recalculatePricePerPerson();
+  }, [recalculatePricePerPerson]);
+  
   const onRefresh = useCallback(() => {
     if (productId) {
       setRefreshing(true);
       loadTourDetails(productId);
     }
   }, [productId, loadTourDetails]);
-  const handleApplyVoucher = (voucher) => {
-    setSelectedVoucher(voucher);
-    recalculateTotalPrice(currentSelectedPackages, voucher);
-  };
+
   const handleSelectionUpdate = (packagesMap) => {
     setCurrentSelectedPackages(packagesMap);
-    recalculateTotalPrice(packagesMap, selectedVoucher);
   };
+
   const onSeeAllReviews = () => {
     if (!productData) return;
     setReviewData({
@@ -137,25 +134,10 @@ export const useTourDetail = (productId) => {
     router.push('/(stack)/ShowReview');
   };
 
+  //   hàm onBookNow để gửi dữ liệu đi
   const onBookNow = () => {
     if (!productData) return;
 
-    // 1. Tính giá gốc của 1 người (bao gồm option)
-    const basePrice = productData.price.current || 0;
-    const optionTotal = Object.values(currentSelectedPackages).reduce((sum, optId) => {
-      for (const pkg of productData.availableServicePackages) {
-        const option = pkg.options.find((opt) => opt.id === optId);
-        if (option) return sum + (option.price || 0);
-      }
-      return sum;
-    }, 0);
-    const pricePerAdultWithOptions = basePrice + optionTotal;
-
-    // 2. Tính số tiền thực tế đã giảm
-    // `currentTotalPrice` là giá đã giảm, `pricePerAdultWithOptions` là giá gốc
-    const discountAmount = pricePerAdultWithOptions - currentTotalPrice;
-
-    // 3. Lấy chi tiết các option đã chọn
     const selectedOptionsDetails = Object.entries(currentSelectedPackages).map(([packageId, optionId]) => {
       const pkg = productData.availableServicePackages.find((p) => p.id === packageId);
       const option = pkg?.options.find((opt) => opt.id === optionId);
@@ -168,16 +150,15 @@ export const useTourDetail = (productId) => {
       };
     });
 
-    // 4. Chuẩn bị payload thông minh
+    // Chuẩn bị payload sạch, không chứa thông tin giảm giá
     const bookingPayload = {
       tour_id: productData._id,
       tour_title: productData.name,
-      total_price: currentTotalPrice,
+      // GỬI ĐI GIÁ GỐC CỦA 1 NGƯỜI (đã bao gồm options)
+      total_price: pricePerPerson,
       selectedOptions: currentSelectedPackages,
       selectedOptionsDetails,
       image: productData.images[0]?.uri || '',
-      voucher_id: selectedVoucher ? selectedVoucher._id : null,
-      discount: discountAmount,
     };
 
     setBookingDetails(bookingPayload);
@@ -188,10 +169,19 @@ export const useTourDetail = (productId) => {
   };
 
   return {
-    productData, loading, error, refreshing, priceBeforeDiscount,
-    currentTotalPrice,
-    currentSelectedPackages, selectedVoucher, bookingDetails,
-    loadTourDetails, onRefresh, handleApplyVoucher,
-    handleSelectionUpdate, onSeeAllReviews, onBookNow, clearBookingDetails,
+    productData,
+    loading,
+    error,
+    refreshing,
+    // Trả về giá cho 1 người, đã bao gồm các options
+    currentTotalPrice: pricePerPerson,
+    currentSelectedPackages,
+    bookingDetails,
+    loadTourDetails,
+    onRefresh,
+    handleSelectionUpdate,
+    onSeeAllReviews,
+    onBookNow,
+    clearBookingDetails,
   };
 };

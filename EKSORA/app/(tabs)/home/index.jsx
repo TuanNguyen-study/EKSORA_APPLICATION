@@ -90,9 +90,44 @@ export default function HomeScreen() {
   );
 
   // Gọi API lấy danh mục và tour ban đầu
-  useEffect(() => {
-     fetchHomeData();
-  }, []);
+
+useEffect(() => {
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [categoriesData, toursData] = await Promise.all([
+        getCategories(),
+        getTours(),
+      ]);
+
+      const allCategory = { _id: 'all', name: 'Tất cả', isAllCategory: true };
+      const categoriesWithAll = [allCategory, ...(Array.isArray(categoriesData) ? categoriesData : categoriesData.data || [])];
+      setCategories(categoriesWithAll);
+
+      const rawTours = Array.isArray(toursData) ? toursData : toursData.data || [];
+
+      // <<< START: PHẦN LỌC DỮ LIỆU >>>
+      const processedTours = rawTours
+        // Bước 1: Lọc bỏ tất cả các tour có giá <= 0
+        .filter(tour => tour && tour.price > 0)
+        // Bước 2: Xử lý các thông tin còn lại của tour
+        .map((tour) => ({
+          ...tour,
+          image: tour.image?.[0] || "https://via.placeholder.com/300",
+        }));
+        
+      setTours(processedTours);
+      setError(null);
+    } catch (err) {
+      console.error("Lỗi khi tải dữ liệu ban đầu:", err);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
 
 
   // Xử lý khi người dùng chọn một địa điểm

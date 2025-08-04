@@ -1,17 +1,26 @@
-
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../../../../store/CartContext'; 
 
+// Hàm định dạng tiền tệ
 const formatCurrency = (amount) => {
   return `${amount?.toLocaleString('vi-VN') || '0'} đ`;
 };
 
-const QuantitySelector = ({ label, quantity, onUpdate }) => {
+
+// Component con để chọn số lượng, bây giờ có thêm prop `price`
+const QuantitySelector = ({ label, quantity, onUpdate, price }) => {
   return (
     <View style={styles.quantitySelector}>
-      <Text style={styles.quantityLabel}>{label}:</Text>
+      {/* Nhóm nhãn và giá vào một View */}
+      <View>
+        <Text style={styles.quantityLabel}>{label}:</Text>
+        {/* Hiển thị giá ngay dưới nhãn */}
+        {price > 0 && (
+            <Text style={styles.priceText}>{formatCurrency(price)}</Text>
+        )}
+      </View>
       <View style={styles.quantityControls}>
         <TouchableOpacity onPress={() => onUpdate(-1)} style={styles.quantityButton}>
           <Ionicons name="remove-circle-outline" size={24} color="#555" />
@@ -25,6 +34,8 @@ const QuantitySelector = ({ label, quantity, onUpdate }) => {
   );
 };
 
+
+// Component chính của một mục trong giỏ hàng
 const CartItem = ({ item, isSelected, onToggleSelect, onDelete }) => {
   const { updateCartItem } = useCart();
 
@@ -75,9 +86,23 @@ const CartItem = ({ item, isSelected, onToggleSelect, onDelete }) => {
         </View>
 
         <View style={styles.quantityContainer}>
-          <QuantitySelector label="Người lớn" quantity={item.adults} onUpdate={(amount) => handleUpdateQuantity('adults', amount)} />
-          <QuantitySelector label="Trẻ em" quantity={item.children} onUpdate={(amount) => handleUpdateQuantity('children', amount)} />
+          {/* --- TRUYỀN GIÁ VÀO QUANTITYSELECTOR --- */}
+          <QuantitySelector 
+            label="Người lớn" 
+            quantity={item.adults} 
+            price={item.adultPrice} // Truyền giá người lớn
+            onUpdate={(amount) => handleUpdateQuantity('adults', amount)} 
+          />
+          {item.children > 0 || item.childPrice > 0 ? (
+              <QuantitySelector 
+                label="Trẻ em" 
+                quantity={item.children} 
+                price={item.childPrice} 
+                onUpdate={(amount) => handleUpdateQuantity('children', amount)} 
+              />
+          ) : null}
         </View>
+        
         
         {item.selectedOptions && item.selectedOptions.length > 0 && (
           <View style={styles.optionsContainer}>
@@ -149,16 +174,25 @@ const styles = StyleSheet.create({
     },
     quantityContainer: {
         paddingTop: 8,
+        borderTopWidth: 1, 
+        borderTopColor: '#F0F0F0',
     },
     quantitySelector: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 6,
+        marginBottom: 10, 
     },
     quantityLabel: {
         fontSize: 14,
         color: '#333',
+        fontWeight: '500', 
+    },
+    priceText: {
+        fontSize: 12,
+        color: '#666',
+        fontStyle: 'italic',
+        marginTop: 2,
     },
     quantityControls: {
         flexDirection: 'row',
@@ -199,7 +233,7 @@ const styles = StyleSheet.create({
     price: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#00639B',
+        color: '#D9534F',
     },
     actionsContainer: {
         flexDirection: 'row',

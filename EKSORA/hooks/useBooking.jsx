@@ -1,19 +1,25 @@
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { useSelector } from 'react-redux';
 import { createBooking } from '../API/services/booking';
+import { useRouter } from 'expo-router';
 import { useCart } from '../store/CartContext';
+
 const formatPrice = (price) => {
   const value = typeof price === 'number' ? price : 0;
   return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+};
+
+const parseDateString = (dateStr) => {
+  const [day, month, year] = dateStr.split('/');
+  return new Date(`${year}-${month}-${day}`).getTime();
 };
 
 export const useBooking = (initialDetails) => {
   const { addToCart, cartItems } = useCart();
   const router = useRouter();
   const user = useSelector((state) => state.auth.user);
-  const { id: userId, firstName,lastName, email, phone } = user || {};
+  const { id: userId, firstName, lastName, email, phone } = user || {};
   const fullName = `${firstName || ''} ${lastName || ''}`.trim();
 
   const [tourData, setTourData] = useState(null);
@@ -21,71 +27,159 @@ export const useBooking = (initialDetails) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [quantityAdult, setQuantityAdult] = useState(0);
   const [quantityChild, setQuantityChild] = useState(0);
-  const [availableDates, setAvailableDates] = useState([]);
+  const [originalPrices, setOriginalPrices] = useState({ adult: 0, child: 0 });
+  const [displayPrices, setDisplayPrices] = useState({ adult: 0, child: 0 });
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
   const [finalPrice, setFinalPrice] = useState(0);
+  const [availableDates, setAvailableDates] = useState([]);
 
+  // --- KHỞI TẠO STATE ---
   useEffect(() => {
     if (initialDetails) {
-      console.log('[INIT] initialDetails:', initialDetails); // 📌
-
+      const adultBasePrice = initialDetails.total_price || 0;
+      const childBasePrice = adultBasePrice * 0.7;
       setTourData({
         tour_id: initialDetails.tour_id,
         tour_title: initialDetails.tour_title,
         image: initialDetails.image,
         selectedOptions: initialDetails.selectedOptions,
         selectedOptionsDetails: initialDetails.selectedOptionsDetails,
-        adultPrice: initialDetails.total_price,
-        childPrice: (initialDetails.total_price || 0) * 0.7,
-        voucher_id: initialDetails.voucher_id,
-        discount: initialDetails.discount,
       });
-
+      setOriginalPrices({ adult: adultBasePrice, child: childBasePrice });
+      setDisplayPrices({ adult: adultBasePrice, child: childBasePrice });
       setQuantityAdult(0);
       setQuantityChild(0);
-
+      setAppliedVoucher(null);
+      setDiscountAmount(0);
       const today = new Date();
-      const dates = [];
-      for (let i = 0; i < 30; i++) {
+      const dates = Array.from({ length: 30 }, (_, i) => {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
-        const formatted = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-        dates.push(formatted);
-      }
+        return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+      });
       setAvailableDates(dates);
-
       if (dates.length > 0) {
         setSelectedDate(dates[0]);
       }
     }
   }, [initialDetails]);
 
-  useEffect(() => {
-    if (tourData) {
-      const totalBeforeDiscount = (tourData.adultPrice * quantityAdult) + (tourData.childPrice * quantityChild);
-      const finalTotal = totalBeforeDiscount - tourData.discount;
-      const safeTotal = Math.max(0, finalTotal);
-      setFinalPrice(safeTotal);
-
-      console.log('[CALC] Total before discount:', totalBeforeDiscount);
-      console.log('[CALC] Discount:', tourData.discount);
-      console.log('[CALC] Final price:', safeTotal); // 📌
-    } else {
-      setFinalPrice(0);
+  // --- HÀM ÁP DỤNG VOUCHER  ---
+  const applyVoucher = useCallback((voucher) => {
+    // Kiểm tra dữ liệu voucher có hợp lệ không
+    if (!voucher?.voucher_id?.min_order_value) {
+      Alert.alert('Lỗi voucher', 'Voucher này không hợp lệ hoặc thiếu thông tin quan trọng.');
+      return;
     }
-  }, [quantityAdult, quantityChild, tourData]);
 
+    // Tính tổng giá trị đơn hàng hiện tại
+    const totalBeforeDiscount = originalPrices.adult * quantityAdult + originalPrices.child * quantityChild;
+    const minOrderValue = voucher.voucher_id.min_order_value;
+
+    // Kiểm tra điều kiện giá trị tối thiểu
+    if (totalBeforeDiscount < minOrderValue) {
+      // Thông báo cho người dùng biết lý do
+      Alert.alert(
+        'Không đủ điều kiện',
+        `Rất tiếc, voucher này chỉ áp dụng cho đơn hàng có giá trị từ ${formatPrice(minOrderValue)} trở lên.`,
+        [{ text: 'Đã hiểu' }]
+      );
+      // Dừng lại, không set voucher
+      return;
+    }
+    
+    // Nếu mọi thứ hợp lệ, tiến hành áp dụng
+    setAppliedVoucher(voucher);
+    Alert.alert('Thành công', 'Đã áp dụng voucher!');
+
+  }, [originalPrices, quantityAdult, quantityChild]);
+
+
+
+  // ---  TÍNH TOÁN LẠI MỌI THỨ KHI CÓ THAY ĐỔI ---
+  useEffect(() => {
+    const totalBeforeDiscount = originalPrices.adult * quantityAdult + originalPrices.child * quantityChild;
+
+    // Nếu không có voucher hoặc voucher không hợp lệ, reset lại giá
+    if (!appliedVoucher || !appliedVoucher.voucher_id || typeof appliedVoucher.voucher_id.discount === 'undefined') {
+      setDiscountAmount(0);
+      setDisplayPrices(originalPrices);
+      setFinalPrice(totalBeforeDiscount);
+      return;
+    }
+
+    if (totalBeforeDiscount < appliedVoucher.voucher_id.min_order_value) {
+      setAppliedVoucher(null); // Tự động gỡ voucher
+      setDiscountAmount(0);
+      setDisplayPrices(originalPrices);
+      setFinalPrice(totalBeforeDiscount);
+      return;
+    }
+
+    let calculatedDiscount = 0;
+    let voucherType = appliedVoucher.voucher_id.discount_type
+      ? appliedVoucher.voucher_id.discount_type.toLowerCase()
+      : '';
+    const discountValue = appliedVoucher.voucher_id.discount;
+
+    if (!voucherType) {
+      if (discountValue > 0 && discountValue <= 100) voucherType = 'percentage';
+      else voucherType = 'fixed_amount';
+    }
+
+    if (voucherType === 'percentage') {
+      calculatedDiscount = totalBeforeDiscount * (discountValue / 100);
+      if (appliedVoucher.voucher_id.max_discount_value) {
+        calculatedDiscount = Math.min(calculatedDiscount, appliedVoucher.voucher_id.max_discount_value);
+      }
+    } else {
+      calculatedDiscount = discountValue;
+    }
+
+    calculatedDiscount = Math.min(calculatedDiscount, totalBeforeDiscount);
+    setDiscountAmount(calculatedDiscount);
+
+    let newAdultPrice = originalPrices.adult;
+    let newChildPrice = originalPrices.child;
+
+    if (totalBeforeDiscount > 0) {
+      const discountRatio = calculatedDiscount / totalBeforeDiscount;
+      newAdultPrice = originalPrices.adult * (1 - discountRatio);
+      newChildPrice = originalPrices.child * (1 - discountRatio);
+    }
+
+    newAdultPrice = Math.max(newAdultPrice, 0);
+    newChildPrice = Math.max(newChildPrice, 0);
+
+    setDisplayPrices({ adult: newAdultPrice, child: newChildPrice });
+    setFinalPrice(totalBeforeDiscount - calculatedDiscount);
+  }, [quantityAdult, quantityChild, originalPrices, appliedVoucher]);
+
+  
+  // --- Các hàm xử lý (Handlers) ---
   const incrementAdult = () => setQuantityAdult((q) => q + 1);
   const decrementAdult = () => setQuantityAdult((q) => (q > 0 ? q - 1 : 0));
   const incrementChild = () => setQuantityChild((q) => q + 1);
   const decrementChild = () => setQuantityChild((q) => (q > 0 ? q - 1 : 0));
 
   const handleConfirmDate = (date) => {
+    setDatePickerVisible(false);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) {
+      Alert.alert("Ngày không hợp lệ", "Bạn không thể đặt lịch cho một ngày trong quá khứ. Vui lòng chọn lại.");
+      return;
+    }
     const formatted = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
     setSelectedDate(formatted);
     if (!availableDates.includes(formatted)) {
-      setAvailableDates(prev => [formatted, ...prev.filter(d => d !== formatted)].sort());
+      setAvailableDates(prev => {
+        const newDates = [formatted, ...prev.filter(d => d !== formatted)];
+        newDates.sort((a, b) => parseDateString(a) - parseDateString(b));
+        return newDates;
+      });
     }
-    setDatePickerVisible(false);
   };
 
   const handleAddToCart = () => {
@@ -93,7 +187,6 @@ export const useBooking = (initialDetails) => {
       Alert.alert('Thông báo', 'Vui lòng chọn số lượng người lớn hoặc trẻ em.');
       return;
     }
-
     if (!tourData) return;
     const cartItemId = `${tourData.tour_id}_${selectedDate}`;
     if (cartItems.find(item => item.id === cartItemId)) {
@@ -109,10 +202,10 @@ export const useBooking = (initialDetails) => {
       travelDate: selectedDate,
       adults: quantityAdult,
       children: quantityChild,
-      adultPrice: tourData.adultPrice,
-      childPrice: tourData.childPrice,
+      adultPrice: displayPrices.adult,
+      childPrice: displayPrices.child,
       selectedOptions: tourData.selectedOptionsDetails,
-      price: (tourData.adultPrice * quantityAdult) + (tourData.childPrice * quantityChild),
+      price: finalPrice,
     };
 
     addToCart(cartItem);
@@ -124,15 +217,12 @@ export const useBooking = (initialDetails) => {
       Alert.alert('Thông báo', 'Vui lòng chọn số lượng người lớn hoặc trẻ em để đặt tour.');
       return;
     }
-
     if (!tourData || !selectedDate || !userId) {
       Alert.alert('Lỗi', 'Dữ liệu không hợp lệ hoặc bạn chưa đăng nhập. Vui lòng thử lại.');
       return;
     }
-
     const [day, month, year] = selectedDate.split('/');
     const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
     const bookingData = {
       user_id: userId,
       fullName,
@@ -142,27 +232,23 @@ export const useBooking = (initialDetails) => {
       travel_date: formattedDate,
       quantity_nguoiLon: quantityAdult,
       quantity_treEm: quantityChild,
-      price_nguoiLon: tourData.adultPrice,
-      price_treEm: tourData.childPrice,
+      price_nguoiLon: originalPrices.adult,
+      price_treEm: originalPrices.child,
       optionServices: Object.values(tourData.selectedOptions).map((id) => ({
         option_service_id: id,
       })),
       coin: 0,
-      voucher_id: tourData.voucher_id || null,
-      discount: tourData.discount || 0,
+      voucher_id: appliedVoucher ? appliedVoucher.voucher_id._id : null,
+      discount: discountAmount,
     };
-
-    console.log('[BOOKING] Dữ liệu gửi đi:', bookingData); // 📌
-
     try {
       const res = await createBooking(bookingData);
-      console.log('[BOOKING] Phản hồi từ server:', res); // 📌
+      console.log('[BOOKING] Phản hồi từ server:', res);
 
       const bookingId = res?.booking_id || res?.booking?._id;
       if (!bookingId) throw new Error('Không nhận được mã đơn hàng.');
-
       router.push({
-        pathname: '/acount/BookingCompleted',
+        pathname: '/BookingCompleted',
         params: {
           bookingId,
           title: tourData.tour_title,
@@ -174,7 +260,7 @@ export const useBooking = (initialDetails) => {
         },
       });
     } catch (error) {
-      console.error('❌ [BOOKING ERROR]:', error?.response?.data || error.message || error); // 📌
+      console.error('[BOOKING ERROR]:', error?.response?.data || error.message || error);
       Alert.alert('Lỗi', 'Đặt tour thất bại. Vui lòng thử lại.');
     }
   };
@@ -187,9 +273,9 @@ export const useBooking = (initialDetails) => {
     selectedDate,
     quantityAdult,
     quantityChild,
-    adultPrice: tourData?.adultPrice || 0,
-    childPrice: tourData?.childPrice || 0,
-    discount: tourData?.discount || 0,
+    adultPrice: displayPrices.adult,
+    childPrice: displayPrices.child,
+    discount: discountAmount,
     finalPrice,
     isDatePickerVisible,
     formatPrice,
@@ -202,5 +288,7 @@ export const useBooking = (initialDetails) => {
     decrementChild,
     handleAddToCart,
     handleBooking,
+    applyVoucher,
+    appliedVoucher,
   };
 };

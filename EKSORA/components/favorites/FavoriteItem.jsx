@@ -4,7 +4,6 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { AntDesign, FontAwesome } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
 import { FavoriteContext } from '../../store/FavoriteContext';
-import { parseDescription } from '../../utils/tourDetailHelpers';
 
 export default function FavoriteItem({
   id,
@@ -14,18 +13,13 @@ export default function FavoriteItem({
   onPress,
   rating,
   reviewCount,
-  description
+  shortDescription,
 }) {
   const [isVisible, setIsVisible] = useState(true);
   const { removeFavorite } = useContext(FavoriteContext);
 
-  const parsedDescription = parseDescription(description);
-  const shortDescription = parsedDescription
-    .filter(item => item.type === 'text')
-    .map(item => item.content)
-    .join(' ')
-    .trim();
 
+  
   const handleRemoveFavorite = async () => {
     try {
       await removeFavorite(id);
@@ -82,6 +76,7 @@ export default function FavoriteItem({
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
@@ -120,10 +115,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.textLight,
     minHeight: 32,
+    marginTop: 4, 
+    lineHeight: 18, 
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 4, 
   },
   ratingText: {
     marginLeft: 4,

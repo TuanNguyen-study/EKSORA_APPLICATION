@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useVoucher } from '../../store/VoucherContext';
+import { useVoucher } from '../../store/VoucherContext'; 
 import CouponModal from '../../app/(stack)/Voucher/CouponModal';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -18,13 +18,8 @@ export default function Offer() {
   const { coupons, saveVoucher } = useVoucher();
   const [isModalVisible, setIsModalVisible] = React.useState(false);
 
-  const handleSave = async (id, isSaved) => {
-    if (isSaved) {
-      Alert.alert('Thông báo', 'Bạn đã lưu voucher này rồi');
-      return;
-    }
-    await saveVoucher(id);
-    Alert.alert('Thành công', 'Đã lưu voucher');
+  const handleSave = (id) => {
+    saveVoucher(id);
   };
 
   return (
@@ -37,6 +32,7 @@ export default function Offer() {
       </LinearGradient>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+        {/* coupons ở đây là danh sách đã được lọc sạch */}
         {coupons.slice(0, 10).map((offer) => (
           <View key={offer.id} style={styles.cardWrapper}>
             <LinearGradient colors={['#00639B', '#0087CA']} style={styles.codeBox}>
@@ -50,12 +46,8 @@ export default function Offer() {
                   <Text style={styles.condition}>HSD: {formatDate(offer.expiry)}</Text>
                 )}
                 <TouchableOpacity
-                  style={[
-                    styles.button,
-                    offer.isSaved && { backgroundColor: '#ccc', borderWidth: 0 },
-                  ]}
-                  disabled={offer.isSaved}
-                  onPress={() => handleSave(offer.id, offer.isSaved)}
+                  style={styles.button}
+                  onPress={() => handleSave(offer.id)}
                 >
                   <Text style={styles.buttonText}>{offer.buttonText}</Text>
                 </TouchableOpacity>
@@ -69,6 +61,7 @@ export default function Offer() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

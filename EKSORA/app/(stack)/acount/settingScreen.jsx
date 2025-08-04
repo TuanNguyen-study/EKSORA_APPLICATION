@@ -16,6 +16,12 @@ import { useRouter, useNavigation } from "expo-router";
 import { getUser } from "../../../API/services/servicesUser";
 import { COLORS } from "../../../constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+// ======================================================================
+// BƯỚC 1: Import hook `useVoucher` từ context của bạn
+// Hãy chắc chắn rằng đường dẫn này là chính xác
+import { useVoucher } from "../../../store/VoucherContext"; 
+// ======================================================================
+
 
 const cardShadow = Platform.select({
   ios: {
@@ -35,6 +41,12 @@ export default function SettingScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // ======================================================================
+  // BƯỚC 2: Lấy hàm `handleLogout` từ context
+  // Đặt tên mới là `clearVoucherState` để tránh trùng tên và rõ nghĩa hơn
+  const { handleLogout: clearVoucherState } = useVoucher();
+  // ======================================================================
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -63,20 +75,34 @@ export default function SettingScreen() {
     [router]
   );
 
+  // ======================================================================
+  // BƯỚC 3: Cập nhật hàm đăng xuất của bạn
+  // ======================================================================
   const handleLogout = useCallback(async () => {
     try {
+      // 1. Xóa hết thông tin người dùng khỏi bộ nhớ cục bộ
       await AsyncStorage.removeItem("userToken");
+      // RẤT QUAN TRỌNG: Xóa cả USER_ID, vì VoucherContext đang dùng key này
+      await AsyncStorage.removeItem("USER_ID"); 
+
+      // 2. GỌI HÀM DỌN DẸP STATE TỪ VOUCHERCONTEXT
+      // Việc này sẽ ngay lập tức làm trống danh sách voucher trên giao diện
+      clearVoucherState();
+
+      // 3. Chuyển hướng người dùng về trang đăng nhập
       router.replace("../login/loginEmail");
     } catch {
       setError("Đăng xuất thất bại");
     } finally {
       setModalVisible(false);
     }
-  }, [router]);
+    // Thêm `clearVoucherState` vào dependency array của useCallback
+  }, [router, clearVoucherState]);
 
   const handleCancel = useCallback(() => setModalVisible(false), []);
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
+  // Các hàm render khác của bạn không cần thay đổi
   const renderSection = (title, items) => (
     <View style={styles.sectionContainer}>
       <Text style={styles.sectionHeader}>{title}</Text>
@@ -160,7 +186,7 @@ export default function SettingScreen() {
     </SafeAreaView>
   );
 }
-
+// ... styles của bạn không thay đổi
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
