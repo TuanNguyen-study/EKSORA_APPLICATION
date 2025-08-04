@@ -4,20 +4,41 @@
     "slug": "EKSORA",
     "version": "1.0.0",
     "orientation": "portrait",
+    "runtimeVersion": "1.0.0",
     
     "icon": "./assets/images/icon.png",
     "scheme": "eksora",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "associatedDomains": [
+        "applinks:eksora.com"
+      ]
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "eksora.com",
+              "pathPrefix": "/dl"
+            },
+            {
+              "scheme": "eksora"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",
