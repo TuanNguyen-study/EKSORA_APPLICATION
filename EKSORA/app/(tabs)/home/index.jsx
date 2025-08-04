@@ -1,17 +1,17 @@
+import { LinearGradient } from "expo-linear-gradient";
+import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
+  Image,
   Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  View,
-  Image,
-  Alert
+  View
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import * as Location from 'expo-location';
 
 // API Services
 import {
@@ -21,12 +21,12 @@ import {
 } from "../../../API/services/serverCategories";
 
 // Components
-import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
-import PromoBanner from "../../../components/home/PromoBanner";
-import LoadingScreen from "../../../components/LoadingScreen";
-import ImageCarousel from "../../../components/home/ImageCarousel";
 import DestinationSection from "../../../components/home/DestinationSection";
+import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
+import ImageCarousel from "../../../components/home/ImageCarousel";
+import PromoBanner from "../../../components/home/PromoBanner";
 import SuggestionTabs from "../../../components/home/SuggestionTabs";
+import LoadingScreen from "../../../components/LoadingScreen";
 
 // Constants
 import { COLORS } from "../../../constants/colors";
@@ -47,6 +47,35 @@ export default function HomeScreen() {
   const [nearbyTours, setNearbyTours] = useState([]);
   const [isFindingNearby, setIsFindingNearby] = useState(false);
   const [nearbyError, setNearbyError] = useState(null);
+  const fetchHomeData = async () => {
+    setLoading(true);
+    try {
+      const [categoriesData, toursData] = await Promise.all([
+        getCategories(),
+        getTours(),
+      ]);
+
+      const allCategory = { _id: 'all', name: 'Tất cả', isAllCategory: true };
+      const categoriesWithAll = [
+        allCategory,
+        ...(Array.isArray(categoriesData) ? categoriesData : categoriesData.data || [])
+      ];
+      setCategories(categoriesWithAll);
+
+      const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || []).map((tour) => ({
+        ...tour,
+        image: tour.image?.[0] || 'https://via.placeholder.com/300',
+      }));
+
+      setTours(processedTours);
+      setError(null);
+    } catch (err) {
+      console.error("Lỗi khi tải dữ liệu:", err);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Effect để set style cho StatusBar
   useFocusEffect(
@@ -55,42 +84,14 @@ export default function HomeScreen() {
       if (Platform.OS === "android") {
         StatusBar.setBackgroundColor(COLORS.primary);
         StatusBar.setTranslucent(false);
+         fetchHomeData();
       }
     }, [])
   );
 
   // Gọi API lấy danh mục và tour ban đầu
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [categoriesData, toursData] = await Promise.all([
-          getCategories(),
-          getTours(),
-        ]);
-
-        const allCategory = { _id: 'all', name: 'Tất cả', isAllCategory: true };
-        const categoriesWithAll = [allCategory, ...(Array.isArray(categoriesData) ? categoriesData : categoriesData.data || [])];
-        setCategories(categoriesWithAll);
-
-        const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || [])
-          // .filter(tour => tour.price > 0) // 👉 Lọc bỏ tour có giá 0đ
-          .map((tour) => ({
-            ...tour,
-            image: tour.image?.[0] || "https://via.placeholder.com/300",
-          }));
-
-        setTours(processedTours);
-        setError(null);
-      } catch (err) {
-        console.error("Lỗi khi tải dữ liệu ban đầu:", err);
-        setError("Không thể tải dữ liệu. Vui lòng thử lại.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+     fetchHomeData();
   }, []);
 
 
@@ -99,7 +100,7 @@ export default function HomeScreen() {
     if (item.isAllCategory) {
       setSelectedLocation(item._id);
       setSelectedLocationName(item.name);
-      setLocationTours([]); 
+      setLocationTours([]);
       return;
     }
 
