@@ -7,10 +7,10 @@ import SearchHeader from "../SearchResult/components/SearchHeader";
 import TourCard from "../SearchResult/components/TourCard";
 import CityCard from "../SearchResult/components/CityCard";
 import EmptyResult from "../SearchResult/components/EmptyResult";
+import { COLORS } from '../../../constants/colors'
+export default function index() {
 
-export default function index (){
-
-  const { query } = useLocalSearchParams(); 
+  const { query } = useLocalSearchParams();
   const [filteredTours, setFilteredTours] = useState([]);
   const [allTours, setAllTours] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,17 +19,23 @@ export default function index (){
     const fetchTours = async () => {
       setLoading(true);
       const all = await getTours();
-      const matched = all.filter((tour) =>
+
+      // 👉 Lọc tour có giá > 0
+      const validTours = all.filter((tour) => tour.price > 0);
+
+      const matched = validTours.filter((tour) =>
         tour.name.toLowerCase().includes(query.toLowerCase()) ||
         tour.description?.toLowerCase().includes(query.toLowerCase()) ||
         tour.province?.toLowerCase().includes(query.toLowerCase())
       );
+
       setFilteredTours(matched);
-      setAllTours(all);
+      setAllTours(validTours); // allTours cũng là danh sách đã lọc
       setLoading(false);
     };
     fetchTours();
   }, [query]);
+
 
   const renderItem = ({ item }) => (
     <TourCard item={item} onPress={() => router.push({ pathname: "/(stack)/trip-detail/[id]", params: { id: item._id } })} />
@@ -39,12 +45,12 @@ export default function index (){
     filteredTours[0] ? <CityCard province={filteredTours[0].cateID.name} image={filteredTours[0].image[0]} /> : null;
 
   return (
-      <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <SearchHeader query={query} />
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FF5722" />
+            <ActivityIndicator size="large" />
           </View>
         ) : filteredTours.length === 0 ? (
           <FlatList
@@ -91,5 +97,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    color: COLORS.primaryDark
   },
 });
