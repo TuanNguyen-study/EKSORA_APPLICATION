@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,11 +9,11 @@ import {
   FlatList,
   Platform,
   Alert,
-  ActivityIndicator, 
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useCart } from '../../../store/CartContext'; 
+import { useCart } from '../../../store/CartContext';
 import CartItem from './components/CartItem';
 import { createBooking } from '../../../API/services/booking';
 import { useSelector } from 'react-redux';
@@ -26,21 +26,19 @@ const formatCurrency = (amount) => {
 const ShoppingCartScreen = () => {
   const { cartItems, removeFromCart } = useCart();
   const router = useRouter();
-  const loggedInUser = useSelector((state) => state.auth.user); 
-  
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [isLoading, setIsLoading] = useState(false); 
+  const loggedInUser = useSelector((state) => state.auth.user);
 
-  useEffect(() => {
-    setSelectedIds(cartItems.map((item) => item.id) || []);
-  }, [cartItems]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() =>
+    cartItems.map((item) => item.id) || []
+  );
 
   const { total, totalDiscount } = useMemo(() => {
     return cartItems.reduce(
       (acc, item) => {
         if (selectedIds.includes(item.id)) {
           acc.total += item.price || 0;
-          const originalPrice = item.originalPrice || item.price || 0;
+          const originalPrice = (item.adultPrice * item.adults) + (item.childPrice * item.children);
           acc.totalDiscount += originalPrice - (item.price || 0);
         }
         return acc;
@@ -57,7 +55,7 @@ const ShoppingCartScreen = () => {
     );
   };
 
-  const handleDeleteItem = (id) => {
+  const handleDeleteItem = (idToDelete) => {
     Alert.alert(
       'Xóa sản phẩm',
       'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?',
@@ -65,25 +63,27 @@ const ShoppingCartScreen = () => {
         { text: 'Hủy', style: 'cancel' },
         {
           text: 'Xóa',
-          onPress: () => removeFromCart(id),
+          onPress: () => {
+            removeFromCart(idToDelete);
+            setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToDelete));
+          },
           style: 'destructive',
         },
       ]
     );
   };
 
-
   const handleSelectAll = () => {
     const allItemIds = cartItems.map((item) => item.id);
-    if (selectedIds.length === allItemIds.length) {
-      setSelectedIds([]); 
+    if (selectedIds.length === allItemIds.length && allItemIds.length > 0) {
+      setSelectedIds([]);
     } else {
-      setSelectedIds(allItemIds); 
+      setSelectedIds(allItemIds);
     }
   };
 
   const handleProceedToCheckout = async () => {
-    if (isLoading) return; 
+    if (isLoading) return;
 
     const selectedItems = cartItems.filter((item) => selectedIds.includes(item.id));
 
@@ -101,9 +101,11 @@ const ShoppingCartScreen = () => {
 
     try {
       const createdItems = [];
+
       for (const item of selectedItems) {
         const [day, month, year] = item.travelDate.split('/');
         const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+
         const bookingData = {
           user_id: loggedInUser.id,
           tour_id: item.tour_id,
@@ -112,23 +114,32 @@ const ShoppingCartScreen = () => {
           quantity_treEm: item.children,
           price_nguoiLon: item.adultPrice,
           price_treEm: item.childPrice,
-          optionServices: (item.selectedOptions || []).map(option => ({ option_service_id: option.id })),
+          optionServices: (item.selectedOptions || []).map((option) => ({
+            option_service_id: option.id,
+          })),
           coin: 0,
           voucher_id: item.voucher_id || null,
           discount: item.discount || 0,
+          fullName: `${loggedInUser.lastName} ${loggedInUser.firstName}`,
+          email: loggedInUser.email,
+          phone: loggedInUser.phone,
         };
 
         const res = await createBooking(bookingData);
         const individualBookingId = res?.booking_id || res?.booking?._id;
+        const bookingStatus = res?.status || 'pending'; // Mặc định là pending nếu không có status
+
+        console.log('Booking response:', { bookingId: individualBookingId, status: bookingStatus });
+
         if (!individualBookingId) throw new Error(`Không tạo được booking cho tour: ${item.name}`);
-        
-        createdItems.push({ ...item, bookingId: individualBookingId });
+
+        createdItems.push({ ...item, bookingId: individualBookingId, status: bookingStatus });
       }
 
-      if (createdItems.length === 0) throw new Error("Không có đơn hàng nào được tạo thành công.");
-      
-      const representativeBookingId = createdItems[0].bookingId;
+      if (createdItems.length === 0) throw new Error('Không có đơn hàng nào được tạo thành công.');
 
+      // Chuyển hướng đến BookingCompleted, không xóa giỏ hàng ở đây
+      const representativeBookingId = createdItems[0].bookingId;
       const checkoutParams = {
         totalPrice: total.toString(),
         items: JSON.stringify(createdItems),
@@ -138,15 +149,14 @@ const ShoppingCartScreen = () => {
         phone: loggedInUser.phone,
         buyerAddress: loggedInUser.address || 'Chưa có địa chỉ',
       };
-      
+
       router.push({
         pathname: '/BookingCompleted',
         params: checkoutParams,
       });
-
     } catch (error) {
       console.error('Lỗi khi tạo đơn hàng:', error.message || error);
-      Alert.alert('Lỗi', `Đặt tour thất bại: ${error.message}`);
+      Alert.alert('Lỗi', `Đặt tour thất bại: ${error.message || 'Vui lòng thử lại.'}`);
     } finally {
       setIsLoading(false);
     }
@@ -181,6 +191,7 @@ const ShoppingCartScreen = () => {
           />
         )}
         keyExtractor={(item) => item.id.toString()}
+        extraData={selectedIds}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -220,7 +231,7 @@ const ShoppingCartScreen = () => {
   );
 };
 
-// Stylesheet 
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -273,7 +284,7 @@ const styles = StyleSheet.create({
     minWidth: 120,
   },
   checkoutButtonDisabled: {
-    backgroundColor: '#A9A9A9', 
+    backgroundColor: '#A9A9A9',
   },
   checkoutButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
 });

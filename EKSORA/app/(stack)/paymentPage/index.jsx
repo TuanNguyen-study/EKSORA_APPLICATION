@@ -32,7 +32,7 @@ export default function PaymentPage() {
   const params = useLocalSearchParams();
   const [selectedMethod, setSelectedMethod] = useState(paymentMethods[0].id);
 
-  // --- LOGIC VÀ STATE GIỮ NGUYÊN ---
+  // --- LOGIC VÀ STATE  ---
   const { displayItems, finalTotalPrice, orderDescription } = useMemo(() => {
     // TRƯỜNG HỢP 1: Dữ liệu từ Giỏ hàng
     if (params.items && typeof params.items === 'string') {

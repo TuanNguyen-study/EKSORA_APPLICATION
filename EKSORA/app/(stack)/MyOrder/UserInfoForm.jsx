@@ -131,7 +131,7 @@ export default function UserInfoScreen() {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Thông tin cá nhân</Text>
+                <Text style={styles.headerTitle}>Thông tin thanh toán</Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>

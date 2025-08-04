@@ -121,7 +121,7 @@ const BottomLoginEmail = () => {
       <Text style={styles.otherOption}>Lựa chọn khác</Text>
 
       <View style={styles.checkboxRow}>
-        <CheckBox checked={isChecked} onChange={setChecked} />
+        {/* <CheckBox checked={isChecked} onChange={setChecked} /> */}
 
         <Text style={styles.terms}>
           Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản

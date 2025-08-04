@@ -80,10 +80,6 @@ export default function BookingModal({ onClose, bookingDetails }) {
         )}
         <View style={styles.comboTitleContainer}>
           <Text style={styles.comboTitle} numberOfLines={2}>{tour_title}</Text>
-          <TouchableOpacity onPress={() => { }} style={styles.detailButton}>
-            <Text style={styles.detailText}>Chi tiết</Text>
-            <Ionicons name="chevron-forward-outline" size={16} color={COLORS.primary} />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.badgesContainer}>
