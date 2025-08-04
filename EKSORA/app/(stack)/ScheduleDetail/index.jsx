@@ -187,7 +187,7 @@ const Index = () => {
       </View>
 
       <FlatList
-        data={limitToursWithConnectors(data, 5)}
+        data={limitToursWithConnectors(data, 7)}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item, index }) => {
           // Nếu item rỗng thì không render gì cả
