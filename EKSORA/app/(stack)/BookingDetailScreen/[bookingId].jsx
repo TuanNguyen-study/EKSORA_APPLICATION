@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, ActivityIndicator,
-  TouchableOpacity, StatusBar, RefreshControl, Platform, Linking
+  TouchableOpacity, StatusBar, RefreshControl, Platform, Linking, Alert
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -30,23 +30,35 @@ const BookingDetailScreen = () => {
   const getStatusInfo = (status) => {
     switch (status?.toLowerCase()) {
       case 'paid': case 'confirmed':
-        return { style: { backgroundColor: '#27AE60' }, text: 'Đã xác nhận', icon: 'check-circle' }; // success
+        return { style: { backgroundColor: '#27AE60' }, text: 'Đã xác nhận', icon: 'check-circle' };
       case 'pending':
-        return { style: { backgroundColor: '#F2C94C' }, text: 'Chờ thanh toán', icon: 'clock-time-nine' }; // warning
+        return { style: { backgroundColor: '#F2C94C' }, text: 'Chờ thanh toán', icon: 'clock-time-nine' };
       case 'cancelled':
-        return { style: { backgroundColor: '#E74C3C' }, text: 'Đã hủy', icon: 'close-circle' }; // danger
+        return { style: { backgroundColor: '#E74C3C' }, text: 'Đã hủy', icon: 'close-circle' };
       default:
-        return { style: { backgroundColor: '#5A6A7A' }, text: 'Không rõ', icon: 'help-circle' }; // textSecondary
+        return { style: { backgroundColor: '#5A6A7A' }, text: 'Không rõ', icon: 'help-circle' };
     }
   };
 
+  // Cập nhật hàm chỉ đường để hoạt động ổn định trên cả iOS và Android
   const handleGetDirections = (location) => {
-    const url = Platform.select({
-      ios: `maps:0,0?q=${location}`,
-      android: `geo:0,0?q=${location}`,
+    if (!location) {
+      console.warn("Không có địa điểm để chỉ đường.");
+      return;
+    }
+    // Mã hóa địa điểm để đảm bảo URL hợp lệ (xử lý dấu, khoảng trắng...)
+    const encodedLocation = encodeURIComponent(location);
+    
+    // Sử dụng URL Google Maps phổ thông, hoạt động trên mọi nền tảng
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+
+    // Mở URL và bắt lỗi nếu có
+    Linking.openURL(url).catch(err => {
+        console.error("Không thể mở bản đồ:", err);
+        Alert.alert("Lỗi", "Không thể mở ứng dụng bản đồ.");
     });
-    Linking.openURL(url);
   };
+  // <<< END: PHẦN CẬP NHẬT QUAN TRỌNG >>>
 
   // --- Logic tải dữ liệu ---
   const fetchBookingDetails = useCallback(async () => {
@@ -215,7 +227,7 @@ const styles = StyleSheet.create({
   },
   customBackButton: {
     position: 'absolute',
-    top: Platform.OS === 'android' ? 30 : 50,
+    top: Platform.OS === 'android' ? 30 : 50, // <-- Tinh chỉnh hợp lý của bạn
     left: 16,
     zIndex: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',

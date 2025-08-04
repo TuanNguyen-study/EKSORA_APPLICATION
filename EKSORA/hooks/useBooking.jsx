@@ -10,7 +10,6 @@ const formatPrice = (price) => {
   return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 };
 
-// Hàm parseDateString để chuyển chuỗi ngày thành timestamp
 const parseDateString = (dateStr) => {
   const [day, month, year] = dateStr.split('/');
   return new Date(`${year}-${month}-${day}`).getTime();
@@ -66,23 +65,44 @@ export const useBooking = (initialDetails) => {
     }
   }, [initialDetails]);
 
-  // --- HÀM ÁP DỤNG VOUCHER ---
+  // --- HÀM ÁP DỤNG VOUCHER  ---
   const applyVoucher = useCallback((voucher) => {
-    setAppliedVoucher(voucher);
-  }, []);
-
-  // --- EFFECT CHÍNH: TÍNH TOÁN LẠI MỌI THỨ KHI CÓ THAY ĐỔI ---
-  useEffect(() => {
-    const totalBeforeDiscount = originalPrices.adult * quantityAdult + originalPrices.child * quantityChild;
-
-    if (!appliedVoucher) {
-      setDiscountAmount(0);
-      setDisplayPrices(originalPrices);
-      setFinalPrice(totalBeforeDiscount);
+    // Kiểm tra dữ liệu voucher có hợp lệ không
+    if (!voucher?.voucher_id?.min_order_value) {
+      Alert.alert('Lỗi voucher', 'Voucher này không hợp lệ hoặc thiếu thông tin quan trọng.');
       return;
     }
 
-    if (!appliedVoucher.voucher_id || typeof appliedVoucher.voucher_id.discount === 'undefined') {
+    // Tính tổng giá trị đơn hàng hiện tại
+    const totalBeforeDiscount = originalPrices.adult * quantityAdult + originalPrices.child * quantityChild;
+    const minOrderValue = voucher.voucher_id.min_order_value;
+
+    // Kiểm tra điều kiện giá trị tối thiểu
+    if (totalBeforeDiscount < minOrderValue) {
+      // Thông báo cho người dùng biết lý do
+      Alert.alert(
+        'Không đủ điều kiện',
+        `Rất tiếc, voucher này chỉ áp dụng cho đơn hàng có giá trị từ ${formatPrice(minOrderValue)} trở lên.`,
+        [{ text: 'Đã hiểu' }]
+      );
+      // Dừng lại, không set voucher
+      return;
+    }
+    
+    // Nếu mọi thứ hợp lệ, tiến hành áp dụng
+    setAppliedVoucher(voucher);
+    Alert.alert('Thành công', 'Đã áp dụng voucher!');
+
+  }, [originalPrices, quantityAdult, quantityChild]);
+
+
+
+  // ---  TÍNH TOÁN LẠI MỌI THỨ KHI CÓ THAY ĐỔI ---
+  useEffect(() => {
+    const totalBeforeDiscount = originalPrices.adult * quantityAdult + originalPrices.child * quantityChild;
+
+    // Nếu không có voucher hoặc voucher không hợp lệ, reset lại giá
+    if (!appliedVoucher || !appliedVoucher.voucher_id || typeof appliedVoucher.voucher_id.discount === 'undefined') {
       setDiscountAmount(0);
       setDisplayPrices(originalPrices);
       setFinalPrice(totalBeforeDiscount);
@@ -90,6 +110,7 @@ export const useBooking = (initialDetails) => {
     }
 
     if (totalBeforeDiscount < appliedVoucher.voucher_id.min_order_value) {
+      setAppliedVoucher(null); // Tự động gỡ voucher
       setDiscountAmount(0);
       setDisplayPrices(originalPrices);
       setFinalPrice(totalBeforeDiscount);
@@ -119,7 +140,6 @@ export const useBooking = (initialDetails) => {
     calculatedDiscount = Math.min(calculatedDiscount, totalBeforeDiscount);
     setDiscountAmount(calculatedDiscount);
 
-    // Sửa lại logic phân bổ giảm giá
     let newAdultPrice = originalPrices.adult;
     let newChildPrice = originalPrices.child;
 
@@ -136,6 +156,7 @@ export const useBooking = (initialDetails) => {
     setFinalPrice(totalBeforeDiscount - calculatedDiscount);
   }, [quantityAdult, quantityChild, originalPrices, appliedVoucher]);
 
+  
   // --- Các hàm xử lý (Handlers) ---
   const incrementAdult = () => setQuantityAdult((q) => q + 1);
   const decrementAdult = () => setQuantityAdult((q) => (q > 0 ? q - 1 : 0));
@@ -155,7 +176,7 @@ export const useBooking = (initialDetails) => {
     if (!availableDates.includes(formatted)) {
       setAvailableDates(prev => {
         const newDates = [formatted, ...prev.filter(d => d !== formatted)];
-        newDates.sort((a, b) => parseDateString(a) - parseDateString(b)); // Sử dụng hàm đã định nghĩa
+        newDates.sort((a, b) => parseDateString(a) - parseDateString(b));
         return newDates;
       });
     }
@@ -181,10 +202,10 @@ export const useBooking = (initialDetails) => {
       travelDate: selectedDate,
       adults: quantityAdult,
       children: quantityChild,
-      adultPrice: displayPrices.adult, // Sử dụng giá đã áp dụng discount
-      childPrice: displayPrices.child, // Sử dụng giá đã áp dụng discount
+      adultPrice: displayPrices.adult,
+      childPrice: displayPrices.child,
       selectedOptions: tourData.selectedOptionsDetails,
-      price: (displayPrices.adult * quantityAdult) + (displayPrices.child * quantityChild), // Tính lại price dựa trên displayPrices
+      price: finalPrice,
     };
 
     addToCart(cartItem);
