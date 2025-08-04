@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../../../../constants/colors';
 import VoucherModal from '../../Voucher/components/VoucherModal';
-
 
 // Component 1: Hiển thị đánh giá sao
 const StarRating = ({ rating, size = 18, color = COLORS.warning }) => {
@@ -104,7 +103,7 @@ const ProductBasicInfo = ({ productInfo, onApplyVoucher, selectedVoucher }) => {
       {/* 3. Đánh giá */}
       {productInfo.rating && (
         <View style={styles.ratingBookingRow}>
-          <StarRating rating={productInfo.rating.stars} />
+         <StarRating rating={productInfo.rating?.stars} />
           <Text style={styles.ratingValue}>{productInfo.rating.stars.toFixed(1)}</Text>
           <Text style={styles.ratingCount}>({productInfo.rating.detailsText || `${productInfo.rating.count} Đánh giá`})</Text>
         </View>
