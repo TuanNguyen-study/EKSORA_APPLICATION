@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../../../constants/colors';
-import CouponModal from '../../Voucher/CouponModal'; 
+import CouponModal from '../../Voucher/CouponModal';
 
 
 // Component 1: Hiển thị đánh giá sao
@@ -104,7 +104,7 @@ const ProductBasicInfo = ({ productInfo, onApplyVoucher, selectedVoucher }) => {
       {/* 3. Đánh giá */}
       {productInfo.rating && (
         <View style={styles.ratingBookingRow}>
-          <StarRating rating={productInfo.rating.stars} />
+         <StarRating rating={productInfo.rating?.stars} />
           <Text style={styles.ratingValue}>{productInfo.rating.stars.toFixed(1)}</Text>
           <Text style={styles.ratingCount}>({productInfo.rating.detailsText || `${productInfo.rating.count} Đánh giá`})</Text>
         </View>
