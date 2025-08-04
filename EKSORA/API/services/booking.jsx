@@ -16,3 +16,24 @@ export const createBooking = async (bookingData) => {
     throw error;
   }
 };
+
+// API lấy chi tiết 1 booking theo ID
+export const getBookingById = async (bookingId, token) => {
+  try {
+    const response = await AxiosInstance.get(`/api/bookings/${bookingId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data; 
+  } catch (error) {
+    console.error('Lỗi khi lấy chi tiết booking:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+      config: error.config,
+    });
+    throw error;
+  }
+};
+

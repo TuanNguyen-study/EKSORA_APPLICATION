@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// VoucherModal.js
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Modal,
   View,
@@ -10,102 +11,138 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AntDesign } from '@expo/vector-icons';
-import VoucherItem from './VoucherItem';
+import VoucherItem from './VoucherItem'; // Import component mới
 import { getVouchersByUserId } from '../../../../API/services/servicesPromotion';
 
+// Màu sắc để dễ quản lý
+const COLORS = {
+  primary: '#F97316',
+  background: '#F9FAFB',
+  text: '#1F2937',
+  textSecondary: '#6B7280',
+  white: '#FFFFFF',
+  border: '#E5E7EB',
+};
+
 const VoucherModal = ({ visible, onClose, onApplyVoucher, selectedVoucher }) => {
-  const [vouchers, setVouchers] = useState([]);
+  const [activeTab, setActiveTab] = useState('available'); // 'available' hoặc 'unavailable'
+  const [allVouchers, setAllVouchers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (visible) {
-      const fetchAndFilterVouchers = async () => {
+      const fetchVouchers = async () => {
         setLoading(true);
         setError(null);
-
         try {
           const userId = await AsyncStorage.getItem("USER_ID");
-          if (!userId) {
-            setError('Không tìm thấy thông tin người dùng.');
-            setLoading(false);
-            return;
-          }
+          if (!userId) throw new Error('Không tìm thấy thông tin người dùng.');
 
           const userVouchers = await getVouchersByUserId(userId);
-          if (!Array.isArray(userVouchers)) {
-            throw new Error('Dữ liệu trả về từ API không phải mảng');
-          }
+          if (!Array.isArray(userVouchers)) throw new Error('Dữ liệu API không hợp lệ');
 
-          const now = new Date();
-          const validVouchers = userVouchers
-            .filter((item) => item.voucher_id)
-            .filter((item) => new Date(item.voucher_id.end_date) > now);
+          // Xử lý dữ liệu demo ngay tại đây
+          const processedVouchers = userVouchers
+            .filter(item => item.voucher_id) // Lọc những item có voucher_id
+            .map(v => ({
+              ...v,
+              voucher_id: {
+                ...v.voucher_id,
+                // Thêm min_order_value nếu cần, nếu không thì xóa dòng này
+                min_order_value: v.voucher_id.discount > 20 ? 250000 : 100000,
+              },
+            }));
 
-          const demoData = validVouchers.map((v) => ({
-            ...v,
-            voucher_id: {
-              ...v.voucher_id,
-              min_order_value: v.voucher_id.discount > 20 ? 250000 : 100000,
-            },
-          }));
-
-          setVouchers(demoData);
+          setAllVouchers(processedVouchers);
         } catch (err) {
-          setError('Đã xảy ra lỗi khi tải ưu đãi.');
-          console.error('Voucher fetch error:', err);
+          setError(err.message);
+          console.error('Lỗi khi tải voucher:', err);
         } finally {
           setLoading(false);
         }
       };
-
-      fetchAndFilterVouchers();
+      fetchVouchers();
     }
   }, [visible]);
 
-  const handleApplyVoucher = (voucher) => {
-    if (onApplyVoucher && typeof onApplyVoucher === 'function') {
+  // Sử dụng useMemo để tối ưu, chỉ lọc lại khi allVouchers thay đổi
+  const { availableVouchers, unavailableVouchers } = useMemo(() => {
+    const now = new Date();
+    const available = allVouchers.filter(item => new Date(item.voucher_id.end_date) > now);
+    const unavailable = allVouchers.filter(item => new Date(item.voucher_id.end_date) <= now);
+    return { availableVouchers: available, unavailableVouchers: unavailable };
+  }, [allVouchers]);
+
+  const handleApplyOrCancel = (voucher) => {
+    // Nếu voucher đang được chọn, hành động là "hủy", truyền null
+    if (selectedVoucher?._id === voucher._id) {
+      onApplyVoucher(null);
+    } else { // Nếu không thì là "áp dụng"
       onApplyVoucher(voucher);
     }
-    onClose();
+    onClose(); // Đóng modal sau khi chọn/hủy
   };
+  
+  const renderList = (data, isUsable) => (
+    <FlatList
+      data={data}
+      renderItem={({ item }) => (
+        <VoucherItem
+          voucherData={item}
+          onAction={handleApplyOrCancel}
+          isSelected={selectedVoucher?._id === item._id}
+          isUsable={isUsable}
+        />
+      )}
+      keyExtractor={(item) => item._id}
+      contentContainerStyle={{ padding: 20 }}
+      ListEmptyComponent={<Text style={styles.infoText}>Không có ưu đãi trong mục này.</Text>}
+    />
+  );
 
   const renderContent = () => {
-    if (loading) {
-      return <ActivityIndicator size="large" color="#F97316" style={{ marginTop: 50 }} />;
-    }
-    if (error) {
-      return <Text style={styles.infoText}>Lỗi: {error}</Text>;
-    }
-    if (vouchers.length === 0) {
-      return <Text style={styles.infoText}>Bạn không có ưu đãi nào còn hiệu lực.</Text>;
-    }
-    return (
-      <FlatList
-        data={vouchers}
-        renderItem={({ item }) => (
-          <VoucherItem
-            voucherData={item}
-            onApply={() => handleApplyVoucher(item)}
-            isSelected={selectedVoucher?._id === item._id}
-          />
-        )}
-        keyExtractor={(item) => item._id}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      />
-    );
+    if (loading) return <ActivityIndicator size="large" color={COLORS.primary} style={{ flex: 1 }} />;
+    if (error) return <Text style={styles.infoText}>Lỗi: {error}</Text>;
+    
+    return activeTab === 'available'
+      ? renderList(availableVouchers, true)
+      : renderList(unavailableVouchers, false);
   };
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
+          {/* Header */}
           <View style={styles.header}>
+            <Text style={styles.headerTitle}>Chọn ưu đãi</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <AntDesign name="close" size={24} color="black" />
+              <AntDesign name="close" size={24} color={COLORS.textSecondary} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Ưu đãi cho bạn</Text>
           </View>
+
+          {/* Tab Bar */}
+          <View style={styles.tabBar}>
+            <TouchableOpacity
+              style={[styles.tabItem, activeTab === 'available' && styles.activeTab]}
+              onPress={() => setActiveTab('available')}
+            >
+              <Text style={[styles.tabText, activeTab === 'available' && styles.activeTabText]}>
+                Có thể dùng ({availableVouchers.length})
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabItem, activeTab === 'unavailable' && styles.activeTab]}
+              onPress={() => setActiveTab('unavailable')}
+            >
+              <Text style={[styles.tabText, activeTab === 'unavailable' && styles.activeTabText]}>
+                Hết hiệu lực ({unavailableVouchers.length})
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Body */}
           <View style={styles.body}>{renderContent()}</View>
         </View>
       </View>
@@ -116,32 +153,58 @@ const VoucherModal = ({ visible, onClose, onApplyVoucher, selectedVoucher }) => 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    height: '75%',
-    backgroundColor: '#F9FAFB',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 16,
+    height: '85%',
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    paddingVertical: 20,
   },
   closeButton: {
     position: 'absolute',
-    left: 16,
-    top: 0,
+    right: 16,
+    top: 16,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.text,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginHorizontal: 20,
+    backgroundColor: COLORS.border,
+    borderRadius: 20,
+    padding: 4,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  activeTab: {
+    backgroundColor: COLORS.white,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  tabText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: COLORS.primary,
     fontWeight: 'bold',
   },
   body: {
@@ -149,16 +212,9 @@ const styles = StyleSheet.create({
   },
   infoText: {
     textAlign: 'center',
-    marginTop: 50,
+    marginTop: 60,
     fontSize: 16,
-    color: '#6B7280',
-  },
-  footerText: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    color: COLORS.textSecondary,
   },
 });
 
