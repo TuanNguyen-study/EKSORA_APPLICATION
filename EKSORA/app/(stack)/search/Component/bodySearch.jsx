@@ -42,11 +42,16 @@ export default function Body() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
+
   useEffect(() => {
     const fetchTours = async () => {
       try {
         const response = await getTours();
-        setTours(response);
+
+        // 👉 Lọc chỉ những tour có giá > 0
+        const validTours = response.filter((tour) => tour.price > 0);
+
+        setTours(validTours);
         setLoading(false);
       } catch (error) {
         setError("Lỗi khi lấy danh sách tours");
@@ -56,6 +61,7 @@ export default function Body() {
 
     fetchTours();
   }, []);
+
 
   // ✅ Mỗi khi activeTab thay đổi → shuffle lại
   useEffect(() => {
