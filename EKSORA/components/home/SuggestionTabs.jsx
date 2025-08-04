@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import SuggestionCard from "./SuggestionCard";
-import CurrentLocationMap from "./CurrentLocationMap";
+import CurrentLocationMap from "./CurrentLocationMap"; 
 import { COLORS } from "../../constants/colors";
 
 const SuggestionTabs = ({
@@ -9,17 +9,12 @@ const SuggestionTabs = ({
   onFindNearby, nearbyTours, isFindingNearby, nearbyError
 }) => {
   const [activeTab, setActiveTab] = useState("Đề xuất");
+  const [initialSearchTriggered, setInitialSearchTriggered] = useState(false);
 
+  // --- LOGIC CHO TAB ĐỀ XUẤT ---
   const dataToRender = selectedLocation === 'all' || !selectedLocation ? tours : locationTours;
-
   const renderEmptyList = () => {
-    if (isLoading) {
-      return (
-        <View style={styles.emptyStateContainer}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-        </View>
-      )
-    }
+    if (isLoading) return <View style={styles.emptyStateContainer}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
     return (
       <View style={styles.emptyStateContainer}>
         <Text style={styles.emptyStateText}>
@@ -31,43 +26,43 @@ const SuggestionTabs = ({
     );
   };
 
+  // --- CẤU TRÚC LẠI HOÀN TOÀN LOGIC CHO TAB GẦN ĐÂY ---
   const renderNearbyContent = () => {
+    // Hàm này được truyền cho bản đồ. Bản đồ sẽ gọi nó khi tìm thấy vị trí.
+    const handleLocationFound = (location) => {
+        if (!initialSearchTriggered) {
+            onFindNearby(location);
+            setInitialSearchTriggered(true);
+        }
+    }
+
     return (
-      <>
-        <View style={styles.mapWrapper}>
-          <CurrentLocationMap onLocationFound={onFindNearby} />
-        </View>
-
-        {isFindingNearby && (
-          <View style={styles.nearbyStatusContainer}>
-            <ActivityIndicator size="small" color={COLORS.primary} />
-            <Text style={styles.nearbyStatusText}>Đang tìm các tour gần bạn...</Text>
-          </View>
-        )}
-
-        {nearbyError && (
-          <View style={styles.nearbyStatusContainer}>
-            <Text style={styles.nearbyErrorText}>{nearbyError}</Text>
-          </View>
-        )}
+      // Container này sẽ chứa bản đồ và các lớp phủ trạng thái
+      <View style={styles.nearbyContainer}>
+        <CurrentLocationMap
+          // 1. Truyền hàm để bản đồ gọi khi có vị trí
+          onLocationFound={handleLocationFound}
+          // 2. Truyền danh sách tour gần đây để bản đồ vẽ marker
+          tourData={nearbyTours}
+          // 3. Truyền hàm điều hướng để bản đồ gọi khi người dùng nhấn marker
+          onMarkerPress={onPressSuggestion}
+        />
         
-        {!isFindingNearby && nearbyTours.length > 0 && (
-          <FlatList
-            data={nearbyTours}
-            renderItem={({ item }) => (
-              <SuggestionCard
-                item={item}
-                onPress={() => onPressSuggestion(String(item._id))}
-              />
-            )}
-            keyExtractor={(item) => String(item._id)}
-            numColumns={2}
-            columnWrapperStyle={styles.row}
-            scrollEnabled={false}
-            contentContainerStyle={styles.suggestionListContent}
-          />
+        {/* Lớp phủ hiển thị trạng thái đang tìm kiếm */}
+        {isFindingNearby && (
+          <View style={styles.overlay}>
+            <ActivityIndicator size="large" color={COLORS.white} />
+            <Text style={styles.overlayText}>Đang tìm các tour gần bạn...</Text>
+          </View>
         )}
-      </>
+
+        {/* Lớp phủ hiển thị lỗi (nếu có) */}
+        {nearbyError && !isFindingNearby && (
+           <View style={styles.overlay}>
+             <Text style={styles.overlayText}>{nearbyError}</Text>
+           </View>
+        )}
+      </View>
     );
   };
 
@@ -87,47 +82,36 @@ const SuggestionTabs = ({
         ))}
       </View>
 
-      {activeTab === "Đề xuất" && (
-        <FlatList
-          data={dataToRender}
-          renderItem={({ item }) => (
-            <SuggestionCard
-              item={item}
-              onPress={() => onPressSuggestion(String(item._id))}
-            />
-          )}
-          keyExtractor={(item) => String(item._id)}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-          scrollEnabled={false}
-          contentContainerStyle={styles.suggestionListContent}
-          ListEmptyComponent={renderEmptyList}
-          initialNumToRender={6}
-          maxToRenderPerBatch={6}
-          windowSize={5}
-        />
-      )}
-
-      {activeTab === "Gần đây" && renderNearbyContent()}
+      <View style={styles.contentContainer}>
+        {activeTab === "Đề xuất" && (
+          <FlatList
+            data={dataToRender}
+            renderItem={({ item }) => (
+              <SuggestionCard item={item} onPress={() => onPressSuggestion(String(item._id))} />
+            )}
+            keyExtractor={(item) => String(item._id)}
+            numColumns={2}
+            scrollEnabled={false}
+            contentContainerStyle={styles.suggestionListContent}
+            ListEmptyComponent={renderEmptyList}
+          />
+        )}
+        
+        {activeTab === "Gần đây" && renderNearbyContent()}
+      </View>
     </View>
   );
 };
 
+
 const styles = StyleSheet.create({
   sectionWrapper: {
-    backgroundColor: COLORS.white,
-    marginHorizontal: 15,
-    marginBottom: 15,
-    borderRadius: 12,
-    borderWidth: 0.8,
-    borderColor: COLORS.lightBorder || "#EAEAEA",
-    paddingBottom: 10,
-    minHeight: 300,
+    backgroundColor: COLORS.white, marginHorizontal: 15, marginBottom: 15,
+    borderRadius: 12, borderWidth: 0.8, borderColor: COLORS.lightBorder || "#EAEAEA",
+    flex: 1, 
   },
   tabBarContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 15,
-    paddingTop: 15,
+    flexDirection: "row", paddingHorizontal: 15, paddingTop: 15,
   },
   tabItem: {
     paddingHorizontal: 12, marginRight: 15, paddingTop: 8, paddingBottom: 12,
@@ -141,11 +125,12 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: COLORS.primary, fontWeight: "bold",
   },
+  contentContainer: {
+    flex: 1,
+    minHeight: 500, 
+  },
   suggestionListContent: {
     paddingHorizontal: 5, paddingTop: 15,
-  },
-  row: {
-    justifyContent: "space-between",
   },
   emptyStateContainer: {
     justifyContent: "center", alignItems: "center", paddingVertical: 40, minHeight: 200, paddingHorizontal: 15,
@@ -153,17 +138,23 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16, color: COLORS.textSecondary, textAlign: 'center',
   },
-  mapWrapper: {
-    height: 250, borderRadius: 8, overflow: 'hidden', marginHorizontal: 10, marginTop: 15,
+  // Style cho tab "Gần đây"
+  nearbyContainer: {
+    flex: 1,
+    margin: 10,
+    borderRadius: 12,
+    overflow: 'hidden', // Bắt buộc để bo góc hoạt động với bản đồ
   },
-  nearbyStatusContainer: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 20, gap: 10,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1, // Đảm bảo lớp phủ nằm trên bản đồ
   },
-  nearbyStatusText: {
-    fontSize: 16, color: COLORS.textSecondary,
-  },
-  nearbyErrorText: {
-    fontSize: 16, color: 'red', textAlign: 'center', paddingHorizontal: 15,
+  overlayText: {
+    color: COLORS.white, fontSize: 16, fontWeight: 'bold',
+    marginTop: 10, textAlign: 'center', paddingHorizontal: 20,
   },
 });
 

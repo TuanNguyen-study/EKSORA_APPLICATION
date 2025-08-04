@@ -18,14 +18,12 @@ import CartItem from './components/CartItem';
 import { createBooking } from '../../../API/services/booking';
 import { useSelector } from 'react-redux';
 
-// Helper function để định dạng tiền tệ
 const formatCurrency = (amount) => {
   if (typeof amount !== 'number') return '0 đ';
   return `${amount.toLocaleString('vi-VN')} đ`;
 };
 
 const ShoppingCartScreen = () => {
-  // --- Hooks và State ---
   const { cartItems, removeFromCart } = useCart();
   const router = useRouter();
   const loggedInUser = useSelector((state) => state.auth.user); 
@@ -33,12 +31,10 @@ const ShoppingCartScreen = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isLoading, setIsLoading] = useState(false); 
 
-  // Tự động chọn tất cả sản phẩm khi giỏ hàng thay đổi
   useEffect(() => {
     setSelectedIds(cartItems.map((item) => item.id) || []);
   }, [cartItems]);
 
-  // Tính toán tổng tiền của các sản phẩm được chọn
   const { total, totalDiscount } = useMemo(() => {
     return cartItems.reduce(
       (acc, item) => {
@@ -52,8 +48,6 @@ const ShoppingCartScreen = () => {
       { total: 0, totalDiscount: 0 }
     );
   }, [cartItems, selectedIds]);
-
-  // --- Các hàm xử lý sự kiện ---
 
   const handleToggleSelect = (id) => {
     setSelectedIds((prevIds) =>
@@ -78,6 +72,7 @@ const ShoppingCartScreen = () => {
     );
   };
 
+
   const handleSelectAll = () => {
     const allItemIds = cartItems.map((item) => item.id);
     if (selectedIds.length === allItemIds.length) {
@@ -88,7 +83,6 @@ const ShoppingCartScreen = () => {
   };
 
   const handleProceedToCheckout = async () => {
-    // Ngăn người dùng bấm nhiều lần khi đang xử lý
     if (isLoading) return; 
 
     const selectedItems = cartItems.filter((item) => selectedIds.includes(item.id));
@@ -103,7 +97,7 @@ const ShoppingCartScreen = () => {
       return;
     }
 
-    setIsLoading(true); // Bắt đầu xử lý, bật trạng thái loading
+    setIsLoading(true);
 
     try {
       const createdItems = [];
@@ -145,32 +139,23 @@ const ShoppingCartScreen = () => {
         buyerAddress: loggedInUser.address || 'Chưa có địa chỉ',
       };
       
-      // 1. Điều hướng người dùng đi trước
       router.push({
         pathname: '/acount/BookingCompleted',
         params: checkoutParams,
-      });
-
-      // 2. Xóa các sản phẩm đã thanh toán khỏi giỏ hàng ở dưới nền
-      selectedItems.forEach(item => {
-          removeFromCart(item.id);
       });
 
     } catch (error) {
       console.error('Lỗi khi tạo đơn hàng:', error.message || error);
       Alert.alert('Lỗi', `Đặt tour thất bại: ${error.message}`);
     } finally {
-      setIsLoading(false); // Dù thành công hay thất bại, luôn tắt loading
+      setIsLoading(false);
     }
   };
 
-
-  // --- Render Component ---
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} disabled={isLoading}>
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -185,7 +170,6 @@ const ShoppingCartScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Danh sách sản phẩm */}
       <FlatList
         data={cartItems}
         renderItem={({ item }) => (
@@ -194,7 +178,6 @@ const ShoppingCartScreen = () => {
             isSelected={selectedIds.includes(item.id)}
             onToggleSelect={() => handleToggleSelect(item.id)}
             onDelete={() => handleDeleteItem(item.id)}
-            disabled={isLoading} // Vô hiệu hóa các item khi đang loading
           />
         )}
         keyExtractor={(item) => item.id.toString()}
@@ -206,7 +189,6 @@ const ShoppingCartScreen = () => {
         }
       />
 
-      {/* Footer chứa nút thanh toán */}
       <View style={styles.footer}>
         <View style={styles.totalInfo}>
           <Text style={styles.totalLabel}>Tổng cộng ({selectedIds.length} sản phẩm)</Text>
@@ -238,7 +220,7 @@ const ShoppingCartScreen = () => {
   );
 };
 
-// --- Stylesheet ---
+// Stylesheet 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

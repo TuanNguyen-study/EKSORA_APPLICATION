@@ -37,16 +37,15 @@ const handlePressSchedule = () => {
       treEm: item?.quantity_treEm?.toString() || '0',
       tourImages: JSON.stringify(item?.tour_id?.image || []),
       totalPrice: item?.totalPrice?.toString() || '0',
-      cateID: item?.tour_id?.cateID, // <--- GỬI LẠI cateID
+      cateID: item?.tour_id?.cateID, 
       time: item?.tour_id?.opening_time,
       close: item?.tour_id?.closing_time,
-      // Thêm bookingData nếu trang kia vẫn cần
       bookingData: JSON.stringify(item), 
     },
   });
 };
 
-  // HÀM MỚI: Chuyển qua trang Chi tiết Tour (TripDetailScreen)
+  //  Chuyển qua trang Chi tiết Tour (TripDetailScreen)
   const handleNavigateToDetail = () => {
     router.push({
       pathname: `(stack)/trip-detail/${item.tour_id._id}`, 
