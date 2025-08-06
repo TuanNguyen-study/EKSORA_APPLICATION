@@ -8,13 +8,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View
 } from "react-native";
 import { COLORS } from "../../../constants/colors";
 
 // --- IMPORT CÁC COMPONENT CON ---
 import OrderSummaryCard from "./components/OrderSummaryCard";
-import PaymentFooter from "./components/PaymentFooter";
 import PaymentHeader from "./components/PaymentHeader";
 import PaymentMethodItem from "./components/PaymentMethodItem";
 
@@ -26,10 +26,38 @@ const paymentMethods = [
   { id: "google_pay", label: "Google Pay", icon: "google" },
 ];
 
+// --- COMPONENT FOOTER  ---
+const PaymentFooter = ({ totalAmount, onPayPress, styles }) => {
+  return (
+    <View style={styles.footerContainer}>
+      {/* --- THAY ĐỔI: Thêm lưu ý không hoàn tiền --- */}
+      <View style={styles.warningContainer}>
+        <Text style={styles.warningText}>
+          Lưu ý: Thanh toán rồi bạn sẽ không thể hủy vé.
+        </Text>
+      </View>
+
+      <View style={styles.footerContent}>
+        <View>
+          <Text style={styles.footerTotalLabel}>Tổng cộng</Text>
+          <Text style={styles.footerTotalAmount}>
+            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalAmount)}
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.payButton} onPress={onPayPress}>
+          <Text style={styles.payButtonText}>Thanh toán</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+
 // --- COMPONENT CHÍNH ---
 export default function PaymentPage() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  // Mặc định chọn PayOS
   const [selectedMethod, setSelectedMethod] = useState(paymentMethods[0].id);
 
   // --- LOGIC VÀ STATE  ---
@@ -57,7 +85,7 @@ export default function PaymentPage() {
       quantityChild: params.quantityChild,
     };
     return {
-      displayItems: [singleItem], 
+      displayItems: [singleItem],
       finalTotalPrice: Number(params.totalPrice),
       orderDescription: `Thanh toán đơn hàng: ${params.title || 'Tour du lịch'}`,
     };
@@ -65,19 +93,38 @@ export default function PaymentPage() {
 
   useEffect(() => {
     if (!params.fullName || !params.email || !params.phone) {
-        Alert.alert("Thiếu thông tin", "Không tìm thấy thông tin liên lạc. Vui lòng quay lại và thử lại.");
+      Alert.alert("Thiếu thông tin", "Không tìm thấy thông tin liên lạc. Vui lòng quay lại và thử lại.");
     }
   }, [params]);
 
+  // --- THAY ĐỔI: Xử lý khi chọn phương thức thanh toán ---
+  const handleSelectMethod = (methodId) => {
+    if (methodId !== 'Payos') {
+      Alert.alert(
+        "Tính năng đang phát triển",
+        "Phương thức này hiện chưa khả dụng. Vui lòng chọn thanh toán qua Ví PayOS."
+      );
+      // Không cho phép chọn phương thức khác
+      return;
+    }
+    setSelectedMethod(methodId);
+  };
+
   const handlePayment = async () => {
+    // --- THAY ĐỔI: Thêm một lớp kiểm tra an toàn trước khi thanh toán ---
+    if (selectedMethod !== 'Payos') {
+        Alert.alert('Chưa hỗ trợ', 'Phương thức thanh toán này đang được phát triển. Vui lòng chọn Ví PayOS để tiếp tục.');
+        return;
+    }
+
     if (!params.fullName || !params.email || !params.phone) {
       Alert.alert('Lỗi', 'Thiếu thông tin liên lạc. Vui lòng thử lại.');
       return;
     }
     const representativeBookingId = params.bookingId || displayItems[0]?.id;
     if (!representativeBookingId) {
-        Alert.alert('Lỗi', 'Không tìm thấy mã đơn hàng.');
-        return;
+      Alert.alert('Lỗi', 'Không tìm thấy mã đơn hàng.');
+      return;
     }
     const payload = {
       amount: finalTotalPrice,
@@ -89,8 +136,8 @@ export default function PaymentPage() {
     };
     console.log('>>> [PAYMENT] ĐANG GỬI PAYLOAD LÊN SERVER:', JSON.stringify(payload, null, 2));
     if (!payload.amount || payload.amount <= 0 || isNaN(payload.amount)) {
-        Alert.alert('Lỗi Dữ Liệu', `Tổng tiền không hợp lệ: ${payload.amount}. Không thể tạo thanh toán.`);
-        return;
+      Alert.alert('Lỗi Dữ Liệu', `Tổng tiền không hợp lệ: ${payload.amount}. Không thể tạo thanh toán.`);
+      return;
     }
     await AsyncStorage.setItem("PENDING_BOOKING_ID", representativeBookingId.toString());
     try {
@@ -129,15 +176,15 @@ export default function PaymentPage() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <PaymentHeader onBackPress={() => router.back()} styles={styles} />
-      <ScrollView 
+      <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <OrderSummaryCard 
-          items={displayItems} 
-          contactInfo={contactInfo} 
-          styles={styles} 
+        <OrderSummaryCard
+          items={displayItems}
+          contactInfo={contactInfo}
+          styles={styles}
         />
 
         <View style={styles.card}>
@@ -148,7 +195,8 @@ export default function PaymentPage() {
               <PaymentMethodItem
                 item={item}
                 isSelected={selectedMethod === item.id}
-                onSelect={() => setSelectedMethod(item.id)}
+                // --- THAY ĐỔI: Sử dụng hàm xử lý mới ---
+                onSelect={() => handleSelectMethod(item.id)}
                 styles={styles}
               />
             )}
@@ -157,16 +205,16 @@ export default function PaymentPage() {
           />
         </View>
       </ScrollView>
-      <PaymentFooter 
-        totalAmount={finalTotalPrice} 
-        onPayPress={handlePayment} 
+      <PaymentFooter
+        totalAmount={finalTotalPrice}
+        onPayPress={handlePayment}
         styles={styles}
       />
     </SafeAreaView>
   );
 }
 
-// --- STYLESHEET GIỮ NGUYÊN ---
+// --- STYLESHEET ĐÃ CẬP NHẬT ---
 const styles = StyleSheet.create({
   // --- Layout chung ---
   safeArea: {
@@ -178,7 +226,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 120, // Để nội dung không bị footer che khuất
+    paddingBottom: 150, // Tăng khoảng đệm dưới để footer không che nội dung
   },
 
   // --- Header ---
@@ -193,7 +241,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E9ECEF',
   },
   headerButton: {
-    width: 40, // Đảm bảo nút back và khoảng trống bên phải có cùng kích thước
+    width: 40,
   },
   headerTitle: {
     color: COLORS.black,
@@ -208,12 +256,10 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     marginTop: 16,
-    // Shadow cho iOS
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
-    // Shadow cho Android
     elevation: 2,
   },
   cardHeader: {
@@ -231,7 +277,7 @@ const styles = StyleSheet.create({
   cardContent: {
     paddingTop: 16,
   },
-  
+
   // --- Chi tiết trong Card Đơn hàng ---
   detailTitle: {
     color: COLORS.black,
@@ -300,27 +346,38 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
 
-  // --- Footer ---
-  footer: {
+  // --- Footer  ---
+  footerContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 16,
+    paddingTop: 12,
     paddingHorizontal: 24,
+    paddingBottom: 16, // Thêm padding cho các thiết bị không có safe area
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: '#E9ECEF',
-    // Shadow cho iOS
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
-    // Shadow cho Android
     elevation: 10,
+  },
+  warningContainer: {
+    //alignItems: 'center',
+    marginBottom: 10,
+  },
+  warningText: {
+    color: '#D9534F', // Màu đỏ cảnh báo
+    fontSize: 13,
+    fontWeight: '600',
+    fontStyle: 'italic',
+  },
+  footerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   footerTotalLabel: {
     color: '#6C757D',
