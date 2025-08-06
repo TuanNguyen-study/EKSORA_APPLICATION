@@ -20,7 +20,7 @@ export default function index() {
       setLoading(true);
       const all = await getTours();
 
-      // 👉 Lọc tour có giá > 0
+      // Lọc tour có giá > 0
       const validTours = all.filter((tour) => tour.price > 0);
 
       const matched = validTours.filter((tour) =>
@@ -42,7 +42,7 @@ export default function index() {
   );
 
   const ListHeader = () =>
-    filteredTours[0] ? <CityCard province={filteredTours[0].cateID.name} image={filteredTours[0].image[0]} /> : null;
+    filteredTours[0] ? <CityCard province={filteredTours[0].location} image={filteredTours[0].image[0]} /> : null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
