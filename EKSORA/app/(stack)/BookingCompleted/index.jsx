@@ -217,17 +217,6 @@ export default function BookingCompleted() {
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Render danh sách Card booking */}
-        {displayItems.map((item) => (
-          <BookingSummaryCard
-            key={item.id}
-            title={item.title}
-            travelDate={item.travelDate}
-            quantityAdult={item.quantityAdult}
-            quantityChild={item.quantityChild}
-            totalPrice={item.totalPrice}
-          />
-        ))}
 
         {/* Phần thông tin liên lạc */}
         <ContactInfoSection
@@ -241,6 +230,20 @@ export default function BookingCompleted() {
           handleEditContact={handleEditContact}
           loading={loading}
         />
+        
+        {/* Render danh sách Card booking */}
+        {displayItems.map((item) => (
+          <BookingSummaryCard
+            key={item.id}
+            title={item.title}
+            travelDate={item.travelDate}
+            quantityAdult={item.quantityAdult}
+            quantityChild={item.quantityChild}
+            totalPrice={item.totalPrice}
+          />
+        ))}
+
+        
       </ScrollView>
 
       {/* Footer */}

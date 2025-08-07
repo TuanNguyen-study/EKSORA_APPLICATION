@@ -37,3 +37,17 @@ export const getBookingById = async (bookingId, token) => {
   }
 };
 
+export const cancelBookingById = async (id, token) => {
+  try {
+    const response = await AxiosInstance.put(`/api/bookings/cancel/${id}`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi hủy đơn hàng:', error);
+    throw new Error(error.response?.data?.message || 'Lỗi khi hủy đơn hàng');
+  }
+};
+

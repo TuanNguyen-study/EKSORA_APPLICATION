@@ -21,12 +21,12 @@ export default function TripsScreen() {
         )}
         scrollEventThrottle={16}
         ListHeaderComponent={<Body />}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#e3e9f1ff" },
+  container: { flex: 1, backgroundColor: "#F8F9FA" },
 });

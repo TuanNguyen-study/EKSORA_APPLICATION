@@ -85,7 +85,7 @@ const BodySignUp = () => {
     try {
       await dispatch(registerUser(form)).unwrap();
       Alert.alert('Thành công', 'Đăng ký thành công!');
-      router.replace('/(tabs)/home');
+      router.replace('/(stack)/login/loginEmail');
     } catch (error) {
       let message = 'Đăng ký thất bại. Vui lòng thử lại.';
       if (error?.message) {

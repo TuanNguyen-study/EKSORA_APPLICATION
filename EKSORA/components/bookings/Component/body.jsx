@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
+import { useState, useCallback } from 'react'; 
+import { useFocusEffect } from 'expo-router';
 import {
   ActivityIndicator,
   FlatList,
@@ -16,7 +17,7 @@ import { getTrips } from '../../../API/services/servicesBooking';
 import EmptyTrips from '../Component/EmptyTrips';
 import TripItem from '../TripItem';
 
-// --- Component Tab  ---
+// Component Tab không thay đổi
 const Tab = ({ title, active, onPress }) => {
   if (active) {
     return (
@@ -40,46 +41,58 @@ const Tab = ({ title, active, onPress }) => {
   );
 };
 
+
 export default function Body() {
   const [loading, setLoading] = useState(true);
-  const [allTrips, setAllTrips] = useState([]); // Lưu tất cả trips ở đây
+  const [allTrips, setAllTrips] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
 
-  useEffect(() => {
-    const fetchTrips = async () => {
-      setLoading(true);
-      try {
-        const userId = await AsyncStorage.getItem('USER_ID');
-        if (userId) {
-          const allTripsFromApi = await getTrips(userId);
-          
-          if (Array.isArray(allTripsFromApi) && allTripsFromApi.length > 0) {
-            allTripsFromApi.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  //  SỬA LẠI CÁCH DÙNG useFocusEffect
+  useFocusEffect(
+    useCallback(() => {
+      // Hàm fetchTrips được định nghĩa và gọi bên trong useCallback.
+      // Hàm callback này không phải là async và không trả về gì, nên nó hợp lệ.
+      const fetchTrips = async () => {
+        setLoading(true);
+        try {
+          const userId = await AsyncStorage.getItem('USER_ID');
+          if (userId) {
+            const allTripsFromApi = await getTrips(userId);
+            
+            if (Array.isArray(allTripsFromApi) && allTripsFromApi.length > 0) {
+              allTripsFromApi.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            }
+
+            setAllTrips(allTripsFromApi); 
+          } else {
+            console.warn('Không tìm thấy userId');
+            setAllTrips([]);
           }
-
-
-          setAllTrips(allTripsFromApi); 
-        } else {
-          console.warn('Không tìm thấy userId');
+        } catch (error) {
+          console.error('Lỗi khi tải chuyến đi:', error);
+          setAllTrips([]);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Lỗi khi tải chuyến đi:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchTrips();
-  }, []);
+      // Gọi hàm async ở đây
+      fetchTrips();
+
+      // Bạn có thể trả về một hàm cleanup ở đây nếu cần
+      // return () => {};
+    }, []) // Mảng rỗng đảm bảo hàm fetch chỉ được tạo 1 lần
+  );
 
   const getDisplayedTrips = () => {
+    const normalizeStatus = (status) => status?.toLowerCase() || '';
+
     switch (activeTab) {
       case 'all':
-        // Lọc ra những vé không bị hủy cho tab "Tất cả"
-        return allTrips.filter((trip) => trip.status !== 'canceled');
+        return allTrips.filter((trip) => normalizeStatus(trip.status) !== 'cancelled' && normalizeStatus(trip.status) !== 'canceled');
       case 'pending':
       case 'paid':
-        return allTrips.filter((trip) => trip.status === activeTab);
+        return allTrips.filter((trip) => normalizeStatus(trip.status) === activeTab);
       default:
         return [];
     }
@@ -88,7 +101,8 @@ export default function Body() {
   const displayedTrips = getDisplayedTrips();
 
   const renderContent = () => {
-    if (loading) {
+    // Không hiển thị loading khi danh sách đã có dữ liệu (để tránh giật màn hình khi focus lại)
+    if (loading && allTrips.length === 0) {
       return (
         <View style={styles.contentCenter}>
           <ActivityIndicator size="large" color="#2F80ED" />
@@ -103,10 +117,12 @@ export default function Body() {
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContentContainer}
         ListEmptyComponent={
-          <View style={styles.contentCenter}>
-            <EmptyTrips />
-            <Text style={styles.emptyText}>Bạn không có vé nào trong mục này.</Text>
-          </View>
+          !loading && ( // Chỉ hiển thị empty text khi đã load xong
+            <View style={styles.contentCenter}>
+              <EmptyTrips />
+              <Text style={styles.emptyText}>Bạn không có vé nào trong mục này.</Text>
+            </View>
+          )
         }
       />
     );
@@ -114,74 +130,71 @@ export default function Body() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Thanh Tab */}
       <View style={styles.tabContainer}>
         <Tab title="Tất cả" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
         <Tab title="Đang chờ" active={activeTab === 'pending'} onPress={() => setActiveTab('pending')} />
         <Tab title="Đã xác nhận" active={activeTab === 'paid'} onPress={() => setActiveTab('paid')} />
       </View>
-
-      {/* Khu vực nội dung chính */}
       {renderContent()}
     </SafeAreaView>
   );
 }
 
-// --- Stylesheet không thay đổi ---
+
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-    paddingTop: Platform.OS === 'android' ? 24 : 0,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#F8F9FA',
-  },
-  filterChip: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    backgroundColor: '#E9EEF2',
-    marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  activeFilterChip: {
-    shadowColor: '#2F80ED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
-  },
-  filterChipText: {
-    fontSize: 14,
-    color: '#4A6A8A',
-    fontWeight: '600',
-  },
-  activeFilterChipText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  contentCenter: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-    marginTop: 50,
-  },
-  listContentContainer: {
-    paddingHorizontal: 8,
-    paddingBottom: 100,
-  },
-  emptyText: {
-    marginTop: 24,
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#6c757d',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-});
+    safe: {
+      flex: 1,
+      backgroundColor: '#F8F9FA',
+      paddingTop: Platform.OS === 'android' ? 24 : 0,
+    },
+    tabContainer: {
+      flexDirection: 'row',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: '#F8F9FA',
+    },
+    filterChip: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 20,
+      backgroundColor: '#E9EEF2',
+      marginRight: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    activeFilterChip: {
+      shadowColor: '#2F80ED',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 5,
+      elevation: 6,
+    },
+    filterChipText: {
+      fontSize: 14,
+      color: '#4A6A8A',
+      fontWeight: '600',
+    },
+    activeFilterChipText: {
+      color: '#FFFFFF',
+      fontWeight: 'bold',
+    },
+    contentCenter: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24,
+      marginTop: 50,
+    },
+    listContentContainer: {
+      paddingHorizontal: 8,
+      paddingBottom: 100,
+    },
+    emptyText: {
+      marginTop: 24,
+      fontSize: 17,
+      fontWeight: '600',
+      color: '#6c757d',
+      textAlign: 'center',
+      lineHeight: 24,
+    },
+  });

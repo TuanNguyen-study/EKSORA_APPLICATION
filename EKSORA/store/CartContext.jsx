@@ -14,10 +14,10 @@ const CART_STORAGE_KEY = 'cart';
 const PAID_BOOKINGS_KEY = '@paid_bookings';
 
 // --- Helper để ghi log ngắn gọn, có tiền tố để dễ lọc ---
-const log = (level, message, data) => {
-  const logData = data ? `: ${JSON.stringify(data)}` : '';
-  console[level](`[CartContext] ${message}${logData}`);
-};
+// const log = (level, message, data) => {
+//   const logData = data ? `: ${JSON.stringify(data)}` : '';
+//   console[level](`[CartContext] ${message}${logData}`);
+// };
 
 // --- Tạo Context ---
 const CartContext = createContext();
