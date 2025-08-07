@@ -42,7 +42,7 @@ export default function PlaceItem({ item, onRemove, onMoveUp, onMoveDown, disabl
 
           {/* Góc dưới: Đặt ngay + nút di chuyển */}
           <View style={styles.bottomActions}>
-            {!item.isBooked && !item.isAdded ? (
+            {item.isBooked ? (
               <Text style={styles.bookedText}>Đã đặt</Text>
             ) : (
               <TouchableOpacity
