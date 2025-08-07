@@ -89,9 +89,7 @@ export default function Body() {
           style={styles.cardContainer}
           onPress={() => handlePressTour(item)}
         >
-          <View style={styles.indexCircle}>
-            <Text style={styles.indexText}>{index + 1}</Text>
-          </View>
+          
           <Image source={{ uri: item.image[0] }} style={styles.cardImage} />
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>
