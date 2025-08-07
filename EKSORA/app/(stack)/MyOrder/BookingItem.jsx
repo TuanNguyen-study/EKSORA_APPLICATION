@@ -1,12 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, StyleSheet, Text, View } from 'react-native'; 
 import { COLORS } from '../../../constants/colors';
 
 
 const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 const formatDate = (dateString) => new Date(dateString).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-const BookingItem = ({ item, onPress }) => {
+const BookingItem = ({ item }) => {
   const {
     tour_id,
     travel_date,
@@ -15,26 +15,25 @@ const BookingItem = ({ item, onPress }) => {
     status,
     quantity_nguoiLon,
     quantity_treEm,
-    price_nguoiLon,
-    price_treEm
   } = item;
 
   const imageUrl = tour_id.image?.[0];
   const statusConfig = {
-  paid: { text: 'ĐÃ XÁC NHẬN', color: COLORS.success, icon: 'check-circle' },
-  pending: { text: 'ĐANG CHỜ XÁC NHẬN', color: COLORS.warning, icon: 'clock-time-eight' },
-  confirmed: { text: 'ĐÃ GIỮ CHỖ', color: COLORS.success, icon: 'calendar-check' },
-  canceled: { text: 'ĐÃ HỦY', color: COLORS.danger, icon: 'close-circle' },
-  refund_requested: { text: 'YÊU CẦU HOÀN TIỀN', color: COLORS.warning, icon: 'cash-refund' },
-  refunded: { text: 'ĐÃ HOÀN TIỀN', color: COLORS.success, icon: 'cash-multiple' },
-  expired: { text: 'HẾT HẠN', color: COLORS.grey, icon: 'calendar-remove' },
-  failed: { text: 'THANH TOÁN LỖI', color: COLORS.danger, icon: 'alert-circle-outline' }, // chỉ thêm nếu dùng
-  default: { text: 'KHÔNG RÕ', color: COLORS.grey, icon: 'help-circle' },
-};
+    paid: { text: 'ĐÃ XÁC NHẬN', color: COLORS.success, icon: 'check-circle' },
+    pending: { text: 'ĐANG CHỜ XÁC NHẬN', color: COLORS.warning, icon: 'clock-time-eight' },
+    confirmed: { text: 'ĐÃ GIỮ CHỖ', color: COLORS.success, icon: 'calendar-check' },
+    canceled: { text: 'ĐÃ HỦY', color: COLORS.danger, icon: 'close-circle' },
+    refund_requested: { text: 'YÊU CẦU HOÀN TIỀN', color: COLORS.warning, icon: 'cash-refund' },
+    refunded: { text: 'ĐÃ HOÀN TIỀN', color: COLORS.success, icon: 'cash-multiple' },
+    expired: { text: 'HẾT HẠN', color: COLORS.grey, icon: 'calendar-remove' },
+    failed: { text: 'THANH TOÁN LỖI', color: COLORS.danger, icon: 'alert-circle-outline' },
+    default: { text: 'KHÔNG RÕ', color: COLORS.grey, icon: 'help-circle' },
+  };
 
   const currentStatus = statusConfig[status?.toLowerCase()] || statusConfig.default;
+
   return (
-    <Pressable style={styles.card} onPress={() => onPress(item)}>
+    <View style={styles.card}>
       <ImageBackground
         source={{ uri: imageUrl || 'https://via.placeholder.com/400x200.png?text=Image' }}
         style={styles.imageBackground}
@@ -58,14 +57,13 @@ const BookingItem = ({ item, onPress }) => {
 
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="barcode-scan" size={18} color={COLORS.primary} />
-          {/* <Text style={styles.infoText}>Mã đơn: ...{_id.slice(-6).toUpperCase()}</Text> */}
           <Text style={styles.infoText}>Mã đơn: {item.order_code || 'Chưa có'}</Text>
         </View>
 
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="account-multiple" size={18} color={COLORS.primary} />
           <Text style={styles.infoText}>
-            Người lớn: {quantity_nguoiLon} | Trẻ em: {quantity_treEm} 
+            Người lớn: {quantity_nguoiLon} | Trẻ em: {quantity_treEm}
           </Text>
         </View>
 
@@ -73,10 +71,9 @@ const BookingItem = ({ item, onPress }) => {
 
         <View style={styles.footer}>
           <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
-          <Text style={styles.detailsButton}>Xem chi tiết</Text>
         </View>
       </View>
-    </Pressable>
+    </View>
   );
 };
 
@@ -95,10 +92,8 @@ const styles = StyleSheet.create({
   imageBackground: { height: 120, justifyContent: 'flex-end' },
   imageStyle: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
   imageOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    padding: 8,
+    height: '100%', 
+    width: '100%',
   },
   statusBadge: {
     position: 'absolute',
@@ -109,6 +104,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)', 
   },
   statusText: {
     color: COLORS.white,
@@ -131,17 +127,10 @@ const styles = StyleSheet.create({
   infoText: { fontSize: 13, color: COLORS.grey, marginLeft: 8 },
   divider: { height: 1, backgroundColor: '#f0f0f0', marginVertical: 8 },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
   },
   totalPrice: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  detailsButton: {
-    fontSize: 13,
     fontWeight: 'bold',
     color: COLORS.primary,
   },

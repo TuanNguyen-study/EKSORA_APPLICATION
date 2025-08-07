@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getUser } from '../../API/services/servicesUser'; 
@@ -7,6 +7,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS } from '../../constants/colors'; 
 
+
+// cắt lấy 12 ký tự cuối cùng của chuỗi ID. Kết quả: eb09b3f4c676
+const formatJoinDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return `Thành viên từ T${date.getMonth() + 1}, ${date.getFullYear()}`;
+};
 
 export default function Header() {
   const [user, setUser] = useState(null);
@@ -35,17 +42,14 @@ export default function Header() {
           setLoading(false);
         }
       };
-
       fetchUser();
-      return () => {
-
-      };
+      return () => {};
     }, [])
   );
 
   if (loading) {
     return (
-      <View style={[styles.headerBase, styles.center, { backgroundColor: 'transparent'}]}>
+      <View style={[styles.headerBase, styles.center]}>
         <ActivityIndicator size="large" color={COLORS.white} />
       </View>
     );
@@ -53,7 +57,7 @@ export default function Header() {
 
   if (!user) {
     return (
-      <View style={[styles.headerBase, styles.center, { backgroundColor: 'transparent'}]}>
+      <View style={[styles.headerBase, styles.center]}>
         <Text style={{ color: COLORS.white }}>Không thể tải thông tin người dùng</Text>
       </View>
     );
@@ -61,61 +65,59 @@ export default function Header() {
 
   return (
     <View style={styles.headerBase}>
-      {/* Phần userInfo và levelRow sẽ nằm trên gradient */}
-      <View style={styles.onGradientSection}>
-        <View style={styles.userInfo}>
-          <Image
-            source={avatarUri ? { uri: avatarUri } : require('../../assets/images/favicon.png')} 
-            style={styles.avatar}
-          />
-          <View style={styles.textGroup}>
-            <Text style={styles.username}>{user.first_name || 'Người dùng'}</Text>
-            <TouchableOpacity onPress={() => router.push('/(stack)/UpdateUser')}>
-              <Text style={styles.update}>Cập nhật thông tin cá nhân </Text>
-            </TouchableOpacity>
-          </View>
+      {/* --- PHẦN THÔNG TIN USER --- */}
+      <View style={styles.userInfoContainer}>
+        <Image
+          source={avatarUri ? { uri: avatarUri } : require('../../assets/images/favicon.png')} 
+          style={styles.avatar}
+        />
+        <View style={styles.textGroup}>
+          <Text style={styles.username}>{user.first_name || 'Xin chào'}</Text>
+          <TouchableOpacity onPress={() => router.push('/(stack)/UpdateUser')}>
+            <Text style={styles.update}>Xem & cập nhật thông tin cá nhân</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Phần statsContainer sẽ là một card trắng */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{user.couponCount || 0}</Text>
-          <Text style={styles.statLabel}>Mã ưu đãi</Text>
+      <View style={styles.membershipCard}>
+        <View style={styles.cardHeader}>
+            <Text style={styles.membershipLevel}>Thành viên Eksora</Text>
+            <Ionicons name="shield-checkmark" size={22} color="rgba(255, 255, 255, 0.8)" />
         </View>
-        <View style={styles.verticalSeparator} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{user.eksXu || 0}</Text>
-          <Text style={styles.statLabel}>Eks Xu</Text>
+
+        <View style={styles.cardNumberContainer}>
+            <Text style={styles.cardNumber}>
+                {user._id.slice(-12).toUpperCase().replace(/(.{4})/g, '$1 ')}
+            </Text>
         </View>
-        <View style={styles.verticalSeparator} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{user.giftCardCount || 0}</Text>
-          <Text style={styles.statLabel}>Eks Gift Card</Text>
-        </View>
+        
       </View>
     </View>
   );
 }
 
+
 const styles = StyleSheet.create({
   headerBase: { 
-    paddingHorizontal: 16, 
+    paddingHorizontal: 16,
+    paddingBottom: 32, 
   },
-  onGradientSection: {
+  center: { 
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 250,
+  },
+
+  userInfoContainer: {
     paddingTop: 30,
-    paddingBottom: 20, 
-  },
-  userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   avatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: COLORS.avatarBackground,
     borderWidth: 2,
     borderColor: COLORS.white,
   },
@@ -129,83 +131,57 @@ const styles = StyleSheet.create({
     color: COLORS.white, 
   },
   update: {
-    color: COLORS.white, 
+    color: 'rgba(255, 255, 255, 0.9)', 
     fontSize: 13,
-    opacity: 0.9,
     marginTop: 4,
   },
-  levelRow: {
+
+  membershipCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.01)', 
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(20, 3, 3, 0.15)',
+  },
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  levelBox: {
+  membershipLevel: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 14,
+    fontWeight: '600', 
+  },
+  cardNumberContainer: {
+    paddingVertical: 10, 
+  },
+  cardNumber: {
+    color: COLORS.white,
+    fontSize: 16, 
+    fontWeight: '500',
+    letterSpacing: 2.5, 
+    textAlign: 'center',
+  },
+  cardFooter: {
+    borderTopWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    paddingTop: 12,
+    marginTop: 4,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  levelBadgeContainer: { 
-    backgroundColor: 'rgba(0,0,0,0.15)', 
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 8,
-  },
-  level: {
-    fontSize: 13,
-    color: COLORS.white, 
-    fontWeight: 'bold',
-  },
-  badge: {
-    fontSize: 16,
-    color: COLORS.white, 
+  cardLabel: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 10,
+    marginBottom: 4,
     fontWeight: '600',
   },
-  link: {
+  cardValue: {
     color: COLORS.white,
     fontSize: 14,
-    fontWeight: '500',
-  },
-  statsContainer: { 
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: COLORS.white, 
-    paddingVertical: 20,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    marginBottom: 16, 
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statValue: {
-    fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.textDark,
-  },
-  statLabel: {
-    fontSize: 13,
-    color: COLORS.textGray,
-    marginTop: 4,
-  },
-  verticalSeparator: {
-    width: 1,
-    height: '60%', 
-    backgroundColor: COLORS.separator,
-  },
-  center: { 
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 200, 
-    paddingTop: 50, 
   },
 });

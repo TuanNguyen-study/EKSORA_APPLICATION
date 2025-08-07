@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StyleSheet,Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../../../constants/colors';
 
@@ -17,7 +17,7 @@ const NoteContactSection = () => {
       <Text style={styles.noteContact_sectionTitle}>🔵 Liên hệ với chúng tôi</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
         <Ionicons name="chatbox-ellipses-outline" size={16} color={COLORS.textSecondary} style={{ marginRight: 6 }} />
-        <Text style={styles.noteContact_text}>Zalo: 0909.123.456</Text>
+        <Text style={styles.noteContact_text}>Zalo: 0365.857.966 </Text>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Ionicons name="chatbox-ellipses-outline" size={16} color={COLORS.textSecondary} style={{ marginRight: 6 }} />
@@ -25,9 +25,7 @@ const NoteContactSection = () => {
       </View>
       <TouchableOpacity
         style={styles.noteContact_button}
-        onPress={() => {
-          Alert.alert('Mở chat', 'Chức năng chat sẽ được tích hợp');
-        }}
+        onPress={() => Linking.openURL(`tel:0365857966`)}
       >
         <Ionicons
           name="chatbox-ellipses-outline"
@@ -35,7 +33,7 @@ const NoteContactSection = () => {
           color={COLORS.primary}
           style={styles.noteContact_icon}
         />
-        <Text style={styles.noteContact_buttonText}>Chat với chúng tôi</Text>
+        <Text style={styles.noteContact_buttonText}>Liên Hệ với chúng tôi</Text>
       </TouchableOpacity>
     </View>
   );
