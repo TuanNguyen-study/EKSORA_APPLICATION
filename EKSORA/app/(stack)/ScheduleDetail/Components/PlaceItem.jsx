@@ -53,10 +53,11 @@ export default function PlaceItem({ item, onRemove, onMoveUp, onMoveDown, disabl
                   })
                 }
               >
-                <Text style={styles.bookNowText}>Đặt ngay</Text>
+                <Text style={[styles.bookNowText, item.isAdded && { opacity: 0 }]}>
+                  Đặt ngay
+                </Text>
               </TouchableOpacity>
             )}
-
 
             {/* Nút di chuyển item */}
             <View style={styles.moveContainer}>

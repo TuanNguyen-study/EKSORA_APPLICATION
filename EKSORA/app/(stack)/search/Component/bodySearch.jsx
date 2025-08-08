@@ -48,7 +48,7 @@ export default function Body() {
       try {
         const response = await getTours();
 
-        // 👉 Lọc chỉ những tour có giá > 0
+        // Lọc chỉ những tour có giá > 0
         const validTours = response.filter((tour) => tour.price > 0);
 
         setTours(validTours);
@@ -63,7 +63,7 @@ export default function Body() {
   }, []);
 
 
-  // ✅ Mỗi khi activeTab thay đổi → shuffle lại
+  //  Mỗi khi activeTab thay đổi → shuffle lại
   useEffect(() => {
     if (tours.length > 0) {
       const shuffled = shuffleArray(tours);
@@ -89,9 +89,7 @@ export default function Body() {
           style={styles.cardContainer}
           onPress={() => handlePressTour(item)}
         >
-          <View style={styles.indexCircle}>
-            <Text style={styles.indexText}>{index + 1}</Text>
-          </View>
+          
           <Image source={{ uri: item.image[0] }} style={styles.cardImage} />
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>

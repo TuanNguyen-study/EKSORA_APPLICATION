@@ -51,7 +51,7 @@ const ModalAddTour = ({ visible, onClose, cateID, onAddTour, existingTourIds = [
       </View>
       <TouchableOpacity
         onPress={() => {
-          onAddTour(item);
+          onAddTour({ ...item, isAdded: true });
           Alert.alert('Thành công', 'Thêm tour vào lịch trình thành công!');
         }}
         style={styles.addButton}
