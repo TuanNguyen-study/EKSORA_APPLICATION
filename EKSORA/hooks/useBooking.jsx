@@ -233,38 +233,52 @@ export const useBooking = (initialDetails) => {
   };
 
   // Xử lý khi người dùng nhấn nút "Thêm vào giỏ hàng"
-  const handleAddToCart = () => {
+
+const handleAddToCart = () => {
     // Kiểm tra số lượng
     if (quantityAdult === 0 && quantityChild === 0) {
-      Alert.alert('Thông báo', 'Vui lòng chọn số lượng người lớn hoặc trẻ em.');
-      return;
+        Alert.alert('Thông báo', 'Vui lòng chọn số lượng người lớn hoặc trẻ em.');
+        return;
     }
     if (!tourData) return;
-    // Tạo ID duy nhất cho sản phẩm trong giỏ hàng để tránh trùng lặp (tour_id + ngày đi)
+
+    // Tạo ID duy nhất cho sản phẩm trong giỏ hàng để tránh trùng lặp
     const cartItemId = `${tourData.tour_id}_${selectedDate}`;
     if (cartItems.find(item => item.id === cartItemId)) {
-      Alert.alert('Thông báo', 'Tour này với ngày đã chọn đã có trong giỏ hàng.');
-      return;
+        Alert.alert('Thông báo', 'Tour này với ngày đã chọn đã có trong giỏ hàng.');
+        return;
     }
 
-    // Tạo đối tượng sản phẩm để thêm vào giỏ
+    // TẠO ĐỐI TƯỢNG SẢN PHẨM HOÀN CHỈNH - PHIÊN BẢN ĐÃ SỬA LỖI
     const cartItem = {
-      id: cartItemId,
-      tour_id: tourData.tour_id,
-      name: tourData.tour_title,
-      image: tourData.image,
-      travelDate: selectedDate,
-      adults: quantityAdult,
-      children: quantityChild,
-      adultPrice: displayPrices.adult, // Giá sau giảm
-      childPrice: displayPrices.child, // Giá sau giảm
-      selectedOptions: tourData.selectedOptionsDetails,
-      price: finalPrice, // Tổng tiền sau giảm
+        id: cartItemId,
+        tour_id: tourData.tour_id,
+        name: tourData.tour_title,
+        image: tourData.image,
+        travelDate: selectedDate,
+        adults: quantityAdult,
+        children: quantityChild,
+        adultPrice: displayPrices.adult,
+        childPrice: displayPrices.child,
+        originalAdultPrice: originalPrices.adult,
+        originalChildPrice: originalPrices.child,
+        selectedOptions: tourData.selectedOptionsDetails,
+        price: finalPrice,
+
+        // ================================================================
+        // ===== PHẦN SỬA LỖI QUAN TRỌNG NHẤT NẰM Ở ĐÂY =====
+        // ================================================================
+        discount: discountAmount,
+        voucherCode: appliedVoucher ? appliedVoucher.voucher_id.code : null, // SỬA LẠI ĐƯỜNG DẪN
+        voucherId: appliedVoucher ? appliedVoucher.voucher_id._id : null,     // SỬA LẠI ĐƯỜNG DẪN
+
+        // SỬA LẠI CẢ TÊN TRƯỜNG VÀ ĐƯỜNG DẪN CHO ĐÚNG
+        end_date: appliedVoucher ? appliedVoucher.voucher_id.end_date : null,
     };
 
-    addToCart(cartItem); // Gọi hàm từ CartContext
+    addToCart(cartItem); // Gọi hàm từ CartContext với dữ liệu ĐẦY ĐỦ
     Alert.alert('Thành công', `Đã thêm "${tourData.tour_title}" vào giỏ hàng!`);
-  };
+};
 
   // Xử lý khi người dùng nhấn nút "Đặt ngay"
   const handleBooking = async () => {

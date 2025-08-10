@@ -38,8 +38,7 @@ const ShoppingCartScreen = () => {
       (acc, item) => {
         if (selectedIds.includes(item.id)) {
           acc.total += item.price || 0;
-          const originalPrice = (item.adultPrice * item.adults) + (item.childPrice * item.children);
-          acc.totalDiscount += originalPrice - (item.price || 0);
+          acc.totalDiscount += item.discount || 0;
         }
         return acc;
       },
@@ -104,22 +103,23 @@ const ShoppingCartScreen = () => {
 
       for (const item of selectedItems) {
         const [day, month, year] = item.travelDate.split('/');
-        const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-
+        const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        // SỬA LẠI BOOKING DATA
         const bookingData = {
           user_id: loggedInUser.id,
           tour_id: item.tour_id,
           travel_date: formattedDate,
           quantity_nguoiLon: item.adults,
           quantity_treEm: item.children,
-          price_nguoiLon: item.adultPrice,
-          price_treEm: item.childPrice,
+          price_nguoiLon: item.originalAdultPrice, // Gửi giá GỐC
+          price_treEm: item.originalChildPrice,   // Gửi giá GỐC
           optionServices: (item.selectedOptions || []).map((option) => ({
-            option_service_id: option.id,
+            option_service_id: option.id || option.option_service_id,
           })),
           coin: 0,
-          voucher_id: item.voucher_id || null,
-          discount: item.discount || 0,
+          voucher_id: item.voucherId || null, // Gửi ID của voucher
+          discount: item.discount || 0,       // Gửi tổng tiền được giảm
           fullName: `${loggedInUser.lastName} ${loggedInUser.firstName}`,
           email: loggedInUser.email,
           phone: loggedInUser.phone,
@@ -127,9 +127,7 @@ const ShoppingCartScreen = () => {
 
         const res = await createBooking(bookingData);
         const individualBookingId = res?.booking_id || res?.booking?._id;
-        const bookingStatus = res?.status || 'pending'; // Mặc định là pending nếu không có status
-
-        console.log('Booking response:', { bookingId: individualBookingId, status: bookingStatus });
+        const bookingStatus = res?.status || 'pending';
 
         if (!individualBookingId) throw new Error(`Không tạo được booking cho tour: ${item.name}`);
 
@@ -138,7 +136,6 @@ const ShoppingCartScreen = () => {
 
       if (createdItems.length === 0) throw new Error('Không có đơn hàng nào được tạo thành công.');
 
-      // Chuyển hướng đến BookingCompleted, không xóa giỏ hàng ở đây
       const representativeBookingId = createdItems[0].bookingId;
       const checkoutParams = {
         totalPrice: total.toString(),
@@ -154,6 +151,7 @@ const ShoppingCartScreen = () => {
         pathname: '/BookingCompleted',
         params: checkoutParams,
       });
+
     } catch (error) {
       console.error('Lỗi khi tạo đơn hàng:', error.message || error);
       Alert.alert('Lỗi', `Đặt tour thất bại: ${error.message || 'Vui lòng thử lại.'}`);

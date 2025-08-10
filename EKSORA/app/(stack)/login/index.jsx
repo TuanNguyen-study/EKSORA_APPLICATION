@@ -13,7 +13,7 @@ const  Index = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
 
-      router.push('/(stack)/signup');
+      router.push('/(tabs)/home');
 
     }, 3000);
 
