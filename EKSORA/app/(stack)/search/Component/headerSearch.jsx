@@ -1,29 +1,50 @@
-import { useState, useEffect } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-  FlatList,
-  Image,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  ScrollView,
+  View
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { COLORS } from "../../../../constants/colors";
 
 export default function HeaderSearch() {
   const [searchText, setSearchText] = useState("");
   const [historySearch, setHistorySearch] = useState([]);
   const popularSearch = [
-    "tràng an",
-    "Hà Nội",
-    "đà nẵng",
-    "hạ long",
-    "hồ chí minh",
+    {
+      _id: "683abaae06f0673f3f0eaa2d",
+      name: "Ninh Bình",
+      __v: 0,
+      image: "https://i.pinimg.com/736x/49/1c/4a/491c4aeededdf7ece96ac7c5d070e745.jpg"
+    },
+    {
+      _id: "682ec34331d8b56270a8af8b",
+      name: "Hà Nội",
+      image: "https://i.pinimg.com/736x/ac/27/50/ac2750aefd89c4cc77b963fad153d477.jpg"
+    },
+    {
+      _id: "683ab9b506f0673f3f0eaa1d",
+      name: "Đà Nẵng",
+      __v: 0,
+      image: "https://i.pinimg.com/736x/32/f0/11/32f01197c72d5fc489fbfbb1e3d015b2.jpg"
+    },
+    {
+      _id: "682ec34331d8b56270a8af95",
+      name: "Hạ Long",
+      image: "https://i.pinimg.com/736x/e8/7d/87/e87d8748b8fdd2615c24b306eeca7e78.jpg"
+    },
+    {
+      _id: "682ec34331d8b56270a8af8c",
+      name: "Hồ Chí Minh",
+      image: "https://i.pinimg.com/736x/83/2c/d1/832cd1e62c6068260bf9960e58f4e7d4.jpg"
+    },
   ];
+
+
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -34,7 +55,7 @@ export default function HeaderSearch() {
   }, []);
 
   const saveSearchHistory = async (keyword) => {
-    let updated = [keyword, ...historySearch.filter((item) => item !== keyword)];
+    let updated = [keyword, ...historySearch.filter((item) => item.name !== keyword.name)];
     if (updated.length > 10) updated = updated.slice(0, 10);
     setHistorySearch(updated);
     await AsyncStorage.setItem("searchHistory", JSON.stringify(updated));
@@ -50,7 +71,7 @@ export default function HeaderSearch() {
     await saveSearchHistory(keyword);
     router.push({
       pathname: "/(stack)/SearchResult",
-      params: { query: keyword },
+      params: { _id: keyword._id, name: keyword.name, image: keyword.image },
     });
   };
 
@@ -89,7 +110,7 @@ export default function HeaderSearch() {
             {historySearch.map((item, index) => (
               <TouchableOpacity key={index} onPress={() => handleSearch(item)}>
                 <View style={styles.chip}>
-                  <Text style={styles.chipText}>{item}</Text>
+                  <Text style={styles.chipText}>{item.name}</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -103,7 +124,7 @@ export default function HeaderSearch() {
         {popularSearch.map((item, index) => (
           <TouchableOpacity key={index} onPress={() => handleSearch(item)}>
             <View style={styles.chip}>
-              <Text style={styles.chipText}>{item}</Text>
+              <Text style={styles.chipText}>{item.name}</Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -150,7 +171,7 @@ const styles = StyleSheet.create({
   },
   clearText: {
     fontSize: 12,
-    color:  COLORS.primary,
+    color: COLORS.primary,
   },
   historyHeader: {
     flexDirection: "row",

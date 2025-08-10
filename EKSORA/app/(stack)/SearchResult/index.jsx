@@ -1,24 +1,25 @@
-import { useLocalSearchParams, router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { View, FlatList, SafeAreaView, ActivityIndicator, StyleSheet, Platform, StatusBar } from "react-native";
+import { ActivityIndicator, FlatList, Platform, SafeAreaView, StatusBar, StyleSheet, View } from "react-native";
 import { getAllToursByLocation } from "../../../API/services/serverCategories";
 
+import { COLORS } from '../../../constants/colors';
+import CityCard from "../SearchResult/components/CityCard";
 import SearchHeader from "../SearchResult/components/SearchHeader";
 import TourCard from "../SearchResult/components/TourCard";
-import CityCard from "../SearchResult/components/CityCard";
-import EmptyResult from "../SearchResult/components/EmptyResult";
-import { COLORS } from '../../../constants/colors'
+
 export default function index() {
 
-  const { query } = useLocalSearchParams();
+  const { _id, name, image } = useLocalSearchParams();
   const [filteredTours, setFilteredTours] = useState([]);
   const [allTours, setAllTours] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const query = { _id, name, image };
     const fetchTours = async () => {
       setLoading(true);
-      const all = await getAllToursByLocation();
+      const all = await getAllToursByLocation(query);
 
       // Lọc tour có giá > 0
       const validTours = all.filter((tour) => tour.price > 0);
@@ -34,7 +35,7 @@ export default function index() {
       setLoading(false);
     };
     fetchTours();
-  }, [query]);
+  }, [_id, name, image]);
 
 
   const renderItem = ({ item }) => (
@@ -47,7 +48,7 @@ export default function index() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <SearchHeader query={query} />
+        <SearchHeader query={name} />
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" />
