@@ -1,54 +1,97 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Platform, SafeAreaView, StatusBar, StyleSheet, View } from "react-native";
-import { getAllToursByLocation } from "../../../API/services/serverCategories";
+import {
+  View,
+  FlatList,
+  SafeAreaView,
+  ActivityIndicator,
+  StyleSheet,
+  Platform,
+  StatusBar,
+} from "react-native";
+import { getToursByLocation } from "../../../API/services/serverCategories";
 
-import { COLORS } from '../../../constants/colors';
-import CityCard from "../SearchResult/components/CityCard";
 import SearchHeader from "../SearchResult/components/SearchHeader";
 import TourCard from "../SearchResult/components/TourCard";
+import CityCard from "../SearchResult/components/CityCard";
+import EmptyResult from "../SearchResult/components/EmptyResult";
+import { COLORS } from "../../../constants/colors";
 
-export default function index() {
-
-  const { _id, name, image } = useLocalSearchParams();
+export default function Index() {
+  const { query } = useLocalSearchParams();
   const [filteredTours, setFilteredTours] = useState([]);
   const [allTours, setAllTours] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const query = { _id, name, image };
     const fetchTours = async () => {
-      setLoading(true);
-      const all = await getAllToursByLocation(query);
+      try {
+        setLoading(true);
+        const all = await getToursByLocation();
 
-      // Lọc tour có giá > 0
-      const validTours = all.filter((tour) => tour.price > 0);
+        // Lọc tour có giá > 0
+        const validTours = all.filter((tour) => tour.price > 0);
 
-      const matched = validTours.filter((tour) =>
-        tour.name.toLowerCase().includes(query.toLowerCase()) ||
-        tour.description?.toLowerCase().includes(query.toLowerCase()) ||
-        tour.province?.toLowerCase().includes(query.toLowerCase())
-      );
+        // Kiểm tra xem query có trùng hẳn tên tỉnh/thành không
+        const isExactProvince = validTours.some(
+          (tour) =>
+            tour.province?.name?.toLowerCase().trim() ===
+            query.toLowerCase().trim()
+        );
 
-      setFilteredTours(matched);
-      setAllTours(validTours); // allTours cũng là danh sách đã lọc
-      setLoading(false);
+        let matched;
+        if (isExactProvince) {
+          // Nếu là search địa điểm thì chỉ lấy đúng địa điểm
+          matched = validTours.filter(
+            (tour) =>
+              tour.province?.name?.toLowerCase().trim() ===
+              query.toLowerCase().trim()
+          );
+        } else {
+          // Nếu không phải search địa điểm thì tìm theo tên tour hoặc mô tả
+          matched = validTours.filter(
+            (tour) =>
+              tour.name?.toLowerCase().includes(query.toLowerCase()) ||
+              tour.description?.toLowerCase().includes(query.toLowerCase())
+          );
+        }
+
+        setFilteredTours(matched);
+        setAllTours(validTours);
+      } catch (error) {
+        console.error("Lỗi khi lấy tour:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchTours();
-  }, [_id, name, image]);
 
+    fetchTours();
+  }, [query]);
 
   const renderItem = ({ item }) => (
-    <TourCard item={item} onPress={() => router.push({ pathname: "/(stack)/trip-detail/[id]", params: { id: item._id } })} />
+    <TourCard
+      item={item}
+      onPress={() =>
+        router.push({
+          pathname: "/(stack)/trip-detail/[id]",
+          params: { id: item._id },
+        })
+      }
+    />
   );
 
   const ListHeader = () =>
-    filteredTours[0] ? <CityCard province={filteredTours[0].cateID.name} image={filteredTours[0].image[0]} /> : null;
+    filteredTours[0] ? (
+      <CityCard
+        cateID={filteredTours[0].cateID?.name}
+        image={filteredTours[0].image[0]}
+      />
+    ) : null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <SearchHeader query={name} />
+        <SearchHeader query={query} />
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" />
@@ -82,7 +125,6 @@ export default function index() {
   );
 }
 
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -98,6 +140,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    color: COLORS.primaryDark
+    color: COLORS.primaryDark,
   },
 });
