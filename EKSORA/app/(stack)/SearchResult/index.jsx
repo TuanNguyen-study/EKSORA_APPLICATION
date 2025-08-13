@@ -18,54 +18,66 @@ import EmptyResult from "../SearchResult/components/EmptyResult";
 import { COLORS } from "../../../constants/colors";
 
 export default function Index() {
-  const { query } = useLocalSearchParams();
+  const { query, filteredTours: filteredToursParam } = useLocalSearchParams();
   const [filteredTours, setFilteredTours] = useState([]);
   const [allTours, setAllTours] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Tiêu chí lọc chung (giá & đánh giá)
+  const [priceRange, setPriceRange] = useState([0, Infinity]); // [min, max]
+  const [minRating, setMinRating] = useState(0); // 0 → 5
+  const [suggestedTours, setSuggestedTours] = useState([]); // chỉ để gợi ý khi rỗng
+
+
   useEffect(() => {
-    const fetchTours = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
 
-        const queryTrimmed = query?.trim() || "";
-        const isObjectId = /^[0-9a-fA-F]{24}$/.test(queryTrimmed);
+        let toursData = [];
 
-        let all = [];
-
-        if (isObjectId) {
-          // Gọi API theo cateID (id MongoDB)
-          console.log("Gọi API với cateID:", queryTrimmed);
-          all = await getAllToursByLocation(queryTrimmed);
+        // Nếu có filteredToursParam từ filter modal
+        if (filteredToursParam) {
+          toursData = JSON.parse(filteredToursParam);
         } else {
-          // Gọi API lấy tất cả tour, sau đó lọc
-          console.log("Gọi API lấy tất cả tour để lọc theo name:", queryTrimmed);
-          all = await getAllToursByLocation();
+          // Nếu không → gọi API
+          const queryTrimmed = query?.trim() || "";
+          const isObjectId = /^[0-9a-fA-F]{24}$/.test(queryTrimmed);
+
+          let all = [];
+          if (isObjectId) {
+            all = await getAllToursByLocation(queryTrimmed);
+          } else {
+            all = await getAllToursByLocation();
+          }
+
+          // Lọc bỏ tour giá <= 0
+          const validTours = all.filter((tour) => tour.price > 0);
+
+          // Lọc theo query (cateID.name → name → description)
+          const queryLower = queryTrimmed.toLowerCase();
+          const matchedByCategory = validTours.filter((tour) =>
+            (tour.cateID?.name || "").toLowerCase().includes(queryLower)
+          );
+          const matchedByText = validTours.filter(
+            (tour) =>
+              (tour.name || "").toLowerCase().includes(queryLower) ||
+              (tour.description || "").toLowerCase().includes(queryLower)
+          );
+
+          toursData =
+            matchedByCategory.length > 0 ? matchedByCategory : matchedByText;
         }
 
-        // Lọc tour có giá > 0
-        const validTours = all.filter((tour) => tour.price > 0);
+        // Lọc thêm giá & đánh giá (áp dụng chung cho cả search & filter)
+        const finalTours = toursData
+          .filter(
+            (tour) => tour.price >= priceRange[0] && tour.price <= priceRange[1]
+          )
+          .filter((tour) => (tour.rating || 0) >= minRating);
 
-        const queryLower = queryTrimmed.toLowerCase();
-
-        // Lọc theo cateID.name
-        const matchedByCategory = validTours.filter((tour) =>
-          (tour.cateID?.name || "").toLowerCase().includes(queryLower)
-        );
-
-        // Lọc theo tên tour hoặc mô tả
-        const matchedByText = validTours.filter(
-          (tour) =>
-            (tour.name || "").toLowerCase().includes(queryLower) ||
-            (tour.description || "").toLowerCase().includes(queryLower)
-        );
-
-        // Ưu tiên cateID, nếu không có thì lấy matchedByText
-        const matched =
-          matchedByCategory.length > 0 ? matchedByCategory : matchedByText;
-
-        setFilteredTours(matched);
-        setAllTours(validTours);
+        setAllTours(toursData); // dữ liệu gốc (chưa filter giá/đánh giá)
+        setFilteredTours(finalTours);
       } catch (error) {
         console.error("Lỗi khi lấy tour:", error?.response?.data || error);
       } finally {
@@ -73,8 +85,8 @@ export default function Index() {
       }
     };
 
-    fetchTours();
-  }, [query]);
+    fetchData();
+  }, [query, filteredToursParam, priceRange, minRating]);
 
   const renderItem = ({ item }) => (
     <TourCard
@@ -99,7 +111,7 @@ export default function Index() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <SearchHeader query={query} />
+        <SearchHeader query={query} filteredTours={filteredTours} />
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" />

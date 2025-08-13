@@ -48,15 +48,15 @@ export default function HeaderSearch() {
   const handleSearch = async (keyword) => {
     if (!keyword) return;
     await saveSearchHistory(keyword);
+
     router.push({
       pathname: "/(stack)/SearchResult",
-      params: { query: keyword },
+      params: { query: keyword }, // luôn truyền query
     });
   };
 
   return (
     <View style={styles.header}>
-      {/* Thanh tìm kiếm */}
       <View style={styles.topRow}>
         <View style={styles.searchWrapper}>
           <TouchableOpacity onPress={() => router.push("/(tabs)/home")} style={styles.backBtn}>
@@ -76,7 +76,6 @@ export default function HeaderSearch() {
           </TouchableOpacity>
         </View>
 
-        {/* Nút mở modal filter */}
         <TouchableOpacity
           style={styles.filterBtn}
           onPress={() => setModalVisible(true)}
@@ -85,7 +84,6 @@ export default function HeaderSearch() {
         </TouchableOpacity>
       </View>
 
-      {/* Lịch sử tìm kiếm */}
       {historySearch.length > 0 && (
         <>
           <View style={styles.historyHeader}>
@@ -107,7 +105,6 @@ export default function HeaderSearch() {
         </>
       )}
 
-      {/* Mọi người đang tìm kiếm */}
       <Text style={styles.sectionLabel}>Mọi người đang tìm kiếm</Text>
       <View style={styles.keywordWrap}>
         {popularSearch.map((item, index) => (
@@ -124,16 +121,16 @@ export default function HeaderSearch() {
         onClose={() => setModalVisible(false)}
         onApply={(filters) => {
           setModalVisible(false);
-
-          // Điều hướng sang SearchResult và truyền tour đã lọc
+          // Khi dùng filter, vẫn truyền query hiện tại để SearchResult lọc chính xác
           router.push({
             pathname: "/(stack)/SearchResult",
-            params: { filteredTours: JSON.stringify(filters.tours) },
+            params: { 
+              query: searchText, 
+              filteredTours: JSON.stringify(filters.tours) 
+            },
           });
         }}
       />
-
-
     </View>
   );
 }
