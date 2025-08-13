@@ -9,7 +9,7 @@ import {
   Platform,
   StatusBar,
 } from "react-native";
-import { getToursByLocation } from "../../../API/services/serverCategories";
+import { getAllToursByLocation } from "../../../API/services/serverCategories";
 
 import SearchHeader from "../SearchResult/components/SearchHeader";
 import TourCard from "../SearchResult/components/TourCard";
@@ -27,39 +27,47 @@ export default function Index() {
     const fetchTours = async () => {
       try {
         setLoading(true);
-        const all = await getToursByLocation();
+
+        const queryTrimmed = query?.trim() || "";
+        const isObjectId = /^[0-9a-fA-F]{24}$/.test(queryTrimmed);
+
+        let all = [];
+
+        if (isObjectId) {
+          // Gọi API theo cateID (id MongoDB)
+          console.log("Gọi API với cateID:", queryTrimmed);
+          all = await getAllToursByLocation(queryTrimmed);
+        } else {
+          // Gọi API lấy tất cả tour, sau đó lọc
+          console.log("Gọi API lấy tất cả tour để lọc theo name:", queryTrimmed);
+          all = await getAllToursByLocation();
+        }
 
         // Lọc tour có giá > 0
         const validTours = all.filter((tour) => tour.price > 0);
 
-        // Kiểm tra xem query có trùng hẳn tên tỉnh/thành không
-        const isExactProvince = validTours.some(
-          (tour) =>
-            tour.province?.name?.toLowerCase().trim() ===
-            query.toLowerCase().trim()
+        const queryLower = queryTrimmed.toLowerCase();
+
+        // Lọc theo cateID.name
+        const matchedByCategory = validTours.filter((tour) =>
+          (tour.cateID?.name || "").toLowerCase().includes(queryLower)
         );
 
-        let matched;
-        if (isExactProvince) {
-          // Nếu là search địa điểm thì chỉ lấy đúng địa điểm
-          matched = validTours.filter(
-            (tour) =>
-              tour.province?.name?.toLowerCase().trim() ===
-              query.toLowerCase().trim()
-          );
-        } else {
-          // Nếu không phải search địa điểm thì tìm theo tên tour hoặc mô tả
-          matched = validTours.filter(
-            (tour) =>
-              tour.name?.toLowerCase().includes(query.toLowerCase()) ||
-              tour.description?.toLowerCase().includes(query.toLowerCase())
-          );
-        }
+        // Lọc theo tên tour hoặc mô tả
+        const matchedByText = validTours.filter(
+          (tour) =>
+            (tour.name || "").toLowerCase().includes(queryLower) ||
+            (tour.description || "").toLowerCase().includes(queryLower)
+        );
+
+        // Ưu tiên cateID, nếu không có thì lấy matchedByText
+        const matched =
+          matchedByCategory.length > 0 ? matchedByCategory : matchedByText;
 
         setFilteredTours(matched);
         setAllTours(validTours);
       } catch (error) {
-        console.error("Lỗi khi lấy tour:", error);
+        console.error("Lỗi khi lấy tour:", error?.response?.data || error);
       } finally {
         setLoading(false);
       }
@@ -84,7 +92,7 @@ export default function Index() {
     filteredTours[0] ? (
       <CityCard
         cateID={filteredTours[0].cateID?.name}
-        image={filteredTours[0].image[0]}
+        image={filteredTours[0].image?.[0]}
       />
     ) : null;
 

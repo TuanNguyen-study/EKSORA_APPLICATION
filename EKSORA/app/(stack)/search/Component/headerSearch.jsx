@@ -10,10 +10,13 @@ import {
   View
 } from "react-native";
 import { COLORS } from "../../../../constants/colors";
+import ModalFilter from "../../search/Component/Filter/ModalFilter";
 
 export default function HeaderSearch() {
   const [searchText, setSearchText] = useState("");
   const [historySearch, setHistorySearch] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+
   const popularSearch = [
     "tràng an",
     "Hà Nội",
@@ -53,22 +56,32 @@ export default function HeaderSearch() {
 
   return (
     <View style={styles.header}>
-      {/* Back button + Search bar */}
-      <View style={styles.searchWrapper}>
-        <TouchableOpacity onPress={() => router.push("/(tabs)/home")} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color="#333" />
-        </TouchableOpacity>
+      {/* Thanh tìm kiếm */}
+      <View style={styles.topRow}>
+        <View style={styles.searchWrapper}>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/home")} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={20} color="#333" />
+          </TouchableOpacity>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Tìm Kiếm"
-          placeholderTextColor='#ccc'
-          value={searchText}
-          onChangeText={setSearchText}
-          onSubmitEditing={() => handleSearch(searchText)}
-        />
-        <TouchableOpacity style={styles.iconWrapper} onPress={() => handleSearch(searchText)}>
-          <Ionicons name="search" size={18} color="white" />
+          <TextInput
+            style={styles.input}
+            placeholder="Tìm Kiếm"
+            placeholderTextColor='#ccc'
+            value={searchText}
+            onChangeText={setSearchText}
+            onSubmitEditing={() => handleSearch(searchText)}
+          />
+          <TouchableOpacity style={styles.iconWrapper} onPress={() => handleSearch(searchText)}>
+            <Ionicons name="search" size={18} color="white" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Nút mở modal filter */}
+        <TouchableOpacity
+          style={styles.filterBtn}
+          onPress={() => setModalVisible(true)}
+        >
+          <Ionicons name="options-outline" size={22} color="white" />
         </TouchableOpacity>
       </View>
 
@@ -105,6 +118,22 @@ export default function HeaderSearch() {
           </TouchableOpacity>
         ))}
       </View>
+
+      <ModalFilter
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onApply={(filters) => {
+          setModalVisible(false);
+
+          // Điều hướng sang SearchResult và truyền tour đã lọc
+          router.push({
+            pathname: "/(stack)/SearchResult",
+            params: { filteredTours: JSON.stringify(filters.tours) },
+          });
+        }}
+      />
+
+
     </View>
   );
 }
@@ -115,7 +144,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 20,
   },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   searchWrapper: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
@@ -139,6 +173,12 @@ const styles = StyleSheet.create({
     padding: 6,
     marginLeft: 8,
   },
+  filterBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 20,
+    padding: 8,
+    marginLeft: 10,
+  },
   sectionLabel: {
     fontWeight: "bold",
     fontSize: 14,
@@ -147,7 +187,7 @@ const styles = StyleSheet.create({
   },
   clearText: {
     fontSize: 12,
-    color:  COLORS.primary,
+    color: COLORS.primary,
   },
   historyHeader: {
     flexDirection: "row",
