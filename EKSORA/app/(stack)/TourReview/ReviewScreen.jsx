@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useFocusEffect } from '@react-navigation/native'; 
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TourReviewCard from './TourReviewCard';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -19,19 +19,22 @@ import { getUserBookings, postReview } from '../../../API/services/servicesUser'
 const ReviewScreen = () => {
     const navigation = useNavigation();
 
-    // --- STATE MANAGEMENT  ---
     const [bookings, setBookings] = useState([]);
     const [screenLoading, setScreenLoading] = useState(true);
     const [submittingId, setSubmittingId] = useState(null);
     const [error, setError] = useState('');
 
-    // --- FETCH DANH SÁCH BOOKING (Sử dụng useFocusEffect để tải lại khi quay về màn hình) ---
+    // Hàm lấy key lưu review theo userId
+    const getReviewKey = (userId) => `REVIEWED_BOOKINGS_${userId}`;
+
+    // --- FETCH DANH SÁCH BOOKING ---
     useFocusEffect(
         React.useCallback(() => {
             const fetchBookings = async () => {
                 try {
                     setScreenLoading(true);
-                    setError(''); // Reset lỗi mỗi khi tải lại
+                    setError('');
+
                     const token = await AsyncStorage.getItem("ACCESS_TOKEN");
                     const userId = await AsyncStorage.getItem("USER_ID");
 
@@ -42,18 +45,17 @@ const ReviewScreen = () => {
                     }
 
                     const data = await getUserBookings(userId, token);
-                    
-                    const reviewedJSON = await AsyncStorage.getItem("REVIEWED_BOOKINGS");
-                    const reviewedIds = reviewedJSON ? JSON.parse(reviewedJSON) : [];
 
+                    // Lấy danh sách booking đã review theo userId
+                    const reviewedJSON = await AsyncStorage.getItem(getReviewKey(userId));
+                    const reviewedIds = reviewedJSON ? JSON.parse(reviewedJSON) : [];
 
                     const allowedStatuses = ['paid', 'completed'];
                     const bookingsToReview = data.filter(item =>
-                        allowedStatuses.includes(item.status?.toLowerCase().trim()) && 
-                        !reviewedIds.includes(item._id)                                
+                        allowedStatuses.includes(item.status?.toLowerCase().trim()) &&
+                        !reviewedIds.includes(item._id)
                     );
 
-                    // Sắp xếp theo ngày tạo giảm dần
                     bookingsToReview.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
                     setBookings(bookingsToReview);
@@ -69,7 +71,6 @@ const ReviewScreen = () => {
             fetchBookings();
         }, [])
     );
-
 
     // ---  HÀM GỬI ĐÁNH GIÁ ---
     const handleSubmitReview = async (bookingId, tourData, rating, comment, localImageUris) => {
@@ -102,10 +103,12 @@ const ReviewScreen = () => {
 
             await postReview(userId, tourId, rating, comment, imagesPayload, token);
 
-            const stored = await AsyncStorage.getItem('REVIEWED_BOOKINGS');
+            // Lưu booking đã review kèm userId
+            const key = getReviewKey(userId);
+            const stored = await AsyncStorage.getItem(key);
             const reviewedBookings = stored ? JSON.parse(stored) : [];
             reviewedBookings.push(bookingId);
-            await AsyncStorage.setItem('REVIEWED_BOOKINGS', JSON.stringify(reviewedBookings));
+            await AsyncStorage.setItem(key, JSON.stringify(reviewedBookings));
 
             Alert.alert('Thành công', 'Cảm ơn bạn đã đánh giá chuyến đi!');
             setBookings(prev => prev.filter(item => item._id !== bookingId));
@@ -119,7 +122,6 @@ const ReviewScreen = () => {
         }
     };
 
-    // --- RENDER FUNCTIONS  ---
     const renderContent = () => {
         if (screenLoading) {
             return <View style={styles.centered}><ActivityIndicator size="large" color="#000" /></View>;
@@ -164,7 +166,6 @@ const ReviewScreen = () => {
     );
 };
 
-
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFFFFF' },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
@@ -175,11 +176,7 @@ const styles = StyleSheet.create({
     listContainer: { paddingVertical: 10, paddingHorizontal: 15 },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
     errorText: { color: 'red', textAlign: 'center' },
-    emptyText: {
-        fontSize: 16,
-        color: '#666',
-        textAlign: 'center',
-    }
+    emptyText: { fontSize: 16, color: '#666', textAlign: 'center' }
 });
 
 export default ReviewScreen;
