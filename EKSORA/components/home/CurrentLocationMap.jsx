@@ -1,91 +1,83 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, ActivityIndicator, Image } from 'react-native';
-import MapView, { Marker, UrlTile } from 'react-native-maps';
+import { StyleSheet, View, Image } from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'; 
 import * as Location from 'expo-location';
 import { COLORS } from '../../constants/colors';
 
-// ---  Tọa độ trung tâm và mức zoom cho bản đồ Việt Nam ---
 const VIETNAM_REGION = {
-  latitude: 16.047079,   // Vĩ độ trung tâm (Đà Nẵng)
-  longitude: 108.206230, // Kinh độ trung tâm (Đà Nẵng)
-  latitudeDelta: 12,    // Mức độ zoom theo chiều dọc để thấy cả nước
-  longitudeDelta: 12,   // Mức độ zoom theo chiều ngang
+  latitude: 16.047079,
+  longitude: 108.206230,
+  latitudeDelta: 12,
+  longitudeDelta: 12,
 };
 
-export default function CurrentLocationMap({ onLocationFound, tourData, onMarkerPress }) {
-
-  const [location, setLocation] = useState(null);
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const locationCallbackCalled = useRef(false);
+//  Cập nhật danh sách props
+export default function CurrentLocationMap({
+  onLocationFound,
+  onLocationError,
+  tourData,
+  onMarkerPress,
+  customMapStyle,
+}) {
   const mapRef = useRef(null);
   const [tourMarkers, setTourMarkers] = useState([]);
+  const locationCallbackCalled = useRef(false);
 
-  // --- LOGIC LẤY VỊ TRÍ  ---
+  // --- LOGIC LẤY VỊ TRÍ ---
   useEffect(() => {
     const getLocation = async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setErrorMsg('Quyền truy cập vị trí đã bị từ chối!');
-        setLoading(false);
+        if (onLocationError) {
+          onLocationError('Quyền truy cập vị trí đã bị từ chối!');
+        }
         return;
       }
+
       try {
         const currentLocation = await Location.getCurrentPositionAsync({});
-        setLocation(currentLocation);
         if (onLocationFound && !locationCallbackCalled.current) {
           onLocationFound(currentLocation);
           locationCallbackCalled.current = true;
         }
       } catch (error) {
-        setErrorMsg('Không thể lấy được vị trí hiện tại.');
-      } finally {
-        setLoading(false);
+        if (onLocationError) {
+          onLocationError('Không thể lấy được vị trí hiện tại.');
+        }
       }
     };
     getLocation();
-  }, [onLocationFound]);
+  }, [onLocationFound, onLocationError]); // Thêm onLocationError vào dependencies
 
-
-  // ---  Cập nhật logic xử lý để lấy cả HÌNH ẢNH của tour ---
+  // --- LOGIC XỬ LÝ MARKER ---
   useEffect(() => {
     const processAndDisplayMarkers = async () => {
       if (!tourData || tourData.length === 0) {
         setTourMarkers([]);
-        // Nếu không có tour nào, zoom về VN
-        if(mapRef.current) {
-            mapRef.current.animateToRegion(VIETNAM_REGION, 1000);
-        }
         return;
       }
-
+      
       const markers = [];
       for (const tour of tourData) {
-           // 1. Lấy tên địa điểm từ dữ liệu tour
         const mainLocation = tour.location.split(',')[0].trim();
-        if (mainLocation && tour.cateID && tour.cateID.name) { // Kiểm tra xem cateID có tồn tại không
-        try {
-            // Tạo chuỗi truy vấn đầy đủ và rõ ràng hơn
+        if (mainLocation && tour.cateID?.name) {
+          try {
             const fullLocationString = `${mainLocation}, ${tour.cateID.name}`;
-
-            // 2. HÀM QUAN TRỌNG NHẤT: Chuyển tên địa điểm thành tọa độ
-            const geocodedLocations = await Location.geocodeAsync(fullLocationString); 
+            const geocodedLocations = await Location.geocodeAsync(fullLocationString);
             
-            if (geocodedLocations && geocodedLocations.length > 0) {
-              // 3. Lấy tọa độ (latitude, longitude) từ kết quả
+            if (geocodedLocations?.length > 0) {
               const { latitude, longitude } = geocodedLocations[0];
-              // 4. Tạo một đối tượng marker hoàn chỉnh
               markers.push({
-                key: tour._id, 
+                key: tour._id,
                 _id: tour._id,
                 latitude,
                 longitude,
                 title: tour.name,
-                imageUrl: tour.image,  
+                imageUrl: tour.image,
               });
             }
           } catch (e) {
-            console.log(`Không thể geocode địa điểm: ${mainLocation}`, e);
+            console.warn(`Không thể geocode địa điểm: ${mainLocation}`, e);
           }
         }
       }
@@ -93,46 +85,37 @@ export default function CurrentLocationMap({ onLocationFound, tourData, onMarker
       setTourMarkers(markers);
       
       if (mapRef.current && markers.length > 0) {
-         // Zoom để hiển thị tất cả các marker
-         setTimeout(() => {
-            // Lấy ra tọa độ của tất cả các marker để fit
-            const markerCoordinates = markers.map(m => ({
-              latitude: m.latitude,
-              longitude: m.longitude,
-            }));
-            mapRef.current.fitToCoordinates(markerCoordinates, {
-              edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
-              animated: true,
-            });
-         }, 4000);
+        const markerCoordinates = markers.map(m => ({
+          latitude: m.latitude,
+          longitude: m.longitude,
+        }));
+        
+        mapRef.current.fitToCoordinates(markerCoordinates, {
+          edgePadding: { top: 150, right: 50, bottom: 50, left: 50 },
+          animated: true,
+        });
       }
     };
     
     processAndDisplayMarkers();
   }, [tourData]);
 
-
-  // Giao diện Render
-  if (loading) {
-    return <View style={styles.container}><ActivityIndicator size="large" color={COLORS.primary} /><Text style={styles.infoText}>Đang tải bản đồ...</Text></View>;
-  }
-  if (errorMsg) {
-    return <View style={styles.container}><Text style={styles.errorText}>{errorMsg}</Text></View>;
-  }
   
   return (
     <View style={styles.mapContainer}>
       <MapView
-        key={tourMarkers.length}
         ref={mapRef}
         style={styles.map}
-        //  Thiết lập vùng hiển thị ban đầu là Việt Nam
+        //  Dùng provider của Google
+        provider={PROVIDER_GOOGLE}
+        //  Áp dụng style tùy chỉnh
+        customMapStyle={customMapStyle}
         initialRegion={VIETNAM_REGION}
         showsUserLocation={true}
+        showsMyLocationButton={true}
       >
-        <UrlTile urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maximumZ={19} />
+
         
-        {/* Render Marker với hình ảnh tùy chỉnh  */}
         {tourMarkers.map(marker => (
           <Marker
             key={marker.key}
@@ -143,7 +126,6 @@ export default function CurrentLocationMap({ onLocationFound, tourData, onMarker
             title={marker.title}
             onPress={() => onMarkerPress && onMarkerPress(String(marker._id))}
           >
-            {/* Đây là phần giao diện tùy chỉnh cho Marker */}
             <View style={styles.customMarker}>
               <View style={styles.markerImageContainer}>
                  <Image
@@ -161,15 +143,14 @@ export default function CurrentLocationMap({ onLocationFound, tourData, onMarker
   );
 }
 
-// ---  Thêm style cho Marker tùy chỉnh ---
+
 const styles = StyleSheet.create({
-    container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f0f0' },
-    mapContainer: { ...StyleSheet.absoluteFillObject },
-    map: { ...StyleSheet.absoluteFillObject },
-    infoText: { fontSize: 16, color: COLORS.textSecondary, marginTop: 10 },
-    errorText: { fontSize: 16, color: 'red', textAlign: 'center', paddingHorizontal: 20 },
-    
-    // Style cho Marker tùy chỉnh
+    mapContainer: {
+        ...StyleSheet.absoluteFillObject,
+    },
+    map: {
+        ...StyleSheet.absoluteFillObject,
+    },
     customMarker: {
         alignItems: 'center',
     },
@@ -184,6 +165,8 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
+        borderColor: COLORS.primary,
+        borderWidth: 2,
     },
     markerImage: {
         width: '100%',
@@ -198,7 +181,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 10,
         borderLeftColor: 'transparent',
         borderRightColor: 'transparent',
-        borderTopColor: '#fff', 
-        marginTop: -1, 
+        borderTopColor: COLORS.primary,
+        marginTop: -3, 
     }
 });

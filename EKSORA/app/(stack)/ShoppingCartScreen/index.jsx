@@ -1,3 +1,5 @@
+// ShoppingCartScreen.js
+
 import React, { useState, useMemo } from 'react';
 import {
   StyleSheet,
@@ -81,6 +83,21 @@ const ShoppingCartScreen = () => {
     }
   };
 
+
+  //  TẠO HÀM ĐIỀU HƯỚNG ĐẾN TRANG CHI TIẾT
+  const handleNavigateToDetail = (item) => {
+    // Đảm bảo rằng item và tour_id tồn tại trước khi điều hướng
+    if (item && item.tour_id) {
+      // Sử dụng đường dẫn đến trang chi tiết tour của bạn.
+      // Ví dụ: '/tour-detail/[id]' hoặc '/tours/[id]'
+      router.push(`/trip-detail/${item.tour_id}`);
+    } else {
+      console.error("Lỗi: Không tìm thấy tour_id để điều hướng.");
+      Alert.alert('Lỗi', 'Không thể xem chi tiết tour này.');
+    }
+  };
+
+
   const handleProceedToCheckout = async () => {
     if (isLoading) return;
 
@@ -105,21 +122,20 @@ const ShoppingCartScreen = () => {
         const [day, month, year] = item.travelDate.split('/');
         const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         
-        // SỬA LẠI BOOKING DATA
         const bookingData = {
           user_id: loggedInUser.id,
           tour_id: item.tour_id,
           travel_date: formattedDate,
           quantity_nguoiLon: item.adults,
           quantity_treEm: item.children,
-          price_nguoiLon: item.originalAdultPrice, // Gửi giá GỐC
-          price_treEm: item.originalChildPrice,   // Gửi giá GỐC
+          price_nguoiLon: item.originalAdultPrice,
+          price_treEm: item.originalChildPrice,
           optionServices: (item.selectedOptions || []).map((option) => ({
             option_service_id: option.id || option.option_service_id,
           })),
           coin: 0,
-          voucher_id: item.voucherId || null, // Gửi ID của voucher
-          discount: item.discount || 0,       // Gửi tổng tiền được giảm
+          voucher_id: item.voucherId || null,
+          discount: item.discount || 0,
           fullName: `${loggedInUser.lastName} ${loggedInUser.firstName}`,
           email: loggedInUser.email,
           phone: loggedInUser.phone,
@@ -181,11 +197,14 @@ const ShoppingCartScreen = () => {
       <FlatList
         data={cartItems}
         renderItem={({ item }) => (
+          // TRUYỀN HÀM ĐIỀU HƯỚNG VÀO CARTITEM
           <CartItem
             item={item}
             isSelected={selectedIds.includes(item.id)}
             onToggleSelect={() => handleToggleSelect(item.id)}
             onDelete={() => handleDeleteItem(item.id)}
+            // Prop mới để xử lý sự kiện nhấn vào item
+            onPressItem={() => handleNavigateToDetail(item)}
           />
         )}
         keyExtractor={(item) => item.id.toString()}
