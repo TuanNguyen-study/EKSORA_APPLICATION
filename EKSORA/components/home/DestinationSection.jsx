@@ -1,18 +1,23 @@
 // components/home/DestinationSection.js
 
 import React from "react";
-import { View, Text, FlatList, StyleSheet, Image } from "react-native";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from "react-native";
 import DestinationChip from "./DestinationChip";
+import { Ionicons } from '@expo/vector-icons'; 
+import { COLORS } from "../../constants/colors"; 
 
-const DestinationSection = ({ categories, selectedLocation, onPressDestination }) => {
+
+const DestinationSection = ({ categories, selectedLocation, onPressDestination, onPressNearby }) => {
   return (
     <View style={styles.sectionWrapper}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Bạn muốn đi đâu chơi?</Text>
-        <Image
-          source={require('../../assets/images/66acd894de10f.png')}
-          style={styles.decorativeImage}
-        />
+        <Text style={styles.sectionTitle}>Bạn muốn đi đâu?</Text>
+        
+        <TouchableOpacity style={styles.nearbyButton} onPress={onPressNearby}>
+            <Ionicons name="location-outline" size={20} color={COLORS.primary} />
+            <Text style={styles.nearbyButtonText}>Gần đây</Text>
+        </TouchableOpacity>
+
       </View>
       <FlatList
         data={categories}
@@ -48,11 +53,26 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#222222',
   },
-  decorativeImage: {
-    width: 80,
-    height: 50,
-    resizeMode: 'cover',
+  // Bỏ style cho image cũ
+  // decorativeImage: { ... },
+
+  // ---- STYLE MỚI CHO NÚT BẤM ----
+  nearbyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.lightGray, // Màu nền nhẹ cho nút
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
   },
+  nearbyButtonText: {
+    marginLeft: 5,
+    color: COLORS.primary,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  // ---- KẾT THÚC STYLE MỚI ----
+
   horizontalListContentPadding: {
     paddingHorizontal: 15,
     paddingBottom: 15,

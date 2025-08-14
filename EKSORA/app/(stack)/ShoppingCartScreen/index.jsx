@@ -1,3 +1,5 @@
+// ShoppingCartScreen.js
+
 import React, { useState, useMemo } from 'react';
 import {
   StyleSheet,
@@ -38,8 +40,7 @@ const ShoppingCartScreen = () => {
       (acc, item) => {
         if (selectedIds.includes(item.id)) {
           acc.total += item.price || 0;
-          const originalPrice = (item.adultPrice * item.adults) + (item.childPrice * item.children);
-          acc.totalDiscount += originalPrice - (item.price || 0);
+          acc.totalDiscount += item.discount || 0;
         }
         return acc;
       },
@@ -82,6 +83,21 @@ const ShoppingCartScreen = () => {
     }
   };
 
+
+  //  TẠO HÀM ĐIỀU HƯỚNG ĐẾN TRANG CHI TIẾT
+  const handleNavigateToDetail = (item) => {
+    // Đảm bảo rằng item và tour_id tồn tại trước khi điều hướng
+    if (item && item.tour_id) {
+      // Sử dụng đường dẫn đến trang chi tiết tour của bạn.
+      // Ví dụ: '/tour-detail/[id]' hoặc '/tours/[id]'
+      router.push(`/trip-detail/${item.tour_id}`);
+    } else {
+      console.error("Lỗi: Không tìm thấy tour_id để điều hướng.");
+      Alert.alert('Lỗi', 'Không thể xem chi tiết tour này.');
+    }
+  };
+
+
   const handleProceedToCheckout = async () => {
     if (isLoading) return;
 
@@ -104,21 +120,21 @@ const ShoppingCartScreen = () => {
 
       for (const item of selectedItems) {
         const [day, month, year] = item.travelDate.split('/');
-        const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-
+        const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
         const bookingData = {
           user_id: loggedInUser.id,
           tour_id: item.tour_id,
           travel_date: formattedDate,
           quantity_nguoiLon: item.adults,
           quantity_treEm: item.children,
-          price_nguoiLon: item.adultPrice,
-          price_treEm: item.childPrice,
+          price_nguoiLon: item.originalAdultPrice,
+          price_treEm: item.originalChildPrice,
           optionServices: (item.selectedOptions || []).map((option) => ({
-            option_service_id: option.id,
+            option_service_id: option.id || option.option_service_id,
           })),
           coin: 0,
-          voucher_id: item.voucher_id || null,
+          voucher_id: item.voucherId || null,
           discount: item.discount || 0,
           fullName: `${loggedInUser.lastName} ${loggedInUser.firstName}`,
           email: loggedInUser.email,
@@ -127,9 +143,7 @@ const ShoppingCartScreen = () => {
 
         const res = await createBooking(bookingData);
         const individualBookingId = res?.booking_id || res?.booking?._id;
-        const bookingStatus = res?.status || 'pending'; // Mặc định là pending nếu không có status
-
-        console.log('Booking response:', { bookingId: individualBookingId, status: bookingStatus });
+        const bookingStatus = res?.status || 'pending';
 
         if (!individualBookingId) throw new Error(`Không tạo được booking cho tour: ${item.name}`);
 
@@ -138,7 +152,6 @@ const ShoppingCartScreen = () => {
 
       if (createdItems.length === 0) throw new Error('Không có đơn hàng nào được tạo thành công.');
 
-      // Chuyển hướng đến BookingCompleted, không xóa giỏ hàng ở đây
       const representativeBookingId = createdItems[0].bookingId;
       const checkoutParams = {
         totalPrice: total.toString(),
@@ -154,6 +167,7 @@ const ShoppingCartScreen = () => {
         pathname: '/BookingCompleted',
         params: checkoutParams,
       });
+
     } catch (error) {
       console.error('Lỗi khi tạo đơn hàng:', error.message || error);
       Alert.alert('Lỗi', `Đặt tour thất bại: ${error.message || 'Vui lòng thử lại.'}`);
@@ -183,11 +197,14 @@ const ShoppingCartScreen = () => {
       <FlatList
         data={cartItems}
         renderItem={({ item }) => (
+          // TRUYỀN HÀM ĐIỀU HƯỚNG VÀO CARTITEM
           <CartItem
             item={item}
             isSelected={selectedIds.includes(item.id)}
             onToggleSelect={() => handleToggleSelect(item.id)}
             onDelete={() => handleDeleteItem(item.id)}
+            // Prop mới để xử lý sự kiện nhấn vào item
+            onPressItem={() => handleNavigateToDetail(item)}
           />
         )}
         keyExtractor={(item) => item.id.toString()}
