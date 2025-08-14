@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-// THAY ĐỔI: Import thêm useState để quản lý modal chia sẻ
 import { useState } from 'react'; 
 import { COLORS } from '../../../constants/colors';
 
@@ -34,7 +33,6 @@ export default function TripDetailScreen() {
   const router = useRouter();
   const { id: productId } = useLocalSearchParams();
 
-  // Lấy các giá trị từ hook - phần này đã rất tốt!
   const {
     productData,
     loading,
@@ -54,18 +52,15 @@ export default function TripDetailScreen() {
     clearBookingDetails,
   } = useTourDetail(productId);
 
-  // --- THAY ĐỔI: QUẢN LÝ TRẠNG THÁI CHO MODAL CHIA SẺ ---
-  // Chúng ta sẽ không dùng Share API gốc nữa, mà dùng ShareModal tùy chỉnh
-  // được điều khiển bởi ProductImageCarousel
+
   const [isShareModalVisible, setShareModalVisible] = useState(false);
 
-  // Xóa hàm handleShareTour cũ, thay bằng các hàm điều khiển modal
-  // const handleShareTour = async () => { ... }; // <- Xóa hàm này đi
+
 
   const openShareModal = () => setShareModalVisible(true);
   const closeShareModal = () => setShareModalVisible(false);
 
-  // --- GIAO DIỆN LOADING, LỖI (Giữ nguyên, đã làm tốt) ---
+
   if (loading && !productData) {
     return (
       <View style={styles.centered}>
@@ -102,33 +97,33 @@ export default function TripDetailScreen() {
         keyExtractor={(item) => item.key}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
-          // THAY ĐỔI: Truyền đầy đủ các props mới vào ProductImageCarousel
+
           <ProductImageCarousel
             images={productData.images}
-            tourData={productData} // Cần thiết cho ShareModal
+            tourData={productData}
             onBackPress={() =>
               router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
             }
             
-            // Props cho tính năng Yêu thích (đã đúng)
+
             isFavorited={isFavorited}
             onFavoritePress={onFavoritePress}
             
-            // Props cho tính năng Chia sẻ (cập nhật)
+
             isShareModalVisible={isShareModalVisible}
-            onSharePress={openShareModal} // Mở modal khi nhấn nút
-            onCloseShareModal={closeShareModal} // Đóng modal
+            onSharePress={openShareModal} 
+            onCloseShareModal={closeShareModal} 
           />
         }
         renderItem={() => (
           <View style={styles.mainContentContainer}>
-            {/* Các component con khác không thay đổi */}
+
             <ProductBasicInfo
               productInfo={productData.productInfo}
               onSeeAllReviews={onSeeAllReviews}
             />
             <View style={styles.separator} />
-            <TripHighlightsSection
+            {/* <TripHighlightsSection
               title="Điểm nổi bật của chuyến đi"
               highlights={productData.highlights.map((highlight) => ({
                 _id: highlight._id,
@@ -136,7 +131,7 @@ export default function TripDetailScreen() {
                 title: highlight.location_name || 'Điểm nổi bật',
                 description: highlight.description || 'Mô tả điểm nổi bật của chuyến đi.',
               }))}
-            />
+            /> */}
             <ProductOptionSelector
               servicePackages={productData.availableServicePackages}
               onSelectionUpdate={handleSelectionUpdate}
@@ -182,8 +177,7 @@ export default function TripDetailScreen() {
         onClose={clearBookingDetails}
         bookingDetails={bookingDetails}
       />
-      
-      {/* Modal yêu cầu đăng nhập (đã đúng) */}
+
       <LoginRequestModal 
         isVisible={isLoginModalVisible}
         onClose={() => setLoginModalVisible(false)}
@@ -192,7 +186,7 @@ export default function TripDetailScreen() {
   );
 }
 
-// --- STYLES (Giữ nguyên) ---
+// --- STYLES ---
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.white },
     centered: {
