@@ -27,7 +27,7 @@ const cardShadow = Platform.select({
   },
 });
 
-// ✅ Hàm xáo trộn mảng
+//  Hàm xáo trộn mảng
 const shuffleArray = (array) => {
   return array
     .map((item) => ({ item, sort: Math.random() }))
