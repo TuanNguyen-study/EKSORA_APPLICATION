@@ -14,15 +14,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS } from '../../../constants/colors'; 
+import { COLORS } from '../../../constants/colors';
 
 if (Platform.OS === 'android') {
     if (UIManager.setLayoutAnimationEnabledExperimental) {
         UIManager.setLayoutAnimationEnabledExperimental(true);
     }
 }
-
-
 
 // Accordion Item
 const AccordionItem = ({ title, children, isOpen, onPress }) => (
@@ -96,7 +94,7 @@ export default function HelpScreen() {
                     <ContentRow text="Tìm kiếm điểm đến: Nhập tên địa điểm hoặc sử dụng bản đồ tích hợp." />
                     <ContentRow text="Đặt tour: Chọn tour, kiểm tra chi tiết, và đặt chỗ qua vài bước đơn giản." />
                     <ContentRow text="Quản lý chuyến đi: Theo dõi lịch trình, vé trong phần 'Hành trình của tôi'." />
-                    <ContentRow text="Tính năng Grok 3: Trò chuyện với AI để nhận gợi ý du lịch và thông tin." />
+                    <ContentRow text="Gợi ý thông minh: Nhận đề xuất hành trình phù hợp theo sở thích và vị trí của bạn." />
                     <ContentRow text="Đánh giá và nhận xét: Chia sẻ trải nghiệm sau chuyến đi." />
                 </AccordionItem>
 
@@ -142,6 +140,7 @@ export default function HelpScreen() {
                 >
                     <ContentRow text="Làm thế nào để hủy tour? Vào 'Hành trình của tôi', chọn tour và làm theo hướng dẫn (có thể áp dụng phí hủy)." />
                     <ContentRow text="Thanh toán có an toàn không? Có, chúng tôi dùng cổng thanh toán mã hóa như Visa, Mastercard, MoMo." />
+                    <ContentRow text="Lưu ý: Sau khi thanh toán, tour sẽ không thể hủy để đảm bảo quy trình đặt chỗ chính xác và an toàn." />
                 </AccordionItem>
             </ScrollView>
         </SafeAreaView>

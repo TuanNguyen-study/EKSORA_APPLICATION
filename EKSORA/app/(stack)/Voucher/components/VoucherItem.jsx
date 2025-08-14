@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Đảm bảo bạn đã cài đặt @expo/vector-icons
+import { Ionicons } from '@expo/vector-icons'; 
 
 // --- Bảng màu để dễ dàng tùy chỉnh ---
 const COLORS = {

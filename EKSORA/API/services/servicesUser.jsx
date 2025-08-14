@@ -34,7 +34,7 @@ export const getUserBookings = async (userId, token) => {
       throw new Error("Dữ liệu đơn đặt hàng trả về không hợp lệ");
     }
   } catch (error) {
-    console.error("Lỗi khi lấy danh sách đơn đặt hàng:", error.message || error);
+    //console.error("Lỗi khi lấy danh sách đơn đặt hàng:", error.message || error);
     throw error;
   }
 };

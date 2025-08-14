@@ -1,7 +1,7 @@
 import { useLocalSearchParams, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { View, FlatList, SafeAreaView, ActivityIndicator, StyleSheet, Platform, StatusBar } from "react-native";
-import { getTours } from "../../../API/services/serverCategories";
+import { getAllToursByLocation } from "../../../API/services/serverCategories";
 
 import SearchHeader from "../SearchResult/components/SearchHeader";
 import TourCard from "../SearchResult/components/TourCard";
@@ -18,9 +18,9 @@ export default function index() {
   useEffect(() => {
     const fetchTours = async () => {
       setLoading(true);
-      const all = await getTours();
+      const all = await getAllToursByLocation();
 
-      // 👉 Lọc tour có giá > 0
+      // Lọc tour có giá > 0
       const validTours = all.filter((tour) => tour.price > 0);
 
       const matched = validTours.filter((tour) =>

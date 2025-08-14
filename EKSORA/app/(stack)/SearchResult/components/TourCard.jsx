@@ -29,7 +29,7 @@ export default function TourCard({ item, onPress }) {
           <View style={styles.ratingRow}>
             <Text style={styles.rating}>⭐ {item.rating}</Text>
             <Text style={styles.dot}>•</Text>
-            <Text style={styles.booked}>60K+ Đã được đặt</Text>
+            <Text style={styles.booked}>Địa điểm hấp dẫn</Text>
           </View>
           <View style={styles.priceRow}>
             <Text style={styles.price}>Từ ₫ {item.price.toLocaleString()}</Text>
