@@ -27,22 +27,35 @@ export default function Body() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  // State để theo dõi người dùng đã đăng nhập hay chưa.
+  const [isLoggedIn, setIsLoggedIn] = useState(false); 
   const router = useRouter();
 
   const loadFavoriteTours = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setError(null); // Luôn reset lỗi mỗi khi tải lại
+
     try {
       const token = await AsyncStorage.getItem("ACCESS_TOKEN");
       const userId = await AsyncStorage.getItem("USER_ID");
-      if (!token || !userId) {
-        setTours([]);
-        return;
-      }
 
+      // BƯỚC 1: KIỂM TRA ĐIỀU KIỆN ĐĂNG NHẬP
+      // Nếu không tìm thấy token hoặc userId, đây là khách truy cập.
+      if (!token || !userId) {
+        setIsLoggedIn(false); // Cập nhật state: CHƯA ĐĂNG NHẬP
+        setTours([]);         // Xóa dữ liệu cũ
+        setLoading(false);    // Dừng màn hình loading
+        return;               // <<< Thoát khỏi hàm ngay lập tức để không gọi API
+      }
+      
+      // Nếu code chạy tới đây, người dùng chắc chắn đã đăng nhập.
+      setIsLoggedIn(true); // Cập nhật state: ĐÃ ĐĂNG NHẬP
+
+      // BƯỚC 2: GỌI API VÌ ĐÃ CÓ THÔNG TIN XÁC THỰC
       const res = await getFavoriteToursByUser(userId, token);
       const favoriteList = res?.data || [];
 
+      // BƯỚC 3: XỬ LÝ DỮ LIỆU NHẬN ĐƯỢC
       const formattedTours = await Promise.all(
         favoriteList
           .filter(item => item.tour_id && typeof item.tour_id === "object")
@@ -58,14 +71,12 @@ export default function Body() {
               console.warn(`Không thể lấy chi tiết cho tour ${tourId}:`, err);
             }
 
-            // Lấy description thô từ API
             const rawDescription = detail.description || item.tour_id.description || '';
-            // Gọi hàm parseDescription đã import và lọc ra để tạo một chuỗi mô tả ngắn gọn
             const shortDescriptionText = parseDescription(rawDescription)
-              .filter(part => part.type === 'text') // Chỉ lấy các phần là văn bản
-              .map(part => part.content)          // Lấy nội dung của chúng
-              .join(' ')                           // Nối chúng lại thành một câu
-              .trim();                             // Cắt bỏ khoảng trắng thừa
+              .filter(part => part.type === 'text')
+              .map(part => part.content)
+              .join(' ')
+              .trim();
 
             return {
               id: tourId,
@@ -83,14 +94,18 @@ export default function Body() {
           })
       );
       setTours(formattedTours);
-    } catch (error) {
-      console.error("Lỗi khi load danh sách tour yêu thích:", error);
+
+    } catch (apiError) {
+      // Khối catch này bây giờ chỉ xử lý lỗi thực sự 
+      // cho người dùng đã đăng nhập.
+      console.error("Lỗi API khi tải danh sách yêu thích:", apiError);
       setError("Không thể tải danh sách yêu thích. Vui lòng thử lại.");
     } finally {
-      setLoading(false);
+      setLoading(false); // Luôn dừng loading sau khi hoàn tất
     }
   }, []);
 
+  // Tải dữ liệu mỗi khi màn hình được người dùng focus
   useFocusEffect(
     useCallback(() => {
       loadFavoriteTours();
@@ -104,11 +119,37 @@ export default function Body() {
     }
   };
 
-  // --- PHẦN RENDER --
+  // --- PHẦN HIỂN THỊ GIAO DIỆN (RENDER) THEO THỨ TỰ ƯU TIÊN ---
+
+  // 1. Luôn hiển thị màn hình loading nếu đang trong quá trình tải
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" color="#007bff" /></View>;
   }
 
+  // 2. ƯU TIÊN HIỂN THỊ "YÊU CẦU ĐĂNG NHẬP" NẾU NGƯỜI DÙNG LÀ KHÁCH
+  if (!isLoggedIn) {
+    return (
+      <View style={styles.center}>
+        <Image
+          source={require("../../../assets/images/favoritesUnmatched.png")}
+          style={styles.emptyImage}
+          resizeMode="contain"
+        />
+        <Text style={styles.noResults}>Truy cập bị hạn chế</Text>
+        <Text style={styles.explore}>
+          Tạo tài khoản hoặc đăng nhập để có thể thực hiện được tính năng của Eksora.
+        </Text>
+        <TouchableOpacity 
+          onPress={() => router.push('/(stack)/login/loginEmail')} 
+          style={[styles.exploreButton, { marginTop: 24 }]}
+        >
+          <Text style={styles.exploreButtonText}>Đăng nhập / Đăng ký</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+  
+  // 3. Hiển thị lỗi chỉ khi người dùng ĐÃ ĐĂNG NHẬP nhưng API gặp sự cố
   if (error) {
     return (
       <View style={styles.center}>
@@ -120,6 +161,7 @@ export default function Body() {
     );
   }
   
+  // 4. Hiển thị khi người dùng ĐÃ ĐĂNG NHẬP nhưng chưa có mục yêu thích nào
   if (tours.length === 0) {
     return (
       <View style={styles.center}>
@@ -142,6 +184,7 @@ export default function Body() {
     );
   }
 
+  // 5. Hiển thị danh sách yêu thích khi đã đăng nhập và có dữ liệu
   return (
     <View style={styles.container}>
       <FlatList
@@ -156,23 +199,22 @@ export default function Body() {
         keyExtractor={(item) => item.id?.toString()}
         contentContainerStyle={{ padding: 16 }}
       />
-
-      <SuggestionModal
-        isVisible={modalVisible}
-        onClose={handleCloseModal}
-      />
     </View>
   );
 }
+
+// --- PHẦN STYLES ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
   },
   center: {
+    paddingTop: 100,
     flex: 1,
-    paddingTop: 150,
-    alignItems: 'center',
+    //justifyContent: 'center', // Canh giữa nội dung theo chiều dọc
+    alignItems: 'center',     // Canh giữa nội dung theo chiều ngang
+    paddingHorizontal: 20,
     backgroundColor: 'white',
   },
   errorText: {
@@ -184,19 +226,20 @@ const styles = StyleSheet.create({
   emptyImage: {
     width: 200,
     height: 150,
-    marginBottom: 16,
+    marginBottom: 24,
   },
   noResults: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
     color: '#333',
+    marginBottom: 8,
   },
   explore: {
     fontSize: 16,
     textAlign: 'center',
     color: '#666',
-    marginTop: 8,
+    lineHeight: 24,
   },
   exploreButton: {
     backgroundColor: '#007bff',
@@ -212,5 +255,6 @@ const styles = StyleSheet.create({
   exploreButtonText: {
     color: 'white',
     fontWeight: 'bold',
+    fontSize: 16,
   },
 });

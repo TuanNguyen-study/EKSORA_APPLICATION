@@ -1,9 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
-import * as Location from 'expo-location';
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router"; 
 import { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
   Image,
   Platform,
   ScrollView,
@@ -20,12 +18,12 @@ import {
   getToursByLocation,
 } from "../../../API/services/serverCategories";
 
-// Components
+// <<< THAY ĐỔI COMPONENT >>>
 import DestinationSection from "../../../components/home/DestinationSection";
 import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
 import ImageCarousel from "../../../components/home/ImageCarousel";
 import PromoBanner from "../../../components/home/PromoBanner";
-import SuggestionTabs from "../../../components/home/SuggestionTabs";
+import SuggestionsSection from "../../../components/home/SuggestionsSection"; 
 import LoadingScreen from "../../../components/LoadingScreen";
 
 // Constants
@@ -38,119 +36,78 @@ export default function HomeScreen() {
   const [categories, setCategories] = useState([]);
   const [tours, setTours] = useState([]);
   const [locationTours, setLocationTours] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [selectedLocationName, setSelectedLocationName] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState('all');
+  const [selectedLocationName, setSelectedLocationName] = useState('Tất cả'); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // State mới cho chức năng "Gần Đây"
-  const [nearbyTours, setNearbyTours] = useState([]);
-  const [isFindingNearby, setIsFindingNearby] = useState(false);
-  const [nearbyError, setNearbyError] = useState(null);
-  const fetchHomeData = async () => {
-    setLoading(true);
-    try {
-      const [categoriesData, toursData] = await Promise.all([
-        getCategories(),
-        getTours(),
-      ]);
-
-      const allCategory = { _id: 'all', name: 'Tất cả', isAllCategory: true };
-      const categoriesWithAll = [
-        allCategory,
-        ...(Array.isArray(categoriesData) ? categoriesData : categoriesData.data || [])
-      ];
-      setCategories(categoriesWithAll);
-
-      const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || []).map((tour) => ({
-        ...tour,
-        image: tour.image?.[0] || 'https://via.placeholder.com/300',
-      }));
-
-      setTours(processedTours);
-      setError(null);
-    } catch (err) {
-      console.error("Lỗi khi tải dữ liệu:", err);
-      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Effect để set style cho StatusBar
   useFocusEffect(
     useCallback(() => {
       StatusBar.setBarStyle("light-content");
       if (Platform.OS === "android") {
         StatusBar.setBackgroundColor(COLORS.primary);
         StatusBar.setTranslucent(false);
-         fetchHomeData();
       }
     }, [])
   );
 
-  // Gọi API lấy danh mục và tour ban đầu
+  // Gọi API lấy danh mục và tour ban đầu chỉ một lần
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        const [categoriesData, toursData] = await Promise.all([
+          getCategories(),
+          getTours(),
+        ]);
 
-useEffect(() => {
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [categoriesData, toursData] = await Promise.all([
-        getCategories(),
-        getTours(),
-      ]);
+        const allCategory = { _id: 'all', name: 'Tất cả', isAllCategory: true };
+        const categoriesWithAll = [allCategory, ...(Array.isArray(categoriesData) ? categoriesData : categoriesData.data || [])];
+        setCategories(categoriesWithAll);
 
-      const allCategory = { _id: 'all', name: 'Tất cả', isAllCategory: true };
-      const categoriesWithAll = [allCategory, ...(Array.isArray(categoriesData) ? categoriesData : categoriesData.data || [])];
-      setCategories(categoriesWithAll);
+        const rawTours = Array.isArray(toursData) ? toursData : toursData.data || [];
+        const processedTours = rawTours
+          .filter(tour => tour && tour.price > 0)
+          .map((tour) => ({
+            ...tour,
+            image: tour.image?.[0] || "https://via.placeholder.com/300",
+          }));
+          
+        setTours(processedTours);
+        setError(null);
+      } catch (err) {
+        console.error("Lỗi khi tải dữ liệu ban đầu:", err);
+        setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      const rawTours = Array.isArray(toursData) ? toursData : toursData.data || [];
-
-      // <<< START: PHẦN LỌC DỮ LIỆU >>>
-      const processedTours = rawTours
-        // Bước 1: Lọc bỏ tất cả các tour có giá <= 0
-        .filter(tour => tour && tour.price > 0)
-        // Bước 2: Xử lý các thông tin còn lại của tour
-        .map((tour) => ({
-          ...tour,
-          image: tour.image?.[0] || "https://via.placeholder.com/300",
-        }));
-        
-      setTours(processedTours);
-      setError(null);
-    } catch (err) {
-      console.error("Lỗi khi tải dữ liệu ban đầu:", err);
-      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchData();
-}, []);
-
+    fetchInitialData();
+  }, []);
 
   // Xử lý khi người dùng chọn một địa điểm
   const handlePressDestination = async (item) => {
+    // Nếu đã chọn rồi thì không fetch lại
+    if (selectedLocation === item._id) return; 
+
+    setLoading(true); // Chỉ bật loading cho phần danh sách tour
+    setSelectedLocation(item._id);
+    setSelectedLocationName(item.name);
+
     if (item.isAllCategory) {
-      setSelectedLocation(item._id);
-      setSelectedLocationName(item.name);
-      setLocationTours([]);
+      setLocationTours([]); // Xóa danh sách tour theo địa điểm
+      setLoading(false);
       return;
     }
 
-    setSelectedLocation(item._id);
-    setSelectedLocationName(item.name);
-    setLoading(true);
     try {
       setError(null);
       const toursData = await getToursByLocation(item._id);
-
       const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || []).map((tour) => ({
         ...tour,
         image: tour.image?.[0] || 'https://via.placeholder.com/300',
       }));
-
       setLocationTours(processedTours);
     } catch (err) {
       console.error("Lỗi khi lấy tour theo địa điểm:", err);
@@ -161,82 +118,12 @@ useEffect(() => {
     }
   };
 
-  // Hàm xử lý khi tìm kiếm tour gần đây
-  const fetchNearbyTours = async (location) => {
-    setIsFindingNearby(true);
-    setNearbyError(null);
-    setNearbyTours([]);
-
-    try {
-      const geocodedAddresses = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-
-      if (!geocodedAddresses?.length) {
-        throw new Error("Không thể xác định được địa chỉ của bạn.");
-      }
-
-      const locationName = geocodedAddresses[0].region;
-      if (!locationName) {
-        throw new Error("Không nhận diện được tỉnh/thành phố.");
-      }
-
-      const cleanedLocationName = locationName.replace(/Thành phố|Tỉnh/i, '').trim();
-      console.log(`Vị trí nhận diện được: ${cleanedLocationName}`);
-
-      const foundCategory = categories.find(
-        (cat) => !cat.isAllCategory && cat.name.toLowerCase() === cleanedLocationName.toLowerCase()
-      );
-
-      if (!foundCategory) {
-        throw new Error(`Rất tiếc, chúng tôi chưa có tour nào tại ${cleanedLocationName}.`);
-      }
-
-      console.log(`Đang tìm tour cho category: ${foundCategory.name} (ID: ${foundCategory._id})`);
-      const toursData = await getToursByLocation(foundCategory._id);
-
-      const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || []).map((tour) => ({
-        ...tour,
-        image: tour.image?.[0] || 'https://via.placeholder.com/300',
-      }));
-
-      if (processedTours.length === 0) {
-        throw new Error(`Không tìm thấy tour nào cho ${cleanedLocationName}.`);
-      }
-
-      setNearbyTours(processedTours);
-
-    } catch (err) {
-      console.error("Lỗi khi tìm tour gần đây:", err.message);
-      setNearbyError(err.message);
-      setNearbyTours([]);
-    } finally {
-      setIsFindingNearby(false);
-    }
+  // <<< HÀM MỚI: XỬ LÝ ĐIỀU HƯỚNG SANG TRANG GẦN ĐÂY >>>
+  const handleNavigateToNearby = () => {
+    router.push('/nearby'); 
   };
 
-  // Hàm logic chính để tìm tour gần đây
-  const handleFindNearbyTours = (location) => {
-    if (!location) return;
 
-    // Hiển thị hộp thoại hỏi người dùng
-    Alert.alert(
-      "Tìm Tour Gần Đây?",
-      "Chúng tôi đã tìm thấy vị trí của bạn. Bạn có muốn xem các tour ở gần đây không?",
-      [
-        {
-          text: "Để sau",
-          onPress: () => console.log("Người dùng đã từ chối tìm tour."),
-          style: "cancel",
-        },
-        {
-          text: "Đồng ý",
-          onPress: () => fetchNearbyTours(location),
-        },
-      ]
-    );
-  };
   // Xử lý khi người dùng chọn một tour đề xuất
   const handlePressSuggestion = (tourId) => {
     if (!tourId) {
@@ -246,11 +133,12 @@ useEffect(() => {
     router.push(`/trip-detail/${tourId}`);
   };
 
-  if (loading && !tours.length) {
+  // Hiển thị màn hình loading chính khi chưa có dữ liệu lần đầu
+  if (loading && !tours.length && !categories.length) {
     return <LoadingScreen />;
   }
 
-  if (error && !loading) {
+  if (error && !tours.length) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
@@ -268,7 +156,7 @@ useEffect(() => {
       >
         <LinearGradient
           colors={['#2F80ED', '#56CCF2', '#FFFFFF']}
-          locations={[0, 0.3, 0.8, 1]}
+          locations={[0, 0.3, 0.8]}
           style={styles.gradientSection}
         >
           <HeaderSearchBar />
@@ -285,28 +173,21 @@ useEffect(() => {
           </View>
           <PromoBanner />
         </View>
-
+        
+        {/* DESTINATION SECTION  */}
         <DestinationSection
           categories={categories}
           selectedLocation={selectedLocation}
           onPressDestination={handlePressDestination}
+          onPressNearby={handleNavigateToNearby} 
         />
-
-        <SuggestionTabs
-          // Props cho tab "Đề xuất"
+        
+        <SuggestionsSection
           tours={tours}
           locationTours={locationTours}
           selectedLocation={selectedLocation}
           selectedLocationName={selectedLocationName}
           isLoading={loading}
-
-          // Props cho tab "Gần đây"
-          onFindNearby={handleFindNearbyTours}
-          nearbyTours={nearbyTours}
-          isFindingNearby={isFindingNearby}
-          nearbyError={nearbyError}
-
-          // Prop chung
           onPressSuggestion={handlePressSuggestion}
         />
       </ScrollView>
@@ -347,9 +228,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   errorText: {
     fontSize: 16,
     color: 'red',
+    textAlign: 'center',
   },
 });

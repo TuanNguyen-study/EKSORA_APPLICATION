@@ -1,96 +1,111 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getUser } from '../../API/services/servicesUser'; 
+import { getUser } from '../../API/services/servicesUser';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
-import { COLORS } from '../../constants/colors'; 
-
-
-// cắt lấy 12 ký tự cuối cùng của chuỗi ID. Kết quả: eb09b3f4c676
-const formatJoinDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return `Thành viên từ T${date.getMonth() + 1}, ${date.getFullYear()}`;
-};
+import { COLORS } from '../../constants/colors';
 
 export default function Header() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [avatarUri, setAvatarUri] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
       const fetchUser = async () => {
-        setLoading(true); 
+        setLoading(true);
+        const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+
+        if (!token) {
+          setIsLoggedIn(false);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        setIsLoggedIn(true);
         try {
           const data = await getUser();
           setUser(data);
           const localAvatar = await AsyncStorage.getItem('LOCAL_AVATAR_URI');
-          if (localAvatar) {
-            setAvatarUri(localAvatar);
-          } else if (data && data.avatar) { 
-            setAvatarUri(data.avatar);
-          } else {
-            setAvatarUri(null); 
-          }
+          setAvatarUri(localAvatar || (data ? data.avatar : null));
         } catch (err) {
           console.error('Không lấy được thông tin user:', err);
-          setUser(null); 
+          setIsLoggedIn(false);
+          setUser(null);
         } finally {
           setLoading(false);
         }
       };
       fetchUser();
-      return () => {};
     }, [])
   );
 
+  // Giao diện loading
   if (loading) {
     return (
-      <View style={[styles.headerBase, styles.center]}>
-        <ActivityIndicator size="large" color={COLORS.white} />
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', minHeight: 220 }]}>
+        <ActivityIndicator size="small" color={COLORS.white} />
       </View>
     );
   }
 
+  // --- PHẦN ĐƯỢC PHỤC HỒI CHO TÀI KHOẢN KHÁCH ---
+  if (!isLoggedIn) {
+    return (
+      <View style={[styles.container, styles.guestHeader]}>
+        <Image
+          source={require('../../assets/images/Logo.png')} // Sử dụng logo nếu có
+          style={styles.guestAvatar}
+        />
+        <View>
+          <Text style={styles.guestUsername}>Chào mừng bạn!</Text>
+          <Text style={styles.guestMessage}>Khám phá Eksora ngay hôm nay</Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.loginButton} 
+          onPress={() => router.push('/(stack)/login/loginEmail')} 
+        >
+          <Text style={styles.loginButtonText}>Đăng nhập / Đăng ký</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Giao diện khi lỗi nhưng đã đăng nhập
   if (!user) {
     return (
-      <View style={[styles.headerBase, styles.center]}>
-        <Text style={{ color: COLORS.white }}>Không thể tải thông tin người dùng</Text>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', minHeight: 220 }]}>
+        <Text style={{ color: COLORS.white }}>Không thể tải thông tin.</Text>
       </View>
     );
   }
 
+  // --- GIAO DIỆN CHO NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP (GIỮ NGUYÊN) ---
   return (
-    <View style={styles.headerBase}>
-      {/* --- PHẦN THÔNG TIN USER --- */}
-      <View style={styles.userInfoContainer}>
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.userInfoContainer} onPress={() => router.push('/(stack)/UpdateUser')}>
         <Image
-          source={avatarUri ? { uri: avatarUri } : require('../../assets/images/favicon.png')} 
+          source={avatarUri ? { uri: avatarUri } : require('../../assets/images/favicon.png')}
           style={styles.avatar}
         />
         <View style={styles.textGroup}>
           <Text style={styles.username}>{user.first_name || 'Xin chào'}</Text>
-          <TouchableOpacity onPress={() => router.push('/(stack)/UpdateUser')}>
-            <Text style={styles.update}>Xem & cập nhật thông tin cá nhân</Text>
-          </TouchableOpacity>
+          <Text style={styles.update}>Xem & cập nhật thông tin cá nhân</Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.membershipCard}>
         <View style={styles.cardHeader}>
-            <Text style={styles.membershipLevel}>Thành viên Eksora</Text>
-            <Ionicons name="shield-checkmark" size={22} color="rgba(255, 255, 255, 0.8)" />
+          <Text style={styles.membershipLevel}>Thành viên Eksora</Text>
+          <Ionicons name="shield-checkmark" size={20} color="white" />
         </View>
-
-        <View style={styles.cardNumberContainer}>
-            <Text style={styles.cardNumber}>
-                {user._id.slice(-12).toUpperCase().replace(/(.{4})/g, '$1 ')}
-            </Text>
-        </View>
-        
+        <Text style={styles.cardNumber}>
+          {(user._id.slice(-12) || '------------').toUpperCase().replace(/(.{4})/g, '$1 ').trim()}
+        </Text>
       </View>
     </View>
   );
@@ -98,51 +113,85 @@ export default function Header() {
 
 
 const styles = StyleSheet.create({
-  headerBase: { 
-    paddingHorizontal: 16,
-    paddingBottom: 32, 
-  },
-  center: { 
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 250,
+  // Container chính bao bọc toàn bộ header
+  container: {
+    paddingTop: 16,
+    paddingBottom: 40,
+    paddingHorizontal: 16, // Thêm padding ngang cho nhất quán
   },
 
-  userInfoContainer: {
-    paddingTop: 30,
-    flexDirection: 'row',
+  // --- STYLES ĐÃ ĐƯỢC PHỤC HỒI CHO GIAO DIỆN KHÁCH ---
+  guestHeader: {
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
   },
-  avatar: {
+  guestAvatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
+    marginBottom: 12,
+  },
+  guestUsername: {
+    fontWeight: 'bold',
+    fontSize: 22,
+    color: COLORS.white,
+    textAlign: 'center',
+  },
+  guestMessage: {
+    color: 'rgba(255, 255, 255, 0.9)', 
+    fontSize: 14,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  loginButton: {
+    backgroundColor: COLORS.white,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  loginButtonText: {
+    color: COLORS.primary, 
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+
+  // --- STYLES CHO GIAO DIỆN ĐÃ ĐĂNG NHẬP (GIỮ NGUYÊN) ---
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24, 
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32, 
     borderWidth: 2,
-    borderColor: COLORS.white,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
   },
   textGroup: {
-    flex: 1,
-    marginLeft: 12,
+    flex: 1, 
+    marginLeft: 16, 
   },
   username: {
     fontWeight: 'bold',
-    fontSize: 20,
-    color: COLORS.white, 
+    fontSize: 22,
+    color: COLORS.white,
   },
   update: {
-    color: 'rgba(255, 255, 255, 0.9)', 
-    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
     marginTop: 4,
   },
-
   membershipCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.01)', 
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(20, 3, 3, 0.15)',
+    padding: 16,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -151,37 +200,14 @@ const styles = StyleSheet.create({
   },
   membershipLevel: {
     color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 14,
-    fontWeight: '600', 
-  },
-  cardNumberContainer: {
-    paddingVertical: 10, 
+    fontSize: 15,
+    fontWeight: '600',
   },
   cardNumber: {
     color: COLORS.white,
-    fontSize: 16, 
+    fontSize: 18,
     fontWeight: '500',
-    letterSpacing: 2.5, 
-    textAlign: 'center',
-  },
-  cardFooter: {
-    borderTopWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    paddingTop: 12,
-    marginTop: 4,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardLabel: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 10,
-    marginBottom: 4,
-    fontWeight: '600',
-  },
-  cardValue: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontWeight: 'bold',
+    letterSpacing: 3,
+    marginTop: 12,
   },
 });

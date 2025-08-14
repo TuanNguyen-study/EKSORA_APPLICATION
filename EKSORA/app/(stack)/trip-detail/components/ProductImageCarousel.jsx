@@ -1,6 +1,8 @@
+// file: components/ProductDetail/ProductImageCarousel.js
+
 import { COLORS } from "../../../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef, useState, useContext } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -8,10 +10,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
-  Alert,
 } from "react-native";
-import { useRouter } from "expo-router"; 
-import { FavoriteContext } from "../../../../store/FavoriteContext";
+import { useRouter } from "expo-router";
 import ShareModal from "./ShareModal";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -20,74 +20,32 @@ const SNAP_INTERVAL = ITEM_WIDTH;
 
 const ProductImageCarousel = ({
   images = [],
-  tourId,
   tourData,
+  isFavorited, // THAY ĐỔI: Nhận trạng thái yêu thích từ prop
+  isShareModalVisible, // THAY ĐỔI: Nhận trạng thái hiển thị modal từ prop
   onBackPress,
-  onSharePress,
-  onFavoritePress,
+  onSharePress, // Sẽ sử dụng prop này
+  onFavoritePress, // Sẽ sử dụng prop này
+  onCloseShareModal, // THAY ĐỔI: Nhận hàm đóng modal từ prop
   onCartPress,
   onImagePress,
 }) => {
-  const { likedTours, addFavorite, removeFavorite, isLoading } =
-    useContext(FavoriteContext);
+  // --- XÓA BỎ LOGIC KHÔNG CẦN THIẾT ---
+  // const { likedTours, addFavorite, removeFavorite } = useContext(FavoriteContext); // Không cần tự xử lý nữa
+  // const [showShareModal, setShowShareModal] = useState(false); // State này sẽ được quản lý bởi component cha
+
   const loopedImages = [...images, ...images, ...images];
   const initialIndex = images.length;
   const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isManuallyScrolling, setIsManuallyScrolling] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false); // State cho ShareModal
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false); // Prevent double taps
-  const isFavorite = likedTours.includes(tourId);
-  const router = useRouter(); // Sử dụng useRouter
-
-  // Xử lý yêu thích
-  const handleFavoritePress = async () => {
-    console.log(
-      `[ProductImageCarousel] handleFavoritePress, tourId: ${tourId}, isFavorite: ${isFavorite}`
-    );
-    try {
-      if (isFavorite) {
-        await removeFavorite(tourId);
-        console.log(
-          `[ProductImageCarousel] Đã gọi removeFavorite cho tourId: ${tourId}`
-        );
-      } else {
-        await addFavorite(tourId);
-        console.log(
-          `[ProductImageCarousel] Đã gọi addFavorite cho tourId: ${tourId}`
-        );
-      }
-      if (onFavoritePress) onFavoritePress();
-    } catch (error) {
-      console.error(
-        `[ProductImageCarousel] Lỗi khi xử lý yêu thích cho tourId ${tourId}:`,
-        error.message
-      );
-      Alert.alert("Lỗi", "Không thể đồng bộ yêu thích. Vui lòng thử lại.");
-    }
-  };
+  const router = useRouter();
 
   // Auto scroll carousel
   useEffect(() => {
     if (!flatListRef.current || loopedImages.length === 0) return;
     flatListRef.current.scrollToIndex({ index: initialIndex, animated: false });
   }, [loopedImages.length]);
-
-  // Debug ShareModal state
-  useEffect(() => {
-    console.log(
-      "ProductImageCarousel - showShareModal changed:",
-      showShareModal
-    );
-  }, [showShareModal]);
-
-  // Reset states when component unmounts
-  useEffect(() => {
-    return () => {
-      setShowShareModal(false);
-      setIsButtonDisabled(false);
-    };
-  }, []);
 
   useEffect(() => {
     if (isManuallyScrolling) return;
@@ -146,55 +104,29 @@ const ProductImageCarousel = ({
     );
   };
 
-  if (!images || images.length === 0) {
-    return (
-      <View style={[styles.carouselContainer, styles.noImageContainer]}>
-        <TouchableOpacity
-          onPress={onBackPress}
-          style={[styles.iconButtonBase, styles.backButton]}
-        >
-          <Ionicons name="arrow-back" size={28} color={COLORS.primary} />
-        </TouchableOpacity>
-        <Ionicons name="image-outline" size={100} color={COLORS.border} />
-      </View>
-    );
-  }
+  // --- HÀM ĐÃ ĐƯỢC ĐƠN GIẢN HÓA HOẶC XÓA BỎ ---
+  // const handleFavoritePress = ... // Xóa hàm này
+  // const handleSharePress = ... // Xóa hàm này
+  // const handleCloseShareModal = ... // Xóa hàm này
 
   const handleCartPress = () => {
     router.push("/(stack)/ShoppingCartScreen");
   };
 
-  // Xử lý hiển thị ShareModal
-  const handleSharePress = () => {
-    if (isButtonDisabled || showShareModal) {
-      console.log(
-        "Share button blocked - disabled:",
-        isButtonDisabled,
-        "modal shown:",
-        showShareModal
+  if (!images || images.length === 0) {
+    // ... (không thay đổi phần này)
+    return (
+        <View style={[styles.carouselContainer, styles.noImageContainer]}>
+          <TouchableOpacity
+            onPress={onBackPress}
+            style={[styles.iconButtonBase, styles.backButton]}
+          >
+            <Ionicons name="arrow-back" size={28} color={COLORS.primary} />
+          </TouchableOpacity>
+          <Ionicons name="image-outline" size={100} color={COLORS.border} />
+        </View>
       );
-      return;
-    }
-
-    console.log(
-      "Share button pressed, current showShareModal:",
-      showShareModal
-    );
-    setIsButtonDisabled(true);
-    setShowShareModal(true);
-
-    // Re-enable button after delay
-    setTimeout(() => {
-      setIsButtonDisabled(false);
-    }, 1000);
-  };
-
-  // Xử lý đóng ShareModal
-  const handleCloseShareModal = () => {
-    console.log("Closing ShareModal");
-    setShowShareModal(false);
-    setIsButtonDisabled(false);
-  };
+  }
 
   return (
     <View style={styles.carouselContainer}>
@@ -203,6 +135,7 @@ const ProductImageCarousel = ({
         data={loopedImages}
         keyExtractor={(item, index) => `${item?.id || "image"}-${index}`}
         horizontal
+        // ... (các props khác của FlatList không đổi)
         snapToInterval={SNAP_INTERVAL}
         decelerationRate="fast"
         bounces={false}
@@ -228,35 +161,33 @@ const ProductImageCarousel = ({
         </TouchableOpacity>
 
         <View style={styles.rightHeaderActions}>
+          {/* THAY ĐỔI: Gọi trực tiếp prop onFavoritePress */}
           <TouchableOpacity
-            onPress={handleFavoritePress}
+            onPress={onFavoritePress}
             style={styles.iconButtonBase}
           >
             <Ionicons
-              name={likedTours.includes(tourId) ? "heart" : "heart-outline"}
+              name={isFavorited ? "heart" : "heart-outline"}
               size={24}
-              color={likedTours.includes(tourId) ? COLORS.danger : COLORS.white}
+              color={isFavorited ? COLORS.danger : COLORS.white}
             />
           </TouchableOpacity>
 
+          {/* THAY ĐỔI: Gọi trực tiếp prop onSharePress */}
           <TouchableOpacity
-            onPress={handleSharePress}
-            style={[
-              styles.iconButtonBase,
-              isButtonDisabled && styles.disabledButton,
-            ]}
-            disabled={isButtonDisabled || showShareModal}
+            onPress={onSharePress}
+            style={styles.iconButtonBase}
             activeOpacity={0.7}
           >
             <Ionicons
               name="share-social-outline"
               size={24}
-              color={isButtonDisabled ? COLORS.textSecondary : COLORS.white}
+              color={COLORS.white}
             />
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handleCartPress}
+            onPress={handleCartPress} // Giữ nguyên vì không liên quan đến logic đăng nhập
             style={styles.iconButtonBase}
           >
             <Ionicons name="cart-outline" size={26} color={COLORS.white} />
@@ -266,11 +197,11 @@ const ProductImageCarousel = ({
 
       {images.length > 1 && renderPagination()}
 
-      {/* Share Modal */}
+      {/* THAY ĐỔI: Điều khiển modal thông qua props */}
       {tourData && (
         <ShareModal
-          visible={showShareModal}
-          onClose={handleCloseShareModal}
+          visible={isShareModalVisible}
+          onClose={onCloseShareModal}
           tourData={tourData}
         />
       )}
@@ -278,67 +209,68 @@ const ProductImageCarousel = ({
   );
 };
 
+// ... (styles không thay đổi)
 const styles = StyleSheet.create({
-  carouselContainer: {
-    position: "relative",
-    width: "100%",
-    height: 300,
-  },
-  noImageContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: COLORS.background,
-  },
-  image: {
-    width: ITEM_WIDTH,
-    height: "100%",
-  },
-  headerActionsContainer: {
-    position: 'absolute',
-    top: 35,
-    left: 10,
-    right: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  rightHeaderActions: {
-    flexDirection: "row",
-  },
-  iconButtonBase: {
-    padding: 8,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    borderRadius: 20,
-    marginHorizontal: 5,
-  },
-  backButton: {
-    backgroundColor: "rgba(255,255,255,0.9)",
-  },
-  paginationContainer: {
-    position: "absolute",
-    bottom: 10,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  paginationDotBase: {
-    width: 64,
-    height: 3,
-    borderRadius: 1,
-    marginHorizontal: 4,
-    marginBottom: 16,
-  },
-  paginationDotActive: {
-    backgroundColor: COLORS.primary,
-  },
-  paginationDotInactive: {
-    backgroundColor: "rgba(255,255,255,0.5)",
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-});
+    carouselContainer: {
+      position: "relative",
+      width: "100%",
+      height: 300,
+    },
+    noImageContainer: {
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: COLORS.background,
+    },
+    image: {
+      width: ITEM_WIDTH,
+      height: "100%",
+    },
+    headerActionsContainer: {
+      position: 'absolute',
+      top: 35,
+      left: 10,
+      right: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    rightHeaderActions: {
+      flexDirection: "row",
+    },
+    iconButtonBase: {
+      padding: 8,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      borderRadius: 20,
+      marginHorizontal: 5,
+    },
+    backButton: {
+      backgroundColor: "rgba(255,255,255,0.9)",
+    },
+    paginationContainer: {
+      position: "absolute",
+      bottom: 10,
+      left: 0,
+      right: 0,
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    paginationDotBase: {
+      width: 64,
+      height: 3,
+      borderRadius: 1,
+      marginHorizontal: 4,
+      marginBottom: 16,
+    },
+    paginationDotActive: {
+      backgroundColor: COLORS.primary,
+    },
+    paginationDotInactive: {
+      backgroundColor: "rgba(255,255,255,0.5)",
+    },
+    disabledButton: {
+      opacity: 0.6,
+    },
+  });
 
 export default ProductImageCarousel;
