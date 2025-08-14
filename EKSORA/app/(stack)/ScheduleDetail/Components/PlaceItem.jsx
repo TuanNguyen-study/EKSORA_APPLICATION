@@ -42,39 +42,36 @@ export default function PlaceItem({ item, onRemove, onMoveUp, onMoveDown, disabl
 
           {/* Góc dưới: Đặt ngay + nút di chuyển */}
           <View style={styles.bottomActions}>
-            {item.isBooked ? (
-              <Text style={styles.bookedText}>Đã đặt</Text>
-            ) : (
-              <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: '/(stack)/trip-detail/[id]',
-                    params: { id: item.id },
-                  })
-                }
-              >
-                <Text style={[styles.bookNowText, item.isAdded && { opacity: 0 }]}>
-                  Đặt ngay
-                </Text>
-              </TouchableOpacity>
-            )}
+            <View style={{ minWidth: 60 }}>
+              {item.isBooked ? (
+                <Text style={styles.bookedText}>Đã đặt</Text>
+              ) : item.canBook ? (
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(stack)/trip-detail/[id]',
+                      params: { id: item.id },
+                    })
+                  }
+                >
+                  <Text style={[styles.bookNowText, item.isAdded && { opacity: 0 }]}>
+                    Đặt ngay
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
 
             {/* Nút di chuyển item */}
             <View style={styles.moveContainer}>
               <TouchableOpacity onPress={onMoveUp} disabled={disableUp} style={styles.moveButton}>
-                <AntDesign
-                  name="arrowup"
-                  size={15}
-                />
+                <AntDesign name="arrowup" size={15} />
               </TouchableOpacity>
               <TouchableOpacity onPress={onMoveDown} disabled={disableDown} style={styles.moveButton}>
-                <AntDesign
-                  name="arrowdown"
-                  size={15}
-                />
+                <AntDesign name="arrowdown" size={15} />
               </TouchableOpacity>
             </View>
           </View>
+
         </View>
       </View>
     </View>
@@ -148,6 +145,7 @@ const styles = StyleSheet.create({
   bottomActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+
     marginTop: 12,
     alignItems: 'center',
   },

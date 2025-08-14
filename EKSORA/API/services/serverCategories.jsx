@@ -4,7 +4,7 @@ import AxiosInstance from '../AxiosInstance';
 export const getCategories = async () => {
   try {
     const response = await AxiosInstance().get('/api/categories');
-    return response; 
+    return response;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách categories:', error);
     throw error;
@@ -15,10 +15,10 @@ export const getCategories = async () => {
 export const getTours = async () => {
   try {
     const response = await AxiosInstance().get('/api/tours');
-    return response;  
+    return response;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách các tour:', error);
-    throw error; 
+    throw error;
   }
 };
 
@@ -33,7 +33,7 @@ export const getToursByLocation = async (cateID) => {
     });
     //console.log('Response đầy đủ:', response);
     //console.log('Data từ API:', response);
-    return response; 
+    return response;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách tour theo cateID:', error);
     throw error;
@@ -42,16 +42,17 @@ export const getToursByLocation = async (cateID) => {
 
 // API lấy danh sách tất cả các tour theo category ID
 export const getAllToursByLocation = async (cateID) => {
+
   try {
     console.log('Gọi API với cateID:', cateID);
-    const response = await AxiosInstance().get('/api/categories/tours-by-location/all', {
+    const response = await AxiosInstance().get('/api/all-include-free', {
       params: {
         cateID: cateID,
       },
     });
     //console.log('Response đầy đủ:', response);
     //console.log('Data từ API:', response);
-    return response; 
+    return response;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách tour theo cateID:', error);
     throw error;
