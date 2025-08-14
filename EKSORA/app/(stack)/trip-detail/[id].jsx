@@ -1,17 +1,20 @@
+// file: screens/TripDetail/TripDetailScreen.js (ĐÃ ĐƯỢC CẬP NHẬT)
+
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Share,
 } from 'react-native';
+import { useState } from 'react'; 
 import { COLORS } from '../../../constants/colors';
+
+// Import các component con
 import CustomerReviewSection from './components/CustomerReviewSection';
 import NoteContactSection from './components/NoteContactSection';
 import ProductBasicInfo from './components/ProductBasicInfo';
@@ -21,49 +24,42 @@ import StickyBookingFooter from './components/StickyBookingFooter';
 import DescriptionSection from './components/DescriptionSection';
 import TripHighlightsSection from './components/TripHighlightsSection';
 import BookingModalWrapper from '../bookingModal/components/BookingModalWrapper';
+
+// Import hook và modal
 import { useTourDetail } from '../../../hooks/useTourDetail';
+import LoginRequestModal from '../../../components/LoginRequestModal';
 
 export default function TripDetailScreen() {
   const router = useRouter();
   const { id: productId } = useLocalSearchParams();
+
   const {
     productData,
     loading,
     error,
     refreshing,
     currentTotalPrice,
-    currentSelectedPackages,
-    selectedVoucher,
+    bookingDetails,
+    isFavorited,
+    isLoginModalVisible,
+    setLoginModalVisible,
     loadTourDetails,
     onRefresh,
-    handleApplyVoucher,
     handleSelectionUpdate,
     onSeeAllReviews,
-    onBookNow, // Lấy hàm chuẩn bị data
-    bookingDetails, // Lấy state chứa data
+    onBookNow,
+    onFavoritePress,
     clearBookingDetails,
-    priceBeforeDiscount, // Lấy hàm để đóng modal và xóa data
   } = useTourDetail(productId);
 
-  const handleShareTour = async () => {
-    const shareUrl = `https://eksora.com/tour/${productData._id}`;
-    const shareTitle = `${productData.name} - Chỉ từ ${productData.price?.current?.toLocaleString('vi-VN') || '0'}đ`;
-    const shareText = `Khám phá ${productData.name} tại ${productData.province}. Đặt tour ngay tại EKSORA!`;
 
-    try {
-      const result = await Share.share({
-        message: `${shareTitle}\n\n${shareText}\n\n${shareUrl}`,
-        title: shareTitle,
-        url: shareUrl,
-      });
+  const [isShareModalVisible, setShareModalVisible] = useState(false);
 
-      if (result.action === Share.sharedAction) {
-        console.log('Tour shared successfully');
-      }
-    } catch (error) {
-      Alert.alert('Lỗi', 'Không thể chia sẻ tour này');
-    }
-  };
+
+
+  const openShareModal = () => setShareModalVisible(true);
+  const closeShareModal = () => setShareModalVisible(false);
+
 
   if (loading && !productData) {
     return (
@@ -87,11 +83,11 @@ export default function TripDetailScreen() {
     );
   }
 
-  // Nếu vì lý do nào đó productData chưa có thì không render gì cả
   if (!productData) {
-    return null; 
+    return null;
   }
 
+  // --- GIAO DIỆN CHÍNH ---
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -101,27 +97,33 @@ export default function TripDetailScreen() {
         keyExtractor={(item) => item.key}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
+
           <ProductImageCarousel
             images={productData.images}
-            tourId={productData._id}
             tourData={productData}
             onBackPress={() =>
               router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
             }
-            onSharePress={handleShareTour}
-            onFavoritePress={() => console.log('Đã nhấn nút yêu thích.')}
+            
+
+            isFavorited={isFavorited}
+            onFavoritePress={onFavoritePress}
+            
+
+            isShareModalVisible={isShareModalVisible}
+            onSharePress={openShareModal} 
+            onCloseShareModal={closeShareModal} 
           />
         }
         renderItem={() => (
           <View style={styles.mainContentContainer}>
+
             <ProductBasicInfo
               productInfo={productData.productInfo}
               onSeeAllReviews={onSeeAllReviews}
-              onApplyVoucher={handleApplyVoucher}
-              selectedVoucher={selectedVoucher}
             />
             <View style={styles.separator} />
-            <TripHighlightsSection
+            {/* <TripHighlightsSection
               title="Điểm nổi bật của chuyến đi"
               highlights={productData.highlights.map((highlight) => ({
                 _id: highlight._id,
@@ -129,11 +131,9 @@ export default function TripDetailScreen() {
                 title: highlight.location_name || 'Điểm nổi bật',
                 description: highlight.description || 'Mô tả điểm nổi bật của chuyến đi.',
               }))}
-            />
+            /> */}
             <ProductOptionSelector
               servicePackages={productData.availableServicePackages}
-              dateFilters={productData.availableDateFilters}
-              initialTotalPrice={productData.price.current}
               onSelectionUpdate={handleSelectionUpdate}
             />
             <CustomerReviewSection
@@ -167,14 +167,9 @@ export default function TripDetailScreen() {
         priceInfo={{
           ...productData.price,
           current: currentTotalPrice,
-          original: priceBeforeDiscount,
         }}
         eksoraPoints={28}
-        tourName={productData.name}
-        selectedVoucher={selectedVoucher}
-        currentSelectedPackages={currentSelectedPackages}
-        tourInfo={productData}
-        onBookNow={onBookNow}
+        onBookNow={onBookNow} 
       />
 
       <BookingModalWrapper
@@ -182,52 +177,59 @@ export default function TripDetailScreen() {
         onClose={clearBookingDetails}
         bookingDetails={bookingDetails}
       />
+
+      <LoginRequestModal 
+        isVisible={isLoginModalVisible}
+        onClose={() => setLoginModalVisible(false)}
+      />
     </View>
   );
 }
+
+// --- STYLES ---
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.white },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background || '#f5f5f5',
-    padding: 20,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: COLORS.textSecondary,
-  },
-  errorText: {
-    fontSize: 16,
-    color: COLORS.danger,
-    textAlign: 'center',
-    marginTop: 10,
-  },
-  retryButton: {
-    marginTop: 20,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  mainContentContainer: {
-    paddingHorizontal: 16,
-    backgroundColor: COLORS.white,
-    marginTop: -18,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 30,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: COLORS.background,
-    marginVertical: 15,
-  },
-});
+    container: { flex: 1, backgroundColor: COLORS.white },
+    centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: COLORS.background || '#f5f5f5',
+      padding: 20,
+    },
+    loadingText: {
+      marginTop: 10,
+      fontSize: 16,
+      color: COLORS.textSecondary,
+    },
+    errorText: {
+      fontSize: 16,
+      color: COLORS.danger,
+      textAlign: 'center',
+      marginTop: 10,
+    },
+    retryButton: {
+      marginTop: 20,
+      backgroundColor: COLORS.primary,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 8,
+    },
+    retryButtonText: {
+      color: COLORS.white,
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    mainContentContainer: {
+      paddingHorizontal: 16,
+      backgroundColor: COLORS.white,
+      marginTop: -18,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingBottom: 30,
+    },
+    separator: {
+      height: 8,
+      backgroundColor: '#F3F4F6',
+      marginVertical: 15,
+    },
+  });

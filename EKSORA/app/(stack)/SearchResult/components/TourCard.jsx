@@ -23,7 +23,7 @@ export default function TourCard({ item, onPress }) {
       <View style={[styles.card, cardShadow]}>
         <Image source={{ uri: item.image[0] }} style={styles.cardImage} />
         <View style={styles.cardContent}>
-          <Text style={styles.category}>Sự kiện & Show diễn - {item.province}</Text>
+          <Text style={styles.category}>Sự kiện & Show diễn - {item.cateID.name}</Text>
           <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>
           <Text style={styles.confirm}>Miễn phí huỷ · Xác nhận tức thời</Text>
           <View style={styles.ratingRow}>

@@ -1,29 +1,51 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetchTourDetail } from "../API/services/tourService";
 import { useReviewContext } from "../store/ReviewContext";
 import {
   prepareProductInfo,
   parseDescription,
 } from "../utils/tourDetailHelpers";
+import { FavoriteContext } from "../store/FavoriteContext";
 
 export const useTourDetail = (productId) => {
   const router = useRouter();
   const { setReviewData } = useReviewContext();
   const mappedReviewsRef = useRef([]);
 
-  // State
+  // SỬ DỤNG CONTEXT VÀ THÊM CÁC STATE MỚI
+  const { likedTours, addFavorite, removeFavorite } =
+    useContext(FavoriteContext);
+
+  // State gốc của bạn
   const [productData, setProductData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [currentSelectedPackages, setCurrentSelectedPackages] = useState({});
   const [bookingDetails, setBookingDetails] = useState(null);
-
-  // Chỉ còn một state duy nhất cho giá, đại diện cho giá gốc + options
   const [pricePerPerson, setPricePerPerson] = useState(0);
 
-  // Hàm tính giá được đơn giản hóa, không còn tham số voucher
+  // State mới để quản lý đăng nhập và hành động
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoginModalVisible, setLoginModalVisible] = useState(false);
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
+
+  // BƯỚC 3: TẠO RA GIÁ TRỊ isFavorited VÀ KIỂM TRA ĐĂNG NHẬP
+  // Trạng thái yêu thích được suy ra trực tiếp từ context
+  const isFavorited = likedTours.includes(productId);
+
+  // useEffect để kiểm tra trạng thái đăng nhập khi hook được tải
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      const token = await AsyncStorage.getItem("ACCESS_TOKEN");
+      setIsLoggedIn(!!token);
+    };
+    checkLoginStatus();
+  }, []); // Chạy 1 lần duy nhất
+
+  // Các hàm gốc
   const recalculatePricePerPerson = useCallback(() => {
     if (!productData) return;
 
@@ -39,11 +61,10 @@ export const useTourDetail = (productId) => {
       0
     );
 
-    // Cập nhật giá cho một người (đã bao gồm options)
     const finalPricePerPerson = basePrice + optionTotal;
     setPricePerPerson(finalPricePerPerson);
   }, [productData, currentSelectedPackages]);
-
+  // LẤY THÔNG TIN CỦA TOUR
   const loadTourDetails = useCallback(async (id) => {
     setLoading(true);
     setError(null);
@@ -61,7 +82,7 @@ export const useTourDetail = (productId) => {
         title: svc.title || svc.name,
         options: (svc.options || []).map((opt) => ({
           id: opt._id,
-          title: opt.title, 
+          title: opt.title,
           description: opt.description,
           price: opt.price_extra,
         })),
@@ -131,7 +152,6 @@ export const useTourDetail = (productId) => {
     }
   }, [productId, loadTourDetails]);
 
-  // Gọi lại hàm tính giá mỗi khi các gói dịch vụ thay đổi
   useEffect(() => {
     recalculatePricePerPerson();
   }, [recalculatePricePerPerson]);
@@ -157,8 +177,15 @@ export const useTourDetail = (productId) => {
     router.push("/(stack)/ShowReview");
   };
 
-  //   hàm onBookNow để gửi dữ liệu đi
-  const onBookNow = () => {
+  // BƯỚC 4: CẬP NHẬT HÀM onBookNow VÀ THÊM HÀM onFavoritePress
+  // Cập nhật hàm onBookNow để kiểm tra đăng nhập
+  const onBookNow = useCallback(() => {
+    // Thêm bước kiểm tra đăng nhập
+    if (!isLoggedIn) {
+      setLoginModalVisible(true);
+      return; // Dừng hàm nếu chưa đăng nhập
+    }
+
     if (!productData) return;
 
     const selectedOptionsDetails = Object.entries(currentSelectedPackages).map(
@@ -178,11 +205,9 @@ export const useTourDetail = (productId) => {
       }
     );
 
-    // Chuẩn bị payload sạch, không chứa thông tin giảm giá
     const bookingPayload = {
       tour_id: productData._id,
-      tour_title: productData.title,
-      // GỬI ĐI GIÁ GỐC CỦA 1 NGƯỜI (đã bao gồm options)
+      tour_title: productData.name,
       total_price: pricePerPerson,
       selectedOptions: currentSelectedPackages,
       selectedOptionsDetails,
@@ -190,18 +215,48 @@ export const useTourDetail = (productId) => {
     };
 
     setBookingDetails(bookingPayload);
-  };
+  }, [isLoggedIn, productData, currentSelectedPackages, pricePerPerson]); // Thêm isLoggedIn vào dependencies
+
+  // Thêm hàm onFavoritePress hoàn toàn mới
+  const onFavoritePress = useCallback(async () => {
+    if (!isLoggedIn) {
+      setLoginModalVisible(true);
+      return;
+    }
+    if (isFavoriteLoading) return;
+
+    setIsFavoriteLoading(true);
+    try {
+      if (isFavorited) {
+        await removeFavorite(productId);
+      } else {
+        await addFavorite(productId);
+      }
+    } catch (error) {
+      console.error("Hành động yêu thích thất bại:", error);
+    } finally {
+      setIsFavoriteLoading(false);
+    }
+  }, [
+    isLoggedIn,
+    isFavorited,
+    productId,
+    addFavorite,
+    removeFavorite,
+    isFavoriteLoading,
+  ]);
 
   const clearBookingDetails = () => {
     setBookingDetails(null);
   };
 
+  // BƯỚC 5: CẬP NHẬT OBJECT TRẢ VỀ
   return {
+    // Các giá trị gốc
     productData,
     loading,
     error,
     refreshing,
-    // Trả về giá cho 1 người, đã bao gồm các options
     currentTotalPrice: pricePerPerson,
     currentSelectedPackages,
     bookingDetails,
@@ -209,7 +264,14 @@ export const useTourDetail = (productId) => {
     onRefresh,
     handleSelectionUpdate,
     onSeeAllReviews,
-    onBookNow,
+    onBookNow, // <-- Hàm này đã có kiểm tra đăng nhập
     clearBookingDetails,
+
+    // Các giá trị mới được thêm vào
+    isFavorited,
+    isFavoriteLoading,
+    isLoginModalVisible,
+    setLoginModalVisible,
+    onFavoritePress, // <-- Hàm mới cho nút yêu thích
   };
 };

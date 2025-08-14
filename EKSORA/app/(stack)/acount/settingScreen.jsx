@@ -16,12 +16,8 @@ import { useRouter, useNavigation } from "expo-router";
 import { getUser } from "../../../API/services/servicesUser";
 import { COLORS } from "../../../constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// ======================================================================
-// BƯỚC 1: Import hook `useVoucher` từ context của bạn
-// Hãy chắc chắn rằng đường dẫn này là chính xác
-import { useVoucher } from "../../../store/VoucherContext"; 
-// ======================================================================
-
+// Import hook `useVoucher` nếu bạn có VoucherContext
+// import { useVoucher } from "../../../store/VoucherContext"; 
 
 const cardShadow = Platform.select({
   ios: {
@@ -41,19 +37,21 @@ export default function SettingScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-
-  // ======================================================================
-  // BƯỚC 2: Lấy hàm `handleLogout` từ context
-  // Đặt tên mới là `clearVoucherState` để tránh trùng tên và rõ nghĩa hơn
-  const { handleLogout: clearVoucherState } = useVoucher();
-  // ======================================================================
+  
+  // Dòng này chỉ cần nếu bạn có VoucherContext và muốn dọn dẹp nó
+  // const { handleLogout: clearVoucherState } = useVoucher();
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        await getUser();
-      } catch {
-        setError("Không thể tải thông tin người dùng");
+        // Chỉ gọi API này nếu có token, nếu không thì không cần
+        const token = await AsyncStorage.getItem("ACCESS_TOKEN");
+        if (token) {
+          await getUser();
+        }
+      } catch (err) {
+        console.error("Không thể tải thông tin người dùng:", err);
+        // Không cần setError ở đây vì màn hình vẫn hiển thị được
       } finally {
         setLoading(false);
       }
@@ -69,40 +67,42 @@ export default function SettingScreen() {
 
   const handlePress = useCallback(
     (item) => {
-      if (item.route === "/logout") setModalVisible(true);
-      else router.push(item.route);
+      if (item.route === "/logout") {
+        setModalVisible(true);
+      } else {
+        router.push(item.route);
+      }
     },
     [router]
   );
 
-  // ======================================================================
-  // BƯỚC 3: Cập nhật hàm đăng xuất của bạn
-  // ======================================================================
+  // === HÀM ĐĂNG XUẤT ĐÃ ĐƯỢC CẬP NHẬT HOÀN CHỈNH ===
   const handleLogout = useCallback(async () => {
     try {
-      // 1. Xóa hết thông tin người dùng khỏi bộ nhớ cục bộ
-      await AsyncStorage.removeItem("userToken");
-      // RẤT QUAN TRỌNG: Xóa cả USER_ID, vì VoucherContext đang dùng key này
-      await AsyncStorage.removeItem("USER_ID"); 
+      // DANH SÁCH CÁC KEY CẦN XÓA KHI ĐĂNG XUẤT
+      const keysToRemove = [
+        "ACCESS_TOKEN",
+        "USER_ID",
+      ];
 
-      // 2. GỌI HÀM DỌN DẸP STATE TỪ VOUCHERCONTEXT
-      // Việc này sẽ ngay lập tức làm trống danh sách voucher trên giao diện
-      clearVoucherState();
+      // 1. Xóa tất cả các key đã định nghĩa khỏi AsyncStorage
+      await AsyncStorage.multiRemove(keysToRemove);
 
-      // 3. Chuyển hướng người dùng về trang đăng nhập
-      router.replace("../login/loginEmail");
-    } catch {
-      setError("Đăng xuất thất bại");
+      router.replace("/(stack)/login/loginEmail"); 
+
+    } catch (e) {
+      console.error("Đăng xuất thất bại:", e);
+      setError("Đã có lỗi xảy ra. Vui lòng thử lại.");
     } finally {
+      // Đóng modal dù thành công hay thất bại
       setModalVisible(false);
     }
-    // Thêm `clearVoucherState` vào dependency array của useCallback
-  }, [router, clearVoucherState]);
+  }, [router]); // Bỏ clearVoucherState nếu không dùng
 
   const handleCancel = useCallback(() => setModalVisible(false), []);
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
-  // Các hàm render khác của bạn không cần thay đổi
+  // --- CÁC HÀM RENDER ---
   const renderSection = (title, items) => (
     <View style={styles.sectionContainer}>
       <Text style={styles.sectionHeader}>{title}</Text>
@@ -126,7 +126,7 @@ export default function SettingScreen() {
 
   const renderContent = () => {
     if (loading) {
-      return <ActivityIndicator size="large" color={COLORS.primary} />;
+      return <ActivityIndicator style={{marginTop: 50}} size="large" color={COLORS.primary} />;
     }
     return (
       <View>
@@ -186,7 +186,8 @@ export default function SettingScreen() {
     </SafeAreaView>
   );
 }
-// ... styles của bạn không thay đổi
+
+// --- STYLES ---
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

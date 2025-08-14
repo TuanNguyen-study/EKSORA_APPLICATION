@@ -1,22 +1,22 @@
-import { useState, useEffect } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-  FlatList,
-  Image,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  ScrollView,
+  View
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { COLORS } from "../../../../constants/colors";
+import ModalFilter from "../../search/Component/Filter/ModalFilter";
 
 export default function HeaderSearch() {
   const [searchText, setSearchText] = useState("");
   const [historySearch, setHistorySearch] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+
   const popularSearch = [
     "tràng an",
     "Hà Nội",
@@ -48,34 +48,42 @@ export default function HeaderSearch() {
   const handleSearch = async (keyword) => {
     if (!keyword) return;
     await saveSearchHistory(keyword);
+
     router.push({
       pathname: "/(stack)/SearchResult",
-      params: { query: keyword },
+      params: { query: keyword }, // luôn truyền query
     });
   };
 
   return (
     <View style={styles.header}>
-      {/* Back button + Search bar */}
-      <View style={styles.searchWrapper}>
-        <TouchableOpacity onPress={() => router.push("/(tabs)/home")} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color="#333" />
-        </TouchableOpacity>
+      <View style={styles.topRow}>
+        <View style={styles.searchWrapper}>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/home")} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={20} color="#333" />
+          </TouchableOpacity>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Tìm Kiếm"
-          placeholderTextColor='#ccc'
-          value={searchText}
-          onChangeText={setSearchText}
-          onSubmitEditing={() => handleSearch(searchText)}
-        />
-        <TouchableOpacity style={styles.iconWrapper} onPress={() => handleSearch(searchText)}>
-          <Ionicons name="search" size={18} color="white" />
+          <TextInput
+            style={styles.input}
+            placeholder="Tìm Kiếm"
+            placeholderTextColor='#ccc'
+            value={searchText}
+            onChangeText={setSearchText}
+            onSubmitEditing={() => handleSearch(searchText)}
+          />
+          <TouchableOpacity style={styles.iconWrapper} onPress={() => handleSearch(searchText)}>
+            <Ionicons name="search" size={18} color="white" />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={styles.filterBtn}
+          onPress={() => setModalVisible(true)}
+        >
+          <Ionicons name="options-outline" size={22} color="white" />
         </TouchableOpacity>
       </View>
 
-      {/* Lịch sử tìm kiếm */}
       {historySearch.length > 0 && (
         <>
           <View style={styles.historyHeader}>
@@ -97,7 +105,6 @@ export default function HeaderSearch() {
         </>
       )}
 
-      {/* Mọi người đang tìm kiếm */}
       <Text style={styles.sectionLabel}>Mọi người đang tìm kiếm</Text>
       <View style={styles.keywordWrap}>
         {popularSearch.map((item, index) => (
@@ -108,6 +115,22 @@ export default function HeaderSearch() {
           </TouchableOpacity>
         ))}
       </View>
+
+      <ModalFilter
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onApply={(filters) => {
+          setModalVisible(false);
+          // Khi dùng filter, vẫn truyền query hiện tại để SearchResult lọc chính xác
+          router.push({
+            pathname: "/(stack)/SearchResult",
+            params: { 
+              query: searchText, 
+              filteredTours: JSON.stringify(filters.tours) 
+            },
+          });
+        }}
+      />
     </View>
   );
 }
@@ -118,7 +141,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 20,
   },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   searchWrapper: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
@@ -142,6 +170,12 @@ const styles = StyleSheet.create({
     padding: 6,
     marginLeft: 8,
   },
+  filterBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 20,
+    padding: 8,
+    marginLeft: 10,
+  },
   sectionLabel: {
     fontWeight: "bold",
     fontSize: 14,
@@ -150,7 +184,7 @@ const styles = StyleSheet.create({
   },
   clearText: {
     fontSize: 12,
-    color:  COLORS.primary,
+    color: COLORS.primary,
   },
   historyHeader: {
     flexDirection: "row",

@@ -17,6 +17,8 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { getUserBookings, postReview } from '../../../API/services/servicesUser';
 
 const ReviewScreen = () => {
+
+
     const navigation = useNavigation();
 
     const [bookings, setBookings] = useState([]);

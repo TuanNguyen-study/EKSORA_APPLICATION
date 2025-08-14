@@ -13,12 +13,12 @@ const cardShadow = Platform.select({
   },
 });
 
-export default function CityCard({ province, image }) {
+export default function CityCard({ cateID, image }) {
   return (
     <View style={[styles.cityCard, cardShadow]}>
       <Image source={{ uri: image }} style={styles.cityImage} />
       <View style={{ flex: 1 }}>
-        <Text style={styles.cityTitle}>{province}</Text>
+        <Text style={styles.cityTitle}>{cateID}</Text>
         <Text style={styles.cityDesc} numberOfLines={2}>
           Khám phá các hoạt động, khách sạn, bí kíp du lịch và nhiều điều thú vị khác tại đây
         </Text>
