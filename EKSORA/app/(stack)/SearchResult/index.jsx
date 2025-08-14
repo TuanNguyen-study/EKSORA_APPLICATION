@@ -25,8 +25,8 @@ export default function Index() {
 
   // Tiêu chí lọc chung (giá & đánh giá)
   const [priceRange, setPriceRange] = useState([0, Infinity]); // [min, max]
-  const [minRating, setMinRating] = useState(0); // 0 → 5
-  const [suggestedTours, setSuggestedTours] = useState([]); // chỉ để gợi ý khi rỗng
+  const [minRating, setMinRating] = useState(0); 
+  const [suggestedTours, setSuggestedTours] = useState([]); 
 
 
   useEffect(() => {
