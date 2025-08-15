@@ -16,6 +16,12 @@ const CouponModal = ({ visible, onClose }) => {
   const { coupons, loading, saveVoucher } = useVoucher();
   const [savingVoucherId, setSavingVoucherId] = useState(null);
 
+  // Lọc ra những mã voucher còn hạn sử dụng
+  const validCoupons = coupons.filter((item) => {
+    if (!item.expiry) return true; // Nếu không có ngày hết hạn thì vẫn hiển thị
+    return new Date(item.expiry) > new Date();
+  });
+
   const formatDate = (isoString) => {
     const d = new Date(isoString);
     const day = d.getDate();
@@ -77,7 +83,7 @@ const CouponModal = ({ visible, onClose }) => {
               />
             ) : (
               <FlatList
-                data={coupons}
+                data={validCoupons}
                 renderItem={renderCoupon}
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.content}

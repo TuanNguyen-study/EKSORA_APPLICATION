@@ -41,7 +41,14 @@ export const VoucherProvider = ({ children }) => {
       console.log('All promotions:', allPromotionsData.length);
       console.log('Saved vouchers:', savedIds.length);
       
-      const promotions = allPromotionsData.map((item) => ({
+      // Lọc ra những voucher còn hạn sử dụng (chưa qua ngày hôm nay)
+      const now = new Date();
+      const validPromotions = allPromotionsData.filter((item) => {
+        if (!item.end_date) return true; // Nếu không có ngày hết hạn thì vẫn hiển thị
+        return new Date(item.end_date) > now;
+      });
+
+      const promotions = validPromotions.map((item) => ({
         id: item._id,
         title: 'Mã giảm giá',
         discount: item.discount ? `Giảm ${item.discount}%` : 'Ưu đãi',
@@ -51,7 +58,8 @@ export const VoucherProvider = ({ children }) => {
         expiry: item.end_date,
       }));
 
-      console.log('Promotions (all vouchers):', promotions.length);
+      console.log('All promotions (before filter):', allPromotionsData.length);
+      console.log('Valid promotions (after expiry filter):', promotions.length);
       console.log('All saved:', promotions.every((p) => p.isSaved));
 
       setCoupons(promotions);
