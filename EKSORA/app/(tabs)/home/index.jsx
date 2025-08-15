@@ -1,5 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { useFocusEffect, useRouter } from "expo-router"; 
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Image,
@@ -8,7 +8,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  View
+  View,
 } from "react-native";
 
 // API Services
@@ -23,7 +23,7 @@ import DestinationSection from "../../../components/home/DestinationSection";
 import HeaderSearchBar from "../../../components/home/HeaderSearchBar";
 import ImageCarousel from "../../../components/home/ImageCarousel";
 import PromoBanner from "../../../components/home/PromoBanner";
-import SuggestionsSection from "../../../components/home/SuggestionsSection"; 
+import SuggestionsSection from "../../../components/home/SuggestionsSection";
 import LoadingScreen from "../../../components/LoadingScreen";
 
 // Constants
@@ -36,8 +36,8 @@ export default function HomeScreen() {
   const [categories, setCategories] = useState([]);
   const [tours, setTours] = useState([]);
   const [locationTours, setLocationTours] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState('all');
-  const [selectedLocationName, setSelectedLocationName] = useState('Tất cả'); 
+  const [selectedLocation, setSelectedLocation] = useState("all");
+  const [selectedLocationName, setSelectedLocationName] = useState("Tất cả");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -61,18 +61,25 @@ export default function HomeScreen() {
           getTours(),
         ]);
 
-        const allCategory = { _id: 'all', name: 'Tất cả', isAllCategory: true };
-        const categoriesWithAll = [allCategory, ...(Array.isArray(categoriesData) ? categoriesData : categoriesData.data || [])];
+        const allCategory = { _id: "all", name: "Tất cả", isAllCategory: true };
+        const categoriesWithAll = [
+          allCategory,
+          ...(Array.isArray(categoriesData)
+            ? categoriesData
+            : categoriesData.data || []),
+        ];
         setCategories(categoriesWithAll);
 
-        const rawTours = Array.isArray(toursData) ? toursData : toursData.data || [];
+        const rawTours = Array.isArray(toursData)
+          ? toursData
+          : toursData.data || [];
         const processedTours = rawTours
-          .filter(tour => tour && tour.price > 0)
+          .filter((tour) => tour && tour.price > 0)
           .map((tour) => ({
             ...tour,
             image: tour.image?.[0] || "https://via.placeholder.com/300",
           }));
-          
+
         setTours(processedTours);
         setError(null);
       } catch (err) {
@@ -89,7 +96,7 @@ export default function HomeScreen() {
   // Xử lý khi người dùng chọn một địa điểm
   const handlePressDestination = async (item) => {
     // Nếu đã chọn rồi thì không fetch lại
-    if (selectedLocation === item._id) return; 
+    if (selectedLocation === item._id) return;
 
     setLoading(true); // Chỉ bật loading cho phần danh sách tour
     setSelectedLocation(item._id);
@@ -104,9 +111,11 @@ export default function HomeScreen() {
     try {
       setError(null);
       const toursData = await getToursByLocation(item._id);
-      const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || []).map((tour) => ({
+      const processedTours = (
+        Array.isArray(toursData) ? toursData : toursData.data || []
+      ).map((tour) => ({
         ...tour,
-        image: tour.image?.[0] || 'https://via.placeholder.com/300',
+        image: tour.image?.[0] || "https://via.placeholder.com/300",
       }));
       setLocationTours(processedTours);
     } catch (err) {
@@ -120,9 +129,8 @@ export default function HomeScreen() {
 
   // <<< HÀM MỚI: XỬ LÝ ĐIỀU HƯỚNG SANG TRANG GẦN ĐÂY >>>
   const handleNavigateToNearby = () => {
-    router.push('/nearby'); 
+    router.push("/nearby");
   };
-
 
   // Xử lý khi người dùng chọn một tour đề xuất
   const handlePressSuggestion = (tourId) => {
@@ -147,41 +155,37 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={styles.rootContainer}>
+    <LinearGradient
+      colors={["#2F80ED", "#56CCF2", "#F5F5F5"]}
+      locations={[0, 0.6, 0.8]}
+      style={styles.rootContainer}
+    >
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
         contentContainerStyle={{ paddingBottom: 60 }}
       >
-        <LinearGradient
-          colors={['#2F80ED', '#56CCF2', '#FFFFFF']}
-          locations={[0, 0.3, 0.8]}
-          style={styles.gradientSection}
-        >
-          <HeaderSearchBar />
-          <ImageCarousel />
-        </LinearGradient>
+        <HeaderSearchBar />
 
         <View>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Ưu đãi tuyệt vời!</Text>
             <Image
-              source={require('../../../assets/images/64ecbddcd5a89.png')}
+              source={require("../../../assets/images/64ecbddcd5a89.png")}
               style={styles.decorativeImage}
             />
           </View>
           <PromoBanner />
         </View>
-        
-        {/* DESTINATION SECTION  */}
+        <ImageCarousel />
         <DestinationSection
           categories={categories}
           selectedLocation={selectedLocation}
           onPressDestination={handlePressDestination}
-          onPressNearby={handleNavigateToNearby} 
+          onPressNearby={handleNavigateToNearby}
         />
-        
+
         <SuggestionsSection
           tours={tours}
           locationTours={locationTours}
@@ -191,7 +195,7 @@ export default function HomeScreen() {
           onPressSuggestion={handlePressSuggestion}
         />
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -207,32 +211,32 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 15,
     marginTop: 15,
     marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#222222',
+    fontWeight: "bold",
+    color: COLORS.white,
   },
   decorativeImage: {
     width: 80,
     height: 50,
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   errorText: {
     fontSize: 16,
-    color: 'red',
-    textAlign: 'center',
+    color: "red",
+    textAlign: "center",
   },
 });

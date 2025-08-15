@@ -1,13 +1,20 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../constants/colors';
+import React from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { COLORS } from "../../constants/colors";
 
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.43;
+const { width } = Dimensions.get("window");
+const CARD_WIDTH = width * 0.42;
 const IMAGE_HEIGHT = CARD_WIDTH * (2.5 / 4);
 
-const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/300';
+const PLACEHOLDER_IMAGE = "https://via.placeholder.com/300";
 
 const SuggestionCard = ({ item, onPress }) => {
   // ép kiểu image luôn là string
@@ -15,7 +22,7 @@ const SuggestionCard = ({ item, onPress }) => {
   if (item?.image) {
     if (Array.isArray(item.image)) {
       imageUrl = item.image[0] || PLACEHOLDER_IMAGE;
-    } else if (typeof item.image === 'string') {
+    } else if (typeof item.image === "string") {
       imageUrl = item.image;
     }
   }
@@ -30,15 +37,21 @@ const SuggestionCard = ({ item, onPress }) => {
         </View>
       )}
       <View style={styles.infoContainer}>
-        <Text style={styles.title} numberOfLines={2}>{item.name}</Text>
+        <Text style={styles.title} numberOfLines={2}>
+          {item.name}
+        </Text>
 
         <View style={styles.ratingContainer}>
           <Ionicons name="star" size={16} color="#FACC15" />
-          <Text style={styles.ratingText}>{item.rating}</Text>
+          <Text style={styles.ratingText}>
+            {Number.isInteger(Number(item.rating))
+              ? `${item.rating}.0`
+              : item.rating}
+          </Text>
         </View>
 
         <Text style={styles.currentPrice}>
-          Từ {item.price ? item.price.toLocaleString('vi-VN') : '0'}đ
+          Từ {item.price ? item.price.toLocaleString("vi-VN") : "0"}đ
         </Text>
       </View>
     </TouchableOpacity>
@@ -48,35 +61,35 @@ const SuggestionCard = ({ item, onPress }) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 0.1,
     marginBottom: 20,
-    marginHorizontal: 2,
-    shadowColor: '#000',
+    marginHorizontal: 7,
+    shadowColor: "#a19b9bff",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    overflow: 'hidden',
+    overflow: "hidden",
     width: CARD_WIDTH,
   },
   cardImage: {
-    width: '100%',
+    width: "100%",
     height: IMAGE_HEIGHT,
   },
   discountBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     right: 10,
     backgroundColor: COLORS.danger,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 5,
+    borderRadius: 10,
   },
   discountText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   infoContainer: {
     paddingTop: 8,
@@ -84,19 +97,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   title: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: "bold",
     color: COLORS.text,
     marginBottom: 4,
   },
   ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   ratingText: {
     marginLeft: 4,
-    fontSize: 14,
+    fontSize: 12,
     color: COLORS.textSecondary,
   },
   currentPrice: {

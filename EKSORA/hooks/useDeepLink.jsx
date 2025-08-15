@@ -39,19 +39,37 @@ export const useDeepLink = () => {
         // Kiểm tra nếu là custom scheme eksora://
         if (url.startsWith("eksora://")) {
           const parts = url.replace("eksora://", "").split("/");
+          // Handle format eksora://tour/{id}
           if (parts[0] === "tour" && parts[1]) {
             const tourId = parts[1];
-            router.push(`/(stack)/trip-detail/${tourId}`);
+            router.replace(`/(stack)/trip-detail/${tourId}`);
             console.log("✅ Custom scheme navigation to trip-detail:", tourId);
+            return;
+          }
+          // Handle format eksora://trip-detail/{id} (từ expo-linking)
+          if (parts[0] === "trip-detail" && parts[1]) {
+            const tourId = parts[1];
+            router.replace(`/(stack)/trip-detail/${tourId}`);
+            console.log("✅ Expo-linking navigation to trip-detail:", tourId);
             return;
           }
         }
 
         // Kiểm tra nếu URL có path-based routing
-        if (url.includes("/(stack)/trip-detail/")) {
-          const tourId = url.split("/(stack)/trip-detail/")[1];
+        if (
+          url.includes("/(stack)/trip-detail/") ||
+          url.includes("/trip-detail/")
+        ) {
+          let tourId = null;
+          if (url.includes("/(stack)/trip-detail/")) {
+            tourId = url.split("/(stack)/trip-detail/")[1];
+          } else if (url.includes("/trip-detail/")) {
+            tourId = url.split("/trip-detail/")[1];
+          }
           if (tourId) {
-            router.push(`/(stack)/trip-detail/${tourId}`);
+            // Loại bỏ query string nếu có
+            tourId = tourId.split("?")[0];
+            router.replace(`/(stack)/trip-detail/${tourId}`);
             console.log("✅ Path-based navigation to trip-detail:", tourId);
             return;
           }
@@ -68,7 +86,7 @@ export const useDeepLink = () => {
           console.log("📱 Tour ID from query:", tourId);
 
           if (tourId) {
-            router.push(`/(stack)/trip-detail/${tourId}`);
+            router.replace(`/(stack)/trip-detail/${tourId}`);
             console.log("✅ Query-based navigation to trip-detail:", tourId);
             return;
           }
@@ -77,12 +95,12 @@ export const useDeepLink = () => {
         }
 
         // Fallback về home screen
-        router.push("/(tabs)/home");
+        router.replace("/(tabs)/home");
         console.log("🏠 Fallback to home");
       } catch (error) {
         console.error("❌ Lỗi parse deeplink:", error);
         // Fallback về home screen
-        router.push("/(tabs)/home");
+        router.replace("/(tabs)/home");
       }
     };
 

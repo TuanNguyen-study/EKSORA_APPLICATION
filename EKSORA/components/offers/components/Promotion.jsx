@@ -10,8 +10,8 @@ import {
 import PromotionItem from "./PromotionItem";
 
 // API và Context
-import { getPromotion } from "../../API/services/servicesPromotion";
-import { FavoriteContext } from "../../store/FavoriteContext";
+import { getPromotion } from "../../../API/services/servicesPromotion";
+import { FavoriteContext } from "../../../store/FavoriteContext";
 
 // Hằng số cho style
 const GRID_PADDING = 16;
@@ -70,7 +70,7 @@ export default function Promotions() {
 
   return (
     <View style={styles.wrapper}>
-      <Image source={require("../../assets/images/imgOffer.png")} style={styles.promoIcon} />
+      <Image source={require("../../../assets/images/imgOffer.png")} style={styles.promoIcon} />
       <View style={styles.header}>
         <Text style={styles.headerText}>Ưu đãi đang diễn ra</Text>
       </View>
@@ -137,5 +137,15 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     padding: GRID_PADDING,
+  },
+   cardHeader: {
+    height: 200,
+    justifyContent: 'space-between',
+  },
+  gradient: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'space-between',
+    borderRadius: 20,
   },
 });

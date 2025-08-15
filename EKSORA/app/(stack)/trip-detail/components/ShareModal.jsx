@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../../../constants/colors";
-import deepLinkUtils from "../../../../utils/deepLinkUtils";
+import * as ExpoLinking from "expo-linking";
 
 const ShareModal = ({ visible, onClose, tourData }) => {
   const [smartLinks, setSmartLinks] = useState(null);
@@ -37,41 +37,60 @@ const ShareModal = ({ visible, onClose, tourData }) => {
   const createSmartDeepLink = async () => {
     try {
       setLoading(true);
-      console.log("🚀 Tự tạo deeplink cho tour ID:", _id);
+      console.log("🚀 Tạo deeplink với expo-linking cho tour ID:", _id);
 
-      // Tự tạo smart links (không cần API)
-      const links = deepLinkUtils.createSmartShareLink(_id);
+      // Tạo deeplink sử dụng expo-linking với scheme eksora
+      const url = ExpoLinking.createURL(`trip-detail/${_id}`, {
+        scheme: "eksora",
+      });
+
+      console.log("🔗 Generated deeplink:", url);
+
+      // Không cần web fallback, chỉ dùng deeplink Expo
+      const links = {
+        primary: url,
+        webFallback: url, // Cũng dùng deeplink Expo
+        expoScheme: url,
+        universalLink: url,
+        appScheme: url,
+        shareableText: url,
+      };
+
       setSmartLinks(links);
 
       // Tạo share content
-      const content = deepLinkUtils.createShareMessage(tourData, links);
+      const content = {
+        title: `${name} - Tour EKSORA`,
+        message: `🌟 Khám phá tour "${name}"\n\n🔗 Mở trong app Expo: ${url}`,
+        url: url,
+      };
+
       setShareContent(content);
 
       // Log debug info trong development
       if (__DEV__) {
-        console.log("✅ Deeplinks đã tạo thành công:", links);
+        console.log("✅ Deeplinks với expo-linking đã tạo thành công:", links);
       }
     } catch (error) {
-      console.error("❌ Lỗi tạo deeplink:", error);
+      console.error("❌ Lỗi tạo deeplink với expo-linking:", error);
 
-      // Fallback về Expo format chuẩn
-      const fallbackExpoLink = `exp://exp.host/@voanh0506/EKSORA?tourId=${_id}`;
-      const fallbackWebLink = `https://voanh0506.github.io/eksora-demo/tour/${_id}`;
+      // Fallback về deeplink Expo đơn giản
+      const fallbackDeepLink = ExpoLinking.createURL(`trip-detail/${_id}`);
 
       const fallbackContent = {
         title: `${name} - Tour EKSORA`,
-        message: `🌟 ${name}\n\n📍 Khám phá tour tuyệt vời!\n\n🔗 Mở trong app: ${fallbackExpoLink}\n\n📱 Hoặc mở web: ${fallbackWebLink}`,
-        url: fallbackExpoLink, // Sử dụng deeplink Expo thực tế
+        message: `🌟 Khám phá tour "${name}"\n\n🔗 Mở trong app Expo: ${fallbackDeepLink}`,
+        url: fallbackDeepLink,
       };
 
       setShareContent(fallbackContent);
       setSmartLinks({
-        primary: fallbackExpoLink,
-        webFallback: fallbackWebLink,
-        expoScheme: fallbackExpoLink,
-        universalLink: fallbackWebLink,
-        appScheme: `eksora://tour/${_id}`,
-        shareableText: fallbackExpoLink,
+        primary: fallbackDeepLink,
+        webFallback: fallbackDeepLink,
+        expoScheme: fallbackDeepLink,
+        universalLink: fallbackDeepLink,
+        appScheme: fallbackDeepLink,
+        shareableText: fallbackDeepLink,
       });
     } finally {
       setLoading(false);
@@ -637,23 +656,6 @@ const ShareModal = ({ visible, onClose, tourData }) => {
                 </View>
 
                 {/* Debug links - hiển thị trong development */}
-                {__DEV__ && smartLinks && (
-                  <View style={styles.debugContainer}>
-                    <Text style={styles.debugTitle}>🔧 Debug Links:</Text>
-                    <Text style={styles.debugText}>
-                      📱 Primary: {smartLinks.primary}
-                    </Text>
-                    <Text style={styles.debugText}>
-                      🔗 Expo: {smartLinks.expoScheme}
-                    </Text>
-                    <Text style={styles.debugText}>
-                      ❓ Query: {smartLinks.expoQuery}
-                    </Text>
-                    <Text style={styles.debugText}>
-                      🌐 Web: {smartLinks.webFallback}
-                    </Text>
-                  </View>
-                )}
               </View>
             </View>
 

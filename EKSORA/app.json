@@ -5,21 +5,21 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "runtimeVersion": "1.0.0",
-    
     "icon": "./assets/images/icon.png",
     "scheme": "eksora",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "associatedDomains": [
-        "applinks:eksora.com"
-      ]
+      "bundleIdentifier": "com.eksora.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "package": "com.eksora.app"
       },
       "edgeToEdgeEnabled": true,
       "intentFilters": [
@@ -36,9 +36,13 @@
               "scheme": "eksora"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
-      ]
+      ],
+      "package": "com.eksora.app"
     },
     "web": {
       "bundler": "metro",
@@ -59,7 +63,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "00d127e4-d538-4c0e-8836-9911531dc88a"
+      }
     }
   }
-  
 }
