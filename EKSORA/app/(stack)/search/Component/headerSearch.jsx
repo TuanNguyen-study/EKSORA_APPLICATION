@@ -18,10 +18,9 @@ export default function HeaderSearch() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const popularSearch = [
-    "tràng an",
     "Hà Nội",
     "đà nẵng",
-    "hạ long",
+    "Quảng Ninh",
     "hồ chí minh",
   ];
 

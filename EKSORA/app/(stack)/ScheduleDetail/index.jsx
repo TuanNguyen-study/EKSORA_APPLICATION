@@ -55,8 +55,74 @@ const Index = () => {
     return result;
   };
 
+  // Reset lịch trình mới từ API
+  const resetSchedule = async (userId) => {
+    try {
+      setLoading(true);
+      let res = await getToursByLocation(cateID);
+      let tours = res.data || res;
+      tours = tours.filter(t => t.name && t.image && t.image.length > 0);
+
+      // Nếu chỉ có 1 tour, random thêm từ cùng danh mục (ALL)
+      if (tours.length === 1) {
+        const resAll = await getAllToursByLocation(cateID);
+        const allTours = (resAll.data || resAll).filter(
+          t => t.name && t.image && t.image.length > 0
+        );
+        const extraTours = allTours
+          .filter(t => t._id !== tours[0]._id)
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 4);
+        tours = [...tours, ...extraTours];
+      }
+
+      // Lấy tour đã đặt
+      const bookings = await getUserBookings(userId);
+      const bookedIds = bookings.map(booking => booking.tour_id?._id);
+      setBookedTourIds(bookedIds);
+
+      // Sắp xếp tour đã đặt lên trước
+      const sortedTours = [...tours].sort((a, b) => {
+        const aBooked = bookedIds.includes(a._id);
+        const bBooked = bookedIds.includes(b._id);
+        return bBooked - aBooked;
+      });
+
+      // Gắn connector
+      let newData = sortedTours.flatMap((tour, index) => {
+        const isBooked = bookedIds.includes(tour._id);
+        const item = {
+          id: tour._id,
+          name: tour.name,
+          image: Array.isArray(tour.image) ? tour.image[0] : tour.image,
+          isBooked,
+          canBook: tour.price > 0
+        };
+        return index < sortedTours.length - 1
+          ? [item, { connector: true }]
+          : [item];
+      });
+
+      // Giới hạn ban đầu 3 tour (vẫn giữ connector)
+      newData = limitToursWithConnectors(newData, 3);
+
+      setData(newData);
+      await saveScheduleToStorage(userId, newData);
+    } catch (e) {
+      console.error('Lỗi khi reset lịch trình:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Xoá item
   const handleRemovePlace = async (index) => {
+    const item = data[index];
+    if (item.isBooked) {
+      Alert.alert('Thông báo', 'Không thể xóa tour đã đặt!');
+      return;
+    }
+
     const newData = [...data];
     if (index > 0 && newData[index - 1]?.connector) {
       newData.splice(index - 1, 2);
@@ -105,7 +171,7 @@ const Index = () => {
     const exists = data.some(item => item?.id === newTour._id);
     if (exists) return;
 
-    const isBooked = bookedTourIds.includes(newTour._id); 
+    const isBooked = bookedTourIds.includes(newTour._id);
     const newItem = {
       id: newTour._id,
       name: newTour.name,
@@ -144,8 +210,15 @@ const Index = () => {
           // Thử load lịch trình đã lưu
           const savedSchedule = await loadSavedSchedule();
           if (savedSchedule && savedSchedule.length > 0) {
-            setData(savedSchedule);
-            setLoading(false);
+            // Kiểm tra số lượng tour (item có name)
+            const tourCount = savedSchedule.filter(item => item.name).length;
+            if (tourCount === 1) {
+              // Nếu chỉ còn 1 tour, reset lịch trình
+              await resetSchedule(userId);
+            } else {
+              setData(savedSchedule);
+              setLoading(false);
+            }
             return;
           }
 
@@ -156,7 +229,7 @@ const Index = () => {
 
           // Nếu chỉ có 1 tour, random thêm từ cùng danh mục (ALL)
           if (tours.length === 1) {
-            const resAll = await getAllToursByLocation(cateID); 
+            const resAll = await getAllToursByLocation(cateID);
             const allTours = (resAll.data || resAll).filter(
               t => t.name && t.image && t.image.length > 0
             );
@@ -194,14 +267,12 @@ const Index = () => {
               : [item];
           });
 
-          // Giới hạn ban đầu 4 tour (vẫn giữ connector)
-          newData = limitToursWithConnectors(newData, 4);
-
+          // Giới hạn ban đầu 3 tour (vẫn giữ connector)
+          newData = limitToursWithConnectors(newData, 3);
           setData(newData);
 
           // Lưu lại lịch trình mới vào AsyncStorage
           await saveScheduleToStorage(userId, newData);
-
         } catch (e) {
           console.error('Lỗi khi load tour theo cateID:', e);
         } finally {
@@ -215,7 +286,6 @@ const Index = () => {
   return (
     <View style={styles.container}>
       <ScheduleHeader />
-      
       <FlatList
         data={data}
         keyExtractor={(item, index) => index.toString()}

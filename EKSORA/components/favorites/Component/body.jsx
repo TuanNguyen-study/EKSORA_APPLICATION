@@ -137,7 +137,8 @@ export default function Body() {
         />
         <Text style={styles.noResults}>Bạn chưa được thực hiện chức năng này</Text>
         <Text style={styles.explore}>
-          Tạo tài khoản hoặc đăng nhập để có thể thực hiện được tính năng của Eksora.
+          bạn cần đăng nhập để thực hiện chức năng này
+        
         </Text>
         <TouchableOpacity 
           onPress={() => router.push('/(stack)/login/loginEmail')} 
@@ -229,14 +230,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   noResults: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
     color: '#333',
     marginBottom: 8,
   },
   explore: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
     color: '#666',
     lineHeight: 24,

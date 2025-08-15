@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState, useCallback } from 'react'; 
-import { useFocusEffect } from 'expo-router';
+import { useState, useCallback } from 'react';
+import { router, useFocusEffect } from 'expo-router';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,6 +10,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -41,33 +42,33 @@ const Tab = ({ title, active, onPress }) => {
   );
 };
 
-
-export default function Body() {
+export default function Body({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [allTrips, setAllTrips] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
+  const [isLoggedIn, setIsLoggedIn] = useState(null); // trạng thái đăng nhập
 
-  //  SỬA LẠI CÁCH DÙNG useFocusEffect
+  // Check login + fetch trips
   useFocusEffect(
     useCallback(() => {
-      // Hàm fetchTrips được định nghĩa và gọi bên trong useCallback.
-      // Hàm callback này không phải là async và không trả về gì, nên nó hợp lệ.
       const fetchTrips = async () => {
         setLoading(true);
         try {
           const userId = await AsyncStorage.getItem('USER_ID');
-          if (userId) {
-            const allTripsFromApi = await getTrips(userId);
-            
-            if (Array.isArray(allTripsFromApi) && allTripsFromApi.length > 0) {
-              allTripsFromApi.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            }
-
-            setAllTrips(allTripsFromApi); 
-          } else {
-            console.warn('Không tìm thấy userId');
+          if (!userId) {
+            setIsLoggedIn(false);
             setAllTrips([]);
+            return;
           }
+          setIsLoggedIn(true);
+
+          const allTripsFromApi = await getTrips(userId);
+          if (Array.isArray(allTripsFromApi) && allTripsFromApi.length > 0) {
+            allTripsFromApi.sort(
+              (a, b) => new Date(b.created_at) - new Date(a.created_at)
+            );
+          }
+          setAllTrips(allTripsFromApi);
         } catch (error) {
           console.error('Lỗi khi tải chuyến đi:', error);
           setAllTrips([]);
@@ -75,21 +76,19 @@ export default function Body() {
           setLoading(false);
         }
       };
-
-      // Gọi hàm async ở đây
       fetchTrips();
-
-      // Bạn có thể trả về một hàm cleanup ở đây nếu cần
-      // return () => {};
-    }, []) // Mảng rỗng đảm bảo hàm fetch chỉ được tạo 1 lần
+    }, [])
   );
 
   const getDisplayedTrips = () => {
     const normalizeStatus = (status) => status?.toLowerCase() || '';
-
     switch (activeTab) {
       case 'all':
-        return allTrips.filter((trip) => normalizeStatus(trip.status) !== 'cancelled' && normalizeStatus(trip.status) !== 'canceled');
+        return allTrips.filter(
+          (trip) =>
+            normalizeStatus(trip.status) !== 'cancelled' &&
+            normalizeStatus(trip.status) !== 'canceled'
+        );
       case 'pending':
       case 'paid':
         return allTrips.filter((trip) => normalizeStatus(trip.status) === activeTab);
@@ -98,10 +97,36 @@ export default function Body() {
     }
   };
 
+  // UI nếu chưa đăng nhập
+  if (isLoggedIn === false) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.contentCenter}>
+          <Image
+            source={require('../../../assets/images/tripsImage.png')}
+            style={styles.image}
+            resizeMode="contain"
+          />
+          <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 16 }}>
+            Hãy đăng nhập để khám phá nhiều hơn
+          </Text>
+          <Text style={{ color: '#6c757d', marginTop: 4, textAlign: 'center' }}>
+            Bạn cần đăng nhập để tiếp tục sử dụng tính năng này
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.push('/(stack)/login/loginEmail')}
+            style={[styles.exploreButton, { marginTop: 24 }]}
+          >
+            <Text style={styles.exploreButtonText}>Đăng nhập / Đăng ký</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   const displayedTrips = getDisplayedTrips();
 
   const renderContent = () => {
-    // Không hiển thị loading khi danh sách đã có dữ liệu (để tránh giật màn hình khi focus lại)
     if (loading && allTrips.length === 0) {
       return (
         <View style={styles.contentCenter}>
@@ -117,10 +142,12 @@ export default function Body() {
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContentContainer}
         ListEmptyComponent={
-          !loading && ( // Chỉ hiển thị empty text khi đã load xong
+          !loading && (
             <View style={styles.contentCenter}>
               <EmptyTrips />
-              <Text style={styles.emptyText}>Bạn không có vé nào trong mục này.</Text>
+              <Text style={styles.emptyText}>
+                Bạn không có vé nào trong mục này.
+              </Text>
             </View>
           )
         }
@@ -140,61 +167,82 @@ export default function Body() {
   );
 }
 
-
 const styles = StyleSheet.create({
-    safe: {
-      flex: 1,
-      backgroundColor: '#F8F9FA',
-      paddingTop: Platform.OS === 'android' ? 24 : 0,
-    },
-    tabContainer: {
-      flexDirection: 'row',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      backgroundColor: '#F8F9FA',
-    },
-    filterChip: {
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 20,
-      backgroundColor: '#E9EEF2',
-      marginRight: 12,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    activeFilterChip: {
-      shadowColor: '#2F80ED',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 5,
-      elevation: 6,
-    },
-    filterChipText: {
-      fontSize: 14,
-      color: '#4A6A8A',
-      fontWeight: '600',
-    },
-    activeFilterChipText: {
-      color: '#FFFFFF',
-      fontWeight: 'bold',
-    },
-    contentCenter: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 24,
-      marginTop: 50,
-    },
-    listContentContainer: {
-      paddingHorizontal: 8,
-      paddingBottom: 100,
-    },
-    emptyText: {
-      marginTop: 24,
-      fontSize: 17,
-      fontWeight: '600',
-      color: '#6c757d',
-      textAlign: 'center',
-      lineHeight: 24,
-    },
-  });
+  safe: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+    paddingTop: Platform.OS === 'android' ? 24 : 0,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F8F9FA',
+  },
+  filterChip: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    backgroundColor: '#E9EEF2',
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeFilterChip: {
+    shadowColor: '#2F80ED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
+  },
+  filterChipText: {
+    fontSize: 14,
+    color: '#4A6A8A',
+    fontWeight: '600',
+  },
+  activeFilterChipText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  contentCenter: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    marginTop: 50,
+  },
+  listContentContainer: {
+    paddingHorizontal: 8,
+    paddingBottom: 100,
+  },
+  emptyText: {
+    marginTop: 24,
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#6c757d',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+
+    exploreButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  exploreButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  image: {
+    width: 200,
+    height: 150,
+    marginBottom: 16,
+  },
+});
