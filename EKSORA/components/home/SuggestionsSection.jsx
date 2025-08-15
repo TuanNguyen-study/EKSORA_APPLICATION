@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   suggestionListContent: {
     paddingTop: 10,
     paddingBottom: 8, 
-    paddingHorizontal: 2,
+    paddingHorizontal: 5,
   },
   emptyStateContainer: {
     justifyContent: "center",

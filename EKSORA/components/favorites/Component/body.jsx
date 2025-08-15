@@ -135,7 +135,7 @@ export default function Body() {
           style={styles.emptyImage}
           resizeMode="contain"
         />
-        <Text style={styles.noResults}>Bạn chưa được thực hiện chức năng này</Text>
+        <Text style={styles.noResults}>Hãy đăng nhập để khám phá nhiều hơn</Text>
         <Text style={styles.explore}>
           bạn cần đăng nhập để thực hiện chức năng này
         

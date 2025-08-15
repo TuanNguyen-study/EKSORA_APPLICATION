@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getUser } from '../../API/services/servicesUser';
-import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { router } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { getUser } from '../../API/services/servicesUser';
 import { COLORS } from '../../constants/colors';
 
 export default function Header() {
@@ -33,7 +33,7 @@ export default function Header() {
           const localAvatar = await AsyncStorage.getItem('LOCAL_AVATAR_URI');
           setAvatarUri(localAvatar || (data ? data.avatar : null));
         } catch (err) {
-          console.error('Không lấy được thông tin user:', err);
+          // console.error('Không lấy được thông tin user:', err);
           setIsLoggedIn(false);
           setUser(null);
         } finally {
@@ -65,9 +65,9 @@ export default function Header() {
           <Text style={styles.guestUsername}>Chào mừng bạn!</Text>
           <Text style={styles.guestMessage}>Khám phá Eksora ngay hôm nay</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.loginButton} 
-          onPress={() => router.push('/(stack)/login/loginEmail')} 
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={() => router.push('/(stack)/login/loginEmail')}
         >
           <Text style={styles.loginButtonText}>Đăng nhập / Đăng ký</Text>
         </TouchableOpacity>
@@ -87,7 +87,7 @@ export default function Header() {
   // --- GIAO DIỆN CHO NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP (GIỮ NGUYÊN) ---
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.userInfoContainer} onPress={() => router.push('/(stack)/UpdateUser')}>
+<TouchableOpacity style={styles.userInfoContainer} onPress={() => router.push('/(stack)/UpdateUser')}>
         <Image
           source={avatarUri ? { uri: avatarUri } : require('../../assets/images/favicon.png')}
           style={styles.avatar}
@@ -124,10 +124,12 @@ const styles = StyleSheet.create({
   guestHeader: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 40,
+    backgroundColor: 'transparent' // để lộ gradient
   },
   guestAvatar: {
-    width: 60,
-    height: 60,
+    width: 100,
+    height: 100,
     borderRadius: 30,
     marginBottom: 12,
   },
@@ -138,7 +140,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   guestMessage: {
-    color: 'rgba(255, 255, 255, 0.9)', 
+    color: 'rgba(255, 255, 255, 0.9)',
     fontSize: 14,
     marginTop: 4,
     textAlign: 'center',
@@ -156,7 +158,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   loginButtonText: {
-    color: COLORS.primary, 
+    color: COLORS.primary,
     fontWeight: 'bold',
     fontSize: 14,
   },
@@ -165,18 +167,18 @@ const styles = StyleSheet.create({
   userInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24, 
+    marginBottom: 24,
   },
   avatar: {
     width: 64,
     height: 64,
-    borderRadius: 32, 
+    borderRadius: 32,
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.9)',
   },
   textGroup: {
-    flex: 1, 
-    marginLeft: 16, 
+    flex: 1,
+    marginLeft: 16,
   },
   username: {
     fontWeight: 'bold',
