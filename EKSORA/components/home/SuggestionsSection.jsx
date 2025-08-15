@@ -59,10 +59,10 @@ const SuggestionsSection = ({
 
 const styles = StyleSheet.create({
   sectionWrapper: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.lightGray,
     marginHorizontal: 15,
     marginBottom: 15,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 0.8,
     borderColor: COLORS.lightBorder || "#EAEAEA",
   },
@@ -74,9 +74,9 @@ const styles = StyleSheet.create({
     paddingTop: 15,
   },
   suggestionListContent: {
-    paddingTop: 15,
-    paddingBottom: 5, 
-    paddingHorizontal: 5,
+    paddingTop: 10,
+    paddingBottom: 8, 
+    paddingHorizontal: 2,
   },
   emptyStateContainer: {
     justifyContent: "center",

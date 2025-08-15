@@ -3,8 +3,12 @@ import { Provider } from 'react-redux';
 import store from '../store';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppProviders } from '../store/AppProviders'; 
+import useDeepLink from '../hooks/useDeepLink';
 
 export default function Layout() {
+  // Handle deeplink navigation
+  useDeepLink();
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>

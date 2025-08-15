@@ -84,7 +84,7 @@ const CouponModal = ({ visible, onClose }) => {
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                   <Text style={styles.emptyText}>
-                    Hiện chưa có mã ưu đãi.
+                    Hiện chưa có mã ưu đãi nào khả dụng
                   </Text>
                 }
                 initialNumToRender={5} // Tăng nhẹ để lấp đầy màn hình ban đầu

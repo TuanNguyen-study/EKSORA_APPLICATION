@@ -162,7 +162,7 @@ const ProductOptionSelector = ({
                 >
                   <View style={styles.optionInfo}>
                     <Text style={[styles.optionName, isSelected && styles.optionNameActive]}>
-                      {opt.name}
+                      {opt.title}
                     </Text>
                     {!!opt.description && (
                       <Text style={styles.optionDesc}>{opt.description}</Text>

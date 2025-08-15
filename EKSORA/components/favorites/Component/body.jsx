@@ -135,7 +135,7 @@ export default function Body() {
           style={styles.emptyImage}
           resizeMode="contain"
         />
-        <Text style={styles.noResults}>Truy cập bị hạn chế</Text>
+        <Text style={styles.noResults}>Bạn chưa được thực hiện chức năng này</Text>
         <Text style={styles.explore}>
           Tạo tài khoản hoặc đăng nhập để có thể thực hiện được tính năng của Eksora.
         </Text>

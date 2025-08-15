@@ -31,7 +31,7 @@ const StickyBookingFooter = ({
       <View style={styles.innerContainer}>
         {/* --- Phần hiển thị giá bên trái --- */}
         <View style={styles.priceInfoContainer}>
-          <Text style={styles.totalLabel}>Tổng cộng</Text>
+          <Text style={styles.totalLabel}>Chỉ từ</Text>
           <View style={styles.priceRow}>
             {selectedVoucher && (
               <Text style={styles.originalPrice}>
