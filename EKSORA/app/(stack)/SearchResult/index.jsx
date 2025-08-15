@@ -8,26 +8,37 @@ import {
   StyleSheet,
   Platform,
   StatusBar,
+  Text,
+  TouchableOpacity,
 } from "react-native";
 import { getAllToursByLocation } from "../../../API/services/serverCategories";
-
+import FilterModal from "../search/Component/Filter/ModalFilter"; // Modal lọc địa điểm, giá, sao
+import PriceStarFilterModal from "../SearchResult/components/Filter/FilterPrice"; // Modal lọc giá, sao
 import SearchHeader from "../SearchResult/components/SearchHeader";
 import TourCard from "../SearchResult/components/TourCard";
 import CityCard from "../SearchResult/components/CityCard";
 import EmptyResult from "../SearchResult/components/EmptyResult";
 import { COLORS } from "../../../constants/colors";
 
+// Hàm loại bỏ dấu tiếng Việt
+const removeDiacritics = (str) => {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+};
+
 export default function Index() {
   const { query, filteredTours: filteredToursParam } = useLocalSearchParams();
   const [filteredTours, setFilteredTours] = useState([]);
   const [allTours, setAllTours] = useState([]);
+  const [suggestedTours, setSuggestedTours] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Tiêu chí lọc chung (giá & đánh giá)
-  const [priceRange, setPriceRange] = useState([0, Infinity]); // [min, max]
-  const [minRating, setMinRating] = useState(0); 
-  const [suggestedTours, setSuggestedTours] = useState([]); 
-
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [priceStarModalVisible, setPriceStarModalVisible] = useState(false);
+  const [priceRange, setPriceRange] = useState([0, Infinity]);
+  const [minRating, setMinRating] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,7 +47,7 @@ export default function Index() {
 
         let toursData = [];
 
-        // Nếu có filteredToursParam từ filter modal
+        // Nếu có filteredToursParam từ FilterModal
         if (filteredToursParam) {
           toursData = JSON.parse(filteredToursParam);
         } else {
@@ -54,30 +65,34 @@ export default function Index() {
           // Lọc bỏ tour giá <= 0
           const validTours = all.filter((tour) => tour.price > 0);
 
-          // Lọc theo query (cateID.name → name → description)
-          const queryLower = queryTrimmed.toLowerCase();
+          // Lọc theo query (chỉ khớp với cateID.name, hỗ trợ không dấu)
+          const queryLower = removeDiacritics(queryTrimmed.toLowerCase());
           const matchedByCategory = validTours.filter((tour) =>
-            (tour.cateID?.name || "").toLowerCase().includes(queryLower)
-          );
-          const matchedByText = validTours.filter(
-            (tour) =>
-              (tour.name || "").toLowerCase().includes(queryLower) ||
-              (tour.description || "").toLowerCase().includes(queryLower)
+            removeDiacritics((tour.cateID?.name || "").toLowerCase()).includes(
+              queryLower
+            )
           );
 
-          toursData =
-            matchedByCategory.length > 0 ? matchedByCategory : matchedByText;
+          toursData = matchedByCategory; // Chỉ sử dụng cateID.name để lọc location
         }
 
-        // Lọc thêm giá & đánh giá (áp dụng chung cho cả search & filter)
+        // Lọc thêm theo giá và sao
         const finalTours = toursData
           .filter(
             (tour) => tour.price >= priceRange[0] && tour.price <= priceRange[1]
           )
           .filter((tour) => (tour.rating || 0) >= minRating);
 
-        setAllTours(toursData); // dữ liệu gốc (chưa filter giá/đánh giá)
+        // Lấy tour gợi ý nếu không có kết quả
+        let suggested = [];
+        if (finalTours.length === 0) {
+          suggested = await getAllToursByLocation(); // Lấy tất cả tour làm gợi ý
+          suggested = suggested.filter((tour) => tour.price > 0).slice(0, 10); // Lấy tối đa 10 tour
+        }
+
+        setAllTours(toursData);
         setFilteredTours(finalTours);
+        setSuggestedTours(suggested);
       } catch (error) {
         console.error("Lỗi khi lấy tour:", error?.response?.data || error);
       } finally {
@@ -106,19 +121,34 @@ export default function Index() {
         cateID={filteredTours[0].cateID?.name}
         image={filteredTours[0].image?.[0]}
       />
+    ) : suggestedTours[0] ? (
+      <View style={styles.suggestionHeader}>
+      </View>
     ) : null;
+
+  // Xử lý áp dụng bộ lọc từ PriceStarFilterModal
+  const handleApplyPriceStarFilters = ({ priceRange, minRating }) => {
+    setPriceRange(priceRange);
+    setMinRating(minRating);
+    setPriceStarModalVisible(false);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <SearchHeader query={query} filteredTours={filteredTours} />
+        <SearchHeader
+          query={query}
+          filteredTours={filteredTours}
+          onOpenFilter={() => setPriceStarModalVisible(true)}
+        />
+       
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" />
+            <ActivityIndicator size="large" color={COLORS.primaryDark} />
           </View>
         ) : filteredTours.length === 0 ? (
           <FlatList
-            data={allTours.slice(0, 10)}
+            data={suggestedTours}
             keyExtractor={(item) => item._id}
             renderItem={renderItem}
             ListHeaderComponent={
@@ -140,6 +170,18 @@ export default function Index() {
             contentContainerStyle={{ paddingBottom: 40 }}
           />
         )}
+        <FilterModal
+          visible={filterModalVisible}
+          onClose={() => setFilterModalVisible(false)}
+        />
+        <PriceStarFilterModal
+          visible={priceStarModalVisible}
+          onClose={() => setPriceStarModalVisible(false)}
+          onApply={handleApplyPriceStarFilters}
+          tours={allTours}
+          initialPriceRange={priceRange}
+          initialMinRating={minRating}
+        />
       </View>
     </SafeAreaView>
   );
@@ -160,6 +202,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    color: COLORS.primaryDark,
+  },
+  suggestionHeader: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  suggestionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  filterButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginVertical: 10,
+  },
+  filterButton: {
+    backgroundColor: COLORS.primaryDark,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  filterButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

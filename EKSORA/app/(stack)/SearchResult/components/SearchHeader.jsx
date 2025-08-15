@@ -1,10 +1,9 @@
-import { Text, TouchableOpacity, View, StyleSheet, ScrollView } from "react-native";
+import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { COLORS } from "../../../../constants/colors";
 
-export default function SearchHeader({ query, filteredTours = [] }) {
-
-
+export default function SearchHeader({ query, filteredTours = [], onOpenFilter }) {
   return (
     <View style={styles.header}>
       <View style={styles.topRow}>
@@ -19,12 +18,13 @@ export default function SearchHeader({ query, filteredTours = [] }) {
             {filteredTours.length > 0 ? filteredTours[0].cateID?.name : query || "Tìm kiếm"}
           </Text>
         </TouchableOpacity>
-
+        <TouchableOpacity style={styles.iconWrapper} onPress={onOpenFilter}>
+          <Ionicons name="options-outline" size={18} color="white" />
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/(stack)/ShoppingCartScreen')}>
           <Ionicons name="cart-outline" size={20} color="#333" style={styles.iconRight} />
         </TouchableOpacity>
       </View>
-
     </View>
   );
 }
@@ -59,9 +59,11 @@ const styles = StyleSheet.create({
   iconRight: {
     marginLeft: 8,
   },
-  filteredToursWrap: {
-    marginTop: 10,
-    paddingLeft: 4,
+  iconWrapper: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 20,
+    padding: 6,
+    marginLeft: 8,
   },
   tourChip: {
     backgroundColor: "#F3F4F6",

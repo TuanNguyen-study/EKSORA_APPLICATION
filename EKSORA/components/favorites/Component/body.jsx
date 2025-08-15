@@ -135,9 +135,9 @@ export default function Body() {
           style={styles.emptyImage}
           resizeMode="contain"
         />
-        <Text style={styles.noResults}>Truy cập bị hạn chế</Text>
+        <Text style={styles.noResults}>Hãy đăng nhập để khám phá nhiều hơn</Text>
         <Text style={styles.explore}>
-          Tạo tài khoản hoặc đăng nhập để có thể thực hiện được tính năng của Eksora.
+          bạn cần đăng nhập để thực hiện chức năng này
         </Text>
         <TouchableOpacity 
           onPress={() => router.push('/(stack)/login/loginEmail')} 
@@ -229,14 +229,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   noResults: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
     color: '#333',
     marginBottom: 8,
   },
   explore: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
     color: '#666',
     lineHeight: 24,

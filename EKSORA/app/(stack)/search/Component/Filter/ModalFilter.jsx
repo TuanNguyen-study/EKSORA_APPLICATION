@@ -18,7 +18,7 @@ import { router } from "expo-router";
 const screenWidth = Dimensions.get("window").width;
 
 export default function FilterModal({ visible, onClose }) {
-  const [priceRange, setPriceRange] = useState([500, 2000]);
+  const [priceRange, setPriceRange] = useState([0, 5000000]); // Đổi giá trị khởi tạo thành [0, 5000000]
   const [selectedStars, setSelectedStars] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
@@ -33,12 +33,14 @@ export default function FilterModal({ visible, onClose }) {
       const cateID = selectedLocation.id;
       let tours = await getToursByLocation(cateID);
 
-      // Lọc theo khoảng giá
-      tours = tours.filter(
-        (tour) => tour.price >= priceRange[0] && tour.price <= priceRange[1]
-      );
+      // Lọc theo khoảng giá nếu không phải giá trị mặc định
+      if (priceRange[0] !== 0 || priceRange[1] !== 5000000) {
+        tours = tours.filter(
+          (tour) => tour.price >= priceRange[0] && tour.price <= priceRange[1]
+        );
+      }
 
-      // Lọc theo số sao (nếu chọn)
+      // Lọc theo số sao nếu đã chọn
       if (selectedStars) {
         tours = tours.filter(
           (tour) => Math.round(tour.rating) === selectedStars

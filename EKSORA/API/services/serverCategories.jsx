@@ -25,7 +25,6 @@ export const getTours = async () => {
 // API lấy danh sách các tour theo category ID
 export const getToursByLocation = async (cateID) => {
   try {
-    console.log('Gọi API với cateID:', cateID);
     const response = await AxiosInstance().get('/api/categories/tours-by-location', {
       params: {
         cateID: cateID,
@@ -44,7 +43,6 @@ export const getToursByLocation = async (cateID) => {
 export const getAllToursByLocation = async (cateID) => {
 
   try {
-    console.log('Gọi API với cateID:', cateID);
     const response = await AxiosInstance().get('/api/all-include-free', {
       params: {
         cateID: cateID,

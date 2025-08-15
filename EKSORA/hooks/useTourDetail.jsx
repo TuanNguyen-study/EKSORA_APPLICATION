@@ -70,7 +70,7 @@ export const useTourDetail = (productId) => {
         title: svc.title || svc.name,
         options: (svc.options || []).map((opt) => ({
           id: opt._id,
-          name: opt.title || opt.name,
+          title: opt.title,
           description: opt.description,
           price: opt.price_extra,
         })),
