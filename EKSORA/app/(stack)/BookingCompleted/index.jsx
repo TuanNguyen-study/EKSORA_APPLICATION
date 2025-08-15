@@ -1,21 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useSelector } from 'react-redux';
+import { useSelector } from "react-redux";
 
-import { updateUserProfile } from '../../../API/services/servicesProfile';
+import { updateUserProfile } from "../../../API/services/servicesProfile";
 import { COLORS } from "../../../constants/colors";
 import BookingSummaryCard from "./components/BookingCard";
 import ContactInfoSection from "./components/ContactInfoSection";
@@ -30,15 +30,18 @@ export default function BookingCompleted() {
   // Xử lý và chuẩn hóa dữ liệu booking từ params bằng useMemo để tối ưu hiệu năng
   const { displayItems, finalTotalPrice } = useMemo(() => {
     // Trường hợp 1: Dữ liệu từ giỏ hàng (một mảng items)
-    if (params.items && typeof params.items === 'string') {
+    if (params.items && typeof params.items === "string") {
       try {
         const parsedItems = JSON.parse(params.items);
-        const itemsForDisplay = parsedItems.map(item => ({
+        const itemsForDisplay = parsedItems.map((item) => ({
           ...item,
           title: item.name,
           totalPrice: item.price,
           quantityAdult: item.adults,
           quantityChild: item.children,
+          voucherCode: item.voucherCode,
+          discountAmount: item.discount || 0,
+          originalPrice: item.originalPrice || item.price,
         }));
         return {
           displayItems: itemsForDisplay,
@@ -57,6 +60,11 @@ export default function BookingCompleted() {
       quantityAdult: params.quantityAdult,
       quantityChild: params.quantityChild,
       totalPrice: Number(params.totalPrice),
+      originalPrice: params.originalPrice
+        ? Number(params.originalPrice)
+        : Number(params.totalPrice),
+      discountAmount: params.discountAmount ? Number(params.discountAmount) : 0,
+      voucherCode: params.voucherCode,
       travelDate: params.travelDate,
     };
     return {
@@ -111,7 +119,7 @@ export default function BookingCompleted() {
           });
         }
       } catch (error) {
-        console.error('Lỗi khi lấy thông tin người dùng:', error);
+        console.error("Lỗi khi lấy thông tin người dùng:", error);
       }
     };
 
@@ -129,10 +137,10 @@ export default function BookingCompleted() {
   const handleEditContact = () => {
     setIsUsingSavedInfo(false); // Chuyển sang giao diện form
     setFormInfo({
-      lastName: contactToDisplay.lastName || '',
-      firstName: contactToDisplay.firstName || '',
-      phone: contactToDisplay.phone || '',
-      email: contactToDisplay.email || '',
+      lastName: contactToDisplay.lastName || "",
+      firstName: contactToDisplay.firstName || "",
+      phone: contactToDisplay.phone || "",
+      email: contactToDisplay.email || "",
     });
   };
 
@@ -158,14 +166,77 @@ export default function BookingCompleted() {
       // 3. Chuyển về lại tab "Thông tin của tôi"
       setIsUsingSavedInfo(true);
 
-      Alert.alert('Thành công', 'Thông tin của bạn đã được cập nhật!');
+      Alert.alert("Thành công", "Thông tin của bạn đã được cập nhật!");
     } catch (error) {
-      console.error('Lỗi khi cập nhật thông tin:', error);
-      Alert.alert('Lỗi', 'Không thể cập nhật thông tin. Vui lòng thử lại sau.');
+      console.error("Lỗi khi cập nhật thông tin:", error);
+      Alert.alert("Lỗi", "Không thể cập nhật thông tin. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
     }
   };
+
+  // Kiểm tra xem có phải là pending booking không
+  const isPendingBooking = params.isPendingBooking === "true";
+
+  // Kiểm tra xem có phải là booking từ trang vé (cần thanh toán ngay) không
+  const isFromTicketPage = params.fromTicketPage === "true";
+
+  // Kiểm tra xem có phải là booking trực tiếp từ "Đặt ngay" không
+  const isFromDirectBooking = params.fromDirectBooking === "true";
+
+  // KHÔNG auto-redirect cho luồng "Đặt ngay" - chỉ cho ticket page
+  const shouldAutoRedirect = isFromTicketPage && !isFromDirectBooking;
+
+  // Auto-redirect đến paymentPage nếu là booking từ trang vé
+  useEffect(() => {
+    if (shouldAutoRedirect) {
+      console.log(
+        ">>> [BOOKING_COMPLETED] Detected booking from ticket page:",
+        params.bookingId
+      );
+      console.log(">>> [BOOKING_COMPLETED] Contact info:", contactToDisplay);
+
+      // Kiểm tra thông tin liên lạc
+      if (
+        contactToDisplay.firstName &&
+        contactToDisplay.phone &&
+        contactToDisplay.email
+      ) {
+        console.log(
+          ">>> [BOOKING_COMPLETED] Auto-redirecting to paymentPage for ticket booking"
+        );
+
+        // Tự động chuyển đến paymentPage mà không cần user interaction
+        const timer = setTimeout(() => {
+          router.replace({
+            pathname: "/(stack)/paymentPage",
+            params: {
+              ...params,
+              fullName:
+                `${contactToDisplay.lastName || ""} ${contactToDisplay.firstName}`.trim(),
+              phone: contactToDisplay.phone,
+              email: contactToDisplay.email,
+              needCreateBooking: false, // Đã có booking rồi, không cần tạo mới
+            },
+          });
+        }, 1000); // Delay 1 giây để user thấy trạng thái
+
+        // Cleanup timer khi component unmount
+        return () => clearTimeout(timer);
+      } else {
+        console.log(
+          ">>> [BOOKING_COMPLETED] Missing contact info, waiting for user to complete"
+        );
+      }
+    }
+  }, [
+    shouldAutoRedirect,
+    contactToDisplay.firstName,
+    contactToDisplay.phone,
+    contactToDisplay.email,
+    params,
+    router,
+  ]);
 
   // Xử lý khi nhấn nút "Thanh toán"
   const handlePayment = () => {
@@ -179,90 +250,132 @@ export default function BookingCompleted() {
       return;
     }
 
-    router.push({
-      pathname: "/paymentPage",
+    // THAY ĐỔI: Xử lý khác nhau cho luồng "Đặt ngay" và luồng khác
+    if (isFromDirectBooking) {
+      // Luồng "Đặt ngay": chuyển đến paymentPage với dữ liệu booking để tạo
+      console.log(">>> [BOOKING_COMPLETED] Processing direct booking flow");
 
-      // params chính là gói dữ liệu bạn gửi đi
-      params: {
-        ...params,
-        fullName: `${contactToDisplay.lastName} ${contactToDisplay.firstName}`,
-        phone: contactToDisplay.phone,
-        email: contactToDisplay.email,
+      router.push({
+        pathname: "/(stack)/paymentPage",
+        params: {
+          ...params,
+          fullName:
+            `${contactToDisplay.lastName || ""} ${contactToDisplay.firstName}`.trim(),
+          phone: contactToDisplay.phone,
+          email: contactToDisplay.email,
+          buyerAddress: loggedInUser?.address || "Chưa có địa chỉ",
+          totalPrice: finalTotalPrice.toString(),
+          needCreateBooking: "true", // Flag để biết cần tạo booking
+          // bookingData đã có trong params từ useBooking
+        },
+      });
+    } else {
+      // Luồng khác (giỏ hàng): chuyển đến paymentPage với items
+      console.log(">>> [BOOKING_COMPLETED] Processing cart/other booking flow");
 
-        // Gửi lại thông tin đơn hàng để màn hình thanh toán hiển thị
-        items: JSON.stringify(displayItems),
-        totalPrice: finalTotalPrice,
-      },
-    });
+      router.push({
+        pathname: "/(stack)/paymentPage",
+        params: {
+          ...params,
+          fullName:
+            `${contactToDisplay.lastName || ""} ${contactToDisplay.firstName}`.trim(),
+          phone: contactToDisplay.phone,
+          email: contactToDisplay.email,
+          items: JSON.stringify(displayItems),
+          totalPrice: finalTotalPrice.toString(),
+          needCreateBooking: isPendingBooking, // Flag để biết cần tạo booking
+        },
+      });
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerButton}
+        >
           <Ionicons name="chevron-back" size={24} color={COLORS.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hoàn tất đơn hàng</Text>
         <View style={styles.headerButton} />
       </View>
 
-              <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-      <ScrollView
-        style={styles.contentContainer}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        showsVerticalScrollIndicator={false}
-      >
-
-        {/* Phần thông tin liên lạc */}
-        <ContactInfoSection
-          isUsingSavedInfo={isUsingSavedInfo}
-          setIsUsingSavedInfo={setIsUsingSavedInfo}
-          contactToDisplay={contactToDisplay}
-          formInfo={formInfo}
-          setFormInfo={setFormInfo}
-          handleFormInputChange={handleFormInputChange}
-          handleConfirmNewContact={handleConfirmNewContact}
-          handleEditContact={handleEditContact}
-          loading={loading}
-        />
-        
-        {/* Render danh sách Card booking */}
-        {displayItems.map((item) => (
-          <BookingSummaryCard
-            key={item.id}
-            title={item.title}
-            travelDate={item.travelDate}
-            quantityAdult={item.quantityAdult}
-            quantityChild={item.quantityChild}
-            totalPrice={item.totalPrice}
-          />
-        ))}
-
-        
-      </ScrollView>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <View>
-          <Text style={styles.footerLabel}>Tổng cộng</Text>
-          <Text style={styles.footerPrice}>
-            {finalTotalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={[styles.payButton, (loading || !contactToDisplay.firstName) && styles.payButtonDisabled]}
-          onPress={handlePayment}
-          disabled={loading || !contactToDisplay.firstName}
+        <ScrollView
+          style={styles.contentContainer}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.payButtonText}>Thanh toán</Text>
-        </TouchableOpacity>
-      </View>
-</KeyboardAvoidingView>
+          {/* Phần thông tin liên lạc */}
+          <ContactInfoSection
+            isUsingSavedInfo={isUsingSavedInfo}
+            setIsUsingSavedInfo={setIsUsingSavedInfo}
+            contactToDisplay={contactToDisplay}
+            formInfo={formInfo}
+            setFormInfo={setFormInfo}
+            handleFormInputChange={handleFormInputChange}
+            handleConfirmNewContact={handleConfirmNewContact}
+            handleEditContact={handleEditContact}
+            loading={loading}
+          />
+
+          {/* Render danh sách Card booking */}
+          {displayItems.map((item) => (
+            <BookingSummaryCard
+              key={item.id}
+              title={item.title}
+              travelDate={item.travelDate}
+              quantityAdult={item.quantityAdult}
+              quantityChild={item.quantityChild}
+              totalPrice={item.totalPrice}
+              voucherCode={item.voucherCode}
+              discountAmount={item.discountAmount}
+              originalPrice={item.originalPrice}
+            />
+          ))}
+        </ScrollView>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <View>
+            <Text style={styles.footerLabel}>Tổng cộng</Text>
+            <Text style={styles.footerPrice}>
+              {finalTotalPrice.toLocaleString("vi-VN", {
+                style: "currency",
+                currency: "VND",
+              })}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.payButton,
+              (loading || !contactToDisplay.firstName || shouldAutoRedirect) &&
+                styles.payButtonDisabled,
+            ]}
+            onPress={handlePayment}
+            disabled={
+              loading || !contactToDisplay.firstName || shouldAutoRedirect
+            }
+          >
+            <Text style={styles.payButtonText}>
+              {shouldAutoRedirect
+                ? "Đang chuyển đến thanh toán..."
+                : isFromDirectBooking
+                  ? "Xác nhận "
+                  : isPendingBooking
+                    ? "Tiếp tục thanh toán"
+                    : "Hoàn tất đơn hàng"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -271,7 +384,7 @@ export default function BookingCompleted() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5F7', 
+    backgroundColor: "#F4F5F7",
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -292,13 +405,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   headerButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
-    alignItems: "flex-start", 
+    alignItems: "flex-start",
   },
   headerTitle: {
     fontSize: 18,
@@ -308,22 +421,21 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    paddingBottom: Platform.OS === "ios" ? 34 : 20,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: "#f0f0f0",
     backgroundColor: COLORS.white,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   footerLabel: {
     fontSize: 14,
     color: COLORS.gray,
-   
   },
   footerPrice: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.black,
   },
   payButton: {

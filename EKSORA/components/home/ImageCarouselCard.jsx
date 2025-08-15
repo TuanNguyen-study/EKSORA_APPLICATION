@@ -6,7 +6,10 @@ import {
   Dimensions,
   TouchableOpacity,
   Animated,
+  Text,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { MaterialIcons } from "@expo/vector-icons";
 import { COLORS } from "../../constants/colors";
 import { useRouter } from "expo-router";
 
@@ -59,6 +62,30 @@ const ImageCarouselCard = ({ item, isActive = false }) => {
         ]}
       >
         <Image source={item.image} style={styles.image} resizeMode="cover" />
+
+        {/* Overlay với thông tin category và "Xem thêm" */}
+        <LinearGradient
+          colors={["rgba(0,0,0,0.3)", "transparent", "rgba(0,0,0,0.5)"]}
+          style={styles.overlay}
+        >
+          <View style={styles.categoryContainer}>
+            <MaterialIcons
+              name="location-on"
+              size={14}
+              color="white"
+              style={{ marginRight: 4 }}
+            />
+            <Text style={styles.categoryText}>
+              {item.tourData?.cateID?.name ||
+                item.tourData?.location ||
+                "Du lịch"}
+            </Text>
+          </View>
+
+          <View style={styles.bottomInfo}>
+            <Text style={styles.viewMoreText}>Xem thêm</Text>
+          </View>
+        </LinearGradient>
       </Animated.View>
     </TouchableOpacity>
   );
@@ -90,16 +117,43 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: "100%",
-    width: ITEM_WIDTH,
-
-    // iOS Shadow
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-
-    // Android Shadow
-    elevation: 5,
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "space-between",
+    padding: 12,
+  },
+  categoryContainer: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  categoryText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  bottomInfo: {
+    alignSelf: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 15,
+    opacity: 0.8,
+  },
+  viewMoreText: {
+    color: COLORS.primary,
+    fontSize: 13,
+    fontWeight: "600",
+    opacity: 0.8,
   },
 });
 
