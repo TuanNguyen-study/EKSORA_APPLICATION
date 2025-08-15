@@ -1,251 +1,250 @@
-import { Ionicons } from "@expo/vector-icons";
-import MultiSlider from "@ptomasroos/react-native-multi-slider";
-import { useState, useEffect } from "react";
+import { useLocalSearchParams, router } from "expo-router";
+import { useEffect, useState, memo } from "react";
 import {
-    Dimensions,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  View,
+  FlatList,
+  SafeAreaView,
+  ActivityIndicator,
+  StyleSheet,
+  Platform,
+  StatusBar,
+  Text,
+  TouchableOpacity,
 } from "react-native";
+import { getAllToursByLocation } from "../../../API/services/serverCategories";
+import FilterModal from "../search/Component/Filter/ModalFilter";
+import PriceStarFilterModal from "../SearchResult/components/Filter/FilterPrice";
+import SearchHeader from "../SearchResult/components/SearchHeader";
+import TourCard from "../SearchResult/components/TourCard";
+import CityCard from "../SearchResult/components/CityCard";
+import EmptyResult from "../SearchResult/components/EmptyResult";
+import { COLORS } from "../../../constants/colors";
 
-const screenWidth = Dimensions.get("window").width;
+const removeDiacritics = (str) => {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+};
 
-export default function PriceStarFilterModal({
-    visible,
-    onClose,
-    onApply,
-    tours,
-    initialPriceRange,
-    initialMinRating,
-}) {
-    const [priceRange, setPriceRange] = useState(initialPriceRange || [0, 5000000]);
-    const [selectedStars, setSelectedStars] = useState(initialMinRating || null); // Mặc định là null, giống FilterModal
-    const [maxPrice, setMaxPrice] = useState(5000000); // Giá tối đa mặc định
+const MemoizedTourCard = memo(TourCard);
 
-    useEffect(() => {
-        if (tours && tours.length > 0) {
-            const maxTourPrice = Math.max(...tours.map((tour) => tour.price || 0));
-            const roundedMaxPrice = Math.ceil(maxTourPrice / 100000) * 100000;
-            setMaxPrice(roundedMaxPrice);
-            if (priceRange[1] > roundedMaxPrice) {
-                setPriceRange([priceRange[0], roundedMaxPrice]);
-            }
+export default function Index() {
+  const { query, filteredTours: filteredToursParam } = useLocalSearchParams(); // Lấy tham số từ URL
+  const [filteredTours, setFilteredTours] = useState([]); // State lưu danh sách tour đã lọc
+  const [allTours, setAllTours] = useState([]); 
+  const [suggestedTours, setSuggestedTours] = useState([]); 
+  const [loading, setLoading] = useState(true);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [priceStarModalVisible, setPriceStarModalVisible] = useState(false); // State quản lý hiển thị modal lọc giá & sao
+  const [priceRange, setPriceRange] = useState([0, 5000000]);
+  const [minRating, setMinRating] = useState(null); 
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        let toursData = [];
+
+        if (filteredToursParam) {
+          // Nếu có filteredTours từ tham số, parse JSON
+          toursData = JSON.parse(filteredToursParam);
+        } else {
+          const queryTrimmed = query?.trim() || "";
+          const isObjectId = /^[0-9a-fA-F]{24}$/.test(queryTrimmed); // Kiểm tra xem query có phải là ObjectId
+
+          let all = [];
+          if (isObjectId) {
+            console.log("Gọi API với cateID:", queryTrimmed);
+            all = await getAllToursByLocation(queryTrimmed); // Gọi API với cateID
+          } else {
+            all = await getAllToursByLocation(); // Gọi API lấy tất cả tour
+          }
+
+          const validTours = all.filter((tour) => tour.price > 0); // Lọc các tour có giá hợp lệ
+
+          const queryLower = removeDiacritics(queryTrimmed.toLowerCase());
+          const matchedByCategory = validTours.filter((tour) =>
+            removeDiacritics((tour.cateID?.name || "").toLowerCase()).includes(queryLower)
+          ); // Tìm tour khớp với query sau khi bỏ dấu
+
+          toursData = matchedByCategory;
         }
-    }, [tours]);
 
-    const filterTours = () => {
-        if (!tours || tours.length === 0) {
-            return [];
-        }
+        // Lấy tour gợi ý
+        const suggested = await getAllToursByLocation();
+        const validSuggested = suggested.filter((tour) => tour.price > 0).slice(0, 10); // Lấy 10 tour gợi ý hợp lệ
 
-        const filtered = tours.filter((tour) => {
-            const priceInRange = tour.price >= priceRange[0] && tour.price <= priceRange[1];
-            const tourRating = tour.rating ? Number(tour.rating) : 0;
-            const starMatch = !selectedStars || Math.round(tourRating) === selectedStars;
-            return priceInRange && starMatch;
-        });
-        return filtered;
+        setAllTours(toursData); // Cập nhật state allTours
+        setFilteredTours(toursData); // Cập nhật state filteredTours
+        setSuggestedTours(validSuggested); // Cập nhật state suggestedTours
+      } catch (error) {
+        console.error("Lỗi khi lấy tour:", error?.response?.data || error);
+      } finally {
+        setLoading(false); // Tắt trạng thái loading sau khi hoàn thành
+      }
     };
 
-    const handleApply = () => {
-        const filteredTours = filterTours();
-        onApply({
-            priceRange,
-            minRating: selectedStars,
-            filteredTours,
-        });
-        onClose();
-    };
+    fetchData();
+  }, [query, filteredToursParam]);
 
-    const handleReset = () => {
-        setPriceRange([0, 5000000]);
-        setSelectedStars(null);
-    };
+  const fetchSuggestedTours = async () => {
+    // Hàm lấy danh sách tour gợi ý
+    try {
+      const suggested = await getAllToursByLocation();
+      const validSuggested = suggested.filter((tour) => tour.price > 0).slice(0, 10);
+      console.log("Fetched suggested tours:", validSuggested.map(t => ({ id: t._id, price: t.price, rating: t.rating })));
+      return validSuggested;
+    } catch (error) {
+      console.error("Lỗi khi lấy suggested tours:", error?.response?.data || error);
+      return [];
+    }
+  };
 
-    return (
-        <Modal visible={visible} animationType="slide" transparent>
-            <View style={styles.overlay}>
-                <View style={styles.modalContainer}>
-                    <View style={styles.header}>
-                        <Text style={styles.headerTitle}>Lọc giá & sao</Text>
-                        <TouchableOpacity onPress={onClose}>
-                            <Ionicons name="close" size={24} color="#333" />
-                        </TouchableOpacity>
-                    </View>
+  const renderItem = ({ item }) => (
+    // Hàm render mỗi item tour trong FlatList
+    <MemoizedTourCard
+      item={item}
+      onPress={() =>
+        router.push({
+          pathname: "/(stack)/trip-detail/[id]",
+          params: { id: item._id },
+        })
+      }
+    />
+  );
 
-                    <ScrollView contentContainerStyle={styles.scrollContainer}>
-                        <Text style={styles.sectionTitle}>Khoảng giá</Text>
-                        <View style={styles.sliderContainer}>
-                            <MultiSlider
-                                values={priceRange}
-                                min={0}
-                                max={5000000}
-                                step={100000}
-                                onValuesChange={setPriceRange}
-                                sliderLength={screenWidth - 60}
-                                selectedStyle={{ backgroundColor: "#007AFF" }}
-                                markerStyle={{
-                                    backgroundColor: "#fff",
-                                    borderWidth: 2,
-                                    borderColor: "#007AFF",
-                                    height: 20,
-                                    width: 20,
-                                }}
-                                pressedMarkerStyle={{ backgroundColor: "#007AFF" }}
-                            />
-                            <View style={styles.priceRow}>
-                                <Text style={styles.priceText}>{priceRange[0].toLocaleString()}đ</Text>
-                                <Text style={styles.priceText}>{priceRange[1].toLocaleString()}đ</Text>
-                            </View>
-                        </View>
+  const ListHeader = () =>
+    // Header của FlatList, hiển thị CityCard hoặc suggestion header
+    filteredTours[0] ? (
+      <CityCard cateID={filteredTours[0].cateID?.name} image={filteredTours[0].image?.[0]} />
+    ) : suggestedTours[0] ? (
+      <View style={styles.suggestionHeader}>
+      </View>
+    ) : null;
 
-                        <Text style={styles.sectionTitle}>Số sao</Text>
-                        <View style={styles.starList}>
-                            {[5, 4, 3, 2, 1].map((star) => (
-                                <TouchableOpacity
-                                    key={star}
-                                    style={[styles.starItem, selectedStars === star && styles.starItemActive]}
-                                    onPress={() => {
-                                        setSelectedStars(star);
-                                    }}
-                                >
-                                    <Ionicons
-                                        name="star"
-                                        size={16}
-                                        color={selectedStars === star ? "#fff" : "#FF9500"}
-                                        style={{ marginRight: 4 }}
-                                    />
-                                    <Text style={[styles.starText, selectedStars === star && styles.starTextActive]}>
-                                        {star}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </ScrollView>
+  const handleApplyPriceStarFilters = async ({ priceRange, minRating, filteredTours }) => {
+    // Hàm xử lý khi áp dụng lọc giá và sao từ modal
+    console.log("Applying filters:", {
+      priceRange,
+      minRating,
+      filteredTourCount: filteredTours.length,
+      filteredTourIds: filteredTours.map(t => t._id),
+    });
 
-                    <View style={styles.footer}>
-                        <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
-                            <Text style={styles.resetText}>Đặt lại</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.applyBtn} onPress={handleApply}>
-                            <Text style={styles.applyText}>Áp dụng</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-        </Modal>
-    );
+    setPriceRange(priceRange); // Cập nhật khoảng giá
+    setMinRating(minRating); // Cập nhật số sao tối thiểu
+    setFilteredTours(filteredTours || []); // Cập nhật danh sách tour đã lọc
+
+    // Nếu không có tour nào khớp, lấy lại tour gợi ý
+    if (filteredTours.length === 0) {
+      const newSuggestedTours = await fetchSuggestedTours();
+      setSuggestedTours(newSuggestedTours);
+    }
+
+    setPriceStarModalVisible(false); // Đóng modal
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <SearchHeader
+          query={query}
+          filteredTours={filteredTours}
+          onOpenFilter={() => setPriceStarModalVisible(true)} // Mở modal lọc giá & sao
+        />
+       
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={COLORS.primaryDark} />
+          </View>
+        ) : (
+          <>
+            {console.log("Rendering FlatList with:", { filteredToursCount: filteredTours.length, suggestedToursCount: suggestedTours.length })}
+            {filteredTours.length === 0 ? (
+              <FlatList
+                data={suggestedTours} // Hiển thị tour gợi ý khi không có tour lọc
+                keyExtractor={(item) => item._id}
+                renderItem={renderItem}
+                ListHeaderComponent={
+                  <>
+                    <ListHeader />
+                    <EmptyResult />
+                  </>
+                }
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 40 }}
+              />
+            ) : (
+              <FlatList
+                data={filteredTours} // Hiển thị tour đã lọc khi có kết quả
+                keyExtractor={(item) => item._id}
+                renderItem={renderItem}
+                ListHeaderComponent={<ListHeader />}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 40 }}
+              />
+            )}
+          </>
+        )}
+        <FilterModal
+          visible={filterModalVisible}
+          onClose={() => setFilterModalVisible(false)} // Đóng modal lọc
+        />
+        <PriceStarFilterModal
+          visible={priceStarModalVisible}
+          onClose={() => setPriceStarModalVisible(false)} // Đóng modal lọc giá & sao
+          onApply={handleApplyPriceStarFilters} // Xử lý khi áp dụng lọc
+          tours={allTours} // Truyền danh sách tour ban đầu
+          initialPriceRange={priceRange} // Giá trị khoảng giá ban đầu
+          initialMinRating={minRating} // Giá trị số sao ban đầu
+        />
+      </View>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        justifyContent: "flex-end",
-        backgroundColor: "rgba(0,0,0,0.3)",
-    },
-    modalContainer: {
-        backgroundColor: "#fff",
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
-        maxHeight: "90%",
-        overflow: "hidden",
-    },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: "#eee",
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: "bold",
-        color: "#333",
-    },
-    scrollContainer: {
-        padding: 16,
-    },
-    sectionTitle: {
-        fontSize: 15,
-        fontWeight: "600",
-        color: "#444",
-        marginBottom: 8,
-    },
-    sliderContainer: {
-        marginBottom: 20,
-    },
-    priceRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 8,
-    },
-    priceText: {
-        fontSize: 14,
-        fontWeight: "500",
-        color: "#555",
-    },
-    starList: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 8,
-        marginBottom: 16,
-    },
-    starItem: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 20,
-        backgroundColor: "#fff",
-    },
-    starItemActive: {
-        backgroundColor: "#FF9500",
-        borderColor: "#FF9500",
-    },
-    starText: {
-        fontSize: 14,
-        fontWeight: "500",
-        color: "#333",
-    },
-    starTextActive: {
-        color: "#fff",
-    },
-    footer: {
-        flexDirection: "row",
-        padding: 16,
-        borderTopWidth: 1,
-        borderTopColor: "#eee",
-        backgroundColor: "#f9f9f9",
-    },
-    resetBtn: {
-        flex: 1,
-        alignItems: "center",
-        padding: 12,
-        marginRight: 8,
-        borderRadius: 8,
-        backgroundColor: "#eaeaea",
-    },
-    resetText: {
-        fontSize: 14,
-        fontWeight: "500",
-        color: "#333",
-    },
-    applyBtn: {
-        flex: 1,
-        alignItems: "center",
-        padding: 12,
-        borderRadius: 8,
-        backgroundColor: "#007AFF",
-    },
-    applyText: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#fff",
-    },
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingHorizontal: 12,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  suggestionHeader: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  suggestionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  filterButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginVertical: 10,
+  },
+  filterButton: {
+    backgroundColor: COLORS.primaryDark,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  filterButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });
