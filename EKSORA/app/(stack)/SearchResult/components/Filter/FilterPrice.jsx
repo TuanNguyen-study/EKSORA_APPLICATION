@@ -9,7 +9,6 @@ import {
     Text,
     TouchableOpacity,
     View,
-    ActivityIndicator,
 } from "react-native";
 
 const screenWidth = Dimensions.get("window").width;
@@ -22,13 +21,11 @@ export default function PriceStarFilterModal({
     initialPriceRange,
     initialMinRating,
 }) {
-    const [priceRange, setPriceRange] = useState(initialPriceRange || [0, 5000000]); // State quản lý khoảng giá
-    const [selectedStars, setSelectedStars] = useState(initialMinRating || null); // State quản lý số sao được chọn, mặc định null
-    const [maxPrice, setMaxPrice] = useState(5000000); // State quản lý giá tối đa
-    const [isLoading, setIsLoading] = useState(false); // State quản lý trạng thái loading
+    const [priceRange, setPriceRange] = useState(initialPriceRange || [0, 5000000]);
+    const [selectedStars, setSelectedStars] = useState(initialMinRating || null); // Mặc định là null, giống FilterModal
+    const [maxPrice, setMaxPrice] = useState(5000000); // Giá tối đa mặc định
 
     useEffect(() => {
-        // Hiệu ứng khi tours thay đổi, tính toán lại maxPrice dựa trên dữ liệu tours
         if (tours && tours.length > 0) {
             const maxTourPrice = Math.max(...tours.map((tour) => tour.price || 0));
             const roundedMaxPrice = Math.ceil(maxTourPrice / 100000) * 100000;
@@ -40,41 +37,30 @@ export default function PriceStarFilterModal({
     }, [tours]);
 
     const filterTours = () => {
-        // Hàm lọc tour dựa trên giá và số sao
         if (!tours || tours.length === 0) {
             return [];
         }
 
         const filtered = tours.filter((tour) => {
-            // Kiểm tra tour có giá trong khoảng được chọn
             const priceInRange = tour.price >= priceRange[0] && tour.price <= priceRange[1];
-            // Lấy và chuyển đổi rating của tour thành số
             const tourRating = tour.rating ? Number(tour.rating) : 0;
-            // Kiểm tra số sao: nếu chưa chọn (null) thì giữ tất cả, nếu chọn thì khớp chính xác sau khi làm tròn
             const starMatch = !selectedStars || Math.round(tourRating) === selectedStars;
             return priceInRange && starMatch;
         });
         return filtered;
     };
 
-    const handleApply = async () => {
-        // Hàm xử lý khi nhấn nút Áp dụng, bao gồm loading
-        setIsLoading(true); // Bật trạng thái loading
-        try {
-            const filteredTours = filterTours(); // Lọc tour
-            onApply({
-                priceRange,
-                minRating: selectedStars,
-                filteredTours,
-            }); // Truyền kết quả lọc về component cha
-        } finally {
-            setIsLoading(false); // Tắt trạng thái loading sau khi hoàn thành
-            onClose(); // Đóng modal
-        }
+    const handleApply = () => {
+        const filteredTours = filterTours();
+        onApply({
+            priceRange,
+            minRating: selectedStars,
+            filteredTours,
+        });
+        onClose();
     };
 
     const handleReset = () => {
-        // Hàm xử lý khi nhấn nút Đặt lại, reset các state về giá trị mặc định
         setPriceRange([0, 5000000]);
         setSelectedStars(null);
     };
@@ -98,7 +84,7 @@ export default function PriceStarFilterModal({
                                 min={0}
                                 max={5000000}
                                 step={100000}
-                                onValuesChange={setPriceRange} // Cập nhật state khi thay đổi slider
+                                onValuesChange={setPriceRange}
                                 sliderLength={screenWidth - 60}
                                 selectedStyle={{ backgroundColor: "#007AFF" }}
                                 markerStyle={{
@@ -123,7 +109,7 @@ export default function PriceStarFilterModal({
                                     key={star}
                                     style={[styles.starItem, selectedStars === star && styles.starItemActive]}
                                     onPress={() => {
-                                        setSelectedStars(star); // Cập nhật state khi chọn số sao
+                                        setSelectedStars(star);
                                     }}
                                 >
                                     <Ionicons
@@ -141,18 +127,12 @@ export default function PriceStarFilterModal({
                     </ScrollView>
 
                     <View style={styles.footer}>
-                        {isLoading ? (
-                            <ActivityIndicator size="small" color="#007AFF" style={styles.loadingIndicator} />
-                        ) : (
-                            <>
-                                <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
-                                    <Text style={styles.resetText}>Đặt lại</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.applyBtn} onPress={handleApply}>
-                                    <Text style={styles.applyText}>Áp dụng</Text>
-                                </TouchableOpacity>
-                            </>
-                        )}
+                        <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
+                            <Text style={styles.resetText}>Đặt lại</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.applyBtn} onPress={handleApply}>
+                            <Text style={styles.applyText}>Áp dụng</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </View>
@@ -242,7 +222,6 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: "#eee",
         backgroundColor: "#f9f9f9",
-        justifyContent: "space-between",
     },
     resetBtn: {
         flex: 1,
@@ -268,10 +247,5 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "600",
         color: "#fff",
-    },
-    loadingIndicator: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
     },
 });
