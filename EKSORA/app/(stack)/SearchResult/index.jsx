@@ -1,5 +1,5 @@
 import { useLocalSearchParams, router } from "expo-router";
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   FlatList,
@@ -9,14 +9,12 @@ import {
   Platform,
   StatusBar,
   Text,
-  TouchableOpacity,
 } from "react-native";
 import { getAllToursByLocation } from "../../../API/services/serverCategories";
 import FilterModal from "../search/Component/Filter/ModalFilter";
 import PriceStarFilterModal from "../SearchResult/components/Filter/FilterPrice";
 import SearchHeader from "../SearchResult/components/SearchHeader";
 import TourCard from "../SearchResult/components/TourCard";
-import CityCard from "../SearchResult/components/CityCard";
 import EmptyResult from "../SearchResult/components/EmptyResult";
 import { COLORS } from "../../../constants/colors";
 
@@ -28,62 +26,65 @@ const removeDiacritics = (str) => {
     .replace(/Đ/g, "D");
 };
 
-const MemoizedTourCard = memo(TourCard);
-
 export default function Index() {
-  const { query, filteredTours: filteredToursParam } = useLocalSearchParams(); // Lấy tham số từ URL
-  const [filteredTours, setFilteredTours] = useState([]); // State lưu danh sách tour đã lọc
-  const [allTours, setAllTours] = useState([]); // State lưu tất cả tour ban đầu
-  const [suggestedTours, setSuggestedTours] = useState([]); // State lưu tour gợi ý
-  const [loading, setLoading] = useState(true); // State quản lý trạng thái loading
-  const [filterModalVisible, setFilterModalVisible] = useState(false); // State quản lý hiển thị modal lọc
-  const [priceStarModalVisible, setPriceStarModalVisible] = useState(false); // State quản lý hiển thị modal lọc giá & sao
-  const [priceRange, setPriceRange] = useState([0, 5000000]); // State quản lý khoảng giá
-  const [minRating, setMinRating] = useState(null); // State quản lý số sao tối thiểu
+  const { query, filteredTours: filteredToursParam } = useLocalSearchParams();
+  const [filteredTours, setFilteredTours] = useState([]);
+  const [allTours, setAllTours] = useState([]);
+  const [suggestedTours, setSuggestedTours] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [priceStarModalVisible, setPriceStarModalVisible] = useState(false);
+  const [priceRange, setPriceRange] = useState([0, 5000000]);
+  const [minRating, setMinRating] = useState(null);
+  const [isFiltered, setIsFiltered] = useState(false); 
 
   useEffect(() => {
-    // Hiệu ứng khi query hoặc filteredToursParam thay đổi, lấy dữ liệu tour
     const fetchData = async () => {
       try {
-        setLoading(true); // Bật trạng thái loading khi bắt đầu lấy dữ liệu
-
+        setLoading(true);
         let toursData = [];
 
         if (filteredToursParam) {
-          // Nếu có filteredTours từ tham số, parse JSON
-          toursData = JSON.parse(filteredToursParam);
+          toursData = JSON.parse(filteredToursParam).filter(
+            (tour) => tour.price > 0 && tour.cateID && tour.cateID.name
+          );
         } else {
           const queryTrimmed = query?.trim() || "";
-          const isObjectId = /^[0-9a-fA-F]{24}$/.test(queryTrimmed); // Kiểm tra xem query có phải là ObjectId
+          const isObjectId = /^[0-9a-fA-F]{24}$/.test(queryTrimmed);
 
           let all = [];
           if (isObjectId) {
-            all = await getAllToursByLocation(queryTrimmed); // Gọi API với cateID
+            all = await getAllToursByLocation(queryTrimmed);
           } else {
-            all = await getAllToursByLocation(); // Gọi API lấy tất cả tour
+            all = await getAllToursByLocation();
           }
 
-          const validTours = all.filter((tour) => tour.price > 0); // Lọc các tour có giá hợp lệ
+
+          const validTours = all.filter((tour) => tour.price > 0);
 
           const queryLower = removeDiacritics(queryTrimmed.toLowerCase());
-          const matchedByCategory = validTours.filter((tour) =>
-            removeDiacritics((tour.cateID?.name || "").toLowerCase()).includes(queryLower)
-          ); // Tìm tour khớp với query sau khi bỏ dấu
+          const matchedTours = validTours.filter((tour) => {
+            const nameMatch = removeDiacritics((tour.name || "").toLowerCase()).includes(queryLower);
+            const categoryMatch =
+              tour.cateID &&
+              removeDiacritics((tour.cateID.name || "").toLowerCase()).includes(queryLower);
+            return nameMatch || categoryMatch;
+          });
 
-          toursData = matchedByCategory;
+          toursData = matchedTours;
         }
 
-        // Lấy tour gợi ý
         const suggested = await getAllToursByLocation();
-        const validSuggested = suggested.filter((tour) => tour.price > 0).slice(0, 10); // Lấy 10 tour gợi ý hợp lệ
+        const validSuggested = suggested.filter((tour) => tour.price > 0).slice(0, 10);
 
-        setAllTours(toursData); // Cập nhật state allTours
-        setFilteredTours(toursData); // Cập nhật state filteredTours
-        setSuggestedTours(validSuggested); // Cập nhật state suggestedTours
+        setAllTours(toursData);
+        setFilteredTours(toursData);
+        setSuggestedTours(validSuggested);
+        setIsFiltered(false); // Reset trạng thái lọc khi tìm kiếm mới
       } catch (error) {
         console.error("Lỗi khi lấy tour:", error?.response?.data || error);
       } finally {
-        setLoading(false); // Tắt trạng thái loading sau khi hoàn thành
+        setLoading(false);
       }
     };
 
@@ -91,7 +92,6 @@ export default function Index() {
   }, [query, filteredToursParam]);
 
   const fetchSuggestedTours = async () => {
-    // Hàm lấy danh sách tour gợi ý
     try {
       const suggested = await getAllToursByLocation();
       const validSuggested = suggested.filter((tour) => tour.price > 0).slice(0, 10);
@@ -103,8 +103,7 @@ export default function Index() {
   };
 
   const renderItem = ({ item }) => (
-    // Hàm render mỗi item tour trong FlatList
-    <MemoizedTourCard
+    <TourCard
       item={item}
       onPress={() =>
         router.push({
@@ -116,27 +115,26 @@ export default function Index() {
   );
 
   const ListHeader = () =>
-    // Header của FlatList, hiển thị CityCard hoặc suggestion header
-    filteredTours[0] ? (
-      <CityCard cateID={filteredTours[0].cateID?.name} image={filteredTours[0].image?.[0]} />
-    ) : suggestedTours[0] ? (
+    filteredTours[0] || suggestedTours[0] ? (
       <View style={styles.suggestionHeader}>
+        <Text style={styles.suggestionTitle}>
+          {filteredTours[0] ? "Kết quả tìm kiếm" : null}
+        </Text>
       </View>
     ) : null;
 
   const handleApplyPriceStarFilters = async ({ priceRange, minRating, filteredTours }) => {
-    // Hàm xử lý khi áp dụng lọc giá và sao từ modal
-    setPriceRange(priceRange); // Cập nhật khoảng giá
-    setMinRating(minRating); // Cập nhật số sao tối thiểu
-    setFilteredTours(filteredTours || []); // Cập nhật danh sách tour đã lọc
+    setPriceRange(priceRange);
+    setMinRating(minRating);
+    setFilteredTours(filteredTours || []);
+    setIsFiltered(true); // Đặt trạng thái lọc thành true khi áp dụng bộ lọc
 
-    // Nếu không có tour nào khớp, lấy lại tour gợi ý
     if (filteredTours.length === 0) {
       const newSuggestedTours = await fetchSuggestedTours();
       setSuggestedTours(newSuggestedTours);
     }
 
-    setPriceStarModalVisible(false); // Đóng modal
+    setPriceStarModalVisible(false);
   };
 
   return (
@@ -145,9 +143,9 @@ export default function Index() {
         <SearchHeader
           query={query}
           filteredTours={filteredTours}
-          onOpenFilter={() => setPriceStarModalVisible(true)} // Mở modal lọc giá & sao
+          onOpenFilter={() => setPriceStarModalVisible(true)}
+          isFiltered={isFiltered}
         />
-       
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={COLORS.primaryDark} />
@@ -156,7 +154,7 @@ export default function Index() {
           <>
             {filteredTours.length === 0 ? (
               <FlatList
-                data={suggestedTours} // Hiển thị tour gợi ý khi không có tour lọc
+                data={suggestedTours}
                 keyExtractor={(item) => item._id}
                 renderItem={renderItem}
                 ListHeaderComponent={
@@ -170,7 +168,7 @@ export default function Index() {
               />
             ) : (
               <FlatList
-                data={filteredTours} // Hiển thị tour đã lọc khi có kết quả
+                data={filteredTours}
                 keyExtractor={(item) => item._id}
                 renderItem={renderItem}
                 ListHeaderComponent={<ListHeader />}
@@ -182,15 +180,15 @@ export default function Index() {
         )}
         <FilterModal
           visible={filterModalVisible}
-          onClose={() => setFilterModalVisible(false)} // Đóng modal lọc
+          onClose={() => setFilterModalVisible(false)}
         />
         <PriceStarFilterModal
           visible={priceStarModalVisible}
-          onClose={() => setPriceStarModalVisible(false)} // Đóng modal lọc giá & sao
-          onApply={handleApplyPriceStarFilters} // Xử lý khi áp dụng lọc
-          tours={allTours} // Truyền danh sách tour ban đầu
-          initialPriceRange={priceRange} // Giá trị khoảng giá ban đầu
-          initialMinRating={minRating} // Giá trị số sao ban đầu
+          onClose={() => setPriceStarModalVisible(false)}
+          onApply={handleApplyPriceStarFilters}
+          tours={allTours}
+          initialPriceRange={priceRange}
+          initialMinRating={minRating}
         />
       </View>
     </SafeAreaView>
@@ -221,21 +219,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
-  },
-  filterButtonsContainer: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginVertical: 10,
-  },
-  filterButton: {
-    backgroundColor: COLORS.primaryDark,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  filterButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });

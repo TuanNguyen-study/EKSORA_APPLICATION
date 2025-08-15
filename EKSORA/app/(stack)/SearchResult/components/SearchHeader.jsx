@@ -3,7 +3,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { COLORS } from "../../../../constants/colors";
 
-export default function SearchHeader({ query, filteredTours = [], onOpenFilter }) {
+export default function SearchHeader({ query, filteredTours = [], onOpenFilter, isFiltered }) {
+  // Hiển thị cateID.name nếu đã áp dụng bộ lọc, nếu không thì hiển thị query
+  const displayText = isFiltered && filteredTours.length > 0 && filteredTours[0].cateID?.name
+    ? filteredTours[0].cateID.name
+    : query || "Tìm kiếm";
+
   return (
     <View style={styles.header}>
       <View style={styles.topRow}>
@@ -15,7 +20,7 @@ export default function SearchHeader({ query, filteredTours = [], onOpenFilter }
           onPress={() => router.push("/(stack)/search")}
         >
           <Text style={styles.queryText}>
-            {filteredTours.length > 0 ? filteredTours[0].cateID?.name : query || "Tìm kiếm"}
+            {displayText}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconWrapper} onPress={onOpenFilter}>

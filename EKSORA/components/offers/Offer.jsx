@@ -7,7 +7,6 @@ import {
   ScrollView,
   Platform,
   Dimensions,
-  ImageBackground,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useVoucher } from "../../store/VoucherContext";
@@ -27,10 +26,6 @@ const formatDate = (dateString) => {
 export default function Offer() {
   const { coupons, saveVoucher } = useVoucher();
   const [isModalVisible, setIsModalVisible] = React.useState(false);
-
-  const handleSave = (id) => {
-    saveVoucher(id);
-  };
 
   return (
     <View style={styles.container}>
@@ -63,17 +58,25 @@ export default function Offer() {
                 </View>
                 <View style={styles.boxBody}>
                   <Text style={styles.discount}>{offer.discount}</Text>
-                  {/* <Text style={styles.condition}>{offer.condition}</Text> */}
                   {offer.expiry && (
                     <Text style={styles.condition}>
                       HSD: {formatDate(offer.expiry)}
                     </Text>
                   )}
                   <TouchableOpacity
-                    style={styles.button}
-                    onPress={() => handleSave(offer.id)}
+                    style={[
+                      styles.button,
+                      offer.isSaved ? styles.savedButton : styles.defaultButton,
+                    ]}
+                    onPress={() => saveVoucher(offer.id)}
+                    disabled={offer.isSaved}
                   >
-                    <Text style={styles.buttonText}>{offer.buttonText}</Text>
+                    <Text style={[
+                      styles.buttonText,
+                      offer.isSaved ? styles.savedButtonText : styles.defaultButtonText,
+                    ]}>
+                      {offer.isSaved ? "Đã lưu" : offer.buttonText}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </LinearGradient>
@@ -134,9 +137,8 @@ const styles = StyleSheet.create({
   row: {
     paddingVertical: 16,
     paddingHorizontal: 10,
+    flexDirection: "row",
     gap: 12,
-    display: "flex",
-    flexDirection: "column",
   },
   cardWrapper: {
     borderRadius: 16,
@@ -177,19 +179,31 @@ const styles = StyleSheet.create({
     color: "#e0f0ff",
     textAlign: "center",
   },
-  buttonText: {
-    color: "#005bac",
-    fontSize: 12,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
   button: {
-    backgroundColor: "white",
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 14,
     width: "100%",
     borderWidth: 0.5,
+    borderColor: COLORS.border,
+    alignItems: "center",
+  },
+  defaultButton: {
+    backgroundColor: "white",
+  },
+  savedButton: {
+    backgroundColor: COLORS.textLight ,
+  },
+  buttonText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  defaultButtonText: {
+    color: "#005bac",
+  },
+  savedButtonText: {
+    color: COLORS.lightGray, 
   },
   noVoucherText: {
     color: COLORS.textGray,
@@ -197,9 +211,5 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     paddingHorizontal: 20,
     paddingVertical: 10,
-  },
-  cardHeader: {
-    height: 200,
-    justifyContent: "space-between",
   },
 });
