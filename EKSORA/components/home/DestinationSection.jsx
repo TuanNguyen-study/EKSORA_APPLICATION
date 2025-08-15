@@ -45,13 +45,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
     marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#222222',
+    color: COLORS.white,
   },
   // Bỏ style cho image cũ
   // decorativeImage: { ... },

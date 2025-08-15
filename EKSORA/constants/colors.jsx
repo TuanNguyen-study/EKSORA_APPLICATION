@@ -28,7 +28,7 @@ export const COLORS = {
   white: '#FFFFFF',
   black: '#000000',
   gray: '#9E9E9E',
-  lightGray: '#F0F2F5',
+  lightGray: '#f3f6fcff',
 
   inactiveTab: '#B0BEC5',
   activeTabDot: '#0087CA',

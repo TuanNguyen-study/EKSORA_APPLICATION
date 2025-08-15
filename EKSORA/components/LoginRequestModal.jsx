@@ -87,7 +87,7 @@ export default function LoginRequestModal({ isVisible, onClose }) {
             >
               {/*  Dải màu Gradient cho nút bấm nổi bật */}
               <LinearGradient
-                colors={[COLORS.primary, COLORS.primary]} 
+                colors={['#6eddfcff', COLORS.primary]} 
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.gradient}

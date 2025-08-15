@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,13 +14,88 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../../../constants/colors";
+import * as ExpoLinking from "expo-linking";
 
 const ShareModal = ({ visible, onClose, tourData }) => {
+  const [smartLinks, setSmartLinks] = useState(null);
+  const [shareContent, setShareContent] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   if (!tourData) {
     return null;
   }
 
   const { _id, name, image, price, cateID } = tourData;
+
+  // Tạo deeplink khi modal được mở
+  useEffect(() => {
+    if (visible && _id) {
+      createSmartDeepLink();
+    }
+  }, [visible, _id]);
+
+  const createSmartDeepLink = async () => {
+    try {
+      setLoading(true);
+      console.log("🚀 Tạo deeplink với expo-linking cho tour ID:", _id);
+
+      // Tạo deeplink sử dụng expo-linking với scheme eksora
+      const url = ExpoLinking.createURL(`trip-detail/${_id}`, {
+        scheme: "eksora",
+      });
+
+      console.log("🔗 Generated deeplink:", url);
+
+      // Không cần web fallback, chỉ dùng deeplink Expo
+      const links = {
+        primary: url,
+        webFallback: url, // Cũng dùng deeplink Expo
+        expoScheme: url,
+        universalLink: url,
+        appScheme: url,
+        shareableText: url,
+      };
+
+      setSmartLinks(links);
+
+      // Tạo share content
+      const content = {
+        title: `${name} - Tour EKSORA`,
+        message: `🌟 Khám phá tour "${name}"\n\n🔗 Mở trong app Expo: ${url}`,
+        url: url,
+      };
+
+      setShareContent(content);
+
+      // Log debug info trong development
+      if (__DEV__) {
+        console.log("✅ Deeplinks với expo-linking đã tạo thành công:", links);
+      }
+    } catch (error) {
+      console.error("❌ Lỗi tạo deeplink với expo-linking:", error);
+
+      // Fallback về deeplink Expo đơn giản
+      const fallbackDeepLink = ExpoLinking.createURL(`trip-detail/${_id}`);
+
+      const fallbackContent = {
+        title: `${name} - Tour EKSORA`,
+        message: `🌟 Khám phá tour "${name}"\n\n🔗 Mở trong app Expo: ${fallbackDeepLink}`,
+        url: fallbackDeepLink,
+      };
+
+      setShareContent(fallbackContent);
+      setSmartLinks({
+        primary: fallbackDeepLink,
+        webFallback: fallbackDeepLink,
+        expoScheme: fallbackDeepLink,
+        universalLink: fallbackDeepLink,
+        appScheme: fallbackDeepLink,
+        shareableText: fallbackDeepLink,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Xử lý price - có thể là object hoặc number
   const getPrice = (priceValue) => {
@@ -43,44 +118,111 @@ const ShareModal = ({ visible, onClose, tourData }) => {
     return priceValue || "0";
   };
 
-  // Tạo URL chia sẻ
-  const shareUrl = `https://eksora.com/tour/${_id}`;
-  const shareTitle = `${name} - Chỉ từ ${formatPrice(actualPrice)}đ`;
+  // Hàm test deeplink
+  const testDeepLink = async () => {
+    if (!smartLinks) {
+      Alert.alert("Thông báo", "Smart links chưa sẵn sàng. Vui lòng đợi...");
+      return;
+    }
 
-  // Tạo message theo format trong hình
-  const fullShareMessage = `${shareTitle}\n\nKhám phá ${name} tại ${cateID?.name || "undefined"}. Đặt tour ngay tại EKSORA!\n\n${shareUrl}`;
+    try {
+      console.log("🧪 Testing deeplink...");
+      const result = await deepLinkUtils.openSmartLink(_id);
+
+      let message = "";
+      let icon = "";
+
+      switch (result.method) {
+        case "expo-query":
+          message = "✅ Đã mở Expo Go (Expo Query)";
+          icon = "📱";
+          break;
+        case "expo-simple":
+          message = "✅ Đã mở Expo Go (Expo Simple)";
+          icon = "📱";
+          break;
+        case "expo-custom":
+          message = "✅ Đã mở Expo Go (Custom scheme)";
+          icon = "📱";
+          break;
+        case "expo":
+          message = "✅ Đã mở trong Expo Go";
+          icon = "📱";
+          break;
+        case "app":
+          message = "✅ Đã mở trong ứng dụng EKSORA";
+          icon = "🚀";
+          break;
+        case "universal":
+          message = "✅ Đã mở universal link";
+          icon = "🔗";
+          break;
+        case "web":
+          message = "✅ Đã mở trên trình duyệt web";
+          icon = "🌐";
+          break;
+        default:
+          message = "❌ Không thể mở liên kết";
+          icon = "⚠️";
+      }
+
+      if (result.success) {
+        Alert.alert("Test Deeplink", `${icon} ${message}`, [
+          { text: "OK", onPress: () => onClose() },
+        ]);
+      } else {
+        Alert.alert(
+          "Lỗi",
+          `❌ ${message}\n\nLỗi: ${result.error || "Không xác định"}`
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        "Lỗi",
+        `❌ Có lỗi xảy ra khi test deeplink:\n${error.message}`
+      );
+    }
+  };
+
+  // Sử dụng shareContent nếu có, fallback về Expo format
+  const currentShareUrl =
+    shareContent?.url || `exp://exp.host/@voanh0506/EKSORA?tourId=${_id}`;
+  const currentShareTitle = shareContent?.title || `${name} - Tour EKSORA`;
+  const currentShareMessage =
+    shareContent?.message ||
+    `🌟 ${name}\n\nKhám phá tour tuyệt vời!\n\n🔗 Mở trong app: exp://exp.host/@voanh0506/EKSORA?tourId=${_id}`;
 
   // Lấy ảnh đầu tiên của tour
   const tourImage = image && image.length > 0 ? image[0] : null;
 
-  // Hàm chia sẻ lên Facebook
+  // Hàm chia sẻ lên Facebook - chỉ share text
   const shareToFacebook = async () => {
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-
     try {
-      const supported = await Linking.canOpenURL(facebookUrl);
-      if (supported) {
-        await Linking.openURL(facebookUrl);
-        onClose(); // Đóng modal ngay lập tức
-      } else {
-        Alert.alert("Lỗi", "Không thể mở Facebook");
+      // Sử dụng Share API thay vì link trực tiếp
+      const result = await Share.share({
+        message: currentShareMessage,
+        title: currentShareTitle,
+      });
+
+      if (result.action === Share.sharedAction) {
+        onClose();
       }
     } catch (error) {
       Alert.alert("Lỗi", "Không thể chia sẻ lên Facebook");
     }
   };
 
-  // Hàm chia sẻ lên Twitter
+  // Hàm chia sẻ lên Twitter - chỉ share text
   const shareToTwitter = async () => {
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`;
-
     try {
-      const supported = await Linking.canOpenURL(twitterUrl);
-      if (supported) {
-        await Linking.openURL(twitterUrl);
-        onClose(); // Đóng modal ngay lập tức
-      } else {
-        Alert.alert("Lỗi", "Không thể mở Twitter");
+      // Sử dụng Share API thay vì link trực tiếp
+      const result = await Share.share({
+        message: currentShareMessage,
+        title: currentShareTitle,
+      });
+
+      if (result.action === Share.sharedAction) {
+        onClose();
       }
     } catch (error) {
       Alert.alert("Lỗi", "Không thể chia sẻ lên Twitter");
@@ -92,17 +234,17 @@ const ShareModal = ({ visible, onClose, tourData }) => {
     try {
       // Thử các URL scheme khác nhau cho WhatsApp
       const whatsappUrls = [
-        `https://wa.me/?text=${encodeURIComponent(fullShareMessage)}`,
-        `whatsapp://send?text=${encodeURIComponent(fullShareMessage)}`,
-        'whatsapp://'
+        `https://wa.me/?text=${encodeURIComponent(currentShareMessage)}`,
+        `whatsapp://send?text=${encodeURIComponent(currentShareMessage)}`,
+        "whatsapp://",
       ];
 
       let appOpened = false;
-      
+
       for (const url of whatsappUrls) {
         try {
           const supported = await Linking.canOpenURL(url);
-          
+
           if (supported) {
             await Linking.openURL(url);
             onClose();
@@ -117,7 +259,7 @@ const ShareModal = ({ visible, onClose, tourData }) => {
       // Nếu không thể detect app, thử mở trực tiếp
       if (!appOpened) {
         try {
-          const directUrl = `https://wa.me/?text=${encodeURIComponent(fullShareMessage)}`;
+          const directUrl = `https://wa.me/?text=${encodeURIComponent(currentShareMessage)}`;
           await Linking.openURL(directUrl);
           onClose();
           appOpened = true;
@@ -128,9 +270,10 @@ const ShareModal = ({ visible, onClose, tourData }) => {
 
       // Chỉ hiển thị dialog nếu thực sự không thể mở
       if (!appOpened) {
-        const storeUrl = Platform.OS === "ios"
-          ? "https://apps.apple.com/app/whatsapp-messenger/id310633997"
-          : "https://play.google.com/store/apps/details?id=com.whatsapp";
+        const storeUrl =
+          Platform.OS === "ios"
+            ? "https://apps.apple.com/app/whatsapp-messenger/id310633997"
+            : "https://play.google.com/store/apps/details?id=com.whatsapp";
 
         Alert.alert(
           "Cần tải ứng dụng",
@@ -161,17 +304,17 @@ const ShareModal = ({ visible, onClose, tourData }) => {
     try {
       // Thử các URL scheme khác nhau cho Telegram
       const telegramUrls = [
-        `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`,
-        `tg://msg?text=${encodeURIComponent(fullShareMessage)}`,
-        'tg://'
+        `https://t.me/share/url?url=${encodeURIComponent(currentShareUrl)}&text=${encodeURIComponent(currentShareTitle)}`,
+        `tg://msg?text=${encodeURIComponent(currentShareMessage)}`,
+        "tg://",
       ];
 
       let appOpened = false;
-      
+
       for (const url of telegramUrls) {
         try {
           const supported = await Linking.canOpenURL(url);
-          
+
           if (supported) {
             await Linking.openURL(url);
             onClose();
@@ -186,7 +329,7 @@ const ShareModal = ({ visible, onClose, tourData }) => {
       // Nếu không thể detect app, thử mở trực tiếp
       if (!appOpened) {
         try {
-          const directUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`;
+          const directUrl = `https://t.me/share/url?url=${encodeURIComponent(currentShareUrl)}&text=${encodeURIComponent(currentShareTitle)}`;
           await Linking.openURL(directUrl);
           onClose();
           appOpened = true;
@@ -197,9 +340,10 @@ const ShareModal = ({ visible, onClose, tourData }) => {
 
       // Chỉ hiển thị dialog nếu thực sự không thể mở
       if (!appOpened) {
-        const storeUrl = Platform.OS === "ios"
-          ? "https://apps.apple.com/app/telegram-messenger/id686449807"
-          : "https://play.google.com/store/apps/details?id=org.telegram.messenger";
+        const storeUrl =
+          Platform.OS === "ios"
+            ? "https://apps.apple.com/app/telegram-messenger/id686449807"
+            : "https://play.google.com/store/apps/details?id=org.telegram.messenger";
 
         Alert.alert(
           "Cần tải ứng dụng",
@@ -230,29 +374,29 @@ const ShareModal = ({ visible, onClose, tourData }) => {
     try {
       // Sử dụng Share API với title để hệ thống tự detect Messenger
       const result = await Share.share({
-        message: fullShareMessage,
-        title: shareTitle,
-        url: shareUrl,
+        message: currentShareMessage,
+        title: currentShareTitle,
+        url: currentShareUrl,
       });
-      
+
       if (result.action === Share.sharedAction) {
         onClose();
         return;
       }
-      
+
       // Fallback: Thử mở Messenger trực tiếp
-      const messengerUrl = Platform.OS === "android" 
-        ? 'fb-messenger://share'
-        : 'fb-messenger://';
-      
+      const messengerUrl =
+        Platform.OS === "android" ? "fb-messenger://share" : "fb-messenger://";
+
       try {
         await Linking.openURL(messengerUrl);
         onClose();
       } catch (directError) {
         // Cuối cùng, hiển thị dialog tải app
-        const storeUrl = Platform.OS === "ios"
-          ? "https://apps.apple.com/app/messenger/id454638411"
-          : "https://play.google.com/store/apps/details?id=com.facebook.orca";
+        const storeUrl =
+          Platform.OS === "ios"
+            ? "https://apps.apple.com/app/messenger/id454638411"
+            : "https://play.google.com/store/apps/details?id=com.facebook.orca";
 
         Alert.alert(
           "Cần tải ứng dụng",
@@ -283,17 +427,17 @@ const ShareModal = ({ visible, onClose, tourData }) => {
     try {
       // Thử các URL scheme khác nhau cho Zalo
       const zaloUrls = [
-        'zalo://share',
-        'zalo://',
-        `zalo://share?text=${encodeURIComponent(fullShareMessage)}`
+        "zalo://share",
+        "zalo://",
+        `zalo://share?text=${encodeURIComponent(currentShareMessage)}`,
       ];
 
       let appOpened = false;
-      
+
       for (const url of zaloUrls) {
         try {
           const supported = await Linking.canOpenURL(url);
-          
+
           if (supported) {
             await Linking.openURL(url);
             onClose();
@@ -308,7 +452,7 @@ const ShareModal = ({ visible, onClose, tourData }) => {
       // Nếu không thể detect app, thử mở trực tiếp
       if (!appOpened) {
         try {
-          const directUrl = `zalo://share?text=${encodeURIComponent(fullShareMessage)}`;
+          const directUrl = `zalo://share?text=${encodeURIComponent(currentShareMessage)}`;
           await Linking.openURL(directUrl);
           onClose();
           appOpened = true;
@@ -319,9 +463,10 @@ const ShareModal = ({ visible, onClose, tourData }) => {
 
       // Chỉ hiển thị dialog nếu thực sự không thể mở
       if (!appOpened) {
-        const storeUrl = Platform.OS === "ios"
-          ? "https://apps.apple.com/app/zalo/id579523206"
-          : "https://play.google.com/store/apps/details?id=com.zing.zalo";
+        const storeUrl =
+          Platform.OS === "ios"
+            ? "https://apps.apple.com/app/zalo/id579523206"
+            : "https://play.google.com/store/apps/details?id=com.zing.zalo";
 
         Alert.alert(
           "Cần tải ứng dụng",
@@ -351,9 +496,9 @@ const ShareModal = ({ visible, onClose, tourData }) => {
   const handleGeneralShare = async () => {
     try {
       const result = await Share.share({
-        message: fullShareMessage,
-        title: shareTitle,
-        url: shareUrl,
+        message: currentShareMessage,
+        title: currentShareTitle,
+        url: currentShareUrl,
       });
 
       if (result.action === Share.sharedAction) {
@@ -368,13 +513,30 @@ const ShareModal = ({ visible, onClose, tourData }) => {
   const copyLink = async () => {
     try {
       await Share.share({
-        message: shareUrl,
-        title: shareTitle,
-        url: shareUrl,
+        message: currentShareUrl,
+        title: currentShareTitle,
+        url: currentShareUrl,
       });
       onClose(); // Đóng modal ngay lập tức
     } catch (error) {
       onClose(); // Đóng modal ngay lập tức
+    }
+  };
+
+  // Hàm chia sẻ deeplink
+  const shareDeepLink = async () => {
+    try {
+      const result = await Share.share({
+        message: `${currentShareTitle}\n\n${currentShareUrl}`,
+        title: currentShareTitle,
+        url: currentShareUrl,
+      });
+
+      if (result.action === Share.sharedAction) {
+        onClose(); // Đóng modal ngay lập tức
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể chia sẻ deeplink");
     }
   };
 
@@ -416,8 +578,20 @@ const ShareModal = ({ visible, onClose, tourData }) => {
       onPress: shareToTelegram,
     },
     {
+      title: "Test App",
+      icon: "phone-portrait-outline",
+      color: "#FF6B35",
+      onPress: testDeepLink,
+    },
+    {
+      title: "DeepLink",
+      icon: "link-outline",
+      color: "#9C27B0",
+      onPress: shareDeepLink,
+    },
+    {
       title: "Copy Link",
-      icon: "link",
+      icon: "copy-outline",
       color: "#666666",
       onPress: copyLink,
     },
@@ -448,7 +622,9 @@ const ShareModal = ({ visible, onClose, tourData }) => {
         <View style={styles.modalContainer}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Chia sẻ chuyến đi</Text>
+            <Text style={styles.headerTitle}>
+              {loading ? "Đang tạo deeplink..." : "Chia sẻ chuyến đi"}
+            </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color={COLORS.text} />
             </TouchableOpacity>
@@ -478,6 +654,8 @@ const ShareModal = ({ visible, onClose, tourData }) => {
                     📍 {cateID?.name || "Việt Nam"}
                   </Text>
                 </View>
+
+                {/* Debug links - hiển thị trong development */}
               </View>
             </View>
 
@@ -486,14 +664,21 @@ const ShareModal = ({ visible, onClose, tourData }) => {
               {shareOptions.map((option, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={styles.shareOption}
-                  onPress={option.onPress}
-                  activeOpacity={0.7}
+                  style={[
+                    styles.shareOption,
+                    loading && styles.shareOptionDisabled,
+                  ]}
+                  onPress={loading ? null : option.onPress}
+                  activeOpacity={loading ? 1 : 0.7}
+                  disabled={loading}
                 >
                   <View
                     style={[
                       styles.iconContainer,
-                      { backgroundColor: `${option.color}15` },
+                      {
+                        backgroundColor: `${option.color}15`,
+                        opacity: loading ? 0.5 : 1,
+                      },
                     ]}
                   >
                     <Ionicons
@@ -502,7 +687,14 @@ const ShareModal = ({ visible, onClose, tourData }) => {
                       color={option.color}
                     />
                   </View>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
+                  <Text
+                    style={[
+                      styles.optionTitle,
+                      loading && styles.optionTitleDisabled,
+                    ]}
+                  >
+                    {option.title}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -599,6 +791,26 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontWeight: "500",
   },
+  debugContainer: {
+    marginTop: 12,
+    padding: 8,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  debugTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  debugText: {
+    fontSize: 10,
+    color: "#666",
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    marginBottom: 2,
+  },
   imageCount: {
     fontSize: 12,
     color: COLORS.textSecondary,
@@ -616,6 +828,9 @@ const styles = StyleSheet.create({
     width: "22%",
     marginBottom: 20,
   },
+  shareOptionDisabled: {
+    opacity: 0.6,
+  },
   iconContainer: {
     width: 50,
     height: 50,
@@ -628,6 +843,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.text,
     textAlign: "center",
+  },
+  optionTitleDisabled: {
+    color: COLORS.textSecondary,
   },
   bottomSpacing: {
     height: 20,

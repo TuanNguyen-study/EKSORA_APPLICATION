@@ -1,17 +1,16 @@
-import { StyleSheet, View, FlatList } from 'react-native';
-import React from 'react';
-import Header from '../../../components/offers/header';
-import Offer from '../../../components/offers/Offer';
-import Promotions from '../../../components/offers/Promotion';
+import { StyleSheet, View, FlatList } from "react-native";
 
-// Tạo một mảng chứa các "phần" của màn hình.
-const SCREEN_COMPONENTS = [
-  { id: 'header', Component: Header },
-  { id: 'offer', Component: Offer },
-  { id: 'promotions', Component: Promotions },
-];
+import React from "react";
+import Header from "../../../components/offers/components/header";
+import Offer from "../../../components/offers/Offer";
+import Promotions from "../../../components/offers/components/Promotion";
 
 const IndexScreen = () => {
+  // Tạo một mảng chứa các "phần" của màn hình (không bao gồm header).
+  const SCREEN_COMPONENTS = [
+    { id: "offer", Component: Offer },
+    { id: "promotions", Component: Promotions },
+  ];
 
   // Nó chỉ đơn giản là render component tương ứng.
   const renderItem = ({ item }) => {
@@ -23,14 +22,17 @@ const IndexScreen = () => {
   return (
     // Dùng View làm container chính cho toàn bộ màn hình
     <View style={styles.container}>
+      {/* Header cố định ở trên cùng */}
+      <Header />
+
+      {/* Phần nội dung có thể scroll */}
       <FlatList
         data={SCREEN_COMPONENTS}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         ListFooterComponent={<View style={{ height: 20, paddingBottom: 30 }} />}
-        // Thêm khoảng trống ở đầu nếu cần
-        ListHeaderComponent={<View style={{ height: 10 }} />}
+        style={styles.scrollableContent}
       />
     </View>
   );
@@ -41,6 +43,9 @@ export default IndexScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
+  },
+  scrollableContent: {
+    flex: 1,
   },
 });

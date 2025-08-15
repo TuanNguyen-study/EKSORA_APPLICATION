@@ -6,8 +6,8 @@ export const fetchTourDetail = async (tourId) => {
 
   try {
     const response = await axios.get(`/api/tours/${tourId}`);
-    //console.log('👉 raw axios response:', response);
-    //console.log('👉 raw response.data:', response.data);
+    // console.log('👉 raw axios response:', response);
+    // console.log('👉 raw response.data:', response.data);
     return response.data ?? response;
   } catch (err) {
     console.error(`❌ Error calling /api/tours/${tourId}:`, err.response || err);

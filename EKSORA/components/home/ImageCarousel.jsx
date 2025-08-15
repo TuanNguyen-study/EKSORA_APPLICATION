@@ -2,17 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { View, FlatList, StyleSheet, Dimensions } from "react-native";
 import ImageCarouselCard from "./ImageCarouselCard";
 import { COLORS } from "../../constants/colors";
+import { getTours } from "../../API/services/serverCategories";
 
 const { width: screenWidth } = Dimensions.get("window");
-
-// Dữ liệu và hằng số có thể được di chuyển ra file riêng 
-const carouselImages = [
-  { id: "c1", image: { uri: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop" } },
-  { id: "c2", image: { uri: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop" } },
-  { id: "c3", image: { uri: "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop" } },
-  { id: "c4", image: { uri: "https://images.unsplash.com/photo-1528164344705-47542687000d?q=80&w=1740&auto=format&fit=crop" } },
-  { id: "c5", image: { uri: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=1740&auto=format&fit=crop" } },
-];
 
 const ITEM_WIDTH_PERCENTAGE = 0.6;
 const ITEM_HEIGHT = 150;
@@ -22,6 +14,58 @@ const SNAP_INTERVAL = ITEM_WIDTH + ITEM_SPACING;
 const PAGINATION_AREA_HEIGHT = 30;
 
 const ImageCarousel = () => {
+  const [carouselImages, setCarouselImages] = useState([]);
+
+  // Fetch tour images từ API
+  useEffect(() => {
+    const fetchTourImages = async () => {
+      try {
+        const response = await getTours();
+        const tours = response?.data || response;
+
+        if (Array.isArray(tours) && tours.length > 0) {
+          // Lấy 5 tour đầu tiên và chuyển đổi thành format carousel
+          const tourImages = tours
+            .slice(0, 10)
+            .map((tour) => ({
+              id: tour._id || tour.id,
+              image: { uri: tour.image?.[0] || "" }, // Lấy ảnh đầu tiên từ mảng image
+              tourData: tour, // Lưu thêm data tour để dùng khi navigate
+            }))
+            .filter((img) => !!img.image.uri);
+
+          // console.log("Tour images loaded:", tourImages); // Debug log
+          setCarouselImages(tourImages);
+        }
+      } catch (error) {
+        // console.error("Error fetching tour images:", error);
+        // Fallback data nếu API lỗi
+        setCarouselImages([
+          {
+            id: "c1",
+            image: {
+              uri: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1740&auto=format&fit=crop",
+            },
+          },
+          {
+            id: "c2",
+            image: {
+              uri: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=1740&auto=format&fit=crop",
+            },
+          },
+          {
+            id: "c3",
+            image: {
+              uri: "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=1740&auto=format&fit=crop",
+            },
+          },
+        ]);
+      }
+    };
+
+    fetchTourImages();
+  }, []);
+
   const loopedCarouselImages = [
     ...carouselImages,
     ...carouselImages,
@@ -29,34 +73,41 @@ const ImageCarousel = () => {
   ];
   const initialIndex = carouselImages.length;
 
-  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(initialIndex);
+  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const carouselRef = useRef(null);
   const [isManuallyScrolling, setIsManuallyScrolling] = useState(false);
 
-  // Scroll đến vị trí ban đầu
+  // Scroll đến vị trí ban đầu khi có dữ liệu
   useEffect(() => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollToIndex({ index: initialIndex, animated: false });
+    if (carouselRef.current && carouselImages.length > 0) {
+      carouselRef.current.scrollToIndex({
+        index: initialIndex,
+        animated: false,
+      });
+      setCurrentCarouselIndex(initialIndex);
     }
-  }, []);
+  }, [carouselImages, initialIndex]);
 
   // Tự động cuộn
   useEffect(() => {
-    if (isManuallyScrolling) return;
+    if (isManuallyScrolling || carouselImages.length === 0) return;
 
     const timer = setInterval(() => {
       if (!carouselRef.current) return;
       let nextIndex = currentCarouselIndex + 1;
-      
-      if (nextIndex >= loopedCarouselImages.length -1) {
-          nextIndex = initialIndex;
-          carouselRef.current.scrollToIndex({ index: nextIndex, animated: false });
+
+      if (nextIndex >= loopedCarouselImages.length - 1) {
+        nextIndex = initialIndex;
+        carouselRef.current.scrollToIndex({
+          index: nextIndex,
+          animated: false,
+        });
       } else {
-          carouselRef.current.scrollToIndex({ index: nextIndex, animated: true });
+        carouselRef.current.scrollToIndex({ index: nextIndex, animated: true });
       }
-      
+
       setCurrentCarouselIndex(nextIndex);
-    }, 3000);
+    }, 5000);
 
     return () => clearInterval(timer);
   }, [currentCarouselIndex, isManuallyScrolling]);
@@ -67,29 +118,13 @@ const ImageCarousel = () => {
     }
   }).current;
 
-  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  }).current;
 
   const handleScrollBegin = () => setIsManuallyScrolling(true);
-  const handleScrollEnd = () => setTimeout(() => setIsManuallyScrolling(false), 500);
-
-  const renderPagination = () => {
-    const activeIndex = currentCarouselIndex % carouselImages.length;
-    return (
-      <View style={styles.paginationContainer}>
-        {carouselImages.map((_, index) => (
-          <View
-            key={`dot-${index}`}
-            style={[
-              styles.paginationDotBase,
-              activeIndex === index
-                ? styles.paginationDotActive
-                : styles.paginationDotInactive,
-            ]}
-          />
-        ))}
-      </View>
-    );
-  };
+  const handleScrollEnd = () =>
+    setTimeout(() => setIsManuallyScrolling(false), 500);
 
   return (
     <View style={styles.carouselSection}>
@@ -97,7 +132,13 @@ const ImageCarousel = () => {
         ref={carouselRef}
         data={loopedCarouselImages}
         keyExtractor={(_, index) => `carousel-item-${index}`}
-        renderItem={({ item }) => <ImageCarouselCard item={item} />}
+        renderItem={({ item, index }) => {
+          const activeIndex = currentCarouselIndex % carouselImages.length;
+          const itemIndex = index % carouselImages.length;
+          const isActive = activeIndex === itemIndex;
+
+          return <ImageCarouselCard item={item} isActive={isActive} />;
+        }}
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={SNAP_INTERVAL}
@@ -118,42 +159,18 @@ const ImageCarousel = () => {
         onScrollBeginDrag={handleScrollBegin}
         onMomentumScrollEnd={handleScrollEnd}
       />
-      <View style={styles.paginationWrapper}>{renderPagination()}</View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   carouselSection: {
-    height: ITEM_HEIGHT + 20 + PAGINATION_AREA_HEIGHT,
-    justifyContent: "space-between",
-    backgroundColor: 'transparent',
+    height: ITEM_HEIGHT + 50,
+    justifyContent: "center",
+    backgroundColor: "transparent",
   },
   carouselFlatListStyle: {
     height: ITEM_HEIGHT,
-  },
-  paginationWrapper: {
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: (PAGINATION_AREA_HEIGHT - 8 - 5) / 2,
-  },
-  paginationContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  paginationDotBase: {
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
-  },
-  paginationDotActive: {
-    backgroundColor: COLORS.primary,
-    width: 20,
-  },
-  paginationDotInactive: {
-    backgroundColor: COLORS.inactiveTabDot || "#D3D3D3",
-    width: 8,
   },
 });
 
