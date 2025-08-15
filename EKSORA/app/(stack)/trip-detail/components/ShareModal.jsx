@@ -663,7 +663,7 @@ const ShareModal = ({ visible, onClose, tourData }) => {
             <View style={styles.shareOptionsContainer}>
               {shareOptions.map((option, index) => (
                 <TouchableOpacity
-                  key={index}
+                  key={option.title || `option-${index}`}
                   style={[
                     styles.shareOption,
                     loading && styles.shareOptionDisabled,

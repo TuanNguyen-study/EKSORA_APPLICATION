@@ -92,7 +92,7 @@ export default function LoginRequestModal({ isVisible, onClose }) {
                 end={{ x: 1, y: 1 }}
                 style={styles.gradient}
               >
-                <Text style={styles.loginButtonText}>Bắt đầu ngay</Text>
+                <Text style={styles.loginButtonText}>Đăng nhập/Đăng ký</Text>
               </LinearGradient>
             </TouchableOpacity>
 
