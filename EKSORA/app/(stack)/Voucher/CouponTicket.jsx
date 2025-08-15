@@ -7,10 +7,10 @@ const COLORS = {
   primaryBlue: '#0087CA',  // Màu xanh dương chủ đạo (giống Modal)
   lightBlue: '#E6F3F9',    // Nền xanh dương rất nhạt
   white: '#FFFFFF',
-  textPrimary: '#1F2937',    // Màu chữ chính (đen đậm)
-  textSecondary: '#6B7280',  // Màu chữ phụ (xám)
-  border: '#E5E7EB',        // Màu viền nhạt
-  disabled: '#F5F5F5',      // Màu nền khi loading
+  textPrimary: '#1F2937',  // Màu chữ chính (đen đậm)
+  textSecondary: '#6B7280', // Màu chữ phụ (xám)
+  border: '#E5E7EB',       // Màu viền nhạt
+  disabled: '#F5F5F5',     // Màu nền khi loading hoặc đã lưu
 };
 
 const CouponTicket = ({
@@ -18,7 +18,7 @@ const CouponTicket = ({
   discountAmount = 'N/A',
   detailsText = '',
   expiryText = '',
-  status = 'available', 
+  status = 'available',
   onToggleStatus = () => {},
   loading = false,
 }) => {
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginHorizontal: 16, 
+    marginHorizontal: 16,
     marginBottom: 20,
     minHeight: 140,
     elevation: 2,
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     left: -24,
     width: 48,
     height: 48,
-    backgroundColor: COLORS.primaryBlue, 
+    backgroundColor: COLORS.primaryBlue,
     transform: [{ rotate: '45deg' }],
     justifyContent: 'flex-end',
     alignItems: 'center',
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   discountText: {
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.primaryBlue, 
+    color: COLORS.primaryBlue,
     marginBottom: 8,
   },
   detailsText: {
@@ -141,10 +141,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   defaultButton: {
-    backgroundColor: COLORS.lightBlue, 
+    backgroundColor: COLORS.lightBlue,
   },
   savedButton: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.disabled,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   defaultButtonText: {
-    color: COLORS.primaryBlue, 
+    color: COLORS.primaryBlue,
   },
   savedButtonText: {
     color: COLORS.textSecondary,
