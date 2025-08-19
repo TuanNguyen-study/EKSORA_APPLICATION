@@ -1,24 +1,23 @@
 // ShoppingCartScreen.js
 
-import React, { useState, useMemo } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  SafeAreaView,
-  TouchableOpacity,
-  StatusBar,
-  FlatList,
-  Platform,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Platform,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSelector } from "react-redux";
 import { useCart } from "../../../store/CartContext";
 import CartItem from "./components/CartItem";
-import { createBooking } from "../../../API/services/booking";
-import { useSelector } from "react-redux";
 
 const formatCurrency = (amount) => {
   if (typeof amount !== "number") return "0 đ";
@@ -129,37 +128,53 @@ const ShoppingCartScreen = () => {
         const [day, month, year] = item.travelDate.split("/");
         const formattedDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
+        // Calculate prices and quantities
+        const quantity_nguoiLon = Number(item.adults) || 0;
+        const quantity_treEm = Number(item.children) || 0;
+        const price_nguoiLon = Number(item.originalAdultPrice) || 0;
+        const price_treEm = Number(item.originalChildPrice) || 0;
+        
+        // Calculate total price for this item
+        const itemTotalPrice = (quantity_nguoiLon * price_nguoiLon) + 
+                             (quantity_treEm * price_treEm);
+
         return {
-          ...item,
           travel_date: formattedDate,
           user_id: loggedInUser.id,
           tour_id: item.tour_id,
-          quantity_nguoiLon: item.adults,
-          quantity_treEm: item.children,
-          price_nguoiLon: item.originalAdultPrice,
-          price_treEm: item.originalChildPrice,
+          quantity_nguoiLon,
+          quantity_treEm,
+          price_nguoiLon,
+          price_treEm,
+          totalPrice: itemTotalPrice,
           optionServices: (item.selectedOptions || []).map((option) => ({
             option_service_id: option.id || option.option_service_id,
           })),
           coin: 0,
           voucher_id: item.voucherId || null,
-          discount: item.discount || 0,
+          discount: Number(item.discount) || 0,
+          // Add required contact fields
+          fullName: `${loggedInUser.lastName || ""} ${loggedInUser.firstName || ""}`.trim(),
+          email: loggedInUser.email || "",
+          phone: loggedInUser.phone || "",
         };
       });
 
-      const checkoutParams = {
-        totalPrice: total.toString(),
-        items: JSON.stringify(itemsForBooking),
-        fullName: `${loggedInUser.lastName} ${loggedInUser.firstName}`,
-        email: loggedInUser.email,
-        phone: loggedInUser.phone,
-        buyerAddress: loggedInUser.address || "Chưa có địa chỉ",
-        isPendingBooking: "true", // Flag để biết cần tạo booking
-      };
-
+      // Chuyển đến trang hoàn tất đơn hàng trước khi thanh toán
       router.push({
-        pathname: "/BookingCompleted",
-        params: checkoutParams,
+        pathname: "/(stack)/BookingCompleted",
+        params: {
+          items: JSON.stringify(itemsForBooking),
+          totalPrice: total.toString(),
+          isPendingBooking: "true",
+          fromCart: "true", // Đánh dấu là từ giỏ hàng
+          // Thêm thông tin người dùng để hiển thị
+          lastName: loggedInUser.lastName || "",
+          firstName: loggedInUser.firstName || "",
+          email: loggedInUser.email || "",
+          phone: loggedInUser.phone || "",
+          buyerAddress: loggedInUser.address || "Chưa có địa chỉ",
+        },
       });
     } catch (error) {
       console.error("Lỗi khi chuẩn bị đơn hàng:", error.message || error);

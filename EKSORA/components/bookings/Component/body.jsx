@@ -158,17 +158,19 @@ export default function Body({ navigation }) {
   };
 
   return (
-
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.tabContainer}
-    >
-      <Tab title="Tất cả" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
-      <Tab title="Đang chờ" active={activeTab === 'pending'} onPress={() => setActiveTab('pending')} />
-      <Tab title="Đã thanh toán" active={activeTab === 'paid'} onPress={() => setActiveTab('paid')} />
-      <Tab title="Đã hủy" active={activeTab === 'canceled'} onPress={() => setActiveTab('canceled')} />
-    </ScrollView>
+    <View style={styles.container}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabContainer}
+      >
+        <Tab title="Tất cả" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
+        <Tab title="Đang chờ" active={activeTab === 'pending'} onPress={() => setActiveTab('pending')} />
+        <Tab title="Đã thanh toán" active={activeTab === 'paid'} onPress={() => setActiveTab('paid')} />
+        <Tab title="Đã hủy" active={activeTab === 'canceled'} onPress={() => setActiveTab('canceled')} />
+      </ScrollView>
+      {renderContent()}
+    </View>
   );
 }
 
