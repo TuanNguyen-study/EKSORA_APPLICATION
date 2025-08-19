@@ -45,17 +45,17 @@ export const VoucherProvider = ({ children }) => {
           savedIds = savedVoucherData
             .map((savedVoucher) => savedVoucher.voucher_id?._id)
             .filter(Boolean);
-          console.log("Saved vouchers:", savedIds.length);
+          // console.log("Saved vouchers:", savedIds.length);
         } catch (error) {
-          console.log("Error fetching saved vouchers:", error);
+          // console.log("Error fetching saved vouchers:", error);
         }
       } else {
-        console.log(
-          "No userId found, showing all vouchers without saved status"
-        );
+        // console.log(
+        //   "No userId found, showing all vouchers without saved status"
+        // );
       }
 
-      console.log("All promotions:", allPromotionsData.length);
+      // console.log("All promotions:", allPromotionsData.length);
 
       // Lọc ra những voucher còn hạn sử dụng (chưa qua ngày hôm nay)
       const now = new Date();
@@ -75,9 +75,9 @@ export const VoucherProvider = ({ children }) => {
         requiresLogin: !userId, // Thêm flag để biết có cần đăng nhập không
       }));
 
-      console.log("All promotions (before filter):", allPromotionsData.length);
-      console.log("Valid promotions (after expiry filter):", promotions.length);
-      console.log("User logged in:", !!userId);
+      // console.log("All promotions (before filter):", allPromotionsData.length);
+      // console.log("Valid promotions (after expiry filter):", promotions.length);
+      // console.log("User logged in:", !!userId);
 
       setCoupons(promotions);
     } catch (error) {

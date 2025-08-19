@@ -3,19 +3,20 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Dimensions,
   FlatList,
+  PanResponder,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  PanResponder,
-  Dimensions,
 } from "react-native";
 import { useSelector } from "react-redux";
-import { COLORS } from "../../../constants/colors";
+import AxiosInstance from "../../../API/services/AxiosInstance";
 import { createBooking } from "../../../API/services/booking";
+import { COLORS } from "../../../constants/colors";
 import { useCart } from "../../../store/CartContext";
 
 // --- IMPORT CÁC COMPONENT CON ---
@@ -26,14 +27,8 @@ import PaymentMethodItem from "./components/PaymentMethodItem";
 // Dữ liệu phương thức thanh toán
 const paymentMethods = [
   { id: "Payos", label: "Ví PayOS", icon: "wallet-outline" },
-  { id: "momo_atm", label: "Thẻ ATM/Internet Banking", icon: "bank-outline" },
-  {
-    id: "credit_card",
-    label: "Thẻ tín dụng/ghi nợ",
-    icon: "credit-card-outline",
-    note: "Visa, Mastercard, JCB",
-  },
-  { id: "google_pay", label: "Google Pay", icon: "google" },
+  { id: "ZaloPay", label: "Ví ZaloPay", icon: "bank-outline" },
+
 ];
 
 // --- COMPONENT FOOTER  ---
@@ -214,7 +209,7 @@ export default function PaymentPage() {
         return {
           displayItems: parsedItems,
           finalTotalPrice: Number(params.totalPrice),
-          orderDescription: `Thanh toán cho ${parsedItems.length} tour du lịch`,
+          orderDescription: `EKSORA thanh toán`,
         };
       } catch (e) {
         console.error("Lỗi parse JSON từ giỏ hàng:", e);
@@ -236,8 +231,8 @@ export default function PaymentPage() {
     return {
       displayItems: [singleItem],
       finalTotalPrice: Number(params.totalPrice),
-      orderDescription: `Thanh toán đơn hàng: ${params.title || "Tour du lịch"}`,
-    };
+      orderDescription: `EKSORA thanh toán  '}`,
+    }
   }, [params]);
 
   useEffect(() => {
@@ -251,347 +246,182 @@ export default function PaymentPage() {
 
   // --- THAY ĐỔI: Xử lý khi chọn phương thức thanh toán ---
   const handleSelectMethod = (methodId) => {
-    if (methodId !== "Payos") {
-      Alert.alert(
-        "Tính năng đang phát triển",
-        "Phương thức này hiện chưa khả dụng. Vui lòng chọn thanh toán qua Ví PayOS."
-      );
-      // Không cho phép chọn phương thức khác
-      return;
-    }
     setSelectedMethod(methodId);
   };
 
   const handlePayment = async () => {
-    if (isProcessing) return;
-
-    // --- THAY ĐỔI: Thêm một lớp kiểm tra an toàn trước khi thanh toán ---
-    if (selectedMethod !== "Payos") {
-      Alert.alert(
-        "Chưa hỗ trợ",
-        "Phương thức thanh toán này đang được phát triển. Vui lòng chọn Ví PayOS để tiếp tục."
-      );
-      return;
-    }
-
     if (!params.fullName || !params.email || !params.phone) {
       Alert.alert("Lỗi", "Thiếu thông tin liên lạc. Vui lòng thử lại.");
       return;
     }
 
-    setIsProcessing(true);
+    // Kiểm tra xem có phải là direct booking không
+    const isDirectBooking = params.needCreateBooking === "true";
+    
+    let bookingId;
+    if (isDirectBooking) {
+      try {
+        // Tạo booking trước khi tạo link thanh toán
+        let bookingData;
 
-    try {
-      let bookingIds = [];
-      let representativeBookingId = params.bookingId || displayItems[0]?.id;
-
-      // THAY ĐỔI: Kiểm tra booking đã tồn tại trong AsyncStorage
-      const existingBookingId =
-        await AsyncStorage.getItem("PENDING_BOOKING_ID");
-
-      if (existingBookingId && !needCreateBooking) {
-        // Nếu có booking ID đã tồn tại và không cần tạo booking mới (từ vé pending)
-        representativeBookingId = existingBookingId;
-        console.log(
-          ">>> [PAYMENT_PAGE] Sử dụng lại booking ID đã tồn tại:",
-          representativeBookingId
-        );
-      } else if (needCreateBooking) {
-        // Kiểm tra xem có dữ liệu booking từ "Đặt ngay" không
-        if (params.bookingData) {
-          // TRƯỜNG HỢP MỚI: Tạo booking từ "Đặt ngay"
-          console.log('>>> [PAYMENT_PAGE] Tạo booking từ luồng "Đặt ngay"');
-          const bookingData = JSON.parse(params.bookingData);
-
-          // Thêm thông tin liên lạc vào booking data
-          bookingData.fullName = params.fullName;
-          bookingData.email = params.email;
-          bookingData.phone = params.phone;
-
-          console.log(
-            ">>> [PAYMENT_PAGE] Creating direct booking with data:",
-            bookingData
-          );
-          const res = await createBooking(bookingData);
-          const bookingId = res?.booking_id || res?.booking?._id;
-
-          if (bookingId) {
-            representativeBookingId = bookingId;
-            bookingIds = [bookingId];
-
-            // Lưu booking ID mới tạo vào AsyncStorage
-            await AsyncStorage.setItem(
-              "PENDING_BOOKING_ID",
-              representativeBookingId.toString()
-            );
-            console.log(
-              '>>> [PAYMENT_PAGE] Đã tạo booking từ "Đặt ngay":',
-              representativeBookingId
-            );
+        // Handle cart items
+        if (params.fromCart === "true" && params.items) {
+          try {
+            const cartItems = JSON.parse(params.items);
+            // Assuming cartItems is an array, take the first item for now
+            // In the future, you might want to create multiple bookings
+            bookingData = cartItems[0];
+          } catch (parseError) {
+            console.error(">>> [PAYMENT] Error parsing cart items:", parseError);
+            throw new Error("Dữ liệu giỏ hàng không hợp lệ");
+          }
+        } 
+        // Handle direct booking data
+        else if (params.bookingData) {
+          try {
+            bookingData = JSON.parse(params.bookingData);
+          } catch (parseError) {
+            console.error(">>> [PAYMENT] Error parsing bookingData:", parseError);
+            throw new Error("Dữ liệu đơn hàng không hợp lệ");
           }
         } else {
-          // Tạo đơn hàng mới từ giỏ hàng (logic cũ)
-          console.log(">>> [PAYMENT_PAGE] Tạo booking từ giỏ hàng");
-          const items = JSON.parse(params.items);
-
-          for (const item of items) {
-            const bookingData = {
-              user_id: item.user_id,
-              tour_id: item.tour_id,
-              travel_date: item.travel_date,
-              quantity_nguoiLon: item.quantity_nguoiLon,
-              quantity_treEm: item.quantity_treEm,
-              price_nguoiLon: item.price_nguoiLon,
-              price_treEm: item.price_treEm,
-              optionServices: item.optionServices || [],
-              coin: item.coin || 0,
-              voucher_id: item.voucher_id || null,
-              discount: item.discount || 0,
-              fullName: params.fullName,
-              email: params.email,
-              phone: params.phone,
-            };
-
-            console.log("Creating booking with data:", bookingData);
-            const res = await createBooking(bookingData);
-            const bookingId = res?.booking_id || res?.booking?._id;
-            if (bookingId) {
-              bookingIds.push(bookingId);
-            }
-          }
-
-          // Sử dụng booking đầu tiên làm representative
-          representativeBookingId = bookingIds[0];
-          // Lưu booking ID mới tạo vào AsyncStorage
-          await AsyncStorage.setItem(
-            "PENDING_BOOKING_ID",
-            representativeBookingId.toString()
-          );
+          throw new Error("Không tìm thấy dữ liệu đơn hàng");
         }
-      }
 
-      if (!representativeBookingId) {
-        Alert.alert("Lỗi", "Không tìm thấy mã đơn hàng.");
+        // Validate required fields
+        const requiredFields = ['user_id', 'tour_id', 'travel_date', 'quantity_nguoiLon', 'totalPrice'];
+        const missingFields = requiredFields.filter(field => !bookingData[field]);
+        
+        if (missingFields.length > 0) {
+          console.error(">>> [PAYMENT] Missing fields in data:", bookingData);
+          throw new Error(`Thiếu thông tin bắt buộc: ${missingFields.join(', ')}`);
+        }
+
+        // Ensure numeric fields are numbers
+        bookingData.quantity_nguoiLon = Number(bookingData.quantity_nguoiLon);
+        // Make quantity_treEm optional, default to 0 if not provided
+        bookingData.quantity_treEm = bookingData.quantity_treEm ? Number(bookingData.quantity_treEm) : 0;
+        bookingData.totalPrice = Number(bookingData.totalPrice);
+
+        // Add default status if not present
+        if (!bookingData.status) {
+          bookingData.status = 'pending';
+        }
+        
+        console.log(">>> [PAYMENT] Creating booking with data:", bookingData);
+        
+        // Đảm bảo có token cho request
+        const token = await AsyncStorage.getItem("ACCESS_TOKEN");
+        if (!token) {
+          throw new Error("Phiên đăng nhập đã hết hạn");
+        }
+        
+        // Thêm headers vào request
+        AxiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        
+        const response = await createBooking(bookingData);
+        console.log(">>> [PAYMENT] Booking response:", response);
+        
+        if (!response) {
+          throw new Error("Không nhận được phản hồi từ server");
+        }
+        
+        if (!response._id) {
+          console.error(">>> [PAYMENT] Invalid response structure:", response);
+          throw new Error("Cấu trúc phản hồi không hợp lệ - thiếu _id");
+        }
+        
+        bookingId = response._id;
+        console.log(">>> [PAYMENT] Created booking:", bookingId);
+        
+        // Lưu bookingId tạm thời
+        await AsyncStorage.setItem("PENDING_BOOKING_ID", bookingId);
+        
+      } catch (error) {
+        console.error(">>> [PAYMENT] Error creating booking:", error);
+        Alert.alert("Lỗi", error.message || "Không thể tạo đơn hàng. Vui lòng thử lại.");
         return;
       }
-
-      const payload = {
-        amount: finalTotalPrice,
-        description: orderDescription,
-        buyerName: params.fullName,
-        buyerEmail: params.email,
-        buyerPhone: params.phone,
-        booking_id: representativeBookingId, // Sử dụng booking ID gốc
-        transaction_id: `TXN_${representativeBookingId}_${Date.now()}`, // Thêm transaction_id duy nhất
-      };
-
-      console.log(
-        ">>> [PAYMENT] PAYLOAD TRƯỚC KHI GỬI:",
-        JSON.stringify(payload, null, 2)
-      );
-
-      // Validate payload trước khi gửi
-      const validationErrors = [];
-      if (!payload.amount || payload.amount <= 0 || isNaN(payload.amount)) {
-        validationErrors.push(`Tổng tiền không hợp lệ: ${payload.amount}`);
-      }
-      if (!payload.buyerName || payload.buyerName.trim().length < 2) {
-        validationErrors.push(
-          `Tên người mua không hợp lệ: "${payload.buyerName}"`
-        );
-      }
-      if (!payload.buyerEmail || !payload.buyerEmail.includes("@")) {
-        validationErrors.push(`Email không hợp lệ: "${payload.buyerEmail}"`);
-      }
-      if (!payload.buyerPhone || payload.buyerPhone.length < 10) {
-        validationErrors.push(
-          `Số điện thoại không hợp lệ: "${payload.buyerPhone}"`
-        );
-      }
-      if (!payload.booking_id) {
-        validationErrors.push("Mã đơn hàng không hợp lệ");
-      }
-      if (!payload.description) {
-        validationErrors.push("Mô tả đơn hàng không hợp lệ");
-      }
-
-      if (validationErrors.length > 0) {
-        console.error(">>> [PAYMENT] Validation Errors:", validationErrors);
-        Alert.alert(
-          "Lỗi Dữ Liệu",
-          `Dữ liệu không hợp lệ:\n${validationErrors.join("\n")}`
-        );
+    } else {
+      // Lấy bookingId từ params hoặc displayItems cho các luồng khác
+      bookingId = params.bookingId || displayItems[0]?.id;
+      if (!bookingId) {
+        Alert.alert('Lỗi', 'Không tìm thấy mã đơn hàng.');
         return;
       }
+    }
 
-      // Chỉ lưu PENDING_BOOKING_ID nếu chưa có sẵn trong AsyncStorage
-      if (!existingBookingId || needCreateBooking) {
-        await AsyncStorage.setItem(
-          "PENDING_BOOKING_ID",
-          representativeBookingId.toString()
-        );
+    const payload = {
+      amount: finalTotalPrice,
+      description: orderDescription,
+      buyerName: params.fullName,
+      buyerEmail: params.email,
+      buyerPhone: params.phone,
+      booking_id: bookingId,
+    };
+
+    try {
+      let endpoint = "";
+      if (selectedMethod === "Payos") {
+        endpoint = "http://160.250.246.76:3000/api/create-payment-link";
+      } else if (selectedMethod === "ZaloPay") {
+        endpoint = "http://160.250.246.76:3000/api/zalo-pay/create-order";
       }
 
-      // Tạo AbortController để có thể timeout request
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 giây timeout
+      console.log(">>> [PAYMENT REQUEST] Endpoint:", endpoint);
+      console.log(">>> [PAYMENT REQUEST] Payload:", payload);
 
-      const response = await fetch(
-        "http://160.250.246.76:3000/api/create-payment-link",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        }
-      );
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-      clearTimeout(timeoutId); // Clear timeout nếu request thành công
+      const data = await response.json();
+      console.log(">>> [PAYMENT RESPONSE] Data:", data);
 
-      const responseText = await response.text();
-      console.log(">>> [PAYMENT] SERVER PHẢN HỒI RAW:", responseText);
-      console.log(">>> [PAYMENT] Response Status:", response.status);
-      console.log(
-        ">>> [PAYMENT] Response Headers:",
-        JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)
-      );
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error(">>> [PAYMENT] Lỗi parse JSON response:", parseError);
-        throw new Error(
-          `Lỗi parse response từ server. Response: ${responseText.substring(0, 200)}...`
-        );
-      }
-
-      console.log(
-        ">>> [PAYMENT] SERVER PHẢN HỒI JSON:",
-        JSON.stringify(data, null, 2)
-      );
+      // Gom tất cả các khả năng URL trả về (PayOS, ZaloPay)
+      const checkoutUrl =
+        data.url ||
+        data.order_url ||
+        data.zalo_url ||
+        data.raw?.order_url;
 
       if (!response.ok) {
-        // Xử lý lỗi cụ thể cho trường hợp đơn hàng đã tồn tại hoặc ObjectId không hợp lệ
-        if (
-          data.error &&
-          (data.error.includes("đã tồn tại") ||
-            data.error.includes("Cast to ObjectId failed"))
-        ) {
-          console.log(
-            ">>> [PAYMENT] Phát hiện lỗi duplicate hoặc ObjectId không hợp lệ"
-          );
-
-          // Xóa PENDING_BOOKING_ID để reset trạng thái
-          await AsyncStorage.removeItem("PENDING_BOOKING_ID");
-          console.log(">>> [PAYMENT] Đã xóa PENDING_BOOKING_ID để reset");
-
-          Alert.alert(
-            "Lỗi Thanh Toán",
-            "Phiên thanh toán trước đó chưa hoàn tất. Vui lòng thử lại từ đầu.",
-            [
-              {
-                text: "Thử lại",
-                onPress: () => {
-                  // Refresh lại trang để người dùng có thể thử lại từ đầu
-                  setIsProcessing(false);
-                  router.back();
-                },
-              },
-            ]
-          );
-          return;
-        }
-
-        // Cải thiện thông báo lỗi với thông tin chi tiết hơn
-        const errorMessage =
-          data.message ||
-          data.error ||
-          data.details ||
-          "Lỗi không xác định từ server.";
-        const errorDetails = {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorMessage,
-          data: data,
-        };
-        console.error(
-          ">>> [PAYMENT] Chi tiết lỗi:",
-          JSON.stringify(errorDetails, null, 2)
-        );
-
-        throw new Error(
-          `Server trả về lỗi ${response.status}: ${errorMessage}`
-        );
+        throw new Error(data.message || data.error || 'Lỗi không xác định từ server.');
       }
 
-      if (data.url) {
-        // Store payment link info for potential cancellation
-        if (data.paymentLinkId || data.id) {
-          await AsyncStorage.setItem(
-            "CURRENT_PAYMENT_ID",
-            data.paymentLinkId || data.id
-          );
+      if (checkoutUrl) {
+        // Clear cart items after successful payment if items came from cart
+        if (params.fromCart === "true" && params.items) {
+          try {
+            await clearCart();
+            console.log(">>> [PAYMENT] Successfully cleared cart after payment");
+          } catch (clearError) {
+            console.error(">>> [PAYMENT] Error clearing cart:", {
+              error: clearError.message || clearError,
+              stack: clearError.stack
+            });
+            // Continue with payment even if cart clearing fails
+          }
         }
 
+        // 🚀 Luôn mở trong WebView cho cả PayOS & ZaloPay
         router.push({
           pathname: "/acount/payment-webview",
-          params: {
-            checkoutUrl: data.url,
-            needCreateBooking: needCreateBooking, // Pass flag để clear cart
-            paymentId: data.paymentLinkId || data.id || representativeBookingId, // Pass payment ID
-          },
+          params: { checkoutUrl },
         });
       } else {
         throw new Error("Không nhận được URL thanh toán từ server.");
       }
-    } catch (error) {
-      console.error(">>> [PAYMENT] Lỗi trong quá trình thanh toán:", error);
-      console.error(">>> [PAYMENT] Stack trace:", error.stack);
-
-      // Kiểm tra loại lỗi để đưa ra thông báo phù hợp
-      let userMessage = "Không thể xử lý thanh toán. Vui lòng thử lại.";
-      let shouldResetBooking = false;
-
-      if (error.name === "AbortError") {
-        userMessage =
-          "Yêu cầu thanh toán bị timeout. Vui lòng kiểm tra kết nối và thử lại.";
-      } else if (
-        error.name === "TypeError" &&
-        error.message.includes("fetch")
-      ) {
-        userMessage =
-          "Không thể kết nối đến server thanh toán. Vui lòng kiểm tra kết nối internet và thử lại.";
-      } else if (error.message.includes("parse")) {
-        userMessage =
-          "Server trả về dữ liệu không hợp lệ. Vui lòng thử lại sau.";
-      } else if (error.message.includes("Server trả về lỗi")) {
-        userMessage = error.message; // Sử dụng message chi tiết từ server
-        // Nếu là lỗi server 500, có thể cần reset booking
-        if (error.message.includes("500")) {
-          shouldResetBooking = true;
-        }
-      }
-
-      // Reset booking nếu cần
-      if (shouldResetBooking) {
-        try {
-          await AsyncStorage.removeItem("PENDING_BOOKING_ID");
-          console.log(
-            ">>> [PAYMENT] Đã reset PENDING_BOOKING_ID do lỗi server"
-          );
-          userMessage +=
-            "\n\nTrạng thái thanh toán đã được reset. Vui lòng thử lại từ đầu.";
-        } catch (resetError) {
-          console.error(">>> [PAYMENT] Lỗi khi reset booking:", resetError);
-        }
-      }
-
-      Alert.alert("Lỗi Thanh Toán", userMessage);
-    } finally {
-      setIsProcessing(false);
+    } catch (err) {
+      console.error(">>> [PAYMENT ERROR]:", err);
+      Alert.alert('Lỗi tạo thanh toán', err.message);
     }
   };
+
+
+
 
   const contactInfo = {
     fullName: params.fullName,

@@ -101,6 +101,7 @@ const BookingSummaryCard = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
+    // Working...,
     borderRadius: 16,
     marginTop: 16,
     marginBottom: 16,

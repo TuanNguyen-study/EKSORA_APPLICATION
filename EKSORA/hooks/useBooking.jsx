@@ -1,8 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { useSelector } from "react-redux";
-import { createBooking } from "../API/services/booking";
-import { useRouter } from "expo-router";
 import { useCart } from "../store/CartContext";
 
 /**
@@ -350,24 +349,29 @@ export const useBooking = (initialDetails) => {
         // Thêm dữ liệu booking để tạo sau
         bookingData: JSON.stringify({
           user_id: userId,
-          fullName,
-          email,
-          phone,
           tour_id: tourData.tour_id,
           travel_date: (() => {
             const [day, month, year] = selectedDate.split("/");
             return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           })(),
+          // Thông tin đặt chỗ
           quantity_nguoiLon: quantityAdult,
           quantity_treEm: quantityChild,
-          price_nguoiLon: originalPrices.adult,
-          price_treEm: originalPrices.child,
-          optionServices: Object.values(tourData.selectedOptions).map((id) => ({
-            option_service_id: id,
-          })),
+          totalPrice: finalPrice,
+          // Thông tin khách hàng
+          fullName: `${firstName || ""} ${lastName || ""}`.trim(),
+          email,
+          phone,
+          // Các thông tin khác
           coin: 0,
           voucher_id: appliedVoucher ? appliedVoucher.voucher_id._id : null,
-          discount: discountAmount,
+          status: "pending",
+          selected_options: Object.values(tourData.selectedOptions || {}).map(id => ({
+            option_service_id: id
+          })),
+          booking_date: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          last_update: new Date().toISOString(),
         }),
       },
     });

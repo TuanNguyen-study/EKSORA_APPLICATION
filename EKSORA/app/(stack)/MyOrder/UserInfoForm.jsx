@@ -1,32 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
 import {
+    Alert,
+    Platform,
     SafeAreaView,
     ScrollView,
-    View,
+    StatusBar,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    StyleSheet,
-    StatusBar,
-    Alert,
-    Platform,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { COLORS } from '../../../constants/colors';
-import { getUser } from '../../../API/services/servicesUser';
 import { updateUserProfile } from '../../../API/services/servicesProfile';
+import { getUser } from '../../../API/services/servicesUser';
+import { COLORS } from '../../../constants/colors';
 
 
-const InputRow = ({ iconName, placeholder, value, onChangeText, keyboardType = 'default', secureTextEntry = false, onPress }) => (
-    <TouchableOpacity style={styles.inputRow} activeOpacity={onPress ? 0.8 : 1} onPress={onPress}>
-        <Ionicons name={iconName} size={22} color={COLORS.darkGray} style={styles.inputIcon} />
+// Component InputRow có thể tùy chỉnh màu placeholder
+const InputRow = ({
+    iconName,
+    placeholder,
+    value,
+    onChangeText,
+    keyboardType = 'default',
+    secureTextEntry = false,
+    onPress,
+    placeholderTextColor = COLORS.separator, // mặc định là darkGray
+}) => (
+    <TouchableOpacity
+        style={styles.inputRow}
+        activeOpacity={onPress ? 0.8 : 1}
+        onPress={onPress}
+    >
+        <Ionicons
+            name={iconName}
+            size={22}
+            color={COLORS.darkGray}
+            style={styles.inputIcon}
+        />
         <TextInput
             style={styles.input}
             placeholder={placeholder}
-            placeholderTextColor={COLORS.darkGray}
+            placeholderTextColor={placeholderTextColor}
             value={value}
             onChangeText={onChangeText}
             keyboardType={keyboardType}
@@ -83,7 +102,6 @@ export default function UserInfoScreen() {
             }
         };
 
-
         fetchData();
     }, []);
 
@@ -128,43 +146,102 @@ export default function UserInfoScreen() {
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={styles.backButton}
+                >
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Thông tin thanh toán</Text>
             </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                contentContainerStyle={styles.scrollContainer}
+                showsVerticalScrollIndicator={false}
+            >
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Thông tin cá nhân</Text>
-                    <InputRow iconName="person-outline" placeholder="Họ và tên" value={fullName} onChangeText={setFullName} />
-                    <InputRow iconName="call-outline" placeholder="Số điện thoại" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-                    <InputRow iconName="mail-outline" placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
+                    <InputRow
+                        iconName="person-outline"
+                        placeholder="Họ và tên"
+                        value={fullName}
+                        onChangeText={setFullName}
+                    />
+                    <InputRow
+                        iconName="call-outline"
+                        placeholder="Số điện thoại"
+                        value={phone}
+                        onChangeText={setPhone}
+                        keyboardType="phone-pad"
+                    />
+                    <InputRow
+                        iconName="mail-outline"
+                        placeholder="Email"
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                    />
                 </View>
 
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Địa chỉ của bạn</Text>
-                    <InputRow iconName="location-outline" placeholder="Số nhà, tên đường..." value={address} onChangeText={setAddress} />
-                    <InputRow iconName="business-outline" placeholder="Thành phố / Tỉnh" value={city} onChangeText={setCity} />
+                    <InputRow
+                        iconName="location-outline"
+                        placeholder="Số nhà, tên đường..."
+                        value={address}
+                        onChangeText={setAddress}
+                    />
+                    <InputRow
+                        iconName="business-outline"
+                        placeholder="Thành phố / Tỉnh"
+                        value={city}
+                        onChangeText={setCity}
+                    />
                 </View>
 
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Phương thức thanh toán</Text>
-                    <InputRow iconName="person-circle-outline" placeholder="Tên trên thẻ" value={cardName} onChangeText={setCardName} />
-                    <InputRow iconName="card-outline" placeholder="Số thẻ" value={cardNumber} onChangeText={setCardNumber} keyboardType="numeric" />
+                    <InputRow
+                        iconName="person-circle-outline"
+                        placeholder="Tên trên thẻ"
+                        value={cardName}
+                        onChangeText={setCardName}
+                    />
+                    <InputRow
+                        iconName="card-outline"
+                        placeholder="Số thẻ"
+                        value={cardNumber}
+                        onChangeText={setCardNumber}
+                        keyboardType="numeric"
+                    />
                     <View style={styles.row}>
                         <View style={{ flex: 1, marginRight: 10 }}>
-                            <InputRow iconName="calendar-outline" placeholder="Ngày hết hạn (MM/YY)" value={expiryDate} onPress={() => setShowDatePicker(true)} />
+                            <InputRow
+                                iconName="calendar-outline"
+                                placeholder="Ngày hết hạn (MM/YY)"
+                                value={expiryDate}
+                                onPress={() => setShowDatePicker(true)}
+                            />
                         </View>
                         <View style={{ flex: 1, marginLeft: 10 }}>
-                            <InputRow iconName="lock-closed-outline" placeholder="CVV" value={cvv} onChangeText={setCvv} keyboardType="numeric" secureTextEntry />
+                            <InputRow
+                                iconName="lock-closed-outline"
+                                placeholder="CVV"
+                                value={cvv}
+                                onChangeText={setCvv}
+                                keyboardType="numeric"
+                                secureTextEntry
+                            />
                         </View>
                     </View>
                 </View>
             </ScrollView>
 
             <View style={styles.footer}>
-                <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
+                <TouchableOpacity
+                    style={styles.saveButton}
+                    onPress={handleSaveChanges}
+                >
                     <Text style={styles.saveButtonText}>Lưu thay đổi</Text>
                 </TouchableOpacity>
             </View>
@@ -217,7 +294,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
+        shadowOpacity: 0.,
         shadowRadius: 10,
         elevation: 5,
     },

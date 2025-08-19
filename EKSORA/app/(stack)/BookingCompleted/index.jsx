@@ -29,44 +29,55 @@ export default function BookingCompleted() {
 
   // Xử lý và chuẩn hóa dữ liệu booking từ params bằng useMemo để tối ưu hiệu năng
   const { displayItems, finalTotalPrice } = useMemo(() => {
-    // Trường hợp 1: Dữ liệu từ giỏ hàng (một mảng items)
+    console.log('>>> [BOOKING_COMPLETED] Processing params:', params);
+    
+    // Trường hợp 1: Dữ liệu từ giỏ hàng
     if (params.items && typeof params.items === "string") {
       try {
         const parsedItems = JSON.parse(params.items);
+        console.log('>>> [BOOKING_COMPLETED] Parsed cart items:', parsedItems);
+        
         const itemsForDisplay = parsedItems.map((item) => ({
-          ...item,
-          title: item.name,
-          totalPrice: item.price,
-          quantityAdult: item.adults,
-          quantityChild: item.children,
-          voucherCode: item.voucherCode,
+          id: item.tour_id || item.id,
+          title: item.name || "Tour du lịch",
+          travelDate: item.travel_date || item.travelDate,
+          quantityAdult: item.quantity_nguoiLon || item.adults || 0,
+          quantityChild: item.quantity_treEm || item.children || 0,
+          totalPrice: item.totalPrice || item.price || 0,
+          voucherCode: item.voucherCode || null,
           discountAmount: item.discount || 0,
-          originalPrice: item.originalPrice || item.price,
+          originalPrice: item.originalPrice || item.price || 0,
+          // Store original data for booking creation
+          originalData: item
         }));
+
+        console.log('>>> [BOOKING_COMPLETED] Formatted items for display:', itemsForDisplay);
+        
         return {
           displayItems: itemsForDisplay,
           finalTotalPrice: Number(params.totalPrice),
         };
       } catch (e) {
-        console.error("Lỗi parse JSON từ giỏ hàng:", e);
+        console.error(">>> [BOOKING_COMPLETED] Error parsing cart items:", e);
         return { displayItems: [], finalTotalPrice: 0 };
       }
     }
 
-    // TRƯỜNG HỢP 2: Dữ liệu đến từ Đặt ngay (props riêng lẻ)
+    // TRƯỜNG HỢP 2: Dữ liệu từ Đặt ngay
     const singleItem = {
       id: params.bookingId,
-      title: params.title,
-      quantityAdult: params.quantityAdult,
-      quantityChild: params.quantityChild,
-      totalPrice: Number(params.totalPrice),
-      originalPrice: params.originalPrice
-        ? Number(params.originalPrice)
-        : Number(params.totalPrice),
-      discountAmount: params.discountAmount ? Number(params.discountAmount) : 0,
+      title: params.title || "Tour du lịch",
+      quantityAdult: Number(params.quantityAdult || 0),
+      quantityChild: Number(params.quantityChild || 0),
+      totalPrice: Number(params.totalPrice || 0),
+      originalPrice: Number(params.originalPrice || params.totalPrice || 0),
+      discountAmount: Number(params.discountAmount || 0),
       voucherCode: params.voucherCode,
       travelDate: params.travelDate,
     };
+
+    console.log('>>> [BOOKING_COMPLETED] Direct booking item:', singleItem);
+    
     return {
       displayItems: [singleItem],
       finalTotalPrice: Number(params.totalPrice),
@@ -79,7 +90,7 @@ export default function BookingCompleted() {
   const [isUsingSavedInfo, setIsUsingSavedInfo] = useState(true);
 
   // State chứa dữ liệu để *hiển thị* cho người dùng trong tab "Thông tin của tôi"
-  const [contactToDisplay, setContactToDisplay] = useState(loggedInUser || {});
+const [contactToDisplay, setContactToDisplay] = useState(loggedInUser || {});
 
   // State chứa dữ liệu của form nhập liệu (khi chỉnh sửa hoặc nhập mới)
   const [formInfo, setFormInfo] = useState({
@@ -164,7 +175,7 @@ export default function BookingCompleted() {
       setContactToDisplay(formInfo);
 
       // 3. Chuyển về lại tab "Thông tin của tôi"
-      setIsUsingSavedInfo(true);
+setIsUsingSavedInfo(true);
 
       Alert.alert("Thành công", "Thông tin của bạn đã được cập nhật!");
     } catch (error) {
@@ -175,17 +186,23 @@ export default function BookingCompleted() {
     }
   };
 
-  // Kiểm tra xem có phải là pending booking không
+  // Kiểm tra nguồn của booking
   const isPendingBooking = params.isPendingBooking === "true";
-
-  // Kiểm tra xem có phải là booking từ trang vé (cần thanh toán ngay) không
+  const isFromCart = params.fromCart === "true";
   const isFromTicketPage = params.fromTicketPage === "true";
-
-  // Kiểm tra xem có phải là booking trực tiếp từ "Đặt ngay" không
   const isFromDirectBooking = params.fromDirectBooking === "true";
 
-  // KHÔNG auto-redirect cho luồng "Đặt ngay" - chỉ cho ticket page
+  // Chỉ auto-redirect cho ticket page không phải direct booking
   const shouldAutoRedirect = isFromTicketPage && !isFromDirectBooking;
+  
+  // Text cho nút thanh toán dựa vào nguồn
+  const getPaymentButtonText = () => {
+    if (shouldAutoRedirect) return "Đang chuyển đến thanh toán...";
+    if (isFromCart) return "Xác nhận";
+    if (isFromDirectBooking) return "Xác nhận";
+    if (isPendingBooking) return "Tiếp tục thanh toán";
+    return "Hoàn tất đơn hàng";
+  };
 
   // Auto-redirect đến paymentPage nếu là booking từ trang vé
   useEffect(() => {
@@ -250,43 +267,72 @@ export default function BookingCompleted() {
       return;
     }
 
-    // THAY ĐỔI: Xử lý khác nhau cho luồng "Đặt ngay" và luồng khác
-    if (isFromDirectBooking) {
-      // Luồng "Đặt ngay": chuyển đến paymentPage với dữ liệu booking để tạo
-      console.log(">>> [BOOKING_COMPLETED] Processing direct booking flow");
+    // Tất cả các luồng đều đến paymentPage
+    console.log(">>> [BOOKING_COMPLETED] Proceeding to payment");
 
-      router.push({
-        pathname: "/(stack)/paymentPage",
-        params: {
-          ...params,
-          fullName:
-            `${contactToDisplay.lastName || ""} ${contactToDisplay.firstName}`.trim(),
-          phone: contactToDisplay.phone,
-          email: contactToDisplay.email,
-          buyerAddress: loggedInUser?.address || "Chưa có địa chỉ",
-          totalPrice: finalTotalPrice.toString(),
-          needCreateBooking: "true", // Flag để biết cần tạo booking
-          // bookingData đã có trong params từ useBooking
-        },
-      });
-    } else {
-      // Luồng khác (giỏ hàng): chuyển đến paymentPage với items
-      console.log(">>> [BOOKING_COMPLETED] Processing cart/other booking flow");
+    // Prepare common params
+    // Prepare booking data
+    let bookingData;
+    if (isFromCart && params.items) {
+      try {
+        const cartItems = JSON.parse(params.items);
+        // Convert the first cart item to booking data format
+        const item = cartItems[0]; // For now, handle one item at a time
+        console.log('>>> [BOOKING_COMPLETED] Processing cart item:', item);
+        
+        // Make sure we have contact info
+        if (!contactToDisplay.firstName || !contactToDisplay.phone || !contactToDisplay.email) {
+          throw new Error('Vui lòng cập nhật đầy đủ thông tin liên hệ');
+        }
 
-      router.push({
-        pathname: "/(stack)/paymentPage",
-        params: {
-          ...params,
-          fullName:
-            `${contactToDisplay.lastName || ""} ${contactToDisplay.firstName}`.trim(),
-          phone: contactToDisplay.phone,
+        // Calculate total price based on adult and child quantities
+        const itemTotalPrice = (item.quantity_nguoiLon * item.price_nguoiLon) + 
+                             ((item.quantity_treEm || 0) * (item.price_treEm || 0));
+        
+        bookingData = {
+          user_id: item.user_id,
+          tour_id: item.tour_id,
+          travel_date: item.travel_date,
+          quantity_nguoiLon: item.quantity_nguoiLon,
+          quantity_treEm: item.quantity_treEm || 0,
+          totalPrice: itemTotalPrice,
+          price_nguoiLon: item.price_nguoiLon,
+          price_treEm: item.price_treEm,
+          optionServices: item.optionServices || [],
+          coin: item.coin || 0,
+          voucher_id: item.voucher_id || null,
+          discount: item.discount || 0,
+          status: 'pending',
+          // Add required contact fields
+          fullName: `${contactToDisplay.lastName || ""} ${contactToDisplay.firstName}`.trim(),
           email: contactToDisplay.email,
-          items: JSON.stringify(displayItems),
-          totalPrice: finalTotalPrice.toString(),
-          needCreateBooking: isPendingBooking, // Flag để biết cần tạo booking
-        },
-      });
+          phone: contactToDisplay.phone,
+        };
+        
+        console.log('>>> [BOOKING_COMPLETED] Prepared booking data:', bookingData);
+      } catch (error) {
+        console.error('Error preparing booking data:', error);
+        Alert.alert('Lỗi', 'Không thể xử lý dữ liệu đơn hàng');
+        return;
+      }
     }
+
+    const paymentParams = {
+      ...params, // Keep original params
+      fullName: `${contactToDisplay.lastName || ""} ${contactToDisplay.firstName}`.trim(),
+      phone: contactToDisplay.phone,
+      email: contactToDisplay.email,
+      buyerAddress: loggedInUser?.address || "Chưa có địa chỉ",
+      totalPrice: finalTotalPrice.toString(),
+      needCreateBooking: "true",
+      // Add prepared booking data if from cart
+      ...(isFromCart && { bookingData: JSON.stringify(bookingData) })
+    };
+
+    router.push({
+      pathname: "/(stack)/paymentPage",
+      params: paymentParams
+    });
   };
 
   return (
@@ -332,7 +378,7 @@ export default function BookingCompleted() {
               key={item.id}
               title={item.title}
               travelDate={item.travelDate}
-              quantityAdult={item.quantityAdult}
+quantityAdult={item.quantityAdult}
               quantityChild={item.quantityChild}
               totalPrice={item.totalPrice}
               voucherCode={item.voucherCode}
@@ -364,15 +410,7 @@ export default function BookingCompleted() {
               loading || !contactToDisplay.firstName || shouldAutoRedirect
             }
           >
-            <Text style={styles.payButtonText}>
-              {shouldAutoRedirect
-                ? "Đang chuyển đến thanh toán..."
-                : isFromDirectBooking
-                  ? "Xác nhận "
-                  : isPendingBooking
-                    ? "Tiếp tục thanh toán"
-                    : "Hoàn tất đơn hàng"}
-            </Text>
+            <Text style={styles.payButtonText}>{getPaymentButtonText()}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -449,7 +487,7 @@ const styles = StyleSheet.create({
   },
   payButtonText: {
     color: COLORS.white,
-    fontWeight: "bold",
+fontWeight: "bold",
     fontSize: 16,
   },
 });
