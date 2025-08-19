@@ -1,18 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState, useCallback } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Platform,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
 
 import { getTrips } from '../../../API/services/servicesBooking';
 import EmptyTrips from '../Component/EmptyTrips';
@@ -156,14 +158,17 @@ export default function Body({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.tabContainer}>
-        <Tab title="Tất cả" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
-        <Tab title="Đang chờ" active={activeTab === 'pending'} onPress={() => setActiveTab('pending')} />
-        <Tab title="Đã xác nhận" active={activeTab === 'paid'} onPress={() => setActiveTab('paid')} />
-      </View>
-      {renderContent()}
-    </SafeAreaView>
+
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.tabContainer}
+    >
+      <Tab title="Tất cả" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
+      <Tab title="Đang chờ" active={activeTab === 'pending'} onPress={() => setActiveTab('pending')} />
+      <Tab title="Đã thanh toán" active={activeTab === 'paid'} onPress={() => setActiveTab('paid')} />
+      <Tab title="Đã hủy" active={activeTab === 'canceled'} onPress={() => setActiveTab('canceled')} />
+    </ScrollView>
   );
 }
 
@@ -224,7 +229,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 
-    exploreButton: {
+  exploreButton: {
     backgroundColor: '#007bff',
     paddingVertical: 12,
     paddingHorizontal: 24,

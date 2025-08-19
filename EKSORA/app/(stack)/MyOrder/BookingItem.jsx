@@ -1,17 +1,22 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ImageBackground, StyleSheet, Text, View } from 'react-native'; 
+import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '../../../constants/colors';
 
+const formatPrice = (price) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
-const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-const formatDate = (dateString) => new Date(dateString).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const formatDate = (dateString) =>
+  new Date(dateString).toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 
-const BookingItem = ({ item }) => {
+const BookingItem = ({ item, onPress }) => {
   const {
     tour_id,
     travel_date,
     totalPrice,
-    _id,
     status,
     quantity_nguoiLon,
     quantity_treEm,
@@ -33,7 +38,7 @@ const BookingItem = ({ item }) => {
   const currentStatus = statusConfig[status?.toLowerCase()] || statusConfig.default;
 
   return (
-    <View style={styles.card}>
+    <Pressable style={styles.card} onPress={onPress}>
       <ImageBackground
         source={{ uri: imageUrl || 'https://via.placeholder.com/400x200.png?text=Image' }}
         style={styles.imageBackground}
@@ -48,7 +53,9 @@ const BookingItem = ({ item }) => {
       </ImageBackground>
 
       <View style={styles.detailsContainer}>
-        <Text style={styles.tourName} numberOfLines={2}>{tour_id.name}</Text>
+        <Text style={styles.tourName} numberOfLines={2}>
+          {tour_id.name}
+        </Text>
 
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="calendar-check" size={18} color={COLORS.primary} />
@@ -73,7 +80,7 @@ const BookingItem = ({ item }) => {
           <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 };
 
@@ -88,11 +95,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    overflow: 'hidden', // để hiệu ứng bấm đẹp hơn
   },
   imageBackground: { height: 120, justifyContent: 'flex-end' },
   imageStyle: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
   imageOverlay: {
-    height: '100%', 
+    height: '100%',
     width: '100%',
   },
   statusBadge: {
@@ -104,7 +112,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)', 
   },
   statusText: {
     color: COLORS.white,

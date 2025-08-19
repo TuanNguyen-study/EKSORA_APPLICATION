@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -21,9 +20,8 @@ import PaymentMethodItem from "./components/PaymentMethodItem";
 // Dữ liệu phương thức thanh toán
 const paymentMethods = [
   { id: "Payos", label: "Ví PayOS", icon: "wallet-outline" },
-  { id: "momo_atm", label: "Thẻ ATM/Internet Banking", icon: "bank-outline" },
-  { id: "credit_card", label: "Thẻ tín dụng/ghi nợ", icon: "credit-card-outline", note: "Visa, Mastercard, JCB" },
-  { id: "google_pay", label: "Google Pay", icon: "google" },
+  { id: "ZaloPay", label: "Ví ZaloPay", icon: "bank-outline" },
+
 ];
 
 // --- COMPONENT FOOTER  ---
@@ -69,7 +67,7 @@ export default function PaymentPage() {
         return {
           displayItems: parsedItems,
           finalTotalPrice: Number(params.totalPrice),
-          orderDescription: `Thanh toán cho ${parsedItems.length} tour du lịch`,
+          orderDescription: `EKSORA thanh toán`,
         };
       } catch (e) {
         console.error("Lỗi parse JSON từ giỏ hàng:", e);
@@ -87,8 +85,8 @@ export default function PaymentPage() {
     return {
       displayItems: [singleItem],
       finalTotalPrice: Number(params.totalPrice),
-      orderDescription: `Thanh toán đơn hàng: ${params.title || 'Tour du lịch'}`,
-    };
+      orderDescription: `EKSORA thanh toán  '}`,
+    }
   }, [params]);
 
   useEffect(() => {
@@ -99,33 +97,21 @@ export default function PaymentPage() {
 
   // --- THAY ĐỔI: Xử lý khi chọn phương thức thanh toán ---
   const handleSelectMethod = (methodId) => {
-    if (methodId !== 'Payos') {
-      Alert.alert(
-        "Tính năng đang phát triển",
-        "Phương thức này hiện chưa khả dụng. Vui lòng chọn thanh toán qua Ví PayOS."
-      );
-      // Không cho phép chọn phương thức khác
-      return;
-    }
     setSelectedMethod(methodId);
   };
 
   const handlePayment = async () => {
-    // --- THAY ĐỔI: Thêm một lớp kiểm tra an toàn trước khi thanh toán ---
-    if (selectedMethod !== 'Payos') {
-        Alert.alert('Chưa hỗ trợ', 'Phương thức thanh toán này đang được phát triển. Vui lòng chọn Ví PayOS để tiếp tục.');
-        return;
-    }
-
     if (!params.fullName || !params.email || !params.phone) {
       Alert.alert('Lỗi', 'Thiếu thông tin liên lạc. Vui lòng thử lại.');
       return;
     }
+
     const representativeBookingId = params.bookingId || displayItems[0]?.id;
     if (!representativeBookingId) {
       Alert.alert('Lỗi', 'Không tìm thấy mã đơn hàng.');
       return;
     }
+
     const payload = {
       amount: finalTotalPrice,
       description: orderDescription,
@@ -134,37 +120,55 @@ export default function PaymentPage() {
       buyerPhone: params.phone,
       booking_id: representativeBookingId,
     };
-    console.log('>>> [PAYMENT] ĐANG GỬI PAYLOAD LÊN SERVER:', JSON.stringify(payload, null, 2));
-    if (!payload.amount || payload.amount <= 0 || isNaN(payload.amount)) {
-      Alert.alert('Lỗi Dữ Liệu', `Tổng tiền không hợp lệ: ${payload.amount}. Không thể tạo thanh toán.`);
-      return;
-    }
-    await AsyncStorage.setItem("PENDING_BOOKING_ID", representativeBookingId.toString());
+
     try {
-      const response = await fetch('http://160.250.246.76:3000/api/create-payment-link', {
+      let endpoint = "";
+      if (selectedMethod === "Payos") {
+        endpoint = "http://160.250.246.76:3000/api/create-payment-link";
+      } else if (selectedMethod === "ZaloPay") {
+        endpoint = "http://160.250.246.76:3000/api/zalo-pay/create-order";
+      }
+
+      console.log(">>> [PAYMENT REQUEST] Endpoint:", endpoint);
+      console.log(">>> [PAYMENT REQUEST] Payload:", payload);
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const responseText = await response.text();
-      console.log('>>> [PAYMENT] SERVER PHẢN HỒI:', responseText);
-      const data = JSON.parse(responseText);
+
+      const data = await response.json();
+      console.log(">>> [PAYMENT RESPONSE] Data:", data);
+
+      // Gom tất cả các khả năng URL trả về (PayOS, ZaloPay)
+      const checkoutUrl =
+        data.url ||
+        data.order_url ||
+        data.zalo_url ||
+        data.raw?.order_url;
+
       if (!response.ok) {
-        const errorMessage = data.message || data.error || 'Lỗi không xác định từ server.';
-        throw new Error(errorMessage);
+        throw new Error(data.message || data.error || 'Lỗi không xác định từ server.');
       }
-      if (data.url) {
+
+      if (checkoutUrl) {
+        // 🚀 Luôn mở trong WebView cho cả PayOS & ZaloPay
         router.push({
           pathname: "/acount/payment-webview",
-          params: { checkoutUrl: data.url }
+          params: { checkoutUrl },
         });
       } else {
         throw new Error('Không nhận được URL thanh toán từ server.');
       }
     } catch (err) {
+      console.error(">>> [PAYMENT ERROR]:", err);
       Alert.alert('Lỗi tạo thanh toán', err.message);
     }
   };
+
+
+
 
   const contactInfo = {
     fullName: params.fullName,

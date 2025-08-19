@@ -1,17 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-    View, Text, StyleSheet, ScrollView, Image, ActivityIndicator,
-    TouchableOpacity, StatusBar, RefreshControl, Platform, Linking, Alert
-} from 'react-native';
-import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Linking,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 // --- Imports ---
-import { getBookingById, cancelBookingById } from '../../../API/services/booking';
-import InfoRow from './components/InfoRow';
+import { cancelBookingById, getBookingById } from '../../../API/services/booking';
 import CancelBookingModal from './components/CancelBookingModal';
+import InfoRow from './components/InfoRow';
 
 const BookingDetailScreen = () => {
     const router = useRouter();
@@ -35,7 +45,7 @@ const BookingDetailScreen = () => {
                 return { style: { backgroundColor: '#27AE60' }, text: 'Đã xác nhận', icon: 'check-circle' };
             case 'pending':
                 return { style: { backgroundColor: '#F2C94C' }, text: 'Chờ thanh toán', icon: 'clock-time-nine' };
-            case 'cancelled':
+            case 'canceled':
                 return { style: { backgroundColor: '#E74C3C' }, text: 'Đã hủy', icon: 'close-circle' };
             default:
                 return { style: { backgroundColor: '#5A6A7A' }, text: 'Không rõ', icon: 'help-circle' };

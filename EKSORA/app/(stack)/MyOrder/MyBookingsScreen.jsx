@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { getUserBookings } from '../../../API/services/servicesUser';
 import { COLORS } from '../../../constants/colors';
-import BookingItem from './BookingItem'; 
+import BookingItem from './BookingItem';
 
 const filterTabs = [
   { status: 'waiting', title: 'Đang chờ' },
@@ -150,7 +150,12 @@ export default function MyBookingsScreen() {
         ) : (
           <FlatList
             data={filteredBookings}
-            renderItem={({ item }) => <BookingItem item={item} />}
+            renderItem={({ item }) => (
+              <BookingItem
+                item={item}
+                onPress={() => router.push(`/BookingDetailScreen/${item._id}`)}
+              />
+            )}
             keyExtractor={item => item._id}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={renderEmptyList}
