@@ -144,7 +144,7 @@ const BookingDetailScreen = () => {
       });
 
       // Điều hướng về trang trips sau khi hủy thành công
-      router.push("/(tabs)/trips");
+     router.replace("/(tabs)/trips");
     } catch (err) {
       console.error("Lỗi khi hủy đơn hàng:", err);
       Toast.show({

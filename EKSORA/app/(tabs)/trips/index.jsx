@@ -4,8 +4,11 @@ import { COLORS } from "../../../constants/colors";
 import TripItem from "../../../components/bookings/TripItem";
 import Header from "../../../components/bookings/Component/header";
 import Body from "../../../components/bookings/Component/body";
+import { useBackToHome } from "../../../hooks/useBackToHome";
 
 export default function TripsScreen() {
+  useBackToHome("trips");
+
   const scrollY = new Animated.Value(0);
 
   return (
