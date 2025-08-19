@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
-  Alert,
   Share,
   Linking,
   Platform,
@@ -15,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../../../constants/colors";
 import * as ExpoLinking from "expo-linking";
+import Toast from 'react-native-toast-message';
 
 const ShareModal = ({ visible, onClose, tourData }) => {
   const [smartLinks, setSmartLinks] = useState(null);
@@ -121,7 +121,11 @@ const ShareModal = ({ visible, onClose, tourData }) => {
   // Hàm test deeplink
   const testDeepLink = async () => {
     if (!smartLinks) {
-      Alert.alert("Thông báo", "Smart links chưa sẵn sàng. Vui lòng đợi...");
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: 'Smart links chưa sẵn sàng. Vui lòng đợi...'
+      });
       return;
     }
 
@@ -167,20 +171,25 @@ const ShareModal = ({ visible, onClose, tourData }) => {
       }
 
       if (result.success) {
-        Alert.alert("Test Deeplink", `${icon} ${message}`, [
-          { text: "OK", onPress: () => onClose() },
-        ]);
+        Toast.show({
+          type: 'success',
+          text1: 'Test Deeplink',
+          text2: `${icon} ${message}`
+        });
+        onClose();
       } else {
-        Alert.alert(
-          "Lỗi",
-          `❌ ${message}\n\nLỗi: ${result.error || "Không xác định"}`
-        );
+        Toast.show({
+          type: 'error',
+          text1: 'Lỗi',
+          text2: `❌ ${message}\n\nLỗi: ${result.error || "Không xác định"}`
+        });
       }
     } catch (error) {
-      Alert.alert(
-        "Lỗi",
-        `❌ Có lỗi xảy ra khi test deeplink:\n${error.message}`
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: `❌ Có lỗi xảy ra khi test deeplink:\n${error.message}`
+      });
     }
   };
 
@@ -208,7 +217,11 @@ const ShareModal = ({ visible, onClose, tourData }) => {
         onClose();
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể chia sẻ lên Facebook");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể chia sẻ lên Facebook'
+      });
     }
   };
 
@@ -225,7 +238,11 @@ const ShareModal = ({ visible, onClose, tourData }) => {
         onClose();
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể chia sẻ lên Twitter");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể chia sẻ lên Twitter'
+      });
     }
   };
 
@@ -275,27 +292,31 @@ const ShareModal = ({ visible, onClose, tourData }) => {
             ? "https://apps.apple.com/app/whatsapp-messenger/id310633997"
             : "https://play.google.com/store/apps/details?id=com.whatsapp";
 
-        Alert.alert(
-          "Cần tải ứng dụng",
-          "Bạn cần tải ứng dụng WhatsApp để chia sẻ. Bạn có muốn tải về không?",
-          [
-            { text: "Hủy", style: "cancel" },
-            {
-              text: "Tải về",
-              onPress: async () => {
-                try {
-                  await Linking.openURL(storeUrl);
-                  onClose();
-                } catch (error) {
-                  Alert.alert("Lỗi", "Không thể mở cửa hàng ứng dụng");
-                }
-              },
-            },
-          ]
-        );
+        Toast.show({
+          type: 'error',
+          text1: 'Cần tải ứng dụng',
+          text2: 'Bạn cần tải ứng dụng WhatsApp để chia sẻ. Bạn có muốn tải về không?',
+          visibilityTime: 5000,
+          onPress: async () => {
+            try {
+              await Linking.openURL(storeUrl);
+              onClose();
+            } catch (error) {
+              Toast.show({
+                type: 'error',
+                text1: 'Lỗi',
+                text2: 'Không thể mở cửa hàng ứng dụng'
+              });
+            }
+          }
+        });
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể chia sẻ qua WhatsApp");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể chia sẻ qua WhatsApp'
+      });
     }
   };
 
@@ -345,27 +366,31 @@ const ShareModal = ({ visible, onClose, tourData }) => {
             ? "https://apps.apple.com/app/telegram-messenger/id686449807"
             : "https://play.google.com/store/apps/details?id=org.telegram.messenger";
 
-        Alert.alert(
-          "Cần tải ứng dụng",
-          "Bạn cần tải ứng dụng Telegram để chia sẻ. Bạn có muốn tải về không?",
-          [
-            { text: "Hủy", style: "cancel" },
-            {
-              text: "Tải về",
-              onPress: async () => {
-                try {
-                  await Linking.openURL(storeUrl);
-                  onClose();
-                } catch (error) {
-                  Alert.alert("Lỗi", "Không thể mở cửa hàng ứng dụng");
-                }
-              },
-            },
-          ]
-        );
+        Toast.show({
+          type: 'error',
+          text1: 'Cần tải ứng dụng',
+          text2: 'Bạn cần tải ứng dụng Telegram để chia sẻ. Bạn có muốn tải về không?',
+          visibilityTime: 5000,
+          onPress: async () => {
+            try {
+              await Linking.openURL(storeUrl);
+              onClose();
+            } catch (error) {
+              Toast.show({
+                type: 'error',
+                text1: 'Lỗi',
+                text2: 'Không thể mở cửa hàng ứng dụng'
+              });
+            }
+          }
+        });
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể chia sẻ qua Telegram");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể chia sẻ qua Telegram'
+      });
     }
   };
 
@@ -398,27 +423,31 @@ const ShareModal = ({ visible, onClose, tourData }) => {
             ? "https://apps.apple.com/app/messenger/id454638411"
             : "https://play.google.com/store/apps/details?id=com.facebook.orca";
 
-        Alert.alert(
-          "Cần tải ứng dụng",
-          "Bạn cần tải ứng dụng Messenger để chia sẻ. Bạn có muốn tải về không?",
-          [
-            { text: "Hủy", style: "cancel" },
-            {
-              text: "Tải về",
-              onPress: async () => {
-                try {
-                  await Linking.openURL(storeUrl);
-                  onClose();
-                } catch (error) {
-                  Alert.alert("Lỗi", "Không thể mở cửa hàng ứng dụng");
-                }
-              },
-            },
-          ]
-        );
+        Toast.show({
+          type: 'error',
+          text1: 'Cần tải ứng dụng',
+          text2: 'Bạn cần tải ứng dụng Messenger để chia sẻ. Bạn có muốn tải về không?',
+          visibilityTime: 5000,
+          onPress: async () => {
+            try {
+              await Linking.openURL(storeUrl);
+              onClose();
+            } catch (error) {
+              Toast.show({
+                type: 'error',
+                text1: 'Lỗi',
+                text2: 'Không thể mở cửa hàng ứng dụng'
+              });
+            }
+          }
+        });
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể chia sẻ qua Messenger: " + error.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể chia sẻ qua Messenger: ' + error.message
+      });
     }
   };
 
@@ -468,27 +497,31 @@ const ShareModal = ({ visible, onClose, tourData }) => {
             ? "https://apps.apple.com/app/zalo/id579523206"
             : "https://play.google.com/store/apps/details?id=com.zing.zalo";
 
-        Alert.alert(
-          "Cần tải ứng dụng",
-          "Bạn cần tải ứng dụng Zalo để chia sẻ. Bạn có muốn tải về không?",
-          [
-            { text: "Hủy", style: "cancel" },
-            {
-              text: "Tải về",
-              onPress: async () => {
-                try {
-                  await Linking.openURL(storeUrl);
-                  onClose();
-                } catch (error) {
-                  Alert.alert("Lỗi", "Không thể mở cửa hàng ứng dụng");
-                }
-              },
-            },
-          ]
-        );
+        Toast.show({
+          type: 'error',
+          text1: 'Cần tải ứng dụng',
+          text2: 'Bạn cần tải ứng dụng Zalo để chia sẻ. Bạn có muốn tải về không?',
+          visibilityTime: 5000,
+          onPress: async () => {
+            try {
+              await Linking.openURL(storeUrl);
+              onClose();
+            } catch (error) {
+              Toast.show({
+                type: 'error',
+                text1: 'Lỗi',
+                text2: 'Không thể mở cửa hàng ứng dụng'
+              });
+            }
+          }
+        });
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể chia sẻ qua Zalo");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể chia sẻ qua Zalo'
+      });
     }
   };
 
@@ -505,7 +538,11 @@ const ShareModal = ({ visible, onClose, tourData }) => {
         onClose(); // Đóng modal ngay lập tức
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể chia sẻ nội dung này");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể chia sẻ nội dung này'
+      });
     }
   };
 
@@ -536,7 +573,11 @@ const ShareModal = ({ visible, onClose, tourData }) => {
         onClose(); // Đóng modal ngay lập tức
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể chia sẻ deeplink");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể chia sẻ deeplink'
+      });
     }
   };
 

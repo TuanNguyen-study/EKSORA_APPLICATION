@@ -5,13 +5,13 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import QRCode from "react-native-qrcode-svg";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector } from "react-redux";
+import Toast from "react-native-toast-message";
 
 // --- CÁC HÀM HỖ TRỢ ---
 
@@ -84,10 +84,11 @@ export default function TripItem({ item }) {
     if (isPaying) return;
 
     if (!loggedInUser || !loggedInUser.id) {
-      Alert.alert(
-        "Chưa đăng nhập",
-        "Vui lòng đăng nhập để tiếp tục thanh toán."
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Chưa đăng nhập',
+        text2: 'Vui lòng đăng nhập để tiếp tục thanh toán.'
+      });
       return;
     }
 
@@ -127,10 +128,11 @@ export default function TripItem({ item }) {
       });
     } catch (error) {
       console.error("Lỗi khi chuẩn bị thanh toán:", error);
-      Alert.alert(
-        "Đã xảy ra lỗi",
-        "Không thể tiến hành thanh toán. Vui lòng thử lại."
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Đã xảy ra lỗi',
+        text2: 'Không thể tiến hành thanh toán. Vui lòng thử lại.'
+      });
     } finally {
       setIsPaying(false);
     }

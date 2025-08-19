@@ -4,7 +4,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import {
-    Alert,
     Platform,
     SafeAreaView,
     ScrollView,
@@ -18,6 +17,7 @@ import {
 import { updateUserProfile } from '../../../API/services/servicesProfile';
 import { getUser } from '../../../API/services/servicesUser';
 import { COLORS } from '../../../constants/colors';
+import Toast from 'react-native-toast-message'; // ✅ thêm Toast
 
 
 // Component InputRow có thể tùy chỉnh màu placeholder
@@ -80,7 +80,6 @@ export default function UserInfoScreen() {
                 setEmail(user.email || '');
                 setAddress(user.address || '');
 
-                // Ưu tiên lấy city từ API, nếu không có thì lấy từ AsyncStorage
                 if (user.city) {
                     setCity(user.city);
                 } else {
@@ -98,7 +97,11 @@ export default function UserInfoScreen() {
                 if (expiryDate) setExpiryDate(expiryDate);
                 if (cvv) setCvv(cvv);
             } catch (error) {
-                Alert.alert('Lỗi', 'Không thể tải thông tin người dùng.');
+                Toast.show({
+                    type: "error",
+                    text1: "Lỗi",
+                    text2: "Không thể tải thông tin người dùng.",
+                });
             }
         };
 
@@ -116,7 +119,11 @@ export default function UserInfoScreen() {
 
     const handleSaveChanges = async () => {
         if (!fullName || !phone || !email || !address || !city) {
-            Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin.');
+            Toast.show({
+                type: "error",
+                text1: "Lỗi",
+                text2: "Vui lòng điền đầy đủ thông tin.",
+            });
             return;
         }
 
@@ -136,9 +143,17 @@ export default function UserInfoScreen() {
             await AsyncStorage.setItem('expiryDate', expiryDate);
             await AsyncStorage.setItem('cvv', cvv);
 
-            Alert.alert('Thành công', 'Thông tin của bạn đã được cập nhật.');
+            Toast.show({
+                type: "success",
+                text1: "Thành công",
+                text2: "Thông tin của bạn đã được cập nhật.",
+            });
         } catch (error) {
-            Alert.alert('Lỗi', 'Không thể cập nhật thông tin.');
+            Toast.show({
+                type: "error",
+                text1: "Lỗi",
+                text2: "Không thể cập nhật thông tin.",
+            });
         }
     };
 

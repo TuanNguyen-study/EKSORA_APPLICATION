@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, Modal, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Alert
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, TextInput, Modal, KeyboardAvoidingView, Platform, TouchableWithoutFeedback
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,6 +11,7 @@ import { provinces } from './provinces';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import * as validators from '../../../utils/validators';
+import Toast from 'react-native-toast-message';
 
 // ===== COMPONENT CHÍNH =====
 export default function PersonalInfoScreen() {
@@ -52,7 +53,11 @@ export default function PersonalInfoScreen() {
   // --- Nhiệm vụ: Mở modal tương ứng để chỉnh sửa thông tin ---
   const handleOpenModal = (field, currentValue) => {
     if (field === 'phoneEmail' && currentValue.includes('@')) {
-      Alert.alert('Thông báo', 'Tính năng thay đổi Email chưa được hỗ trợ. Vui lòng liên hệ bộ phận CSKH.');
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: 'Tính năng thay đổi Email chưa được hỗ trợ. Vui lòng liên hệ bộ phận CSKH.'
+      });
       return;
     }
 
@@ -65,54 +70,60 @@ export default function PersonalInfoScreen() {
     }
   };
 
-
-// --- Nhiệm vụ: Lưu thông tin từ modal ---
-const handleModalSave = async () => {
+  // --- Nhiệm vụ: Lưu thông tin từ modal ---
+  const handleModalSave = async () => {
     let error = null;
     let valueToValidate = tempValue.trim(); // Dùng giá trị đã trim để validate
 
     // === BƯỚC 1: KIỂM TRA ĐẦU VÀO RỖNG ===
     if (!valueToValidate) {
-        Alert.alert('Thông báo', 'Vui lòng nhập thông tin.');
-        return;
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: 'Vui lòng nhập thông tin.'
+      });
+      return;
     }
 
     // === BƯỚC 2: VALIDATE DỮ LIỆU THÔ TỪ NGƯỜI DÙNG ===
     switch (currentField) {
-        case 'name':
-            // Giả sử validateName cũng kiểm tra ký tự không hợp lệ
-            error = validators.validateName(valueToValidate);
-            break;
-        case 'title':
-            error = validators.validateRequired(valueToValidate, 'Danh xưng');
-            break;
-        case 'country':
-            error = validators.validateRequired(valueToValidate, 'Quốc gia/Khu vực');
-            break;
-        case 'phoneEmail':
-            // Validate trực tiếp đầu vào của người dùng
-            error = validators.validatePhoneNumber(valueToValidate);
-            break;
+      case 'name':
+        // Giả sử validateName cũng kiểm tra ký tự không hợp lệ
+        error = validators.validateName(valueToValidate);
+        break;
+      case 'title':
+        error = validators.validateRequired(valueToValidate, 'Danh xưng');
+        break;
+      case 'country':
+        error = validators.validateRequired(valueToValidate, 'Quốc gia/Khu vực');
+        break;
+      case 'phoneEmail':
+        // Validate trực tiếp đầu vào của người dùng
+        error = validators.validatePhoneNumber(valueToValidate);
+        break;
     }
 
     // === BƯỚC 3: HIỂN THỊ LỖI NẾU CÓ ===
     if (error) {
-        Alert.alert('Thông báo', error);
-        return; // Dừng lại ngay nếu có lỗi
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: error
+      });
+      return; // Dừng lại ngay nếu có lỗi
     }
 
     // === BƯỚC 4: FORMAT DỮ LIỆU NẾU ĐÃ HỢP LỆ ===
     let valueToSave = valueToValidate; // Mặc định
     switch (currentField) {
-        case 'name':
-            valueToSave = validators.formatName(valueToValidate);
-            break;
-        case 'phoneEmail':
-            valueToSave = validators.formatPhoneNumber(valueToValidate);
-            break;
-        // title và country chỉ cần trim là đủ, đã làm ở trên
+      case 'name':
+        valueToSave = validators.formatName(valueToValidate);
+        break;
+      case 'phoneEmail':
+        valueToSave = validators.formatPhoneNumber(valueToValidate);
+        break;
+      // title và country chỉ cần trim là đủ, đã làm ở trên
     }
-
 
     // === BƯỚC 5: LƯU DỮ LIỆU NẾU KHÔNG CÓ LỖI ===
     const updatedInfo = { ...userInfo, [currentField]: valueToSave };
@@ -124,25 +135,33 @@ const handleModalSave = async () => {
 
     const payload = {};
     switch (currentField) {
-        case 'name': payload.first_name = valueToSave; break;
-        case 'title': payload.last_name = valueToSave; break;
-        case 'country': payload.address = valueToSave; break;
-        case 'phoneEmail': payload.phone = valueToSave; break;
+      case 'name': payload.first_name = valueToSave; break;
+      case 'title': payload.last_name = valueToSave; break;
+      case 'country': payload.address = valueToSave; break;
+      case 'phoneEmail': payload.phone = valueToSave; break;
     }
 
     if (Object.keys(payload).length > 0) {
-        try {
-            await updateUserProfile(token, payload);
-            // Bạn có thể bỏ comment dòng này để có thông báo thành công thực sự
-            // Alert.alert('Thành công', 'Cập nhật thông tin thành công!');
-        } catch (e) {
-            Alert.alert('Lỗi', 'Cập nhật thất bại, vui lòng thử lại.');
-            console.log('API update error:', e);
-            // Rollback lại thông tin cũ nếu API lỗi
-            setUserInfo(userInfo); 
-        }
+      try {
+        await updateUserProfile(token, payload);
+        // Bạn có thể bỏ comment dòng này để có thông báo thành công thực sự
+        // Toast.show({
+        //   type: 'success',
+        //   text1: 'Thành công',
+        //   text2: 'Cập nhật thông tin thành công!'
+        // });
+      } catch (e) {
+        Toast.show({
+          type: 'error',
+          text1: 'Lỗi',
+          text2: 'Cập nhật thất bại, vui lòng thử lại.'
+        });
+        console.log('API update error:', e);
+        // Rollback lại thông tin cũ nếu API lỗi
+        setUserInfo(userInfo); 
+      }
     }
-};
+  };
 
   // --- Nhiệm vụ: Lưu ngày sinh sau khi chọn ---
   const handleConfirmDate = async (date) => {
@@ -150,7 +169,11 @@ const handleModalSave = async () => {
 
     const error = validators.validateBirthDate(formattedDate);
     if (error) {
-      Alert.alert('Thông báo', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: error
+      });
       setDatePickerVisible(false);
       return;
     }
@@ -164,7 +187,11 @@ const handleModalSave = async () => {
       try {
         await updateUserProfile(token, { birth_day: formattedDate });
       } catch (e) {
-        Alert.alert('Lỗi', 'Cập nhật ngày sinh thất bại.');
+        Toast.show({
+          type: 'error',
+          text1: 'Lỗi',
+          text2: 'Cập nhật ngày sinh thất bại.'
+        });
       }
     }
   };
@@ -173,7 +200,11 @@ const handleModalSave = async () => {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Yêu cầu quyền', 'Bạn cần cấp quyền truy cập ảnh để thay đổi ảnh đại diện.');
+      Toast.show({
+        type: 'error',
+        text1: 'Yêu cầu quyền',
+        text2: 'Bạn cần cấp quyền truy cập ảnh để thay đổi ảnh đại diện.'
+      });
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({

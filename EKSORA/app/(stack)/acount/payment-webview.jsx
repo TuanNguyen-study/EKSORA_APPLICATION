@@ -4,7 +4,6 @@ import {
   Text,
   View,
   BackHandler,
-  Alert,
   PanResponder,
   Dimensions,
 } from "react-native";
@@ -12,6 +11,8 @@ import { WebView } from "react-native-webview";
 import { useCart } from "../../../store/CartContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState, useRef } from "react";
+import Toast from 'react-native-toast-message';
+
 
 export default function PaymentWebview() {
   const { checkoutUrl, needCreateBooking, paymentId } = useLocalSearchParams();
@@ -60,42 +61,41 @@ export default function PaymentWebview() {
 
   // Handle cancel payment action
   const handleCancelPayment = async () => {
-    Alert.alert(
-      "Hủy thanh toán?",
-      "Bạn có chắc chắn muốn hủy thanh toán và quay lại không?",
-      [
-        { text: "Tiếp tục thanh toán", style: "cancel", onPress: () => null },
-        {
-          text: "Hủy thanh toán",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // Try to cancel the current payment
-              const currentPaymentId =
-                await AsyncStorage.getItem("CURRENT_PAYMENT_ID");
-              const pendingBookingId =
-                await AsyncStorage.getItem("PENDING_BOOKING_ID");
+    // Show toast hỏi người dùng trước khi hủy
+    Toast.show({
+      type: "info", 
+      text1: "Hủy thanh toán?",
+      text2: "Vuốt sang phải hoặc bấm nút Back để xác nhận",
+    });
 
-              const paymentIdToCancel =
-                paymentId || currentPaymentId || pendingBookingId;
-              if (paymentIdToCancel) {
-                await cancelPaymentLink(paymentIdToCancel);
-                // Clean up stored payment IDs
-                await AsyncStorage.removeItem("CURRENT_PAYMENT_ID");
-                await AsyncStorage.removeItem("PENDING_BOOKING_ID");
-              }
-              router.replace("cancel");
-            } catch (error) {
-              console.error(
-                ">>> [PAYMENT_WEBVIEW] Error during cancellation:",
-                error
-              );
-              router.replace("cancel");
-            }
-          },
-        },
-      ]
-    );
+    try {
+      // ta xử lý trực tiếp (nếu chắc chắn hủy luôn)
+      const currentPaymentId = await AsyncStorage.getItem("CURRENT_PAYMENT_ID");
+      const pendingBookingId = await AsyncStorage.getItem("PENDING_BOOKING_ID");
+
+      const paymentIdToCancel = paymentId || currentPaymentId || pendingBookingId;
+      if (paymentIdToCancel) {
+        await cancelPaymentLink(paymentIdToCancel);
+        // Clean up stored payment IDs
+        await AsyncStorage.removeItem("CURRENT_PAYMENT_ID");
+        await AsyncStorage.removeItem("PENDING_BOOKING_ID");
+      }
+
+      Toast.show({
+        type: "success",
+        text1: "Đã hủy thanh toán",
+      });
+
+      router.replace("cancel");
+    } catch (error) {
+      console.error(">>> [PAYMENT_WEBVIEW] Error during cancellation:", error);
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Không thể hủy thanh toán",
+      });
+      router.replace("cancel");
+    }
   };
 
   // PanResponder for swipe gesture detection

@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
+
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -14,11 +14,12 @@ import {
   View,
 } from "react-native";
 import { useSelector } from "react-redux";
-
 import { updateUserProfile } from "../../../API/services/servicesProfile";
 import { COLORS } from "../../../constants/colors";
 import BookingSummaryCard from "./components/BookingCard";
 import ContactInfoSection from "./components/ContactInfoSection";
+import Toast from "react-native-toast-message";
+
 
 export default function BookingCompleted() {
   const router = useRouter();
@@ -159,11 +160,15 @@ const [contactToDisplay, setContactToDisplay] = useState(loggedInUser || {});
   const handleConfirmNewContact = async () => {
     const { firstName, lastName, phone, email } = formInfo;
     if (!firstName || !lastName || !phone || !email) {
-      Alert.alert("Thiếu thông tin", "Vui lòng điền đầy đủ tất cả các trường.");
+      Toast.show({
+        type: "error",
+        text1: "Thiếu thông tin",
+        text2: "Vui lòng điền đầy đủ tất cả các trường.",
+      })
       return;
     }
 
-    setLoading(true);
+    setLoading(true); 
     try {
       const token = await AsyncStorage.getItem("ACCESS_TOKEN");
       if (!token) throw new Error("Không tìm thấy token xác thực.");
@@ -176,11 +181,18 @@ const [contactToDisplay, setContactToDisplay] = useState(loggedInUser || {});
 
       // 3. Chuyển về lại tab "Thông tin của tôi"
 setIsUsingSavedInfo(true);
-
-      Alert.alert("Thành công", "Thông tin của bạn đã được cập nhật!");
+      Toast.show({
+        type: "success",
+        text1: "Thành công",
+        text2:"Thông tin của bạn được cập nhật !",
+      })
     } catch (error) {
       console.error("Lỗi khi cập nhật thông tin:", error);
-      Alert.alert("Lỗi", "Không thể cập nhật thông tin. Vui lòng thử lại sau.");
+        Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2:"Không thể cập nhật thông tin. Vui lòng thử lại sau.",
+      })
     } finally {
       setLoading(false);
     }
@@ -259,10 +271,11 @@ setIsUsingSavedInfo(true);
   const handlePayment = () => {
     // 1. Kiểm tra xem có thông tin liên lạc hay không
     if (!contactToDisplay.firstName || !contactToDisplay.phone) {
-      Alert.alert(
-        "Thiếu thông tin",
-        "Vui lòng xác nhận thông tin liên lạc của bạn để tiếp tục."
-      );
+         Toast.show({
+        type: "error",
+        text1: "Thiếu thông tin",
+        text2:"Vui lòng xác nhận thông tin liên lạc của bạn để tiếp tục.",
+      })
       handleEditContact();
       return;
     }
@@ -312,7 +325,11 @@ setIsUsingSavedInfo(true);
         console.log('>>> [BOOKING_COMPLETED] Prepared booking data:', bookingData);
       } catch (error) {
         console.error('Error preparing booking data:', error);
-        Alert.alert('Lỗi', 'Không thể xử lý dữ liệu đơn hàng');
+        Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2:"Không thể xử lý được đơn hàng .",
+      })
         return;
       }
     }

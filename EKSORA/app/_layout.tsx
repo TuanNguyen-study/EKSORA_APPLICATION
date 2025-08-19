@@ -4,6 +4,8 @@ import store from '../store';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppProviders } from '../store/AppProviders'; 
 import useDeepLink from '../hooks/useDeepLink';
+import Toast from "react-native-toast-message";
+import { toastConfig } from "../hooks/toastConfig";
 
 export default function Layout() {
   // Handle deeplink navigation
@@ -30,6 +32,8 @@ export default function Layout() {
             <Stack.Screen name="booking" options={{ title: 'Booking Screen', headerShown: false }} />
             <Stack.Screen name="ShowReview" options={{ title: 'ShoReview Screen', headerShown: false }} />
           </Stack>
+
+          <Toast config={toastConfig} />
         </AppProviders>
       </Provider>
     </GestureHandlerRootView>

@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useDispatch } from 'react-redux';
+import Toast from 'react-native-toast-message';
 import { registerUser } from '../../../../API/services/AxiosInstance';
 
 import {
@@ -12,6 +13,7 @@ import {
   validatePhoneNumber,
   validateRequired,
 } from '../../../../utils/validators'; 
+
 const BodySignUp = () => {
   const [form, setForm] = useState({
     email: '',
@@ -84,7 +86,11 @@ const BodySignUp = () => {
 
     try {
       await dispatch(registerUser(form)).unwrap();
-      Alert.alert('Thành công', 'Đăng ký thành công!');
+      Toast.show({
+        type: 'success',
+        text1: 'Thành công',
+        text2: 'Đăng ký thành công!'
+      });
       router.replace('/(stack)/login/loginEmail');
     } catch (error) {
       let message = 'Đăng ký thất bại. Vui lòng thử lại.';
@@ -93,7 +99,11 @@ const BodySignUp = () => {
           ? error.message
           : error.message.vi || JSON.stringify(error.message);
       }
-      Alert.alert('Lỗi', message);
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: message
+      });
     }
   };
 

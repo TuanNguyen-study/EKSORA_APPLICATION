@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import MultiSlider from "@ptomasroos/react-native-multi-slider";
 import { useState } from "react";
 import {
-  Alert,
   Dimensions,
   Modal,
   ScrollView,
@@ -11,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from 'react-native-toast-message';
 import { getToursByLocation } from "../../../../../API/services/serverCategories";
 import LocationModal from "./LocationModal";
 import { router } from "expo-router";
@@ -26,7 +26,11 @@ export default function FilterModal({ visible, onClose }) {
   const applyFilter = async () => {
     try {
       if (!selectedLocation?.id) {
-        Alert.alert("Vui lòng chọn địa điểm trước khi áp dụng");
+        Toast.show({
+          type: 'error',
+          text1: 'Lỗi',
+          text2: 'Vui lòng chọn địa điểm trước khi áp dụng'
+        });
         return;
       }
 
@@ -56,7 +60,11 @@ export default function FilterModal({ visible, onClose }) {
       onClose();
     } catch (error) {
       console.error("Lỗi khi lọc tour:", error);
-      Alert.alert("Lỗi", "Không thể lọc tour, vui lòng thử lại sau");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể lọc tour, vui lòng thử lại sau'
+      });
     }
   };
 
