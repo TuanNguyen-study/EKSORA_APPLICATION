@@ -22,7 +22,7 @@ const BookingItem = ({ item, onPress }) => {
     quantity_treEm,
   } = item;
 
-  const imageUrl = tour_id.image?.[0];
+  const imageUrl = tour_id?.image?.[0];
   const statusConfig = {
     paid: { text: 'ĐÃ XÁC NHẬN', color: COLORS.success, icon: 'check-circle' },
     pending: { text: 'ĐANG CHỜ XÁC NHẬN', color: COLORS.warning, icon: 'clock-time-eight' },

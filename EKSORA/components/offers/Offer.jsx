@@ -7,11 +7,11 @@ import {
   ScrollView,
   Platform,
   Dimensions,
-  ImageBackground,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useVoucher } from "../../store/VoucherContext";
 import CouponModal from "../../app/(stack)/Voucher/CouponModal";
+import LoginRequestModal from "../LoginRequestModal";
 import { COLORS } from "../../constants/colors";
 const { width: screenWidth } = Dimensions.get("window");
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -27,15 +27,24 @@ const formatDate = (dateString) => {
 export default function Offer() {
   const { coupons, saveVoucher } = useVoucher();
   const [isModalVisible, setIsModalVisible] = React.useState(false);
+  const [isLoginModalVisible, setIsLoginModalVisible] = React.useState(false);
 
-  const handleSave = (id) => {
-    saveVoucher(id);
+  // Hàm xử lý khi bấm nút "Lưu" voucher
+  const handleSaveVoucher = (offer) => {
+    if (offer.requiresLogin && !offer.isSaved) {
+      // Nếu cần đăng nhập và chưa lưu, hiển thị LoginRequestModal
+      setIsLoginModalVisible(true);
+    } else if (!offer.isSaved) {
+      // Nếu đã đăng nhập, lưu voucher bình thường
+      saveVoucher(offer.id);
+    }
+    // Nếu đã lưu rồi (offer.isSaved = true), button bị disabled nên không làm gì
   };
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#00639B", "#0087CA"]}
+        colors={["#0087CA", "#0087CA"]}
         style={styles.headerContainer}
       >
         <View style={styles.headerContent}>
@@ -55,7 +64,7 @@ export default function Offer() {
           coupons.slice(0, 10).map((offer) => (
             <View key={offer.id} style={styles.cardWrapper}>
               <LinearGradient
-                colors={["#00639B", "#0087CA"]}
+                colors={["#5f889cff", "#0087CA"]}
                 style={styles.codeBox}
               >
                 <View style={styles.boxHeader}>
@@ -63,17 +72,35 @@ export default function Offer() {
                 </View>
                 <View style={styles.boxBody}>
                   <Text style={styles.discount}>{offer.discount}</Text>
-                  {/* <Text style={styles.condition}>{offer.condition}</Text> */}
                   {offer.expiry && (
                     <Text style={styles.condition}>
                       HSD: {formatDate(offer.expiry)}
                     </Text>
                   )}
                   <TouchableOpacity
-                    style={styles.button}
-                    onPress={() => handleSave(offer.id)}
+                    style={[
+                      styles.button,
+                      offer.isSaved
+                        ? styles.savedButton
+                        : offer.requiresLogin
+                          ? styles.loginRequiredButton
+                          : styles.defaultButton,
+                    ]}
+                    onPress={() => handleSaveVoucher(offer)}
+                    disabled={offer.isSaved}
                   >
-                    <Text style={styles.buttonText}>{offer.buttonText}</Text>
+                    <Text
+                      style={[
+                        styles.buttonText,
+                        offer.isSaved
+                          ? styles.savedButtonText
+                          : offer.requiresLogin
+                            ? styles.loginRequiredButtonText
+                            : styles.defaultButtonText,
+                      ]}
+                    >
+                      {offer.isSaved ? "Đã lưu" : "Lưu"}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </LinearGradient>
@@ -89,6 +116,11 @@ export default function Offer() {
       <CouponModal
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
+      />
+
+      <LoginRequestModal
+        isVisible={isLoginModalVisible}
+        onClose={() => setIsLoginModalVisible(false)}
       />
     </View>
   );
@@ -134,9 +166,8 @@ const styles = StyleSheet.create({
   row: {
     paddingVertical: 16,
     paddingHorizontal: 10,
+    flexDirection: "row",
     gap: 12,
-    display: "flex",
-    flexDirection: "column",
   },
   cardWrapper: {
     borderRadius: 16,
@@ -177,19 +208,37 @@ const styles = StyleSheet.create({
     color: "#e0f0ff",
     textAlign: "center",
   },
-  buttonText: {
-    color: "#005bac",
-    fontSize: 12,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
   button: {
-    backgroundColor: "white",
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 14,
     width: "100%",
     borderWidth: 0.5,
+    borderColor: COLORS.border,
+    alignItems: "center",
+  },
+  defaultButton: {
+    backgroundColor: "white",
+  },
+  loginRequiredButton: {
+    backgroundColor: "white", // Màu trắng để giống defaultButton
+  },
+  savedButton: {
+    backgroundColor: COLORS.textLight,
+  },
+  buttonText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  defaultButtonText: {
+    color: "#005bac",
+  },
+  loginRequiredButtonText: {
+    color: "#005bac", // Màu xanh để dễ đọc, giống defaultButtonText
+  },
+  savedButtonText: {
+    color: COLORS.lightGray,
   },
   noVoucherText: {
     color: COLORS.textGray,
@@ -197,9 +246,5 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     paddingHorizontal: 20,
     paddingVertical: 10,
-  },
-  cardHeader: {
-    height: 200,
-    justifyContent: "space-between",
   },
 });

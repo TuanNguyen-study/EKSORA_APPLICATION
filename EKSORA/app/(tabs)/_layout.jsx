@@ -46,13 +46,8 @@ const TabArr = [
 ];
 
 const CustomTabBarButton = ({ children, onPress }) => (
-  <TouchableOpacity
-    style={styles.customButtonContainer}
-    onPress={onPress}
-  >
-    <View style={styles.customButton}>
-      {children}
-    </View>
+  <TouchableOpacity style={styles.customButtonContainer} onPress={onPress}>
+    <View style={styles.customButton}>{children}</View>
   </TouchableOpacity>
 );
 
@@ -72,13 +67,17 @@ export default function TabsLayout() {
           if (item.isCustom) {
             return (
               <Tabs.Screen
-                key={index}
+                key={`custom-${item.route}`}
                 name={item.route}
                 options={{
                   tabBarLabel: () => null,
                   tabBarButton: (props) => <CustomTabBarButton {...props} />,
                   tabBarIcon: () => (
-                    <Ionicons name={item.activeIcon} size={32} color={COLORS.white} />
+                    <Ionicons
+                      name={item.activeIcon}
+                      size={32}
+                      color={COLORS.white}
+                    />
                   ),
                 }}
               />
@@ -86,7 +85,7 @@ export default function TabsLayout() {
           } else {
             return (
               <Tabs.Screen
-                key={index}
+                key={`tab-${item.route}`}
                 name={item.route}
                 options={{
                   title: item.label,
@@ -113,18 +112,18 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#2F80ED"
+    backgroundColor: "#2F80ED",
   },
   tabBar: {
     backgroundColor: COLORS.white,
-    position: 'absolute',
+    position: "absolute",
     left: 20,
     right: 20,
     borderRadius: 15,
     height: 70,
     borderTopWidth: 0,
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -136,18 +135,18 @@ const styles = StyleSheet.create({
   },
   customButtonContainer: {
     top: -20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   customButton: {
     width: 60,
     height: 60,
     borderRadius: 35,
     backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4.65,

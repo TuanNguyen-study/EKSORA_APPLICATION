@@ -32,7 +32,7 @@ const DateSelector = ({
         const [day, month] = date.split("/");
         return (
           <TouchableOpacity
-            key={index}
+            key={date}
             style={[
               styles.dateButton,
               selectedDate === date && styles.dateButtonSelected,
