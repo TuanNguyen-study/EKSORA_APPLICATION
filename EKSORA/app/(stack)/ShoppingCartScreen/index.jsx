@@ -1,11 +1,8 @@
-// ShoppingCartScreen.js
-
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Platform,
   SafeAreaView,
@@ -17,6 +14,7 @@ import {
 } from "react-native";
 import { useSelector } from "react-redux";
 import { useCart } from "../../../store/CartContext";
+import Toast from 'react-native-toast-message';
 import CartItem from "./components/CartItem";
 
 const formatCurrency = (amount) => {
@@ -56,23 +54,25 @@ const ShoppingCartScreen = () => {
   };
 
   const handleDeleteItem = (idToDelete) => {
-    Alert.alert(
-      "Xóa sản phẩm",
-      "Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?",
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Xóa",
-          onPress: () => {
-            removeFromCart(idToDelete);
-            setSelectedIds((prevIds) =>
-              prevIds.filter((id) => id !== idToDelete)
-            );
-          },
-          style: "destructive",
-        },
-      ]
-    );
+    Toast.show({
+      type: 'info',
+      text1: 'Xóa sản phẩm',
+      text2: 'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?',
+      onPress: () => {
+        removeFromCart(idToDelete);
+        setSelectedIds((prevIds) =>
+          prevIds.filter((id) => id !== idToDelete)
+        );
+        Toast.show({
+          type: 'success',
+          text1: 'Thành công',
+          text2: 'Sản phẩm đã được xóa khỏi giỏ hàng'
+        });
+      },
+      autoHide: false,
+      visibilityTime: 5000,
+      bottomOffset: 40,
+    });
   };
 
   const handleSelectAll = () => {
@@ -93,7 +93,11 @@ const ShoppingCartScreen = () => {
       router.push(`/trip-detail/${item.tour_id}`);
     } else {
       console.error("Lỗi: Không tìm thấy tour_id để điều hướng.");
-      Alert.alert("Lỗi", "Không thể xem chi tiết tour này.");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể xem chi tiết tour này.'
+      });
     }
   };
 
@@ -105,18 +109,20 @@ const ShoppingCartScreen = () => {
     );
 
     if (selectedItems.length === 0) {
-      Alert.alert(
-        "Chưa chọn sản phẩm",
-        "Vui lòng chọn ít nhất một sản phẩm để thanh toán."
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Chưa chọn sản phẩm',
+        text2: 'Vui lòng chọn ít nhất một sản phẩm để thanh toán.'
+      });
       return;
     }
 
     if (!loggedInUser || !loggedInUser.id) {
-      Alert.alert(
-        "Lỗi",
-        "Thông tin người dùng không hợp lệ. Vui lòng đăng nhập lại."
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Thông tin người dùng không hợp lệ. Vui lòng đăng nhập lại.'
+      });
       return;
     }
 
@@ -178,10 +184,11 @@ const ShoppingCartScreen = () => {
       });
     } catch (error) {
       console.error("Lỗi khi chuẩn bị đơn hàng:", error.message || error);
-      Alert.alert(
-        "Lỗi",
-        `Chuẩn bị đơn hàng thất bại: ${error.message || "Vui lòng thử lại."}`
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: `Chuẩn bị đơn hàng thất bại: ${error.message || "Vui lòng thử lại."}`
+      });
     } finally {
       setIsLoading(false);
     }

@@ -1,11 +1,11 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { View, Alert, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useDispatch } from 'react-redux';
-import {  verifyOtp } from '../../../../API/services/passwordActions';
+import Toast from 'react-native-toast-message';
+import { verifyOtp } from '../../../../API/services/passwordActions';
 import { loginUser } from '../../../../API/services/AxiosInstance';
-
 
 const Otp = () => {
   const { email } = useLocalSearchParams(); // ✅ lấy email từ params
@@ -28,30 +28,37 @@ const Otp = () => {
     }
   };
 
-// ...existing code...
-const handleVerify = async () => {
-  const otpValue = otp.join('');
-  if (otpValue.length !== 4) {
-    Alert.alert('Lỗi', 'Vui lòng nhập đủ 4 số OTP');
-    return;
-  }
+  // ...existing code...
+  const handleVerify = async () => {
+    const otpValue = otp.join('');
+    if (otpValue.length !== 4) {
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Vui lòng nhập đủ 4 số OTP'
+      });
+      return;
+    }
 
-  try {
-    setLoading(true);
-    const result = await dispatch(verifyOtp({ email, otp: otpValue })).unwrap();
+    try {
+      setLoading(true);
+      const result = await dispatch(verifyOtp({ email, otp: otpValue })).unwrap();
 
-    // Lấy resetToken từ result và truyền sang màn ResetPassword
-    router.replace({
-      pathname: '/(stack)/signup/ResetPassword',
-      params: { token: result.resetToken }, // truyền resetToken
-    });
-  } catch (error) {
-    Alert.alert('Lỗi', error || 'Xác thực OTP thất bại');
-  } finally {
-    setLoading(false);
-  }
-};
-
+      // Lấy resetToken từ result và truyền sang màn ResetPassword
+      router.replace({
+        pathname: '/(stack)/signup/ResetPassword',
+        params: { token: result.resetToken }, // truyền resetToken
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: error || 'Xác thực OTP thất bại'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>

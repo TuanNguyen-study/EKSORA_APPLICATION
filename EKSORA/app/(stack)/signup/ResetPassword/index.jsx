@@ -1,9 +1,11 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useDispatch } from 'react-redux';
-import {  resetPassword } from '../../../../API/services/passwordActions';
+import Toast from 'react-native-toast-message';
+import { resetPassword } from '../../../../API/services/passwordActions';
+
 const ResetPassword = () => {
  const { token } = useLocalSearchParams();
   const [password, setPassword] = useState('');
@@ -12,13 +14,21 @@ const ResetPassword = () => {
 
 const handleResetPassword = async () => {
   if (!password) {
-    Alert.alert('Lỗi', 'Vui lòng nhập mật khẩu mới');
+    Toast.show({
+      type: 'error',
+      text1: 'Lỗi',
+      text2: 'Vui lòng nhập mật khẩu mới'
+    });
     return;
   }
 
   try {
-await dispatch(resetPassword({ newPassword: password, resetToken: token })).unwrap();
-    Alert.alert('Thành công', 'Đổi mật khẩu thành công');
+    await dispatch(resetPassword({ newPassword: password, resetToken: token })).unwrap();
+    Toast.show({
+      type: 'success',
+      text1: 'Thành công',
+      text2: 'Đổi mật khẩu thành công'
+    });
     router.push('/(stack)/login/loginEmail');
   } catch (error) {
     console.error('Reset password error:', error);
@@ -39,10 +49,13 @@ await dispatch(resetPassword({ newPassword: password, resetToken: token })).unwr
       message = 'Lỗi không xác định';
     }
 
-    Alert.alert('Lỗi', message);
+    Toast.show({
+      type: 'error',
+      text1: 'Lỗi',
+      text2: message
+    });
   }
 };
-
 
   return (
     <View style={styles.container}>

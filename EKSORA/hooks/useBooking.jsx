@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Alert } from "react-native";
 import { useSelector } from "react-redux";
 import { useCart } from "../store/CartContext";
+import Toast from "react-native-toast-message";
 
 /**
  * Hàm tiện ích: Định dạng một số thành chuỗi tiền tệ Việt Nam (VND).
@@ -99,16 +99,21 @@ export const useBooking = (initialDetails) => {
       // 1. Trường hợp người dùng gỡ voucher
       if (!voucher) {
         setAppliedVoucher(null);
-        Alert.alert("Đã bỏ áp dụng", "Voucher đã được gỡ bỏ.");
+        Toast.show({
+          type: 'success',
+          text1: 'Đã bỏ áp dụng',
+          text2: 'Voucher đã được gỡ bỏ.'
+        });
         return;
       }
 
       // 2. Kiểm tra voucher có hợp lệ không
       if (!voucher?.voucher_id?.min_order_value) {
-        Alert.alert(
-          "Lỗi voucher",
-          "Voucher này không hợp lệ hoặc thiếu thông tin quan trọng."
-        );
+        Toast.show({
+          type: 'error',
+          text1: 'Lỗi voucher',
+          text2: 'Voucher này không hợp lệ hoặc thiếu thông tin quan trọng.'
+        });
         return;
       }
 
@@ -121,17 +126,21 @@ export const useBooking = (initialDetails) => {
 
       // 4. Kiểm tra xem đơn hàng có đủ điều kiện giá trị tối thiểu không
       if (totalBeforeDiscount < minOrderValue) {
-        Alert.alert(
-          "Không đủ điều kiện",
-          `Rất tiếc, voucher này chỉ áp dụng cho đơn hàng có giá trị từ ${formatPrice(minOrderValue)} trở lên.`,
-          [{ text: "Đã hiểu" }]
-        );
+        Toast.show({
+          type: 'error',
+          text1: 'Không đủ điều kiện',
+          text2: `Rất tiếc, voucher này chỉ áp dụng cho đơn hàng có giá trị từ ${formatPrice(minOrderValue)} trở lên.`
+        });
         return;
       }
 
       // 5. Nếu mọi thứ OK, lưu voucher vào state
       setAppliedVoucher(voucher);
-      Alert.alert("Thành công", "Đã áp dụng voucher!");
+      Toast.show({
+        type: 'success',
+        text1: 'Thành công',
+        text2: 'Đã áp dụng voucher!'
+      });
     },
     [originalPrices, quantityAdult, quantityChild]
   ); // Phụ thuộc vào các giá trị này
@@ -161,7 +170,7 @@ export const useBooking = (initialDetails) => {
       setDiscountAmount(0);
       setDisplayPrices(originalPrices);
       setFinalPrice(totalBeforeDiscount);
-      // Thông báo cho người dùng (có thể thêm Alert ở đây nếu muốn)
+      // Thông báo cho người dùng (có thể thêm Toast ở đây nếu muốn)
       return;
     }
 
@@ -230,10 +239,11 @@ export const useBooking = (initialDetails) => {
     today.setHours(0, 0, 0, 0); // Đặt giờ về 0 để so sánh chỉ ngày
     // Không cho phép chọn ngày trong quá khứ
     if (date < today) {
-      Alert.alert(
-        "Ngày không hợp lệ",
-        "Bạn không thể đặt lịch cho một ngày trong quá khứ. Vui lòng chọn lại."
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Ngày không hợp lệ',
+        text2: 'Bạn không thể đặt lịch cho một ngày trong quá khứ. Vui lòng chọn lại.'
+      });
       return;
     }
     const formatted = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
@@ -249,11 +259,14 @@ export const useBooking = (initialDetails) => {
   };
 
   // Xử lý khi người dùng nhấn nút "Thêm vào giỏ hàng"
-
   const handleAddToCart = () => {
     // Kiểm tra số lượng
     if (quantityAdult === 0 && quantityChild === 0) {
-      Alert.alert("Thông báo", "Vui lòng chọn số lượng người lớn hoặc trẻ em.");
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: 'Vui lòng chọn số lượng người lớn hoặc trẻ em.'
+      });
       return;
     }
     if (!tourData) return;
@@ -261,10 +274,11 @@ export const useBooking = (initialDetails) => {
     // Tạo ID duy nhất cho sản phẩm trong giỏ hàng để tránh trùng lặp
     const cartItemId = `${tourData.tour_id}_${selectedDate}`;
     if (cartItems.find((item) => item.id === cartItemId)) {
-      Alert.alert(
-        "Thông báo",
-        "Tour này với ngày đã chọn đã có trong giỏ hàng."
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: 'Tour này với ngày đã chọn đã có trong giỏ hàng.'
+      });
       return;
     }
 
@@ -300,24 +314,30 @@ export const useBooking = (initialDetails) => {
     };
 
     addToCart(cartItem); // Gọi hàm từ CartContext với dữ liệu ĐẦY ĐỦ
-    Alert.alert("Thành công", `Đã thêm "${tourData.tour_title}" vào giỏ hàng!`);
+    Toast.show({
+      type: 'success',
+      text1: 'Thành công',
+      text2: `Đã thêm "${tourData.tour_title}" vào giỏ hàng!`
+    });
   };
 
   // Xử lý khi người dùng nhấn nút "Đặt ngay"
   const handleBooking = async () => {
     // Kiểm tra các điều kiện cần thiết
     if (quantityAdult === 0 && quantityChild === 0) {
-      Alert.alert(
-        "Thông báo",
-        "Vui lòng chọn số lượng người lớn hoặc trẻ em để đặt tour."
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: 'Vui lòng chọn số lượng người lớn hoặc trẻ em để đặt tour.'
+      });
       return;
     }
     if (!tourData || !selectedDate || !userId) {
-      Alert.alert(
-        "Lỗi",
-        "Dữ liệu không hợp lệ hoặc bạn chưa đăng nhập. Vui lòng thử lại."
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Dữ liệu không hợp lệ hoặc bạn chưa đăng nhập. Vui lòng thử lại.'
+      });
       return;
     }
 
