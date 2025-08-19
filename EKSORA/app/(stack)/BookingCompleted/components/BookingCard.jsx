@@ -26,22 +26,26 @@ const BookingSummaryCard = ({
       <Text style={styles.cardTitle}>{title}</Text>
 
       <DetailRow
+        key="ticket-type"
         iconName="ticket-outline"
         label="Loại vé"
         value="Vé tiêu chuẩn"
       />
       <DetailRow
+        key="travel-date"
         iconName="calendar-outline"
         label="Ngày tham gia"
         value={travelDate}
       />
       <DetailRow
+        key="adult-quantity"
         iconName="person-outline"
         label="Người lớn"
         value={`x ${quantityAdult}`}
       />
       {Number(quantityChild) > 0 && (
         <DetailRow
+          key="child-quantity"
           iconName="body-outline"
           label="Trẻ em"
           value={`x ${quantityChild}`}
@@ -51,6 +55,7 @@ const BookingSummaryCard = ({
       {/* Hiển thị thông tin voucher nếu có */}
       {voucherCode && (
         <DetailRow
+          key="voucher-code"
           iconName="pricetag-outline"
           label="Mã ưu đãi"
           value={voucherCode}

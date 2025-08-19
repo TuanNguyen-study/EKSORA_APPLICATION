@@ -1,21 +1,31 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
-import React,{ useCallback, useState } from 'react';
-import { Dimensions, SafeAreaView, ScrollView, StatusBar, StyleSheet, View } from 'react-native';
-import Body from '../../../components/account/body';
-import Header from '../../../components/account/header';
-import { COLORS } from '../../../constants/colors';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useCallback, useState } from "react";
+import {
+  Dimensions,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  View,
+} from "react-native";
+import Body from "../../../components/account/body";
+import Header from "../../../components/account/header";
+import { COLORS } from "../../../constants/colors";
+import { useBackToHome } from "../../../hooks/useBackToHome";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export default function AccountScreen() {
+  useBackToHome("account");
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       const checkLogin = async () => {
-        const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+        const token = await AsyncStorage.getItem("ACCESS_TOKEN");
         setIsLoggedIn(!!token); // true nếu có token, false nếu không
       };
       checkLogin();
@@ -30,12 +40,12 @@ export default function AccountScreen() {
       <View style={styles.gradientContainer}>
         <LinearGradient
           colors={[
-            '#2F80ED',
-            '#479DEB',
-            '#56CCF2',
-            '#A3DFF7',
-            '#FFFFFF',
-            '#FFFFFF',
+            "#2F80ED",
+            "#479DEB",
+            "#56CCF2",
+            "#A3DFF7",
+            "#FFFFFF",
+            "#FFFFFF",
           ]}
           locations={[0, 0.2, 0.4, 0.65, 0.8, 1]}
           start={{ x: 0.5, y: 0 }}
@@ -50,7 +60,7 @@ export default function AccountScreen() {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContentContainer,
-          !isLoggedIn && { flex: 1, justifyContent: 'center' } // căn giữa nếu chưa login
+          !isLoggedIn && { flex: 1, justifyContent: "center" }, // căn giữa nếu chưa login
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -68,21 +78,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   gradientContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0, // <-- thay vì height: 280
-  }, 
+  },
   gradientBackground: {
     ...StyleSheet.absoluteFillObject,
   },
   spot: {
-    position: 'absolute',
+    position: "absolute",
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   scrollView: {
     flex: 1,

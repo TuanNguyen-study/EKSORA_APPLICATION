@@ -132,8 +132,8 @@ const BookingDetailScreen = () => {
         {
           text: "OK",
           onPress: () => {
-            // Navigate back to trips page after successful cancellation
-            router.push("/(tabs)/trips");
+            // Replace current screen with trips page to remove booking detail from navigation stack
+            router.replace("/(tabs)/trips");
           },
         },
       ]);

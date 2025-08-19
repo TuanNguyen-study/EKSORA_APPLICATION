@@ -28,7 +28,6 @@ import PaymentMethodItem from "./components/PaymentMethodItem";
 const paymentMethods = [
   { id: "Payos", label: "Ví PayOS", icon: "wallet-outline" },
   { id: "ZaloPay", label: "Ví ZaloPay", icon: "bank-outline" },
-
 ];
 
 // --- COMPONENT FOOTER  ---
@@ -232,7 +231,7 @@ export default function PaymentPage() {
       displayItems: [singleItem],
       finalTotalPrice: Number(params.totalPrice),
       orderDescription: `EKSORA thanh toán  '}`,
-    }
+    };
   }, [params]);
 
   useEffect(() => {
@@ -257,7 +256,7 @@ export default function PaymentPage() {
 
     // Kiểm tra xem có phải là direct booking không
     const isDirectBooking = params.needCreateBooking === "true";
-    
+
     let bookingId;
     if (isDirectBooking) {
       try {
@@ -272,16 +271,22 @@ export default function PaymentPage() {
             // In the future, you might want to create multiple bookings
             bookingData = cartItems[0];
           } catch (parseError) {
-            console.error(">>> [PAYMENT] Error parsing cart items:", parseError);
+            console.error(
+              ">>> [PAYMENT] Error parsing cart items:",
+              parseError
+            );
             throw new Error("Dữ liệu giỏ hàng không hợp lệ");
           }
-        } 
+        }
         // Handle direct booking data
         else if (params.bookingData) {
           try {
             bookingData = JSON.parse(params.bookingData);
           } catch (parseError) {
-            console.error(">>> [PAYMENT] Error parsing bookingData:", parseError);
+            console.error(
+              ">>> [PAYMENT] Error parsing bookingData:",
+              parseError
+            );
             throw new Error("Dữ liệu đơn hàng không hợp lệ");
           }
         } else {
@@ -289,64 +294,79 @@ export default function PaymentPage() {
         }
 
         // Validate required fields
-        const requiredFields = ['user_id', 'tour_id', 'travel_date', 'quantity_nguoiLon', 'totalPrice'];
-        const missingFields = requiredFields.filter(field => !bookingData[field]);
-        
+        const requiredFields = [
+          "user_id",
+          "tour_id",
+          "travel_date",
+          "quantity_nguoiLon",
+          "totalPrice",
+        ];
+        const missingFields = requiredFields.filter(
+          (field) => !bookingData[field]
+        );
+
         if (missingFields.length > 0) {
           console.error(">>> [PAYMENT] Missing fields in data:", bookingData);
-          throw new Error(`Thiếu thông tin bắt buộc: ${missingFields.join(', ')}`);
+          throw new Error(
+            `Thiếu thông tin bắt buộc: ${missingFields.join(", ")}`
+          );
         }
 
         // Ensure numeric fields are numbers
         bookingData.quantity_nguoiLon = Number(bookingData.quantity_nguoiLon);
         // Make quantity_treEm optional, default to 0 if not provided
-        bookingData.quantity_treEm = bookingData.quantity_treEm ? Number(bookingData.quantity_treEm) : 0;
+        bookingData.quantity_treEm = bookingData.quantity_treEm
+          ? Number(bookingData.quantity_treEm)
+          : 0;
         bookingData.totalPrice = Number(bookingData.totalPrice);
 
         // Add default status if not present
         if (!bookingData.status) {
-          bookingData.status = 'pending';
+          bookingData.status = "pending";
         }
-        
+
         console.log(">>> [PAYMENT] Creating booking with data:", bookingData);
-        
+
         // Đảm bảo có token cho request
         const token = await AsyncStorage.getItem("ACCESS_TOKEN");
         if (!token) {
           throw new Error("Phiên đăng nhập đã hết hạn");
         }
-        
+
         // Thêm headers vào request
-        AxiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-        
+        AxiosInstance.defaults.headers.common["Authorization"] =
+          `Bearer ${token}`;
+
         const response = await createBooking(bookingData);
         console.log(">>> [PAYMENT] Booking response:", response);
-        
+
         if (!response) {
           throw new Error("Không nhận được phản hồi từ server");
         }
-        
+
         if (!response._id) {
           console.error(">>> [PAYMENT] Invalid response structure:", response);
           throw new Error("Cấu trúc phản hồi không hợp lệ - thiếu _id");
         }
-        
+
         bookingId = response._id;
         console.log(">>> [PAYMENT] Created booking:", bookingId);
-        
+
         // Lưu bookingId tạm thời
         await AsyncStorage.setItem("PENDING_BOOKING_ID", bookingId);
-        
       } catch (error) {
         console.error(">>> [PAYMENT] Error creating booking:", error);
-        Alert.alert("Lỗi", error.message || "Không thể tạo đơn hàng. Vui lòng thử lại.");
+        Alert.alert(
+          "Lỗi",
+          error.message || "Không thể tạo đơn hàng. Vui lòng thử lại."
+        );
         return;
       }
     } else {
       // Lấy bookingId từ params hoặc displayItems cho các luồng khác
       bookingId = params.bookingId || displayItems[0]?.id;
       if (!bookingId) {
-        Alert.alert('Lỗi', 'Không tìm thấy mã đơn hàng.');
+        Alert.alert("Lỗi", "Không tìm thấy mã đơn hàng.");
         return;
       }
     }
@@ -372,8 +392,8 @@ export default function PaymentPage() {
       console.log(">>> [PAYMENT REQUEST] Payload:", payload);
 
       const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -382,27 +402,46 @@ export default function PaymentPage() {
 
       // Gom tất cả các khả năng URL trả về (PayOS, ZaloPay)
       const checkoutUrl =
-        data.url ||
-        data.order_url ||
-        data.zalo_url ||
-        data.raw?.order_url;
+        data.url || data.order_url || data.zalo_url || data.raw?.order_url;
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || 'Lỗi không xác định từ server.');
+        throw new Error(
+          data.message || data.error || "Lỗi không xác định từ server."
+        );
       }
 
       if (checkoutUrl) {
         // Clear cart items after successful payment if items came from cart
         if (params.fromCart === "true" && params.items) {
           try {
+            console.log(">>> [PAYMENT] Attempting to clear cart...");
             await clearCart();
-            console.log(">>> [PAYMENT] Successfully cleared cart after payment");
+            console.log(
+              ">>> [PAYMENT] Successfully cleared cart after payment"
+            );
           } catch (clearError) {
-            console.error(">>> [PAYMENT] Error clearing cart:", {
-              error: clearError.message || clearError,
-              stack: clearError.stack
-            });
-            // Continue with payment even if cart clearing fails
+            // Log detailed error information
+            const errorDetails = {
+              message: clearError.message || clearError,
+              status: clearError.response?.status,
+              statusText: clearError.response?.statusText,
+              stack: clearError.stack,
+            };
+
+            console.error(">>> [PAYMENT] Error clearing cart:", errorDetails);
+
+            // For 403 errors, provide specific handling
+            if (
+              errorDetails.status === 403 ||
+              errorDetails.message?.includes("403")
+            ) {
+              console.warn(
+                ">>> [PAYMENT] Cart clear failed due to permission issue (403). This may be due to expired token during cart cleanup, but payment was successful."
+              );
+            }
+
+            // Continue with payment navigation even if cart clearing fails
+            // Cart will be cleaned up next time user opens the app
           }
         }
 
@@ -416,12 +455,9 @@ export default function PaymentPage() {
       }
     } catch (err) {
       console.error(">>> [PAYMENT ERROR]:", err);
-      Alert.alert('Lỗi tạo thanh toán', err.message);
+      Alert.alert("Lỗi tạo thanh toán", err.message);
     }
   };
-
-
-
 
   const contactInfo = {
     fullName: params.fullName,
