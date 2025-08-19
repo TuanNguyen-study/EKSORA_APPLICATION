@@ -143,7 +143,7 @@ export default function PaymentPage() {
       );
 
       if (response.ok) {
-        console.log(">>> [PAYMENT] Payment link cancelled successfully");
+        console.log(">>> [PAYMENT] Payment link canceled successfully");
       } else {
         console.warn(
           ">>> [PAYMENT] Failed to cancel payment link:",

@@ -31,28 +31,31 @@ export const VoucherProvider = ({ children }) => {
       setLoading(true);
       const userId = await AsyncStorage.getItem("USER_ID");
 
-      // Nếu không có userId, dọn dẹp và dừng
-      if (!userId) {
-        console.log("No userId found, clearing coupons");
-        setCoupons([]);
-        setLoading(false);
-        return;
-      }
-
-      const [allPromotionsResponse, savedVouchersResponse] = await Promise.all([
-        getPromotion(),
-        getVouchersByUserId(userId),
-      ]);
-
-      const savedVoucherData = savedVouchersResponse || [];
-      const savedIds = savedVoucherData
-        .map((savedVoucher) => savedVoucher.voucher_id?._id)
-        .filter(Boolean);
+      // Luôn lấy danh sách tất cả voucher, bất kể có userId hay không
+      const allPromotionsResponse = await getPromotion();
       const allPromotionsData =
         allPromotionsResponse?.data || allPromotionsResponse || [];
 
+      // Nếu có userId, lấy danh sách voucher đã lưu
+      let savedIds = [];
+      if (userId) {
+        try {
+          const savedVouchersResponse = await getVouchersByUserId(userId);
+          const savedVoucherData = savedVouchersResponse || [];
+          savedIds = savedVoucherData
+            .map((savedVoucher) => savedVoucher.voucher_id?._id)
+            .filter(Boolean);
+          console.log("Saved vouchers:", savedIds.length);
+        } catch (error) {
+          console.log("Error fetching saved vouchers:", error);
+        }
+      } else {
+        console.log(
+          "No userId found, showing all vouchers without saved status"
+        );
+      }
+
       console.log("All promotions:", allPromotionsData.length);
-      console.log("Saved vouchers:", savedIds.length);
 
       // Lọc ra những voucher còn hạn sử dụng (chưa qua ngày hôm nay)
       const now = new Date();
@@ -66,17 +69,15 @@ export const VoucherProvider = ({ children }) => {
         title: "Mã giảm giá",
         discount: item.discount ? `Giảm ${item.discount}%` : "Ưu đãi",
         condition: item.condition || `Áp dụng đơn từ...`,
-        buttonText: "Lưu",
-        isSaved: savedIds.includes(item._id), // Khởi tạo isSaved dựa trên savedIds
+        buttonText: userId ? "Lưu" : "Đăng nhập để lưu", // Thay đổi text button khi chưa đăng nhập
+        isSaved: userId ? savedIds.includes(item._id) : false, // Chỉ hiển thị saved status khi có userId
         expiry: item.end_date,
+        requiresLogin: !userId, // Thêm flag để biết có cần đăng nhập không
       }));
 
       console.log("All promotions (before filter):", allPromotionsData.length);
       console.log("Valid promotions (after expiry filter):", promotions.length);
-      console.log(
-        "All saved:",
-        promotions.every((p) => p.isSaved)
-      );
+      console.log("User logged in:", !!userId);
 
       setCoupons(promotions);
     } catch (error) {
@@ -91,7 +92,11 @@ export const VoucherProvider = ({ children }) => {
   const saveVoucher = async (voucherId) => {
     try {
       const userId = await AsyncStorage.getItem("USER_ID");
-      if (!userId) return;
+      if (!userId) {
+        // Nếu chưa đăng nhập, hiển thị thông báo yêu cầu đăng nhập
+        alert("Vui lòng đăng nhập để lưu voucher này!");
+        return;
+      }
       console.log("Saving voucher:", voucherId);
       await saveUserVoucher(userId, voucherId);
       setCoupons((prev) =>
@@ -124,6 +129,22 @@ export const VoucherProvider = ({ children }) => {
     fetchPromotions();
   }, []);
 
+  // Lắng nghe thay đổi trong AsyncStorage để update khi user login/logout
+  useEffect(() => {
+    const checkAuthChange = async () => {
+      const currentUserId = await AsyncStorage.getItem("USER_ID");
+      // Chỉ re-fetch nếu có thay đổi trong authentication state
+      if (currentUserId !== null) {
+        fetchPromotions();
+      }
+    };
+
+    // Thiết lập interval để kiểm tra thay đổi auth state
+    const authCheckInterval = setInterval(checkAuthChange, 2000);
+
+    return () => clearInterval(authCheckInterval);
+  }, []);
+
   // Giá trị context
   const contextValue = {
     coupons,
@@ -131,6 +152,7 @@ export const VoucherProvider = ({ children }) => {
     saveVoucher,
     handleLogout,
     fetchPromotions,
+    refetchPromotions: fetchPromotions, // Alias để gọi từ bên ngoài
   };
 
   return (

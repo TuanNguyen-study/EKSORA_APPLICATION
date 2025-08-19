@@ -113,10 +113,12 @@ export default function HomeScreen() {
       const toursData = await getToursByLocation(item._id);
       const processedTours = (
         Array.isArray(toursData) ? toursData : toursData.data || []
-      ).map((tour) => ({
-        ...tour,
-        image: tour.image?.[0] || "https://via.placeholder.com/300",
-      }));
+      )
+        .filter((tour) => tour && tour.price > 0) // Lọc bỏ tour có giá 0 đồng
+        .map((tour) => ({
+          ...tour,
+          image: tour.image?.[0] || "https://via.placeholder.com/300",
+        }));
       setLocationTours(processedTours);
     } catch (err) {
       console.error("Lỗi khi lấy tour theo địa điểm:", err);
