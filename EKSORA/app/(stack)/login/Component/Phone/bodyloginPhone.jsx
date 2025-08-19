@@ -1,12 +1,12 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { loginphone } from '../../../../../API/services/AxiosInstance';
 import { useDispatch } from 'react-redux';
+import Toast from 'react-native-toast-message';
 
 const BodyLoginPhone = () => {
-
   const [form, setForm] = useState({ phone: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -37,13 +37,21 @@ const BodyLoginPhone = () => {
     }
 
     if (hasError) {
-      Alert.alert('Lỗi', 'vui lòng nhập đầy đủ số điện thoại và mật khẩu hợp lệ');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Vui lòng nhập đầy đủ số điện thoại và mật khẩu hợp lệ',
+      });
       return;
     }
 
     const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
     if (!passwordRegex.test(password)) {
-      Alert.alert('Lỗi', 'đật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa và 1 ký tự đặc biệt');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Mật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa và 1 ký tự đặc biệt',
+      });
       return;
     }
 
@@ -51,15 +59,27 @@ const BodyLoginPhone = () => {
     try {
       const resultAction = await dispatch(loginphone({ phone, password }));
       if (loginphone.fulfilled.match(resultAction)) {
-        Alert.alert('Thành công', 'đăng nhập thành công!');
+        Toast.show({
+          type: 'success',
+          text1: 'Thành công',
+          text2: 'Đăng nhập thành công!',
+        });
         setForm({ phone: '', password: '' });
         setShowPassword(false);
         router.push('/(tabs)/home');
       } else {
-        Alert.alert('thất bại', resultAction.payload || 'đăng nhập thất bại');
+        Toast.show({
+          type: 'error',
+          text1: 'Thất bại',
+          text2: resultAction.payload || 'Đăng nhập thất bại',
+        });
       }
     } catch (err) {
-      Alert.alert('lỗi hệ thống', err.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi hệ thống',
+        text2: err.message,
+      });
     } finally {
       setLoading(false);
     }
@@ -98,10 +118,9 @@ const BodyLoginPhone = () => {
         </TouchableOpacity>
       </View>
 
-    <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                    <Text style={styles.loginButtonText}>Đăng nhập</Text>
-                </TouchableOpacity>
-
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+        <Text style={styles.loginButtonText}>Đăng nhập</Text>
+      </TouchableOpacity>
 
       <View style={styles.row}>
         <TouchableOpacity onPress={() => router.replace('/(stack)/signup/Repassword')}>
@@ -114,69 +133,65 @@ const BodyLoginPhone = () => {
           </Text>
         </TouchableOpacity>
       </View>
-        </View>
-    );
+
+      <Toast />
+    </View>
+  );
 };
 
 export default BodyLoginPhone;
 
 const styles = StyleSheet.create({
-
-
-    container: {
-        paddingHorizontal: 20,
-        paddingTop: 10,
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 100,
-        paddingHorizontal: 15,
-        paddingVertical: 12,
-        marginBottom: 15,
-    },
-    icon: {
-        marginRight: 10,
-        color: '#666',
-    },
-    input: {
-        flex: 1,
-        fontSize: 16,
-    },
-    loginButton: {
-        backgroundColor: '#009DFF',
-        paddingVertical: 14,
-        borderRadius: 100,
-        alignItems: 'center',
-        marginTop: 10,
-    },
-    loginButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 15,
-        paddingHorizontal: 4,
-    },
-    link: {
-        color: '#000',
-        fontSize: 14,
-        textDecorationLine: 'underline'
-
-    },
-    bold: {
-        fontWeight: 'bold',
-        textDecorationLine: 'underline'
-
-    },
-
-    errorBorder: {
-  borderColor: 'red',
-},
-
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 100,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    marginBottom: 15,
+  },
+  icon: {
+    marginRight: 10,
+    color: '#666',
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+  },
+  loginButton: {
+    backgroundColor: '#009DFF',
+    paddingVertical: 14,
+    borderRadius: 100,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 15,
+    paddingHorizontal: 4,
+  },
+  link: {
+    color: '#000',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  bold: {
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+  errorBorder: {
+    borderColor: 'red',
+  },
 });

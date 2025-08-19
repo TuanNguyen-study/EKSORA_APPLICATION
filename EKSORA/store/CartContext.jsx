@@ -5,9 +5,10 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useState,
-} from "react";
-import { getUserBookings } from "../API/services/servicesUser";
+  useState
+} from 'react';
+import { getUserBookings } from '../API/services/servicesUser';
+import Toast from 'react-native-toast-message';
 
 // --- Khai báo các khóa lưu trữ ---
 const CART_STORAGE_KEY = "cart";
@@ -222,7 +223,11 @@ export const CartProvider = ({ children, userId, token }) => {
   const addToCart = async (item) => {
     const normalizedTravelDate = normalizeDate(item.travelDate);
     if (!normalizedTravelDate) {
-      alert("Ngày đi tour không hợp lệ!");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Ngày đi tour không hợp lệ!'
+      });
       return;
     }
 
@@ -235,7 +240,11 @@ export const CartProvider = ({ children, userId, token }) => {
     );
 
     if (existingItem) {
-      alert("Tour cho ngày này đã có trong giỏ hàng!");
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: 'Tour cho ngày này đã có trong giỏ hàng!'
+      });
       return;
     }
 

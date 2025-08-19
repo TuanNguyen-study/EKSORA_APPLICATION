@@ -24,6 +24,7 @@ import {
 import { provinces } from "./provinces";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+// import * as validators from '../../../utils/validators';
 import * as validators from "../../../utils/validators";
 
 // ===== COMPONENT CHÍNH =====

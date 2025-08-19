@@ -4,7 +4,8 @@ import store from '../store';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppProviders } from '../store/AppProviders'; 
 import useDeepLink from '../hooks/useDeepLink';
-import AutoLogoutWrapper from '../components/AutoLogoutWrapper';
+import Toast from "react-native-toast-message";
+import { toastConfig } from "../hooks/toastConfig";
 
 export default function Layout() {
   // Handle deeplink navigation
@@ -13,27 +14,27 @@ export default function Layout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>
-        <AutoLogoutWrapper>
-          <AppProviders>
-            <Stack
-              screenOptions={{
-                headerStyle: { backgroundColor: '#1e90ff' },
-                headerTintColor: 'white',
-                headerTitleStyle: { fontWeight: 'bold' },
-                headerShown: false,
-              }}
-            >
-              <Stack.Screen name="(stack)" options={{ headerShown: false }} />
-              <Stack.Screen name="trip-detail" options={{ title: 'Trip Details' }} />
-              <Stack.Screen name="loginEmail" options={{ title: 'login Email' }} />
-              <Stack.Screen name="loginPhone" options={{ title: 'login Phone' }} />
-              <Stack.Screen name="editFavorite" options={{ title: 'Edit Favorite', headerShown: false }} />
-              <Stack.Screen name="setting" options={{ title: 'Setting', headerShown: false }} />
-              <Stack.Screen name="booking" options={{ title: 'Booking Screen', headerShown: false }} />
-              <Stack.Screen name="ShowReview" options={{ title: 'ShoReview Screen', headerShown: false }} />
-            </Stack>
-          </AppProviders>
-        </AutoLogoutWrapper>
+        <AppProviders>
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: '#1e90ff' },
+              headerTintColor: 'white',
+              headerTitleStyle: { fontWeight: 'bold' },
+              headerShown: false,
+            }}
+          >
+            <Stack.Screen name="(stack)" options={{ headerShown: false }} />
+            <Stack.Screen name="trip-detail" options={{ title: 'Trip Details' }} />
+            <Stack.Screen name="loginEmail" options={{ title: 'login Email' }} />
+            <Stack.Screen name="loginPhone" options={{ title: 'login Phone' }} />
+            <Stack.Screen name="editFavorite" options={{ title: 'Edit Favorite', headerShown: false }} />
+            <Stack.Screen name="setting" options={{ title: 'Setting', headerShown: false }} />
+            <Stack.Screen name="booking" options={{ title: 'Booking Screen', headerShown: false }} />
+            <Stack.Screen name="ShowReview" options={{ title: 'ShoReview Screen', headerShown: false }} />
+          </Stack>
+
+          <Toast config={toastConfig} />
+        </AppProviders>
       </Provider>
     </GestureHandlerRootView>
   );

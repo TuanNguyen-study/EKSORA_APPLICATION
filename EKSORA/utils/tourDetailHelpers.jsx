@@ -1,7 +1,4 @@
-// src/utils/tourDetailHelpers.js
-// File này chứa các hàm tiện ích, chỉ nhận đầu vào và trả về kết quả.
-
-import { Alert } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 /**
  * Chuẩn bị đối tượng thông tin cơ bản của tour để hiển thị trên UI.
@@ -102,7 +99,11 @@ export const formatPrice = (price, selectedVoucher) => {
       finalPrice = value - (value * discount) / 100;
     } else {
       // Thông báo cho người dùng rằng voucher không đủ điều kiện
-      Alert.alert('Thông báo', `Đơn hàng phải từ ${minOrderValue.toLocaleString('vi-VN')}đ để áp dụng voucher này.`);
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: `Đơn hàng phải từ ${minOrderValue.toLocaleString('vi-VN')}đ để áp dụng voucher này.`
+      });
     }
   }
   return Math.max(0, finalPrice);

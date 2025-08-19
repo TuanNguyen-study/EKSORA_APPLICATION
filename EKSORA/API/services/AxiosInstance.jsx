@@ -62,7 +62,6 @@ export const loginUser = createAsyncThunk(
 
       return res.data;
     } catch (err) {
-      console.error('[Login Email] Error:', err.response?.data || err.message);
       return rejectWithValue(extractErrorMessage(err, 'Đăng nhập thất bại'));
     }
   }

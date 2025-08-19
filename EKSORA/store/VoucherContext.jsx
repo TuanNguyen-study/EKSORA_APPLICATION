@@ -11,6 +11,7 @@ import {
   getVouchersByUserId,
 } from "../API/services/servicesPromotion";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
 
 // Tạo Context với các giá trị mặc định
 const VoucherContext = createContext({
@@ -94,7 +95,11 @@ export const VoucherProvider = ({ children }) => {
       const userId = await AsyncStorage.getItem("USER_ID");
       if (!userId) {
         // Nếu chưa đăng nhập, hiển thị thông báo yêu cầu đăng nhập
-        alert("Vui lòng đăng nhập để lưu voucher này!");
+        Toast.show({
+          type: 'error',
+          text1: 'Thông báo',
+          text2: 'Vui lòng đăng nhập để lưu voucher này!'
+        });
         return;
       }
       console.log("Saving voucher:", voucherId);
@@ -113,7 +118,11 @@ export const VoucherProvider = ({ children }) => {
           )
         );
       } else {
-        alert("Đã có lỗi xảy ra khi lưu voucher.");
+        Toast.show({
+          type: 'error',
+          text1: 'Lỗi',
+          text2: 'Đã có lỗi xảy ra khi lưu voucher.'
+        });
       }
     }
   };

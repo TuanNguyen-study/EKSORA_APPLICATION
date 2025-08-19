@@ -6,18 +6,17 @@ import {
     FlatList,
     TouchableOpacity,
     ActivityIndicator,
-    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 import TourReviewCard from './TourReviewCard';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { getUserBookings, postReview } from '../../../API/services/servicesUser';
 
 const ReviewScreen = () => {
-
 
     const navigation = useNavigation();
 
@@ -84,7 +83,11 @@ const ReviewScreen = () => {
             const tourId = (typeof tourData === 'object' && tourData !== null) ? tourData._id : tourData;
 
             if (!userId || !token || !tourId || !rating || rating === 0) {
-                Alert.alert('Thiếu thông tin', 'Vui lòng chọn số sao để đánh giá.');
+                Toast.show({
+                    type: 'error',
+                    text1: 'Thiếu thông tin',
+                    text2: 'Vui lòng chọn số sao để đánh giá.'
+                });
                 setSubmittingId(null);
                 return;
             }
@@ -112,13 +115,21 @@ const ReviewScreen = () => {
             reviewedBookings.push(bookingId);
             await AsyncStorage.setItem(key, JSON.stringify(reviewedBookings));
 
-            Alert.alert('Thành công', 'Cảm ơn bạn đã đánh giá chuyến đi!');
+            Toast.show({
+                type: 'success',
+                text1: 'Thành công',
+                text2: 'Cảm ơn bạn đã đánh giá chuyến đi!'
+            });
             setBookings(prev => prev.filter(item => item._id !== bookingId));
 
         } catch (err) {
             console.error("--- LỖI CHI TIẾT KHI GỬI ĐÁNH GIÁ ---", err);
             const errorMessage = err.response?.data?.message || 'Không thể gửi đánh giá. Vui lòng thử lại sau.';
-            Alert.alert('Đã xảy ra lỗi', errorMessage);
+            Toast.show({
+                type: 'error',
+                text1: 'Đã xảy ra lỗi',
+                text2: errorMessage
+            });
         } finally {
             setSubmittingId(null);
         }

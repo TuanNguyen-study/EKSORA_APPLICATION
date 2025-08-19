@@ -1,4 +1,3 @@
-// VoucherModal.js
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Modal,
@@ -13,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AntDesign } from '@expo/vector-icons';
 import VoucherItem from './VoucherItem'; 
 import { getVouchersByUserId } from '../../../../API/services/servicesPromotion';
+import Toast from 'react-native-toast-message';
 
 // Màu sắc để dễ quản lý
 const COLORS = {
@@ -74,27 +74,30 @@ const VoucherModal = ({ visible, onClose, onApplyVoucher, selectedVoucher }) => 
     return { availableVouchers: available, unavailableVouchers: unavailable };
   }, [allVouchers]);
 
-const handleApplyOrCancel = (voucher) => {
-  const isRemoving = selectedVoucher?._id === voucher._id;
+  const handleApplyOrCancel = (voucher) => {
+    const isRemoving = selectedVoucher?._id === voucher._id;
 
-  if (isRemoving) {
-    // Bỏ chọn → không cần kiểm tra hợp lệ
-    onApplyVoucher(null);
+    if (isRemoving) {
+      // Bỏ chọn → không cần kiểm tra hợp lệ
+      onApplyVoucher(null);
+      onClose();
+      return;
+    }
+
+    // Chỉ kiểm tra khi áp dụng
+    if (!voucher?.voucher_id || !voucher.voucher_id.discount) {
+      Toast.show({
+        type: 'error',
+        text1: 'Thông báo',
+        text2: 'Voucher này không hợp lệ hoặc thiếu thông tin quan trọng'
+      });
+      return;
+    }
+
+    onApplyVoucher(voucher);
     onClose();
-    return;
-  }
+  };
 
-  // Chỉ kiểm tra khi áp dụng
-  if (!voucher?.voucher_id || !voucher.voucher_id.discount) {
-    alert("Voucher này không hợp lệ hoặc thiếu thông tin quan trọng");
-    return;
-  }
-
-  onApplyVoucher(voucher);
-  onClose();
-};
-
-  
   const renderList = (data, isUsable) => (
     <FlatList
       data={data}

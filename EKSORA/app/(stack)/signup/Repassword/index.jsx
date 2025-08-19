@@ -1,9 +1,10 @@
 import React, { useState }  from 'react';
-import { View, Alert, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useDispatch } from 'react-redux';
 import { sendotp} from '../../../../API/services/passwordActions';
 import { useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message';
 
 const Index = () => {
    const [email, setEmail] = useState('');
@@ -13,25 +14,38 @@ const Index = () => {
 
    const handleSendOTP = async () => {
   if (!email.trim()) {
-    Alert.alert('Lỗi', 'Vui lòng nhập email hoặc số điện thoại');
+    Toast.show({
+      type: 'error',
+      text1: 'Lỗi',
+      text2: 'Vui lòng nhập email hoặc số điện thoại'
+    });
     return;
   }
 
   try {
     setLoading(true);
     await dispatch(sendotp(email)).unwrap();
-    Alert.alert('Thành công', 'Mã OTP đã được gửi!');
+    Toast.show({
+      type: 'success',
+      text1: 'Thành công',
+      text2: 'Mã OTP đã được gửi!'
+    });
     router.replace({
       pathname: '/(stack)/signup/OTP',
       params: { email }, 
     });
   } catch (error) {
     console.log('Gửi OTP lỗi:', error, error?.response?.data);
-    Alert.alert('Lỗi', error?.response?.data?.message || 'Gửi OTP thất bại');
+    Toast.show({
+      type: 'error',
+      text1: 'Lỗi',
+      text2: error?.response?.data?.message || 'Gửi OTP thất bại'
+    });
   } finally {
     setLoading(false);
   }
 };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Đặt lại mật khẩu</Text>

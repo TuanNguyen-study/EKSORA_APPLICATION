@@ -11,12 +11,12 @@ import {
   RefreshControl,
   Platform,
   Linking,
-  Alert,
 } from "react-native";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import QRCode from "react-native-qrcode-svg";
+import Toast from "react-native-toast-message";
 
 // --- Imports ---
 import {
@@ -75,14 +75,22 @@ const BookingDetailScreen = () => {
 
   const handleGetDirections = (location) => {
     if (!location) {
-      Alert.alert("Lỗi", "Không có thông tin địa điểm để chỉ đường.");
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Không có thông tin để chỉ đường.",
+      });
       return;
     }
     const encodedLocation = encodeURIComponent(location);
     const url = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
     Linking.openURL(url).catch((err) => {
       console.error("Không thể mở bản đồ:", err);
-      Alert.alert("Lỗi", "Không thể mở ứng dụng bản đồ.");
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Không thể mở ứng dụng bản đồ.",
+      });
     });
   };
 
@@ -128,21 +136,22 @@ const BookingDetailScreen = () => {
       const token = await AsyncStorage.getItem("ACCESS_TOKEN");
       if (!token) throw new Error("Không tìm thấy token xác thực.");
       await cancelBookingById(bookingId, token);
-      Alert.alert("Thành công", "Đơn hàng của bạn đã được hủy.", [
-        {
-          text: "OK",
-          onPress: () => {
-            // Replace current screen with trips page to remove booking detail from navigation stack
-            router.replace("/(tabs)/trips");
-          },
-        },
-      ]);
+
+      Toast.show({
+        type: "success",
+        text1: "Thành công",
+        text2: "Đơn hàng của bạn đã được hủy.",
+      });
+
+      // Điều hướng về trang trips sau khi hủy thành công
+     router.replace("/(tabs)/trips");
     } catch (err) {
       console.error("Lỗi khi hủy đơn hàng:", err);
-      Alert.alert(
-        "Lỗi",
-        err.message || "Không thể hủy đơn hàng. Vui lòng thử lại."
-      );
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: err.message || "Không thể hủy đơn hàng. Vui lòng thử lại.",
+      });
     } finally {
       setIsCancelling(false);
       setCancelModalVisible(false);
@@ -294,7 +303,6 @@ const BookingDetailScreen = () => {
         </ScrollView>
 
         {/* --- THAY ĐỔI LOGIC  --- */}
-        {/* NÚT HỦY ĐƠN HÀNG - Chỉ hiển thị khi trạng thái không phải là 'paid' hoặc 'canceled' */}
         {status.toLowerCase() !== "paid" &&
           status.toLowerCase() !== "canceled" && (
             <View style={styles.cancelButtonContainer}>

@@ -2,7 +2,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
   Dimensions,
   FlatList,
   PanResponder,
@@ -18,6 +17,7 @@ import AxiosInstance from "../../../API/services/AxiosInstance";
 import { createBooking } from "../../../API/services/booking";
 import { COLORS } from "../../../constants/colors";
 import { useCart } from "../../../store/CartContext";
+import Toast from 'react-native-toast-message';
 
 // --- IMPORT CÁC COMPONENT CON ---
 import OrderSummaryCard from "./components/OrderSummaryCard";
@@ -153,45 +153,44 @@ export default function PaymentPage() {
   const handleBackPress = async () => {
     // If user is processing payment, show confirmation
     if (isProcessing) {
-      Alert.alert(
-        "Hủy thanh toán?",
-        "Bạn có chắc chắn muốn hủy quá trình thanh toán hiện tại không?",
-        [
-          { text: "Tiếp tục thanh toán", style: "cancel" },
-          {
-            text: "Hủy thanh toán",
-            style: "destructive",
-            onPress: async () => {
-              try {
-                // Try to get the current payment ID to cancel it
-                const currentPaymentId =
-                  await AsyncStorage.getItem("CURRENT_PAYMENT_ID");
-                const pendingBookingId =
-                  await AsyncStorage.getItem("PENDING_BOOKING_ID");
+      Toast.show({
+        type: 'info',
+        text1: 'Hủy thanh toán?',
+        text2: 'Bạn có chắc chắn muốn hủy quá trình thanh toán hiện tại không?',
+        onPress: async () => {
+          try {
+            // Try to get the current payment ID to cancel it
+            const currentPaymentId =
+              await AsyncStorage.getItem("CURRENT_PAYMENT_ID");
+            const pendingBookingId =
+              await AsyncStorage.getItem("PENDING_BOOKING_ID");
 
-                const paymentIdToCancel = currentPaymentId || pendingBookingId;
-                if (paymentIdToCancel) {
-                  await cancelPaymentLink(paymentIdToCancel);
-                  // Clean up stored payment IDs
-                  await AsyncStorage.removeItem("CURRENT_PAYMENT_ID");
-                  await AsyncStorage.removeItem("PENDING_BOOKING_ID");
-                }
+            const paymentIdToCancel = currentPaymentId || pendingBookingId;
+            if (paymentIdToCancel) {
+              await cancelPaymentLink(paymentIdToCancel);
+              // Clean up stored payment IDs
+              await AsyncStorage.removeItem("CURRENT_PAYMENT_ID");
+              await AsyncStorage.removeItem("PENDING_BOOKING_ID");
+            }
 
-                // Reset processing state and go back
-                setIsProcessing(false);
-                router.back();
-              } catch (error) {
-                console.error(
-                  ">>> [PAYMENT] Error during cancellation:",
-                  error
-                );
-                setIsProcessing(false);
-                router.back();
-              }
-            },
-          },
-        ]
-      );
+            // Reset processing state and go back
+            setIsProcessing(false);
+            router.back();
+          } catch (error) {
+            console.error(
+              ">>> [PAYMENT] Error during cancellation:",
+              error
+            );
+            setIsProcessing(false);
+            router.back();
+          }
+        },
+        autoHide: false,
+        props: {
+          confirmText: 'Hủy thanh toán',
+          cancelText: 'Tiếp tục thanh toán',
+        }
+      });
       return;
     }
 
@@ -230,16 +229,17 @@ export default function PaymentPage() {
     return {
       displayItems: [singleItem],
       finalTotalPrice: Number(params.totalPrice),
-      orderDescription: `EKSORA thanh toán  '}`,
-    };
+      orderDescription: `EKSORA thanh toán`,
+    }
   }, [params]);
 
   useEffect(() => {
     if (!params.fullName || !params.email || !params.phone) {
-      Alert.alert(
-        "Thiếu thông tin",
-        "Không tìm thấy thông tin liên lạc. Vui lòng quay lại và thử lại."
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Thiếu thông tin',
+        text2: 'Không tìm thấy thông tin liên lạc. Vui lòng quay lại và thử lại.'
+      });
     }
   }, [params]);
 
@@ -250,7 +250,11 @@ export default function PaymentPage() {
 
   const handlePayment = async () => {
     if (!params.fullName || !params.email || !params.phone) {
-      Alert.alert("Lỗi", "Thiếu thông tin liên lạc. Vui lòng thử lại.");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Thiếu thông tin liên lạc. Vui lòng thử lại.'
+      });
       return;
     }
 
@@ -356,17 +360,22 @@ export default function PaymentPage() {
         await AsyncStorage.setItem("PENDING_BOOKING_ID", bookingId);
       } catch (error) {
         console.error(">>> [PAYMENT] Error creating booking:", error);
-        Alert.alert(
-          "Lỗi",
-          error.message || "Không thể tạo đơn hàng. Vui lòng thử lại."
-        );
+        Toast.show({
+          type: 'error',
+          text1: 'Lỗi',
+          text2: error.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.'
+        });
         return;
       }
     } else {
       // Lấy bookingId từ params hoặc displayItems cho các luồng khác
       bookingId = params.bookingId || displayItems[0]?.id;
       if (!bookingId) {
-        Alert.alert("Lỗi", "Không tìm thấy mã đơn hàng.");
+        Toast.show({
+          type: 'error',
+          text1: 'Lỗi',
+          text2: 'Không tìm thấy mã đơn hàng.'
+        });
         return;
       }
     }
@@ -445,7 +454,7 @@ export default function PaymentPage() {
           }
         }
 
-        // 🚀 Luôn mở trong WebView cho cả PayOS & ZaloPay
+        // Luôn mở trong WebView cho cả PayOS & ZaloPay
         router.push({
           pathname: "/acount/payment-webview",
           params: { checkoutUrl },
@@ -455,7 +464,11 @@ export default function PaymentPage() {
       }
     } catch (err) {
       console.error(">>> [PAYMENT ERROR]:", err);
-      Alert.alert("Lỗi tạo thanh toán", err.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi tạo thanh toán',
+        text2: err.message
+      });
     }
   };
 
@@ -508,7 +521,9 @@ export default function PaymentPage() {
       />
     </SafeAreaView>
   );
-} // --- STYLESHEET ĐÃ CẬP NHẬT ---
+}
+
+// --- STYLESHEET ĐÃ CẬP NHẬT ---
 const styles = StyleSheet.create({
   // --- Layout chung ---
   safeArea: {
