@@ -1,29 +1,3 @@
-<<<<<<< HEAD
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Linking,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
-
-// --- Imports ---
-import { cancelBookingById, getBookingById } from '../../../API/services/booking';
-import CancelBookingModal from './components/CancelBookingModal';
-import InfoRow from './components/InfoRow';
-=======
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
@@ -51,7 +25,6 @@ import {
 } from "../../../API/services/booking";
 import InfoRow from "./components/InfoRow";
 import CancelBookingModal from "./components/CancelBookingModal";
->>>>>>> c2a74e12364b5ba94ddb1e9777de5a773fe0b0af
 
 const BookingDetailScreen = () => {
   const router = useRouter();
@@ -70,104 +43,6 @@ const BookingDetailScreen = () => {
     new Date(dateString).toLocaleDateString("vi-VN");
   const formatPrice = (price) => `${(price || 0).toLocaleString("vi-VN")} VND`;
 
-<<<<<<< HEAD
-    const getStatusInfo = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'paid': case 'confirmed':
-                return { style: { backgroundColor: '#27AE60' }, text: 'Đã xác nhận', icon: 'check-circle' };
-            case 'pending':
-                return { style: { backgroundColor: '#F2C94C' }, text: 'Chờ thanh toán', icon: 'clock-time-nine' };
-            case 'canceled':
-                return { style: { backgroundColor: '#E74C3C' }, text: 'Đã hủy', icon: 'close-circle' };
-            default:
-                return { style: { backgroundColor: '#5A6A7A' }, text: 'Không rõ', icon: 'help-circle' };
-        }
-    };
-
-    const handleGetDirections = (location) => {
-        if (!location) {
-            Alert.alert("Lỗi", "Không có thông tin địa điểm để chỉ đường.");
-            return;
-        }
-        const encodedLocation = encodeURIComponent(location);
-        const url = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
-        Linking.openURL(url).catch(err => {
-            console.error("Không thể mở bản đồ:", err);
-            Alert.alert("Lỗi", "Không thể mở ứng dụng bản đồ.");
-        });
-    };
-
-    // --- Logic tải và xử lý dữ liệu ---
-    const fetchBookingDetails = useCallback(async () => {
-        if (!bookingId) {
-            setError('Không tìm thấy mã đơn hàng.');
-            setLoading(false);
-            return;
-        }
-        try {
-            const token = await AsyncStorage.getItem('ACCESS_TOKEN');
-            if (!token) throw new Error('Yêu cầu xác thực, vui lòng đăng nhập lại.');
-
-            const response = await getBookingById(bookingId, token);
-            if (response?.booking) {
-                setBooking(response.booking);
-                setError(null);
-            } else {
-                throw new Error('Dữ liệu trả về không hợp lệ.');
-            }
-        } catch (err) {
-            setError(err.message || 'Đã có lỗi xảy ra khi tải dữ liệu.');
-        } finally {
-            setLoading(false);
-            setIsRefreshing(false);
-        }
-    }, [bookingId]);
-
-    useEffect(() => {
-        setLoading(true);
-        fetchBookingDetails();
-    }, [fetchBookingDetails]);
-
-    const onRefresh = useCallback(() => {
-        setIsRefreshing(true);
-        fetchBookingDetails();
-    }, [fetchBookingDetails]);
-
-    const handleConfirmCancel = async () => {
-        setIsCancelling(true);
-        try {
-            const token = await AsyncStorage.getItem('ACCESS_TOKEN');
-            if (!token) throw new Error('Không tìm thấy token xác thực.');
-            await cancelBookingById(bookingId, token);
-            Alert.alert("Thành công", "Đơn hàng của bạn đã được hủy.");
-            onRefresh();
-        } catch (err) {
-            console.error("Lỗi khi hủy đơn hàng:", err);
-            Alert.alert("Lỗi", err.message || "Không thể hủy đơn hàng. Vui lòng thử lại.");
-        } finally {
-            setIsCancelling(false);
-            setCancelModalVisible(false);
-        }
-    };
-
-    // --- Giao diện Loading & Error ---
-    if (loading && !isRefreshing) {
-        return <View style={styles.centeredContainer}><ActivityIndicator size="large" color="#2C3E50" /></View>;
-    }
-    if (error) {
-        return (
-            <View style={styles.centeredContainer}>
-                <MaterialCommunityIcons name="cloud-alert" size={60} color="#5A6A7A" />
-                <Text style={styles.errorText}>{error}</Text>
-                <TouchableOpacity onPress={onRefresh} style={styles.retryButton}>
-                    <Text style={styles.retryButtonText}>Thử lại</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
-    if (!booking) {
-        return <View style={styles.centeredContainer}><Text>Không có dữ liệu đơn hàng.</Text></View>;
-=======
   const getStatusInfo = (status) => {
     switch (status?.toLowerCase()) {
       case "paid":
@@ -195,7 +70,6 @@ const BookingDetailScreen = () => {
           text: "Không rõ",
           icon: "help-circle",
         };
->>>>>>> c2a74e12364b5ba94ddb1e9777de5a773fe0b0af
     }
   };
 
