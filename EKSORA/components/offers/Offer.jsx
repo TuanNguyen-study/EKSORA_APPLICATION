@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useVoucher } from "../../store/VoucherContext";
 import CouponModal from "../../app/(stack)/Voucher/CouponModal";
+import LoginRequestModal from "../LoginRequestModal";
 import { COLORS } from "../../constants/colors";
 const { width: screenWidth } = Dimensions.get("window");
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -26,11 +27,24 @@ const formatDate = (dateString) => {
 export default function Offer() {
   const { coupons, saveVoucher } = useVoucher();
   const [isModalVisible, setIsModalVisible] = React.useState(false);
+  const [isLoginModalVisible, setIsLoginModalVisible] = React.useState(false);
+
+  // Hàm xử lý khi bấm nút "Lưu" voucher
+  const handleSaveVoucher = (offer) => {
+    if (offer.requiresLogin && !offer.isSaved) {
+      // Nếu cần đăng nhập và chưa lưu, hiển thị LoginRequestModal
+      setIsLoginModalVisible(true);
+    } else if (!offer.isSaved) {
+      // Nếu đã đăng nhập, lưu voucher bình thường
+      saveVoucher(offer.id);
+    }
+    // Nếu đã lưu rồi (offer.isSaved = true), button bị disabled nên không làm gì
+  };
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#00639B", "#0087CA"]}
+        colors={["#0087CA", "#0087CA"]}
         style={styles.headerContainer}
       >
         <View style={styles.headerContent}>
@@ -50,7 +64,7 @@ export default function Offer() {
           coupons.slice(0, 10).map((offer) => (
             <View key={offer.id} style={styles.cardWrapper}>
               <LinearGradient
-                colors={["#00639B", "#0087CA"]}
+                colors={["#5f889cff", "#0087CA"]}
                 style={styles.codeBox}
               >
                 <View style={styles.boxHeader}>
@@ -66,16 +80,26 @@ export default function Offer() {
                   <TouchableOpacity
                     style={[
                       styles.button,
-                      offer.isSaved ? styles.savedButton : styles.defaultButton,
+                      offer.isSaved
+                        ? styles.savedButton
+                        : offer.requiresLogin
+                          ? styles.loginRequiredButton
+                          : styles.defaultButton,
                     ]}
-                    onPress={() => saveVoucher(offer.id)}
+                    onPress={() => handleSaveVoucher(offer)}
                     disabled={offer.isSaved}
                   >
-                    <Text style={[
-                      styles.buttonText,
-                      offer.isSaved ? styles.savedButtonText : styles.defaultButtonText,
-                    ]}>
-                      {offer.isSaved ? "Đã lưu" : offer.buttonText}
+                    <Text
+                      style={[
+                        styles.buttonText,
+                        offer.isSaved
+                          ? styles.savedButtonText
+                          : offer.requiresLogin
+                            ? styles.loginRequiredButtonText
+                            : styles.defaultButtonText,
+                      ]}
+                    >
+                      {offer.isSaved ? "Đã lưu" : "Lưu"}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -92,6 +116,11 @@ export default function Offer() {
       <CouponModal
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
+      />
+
+      <LoginRequestModal
+        isVisible={isLoginModalVisible}
+        onClose={() => setIsLoginModalVisible(false)}
       />
     </View>
   );
@@ -191,8 +220,11 @@ const styles = StyleSheet.create({
   defaultButton: {
     backgroundColor: "white",
   },
+  loginRequiredButton: {
+    backgroundColor: "white", // Màu trắng để giống defaultButton
+  },
   savedButton: {
-    backgroundColor: COLORS.textLight ,
+    backgroundColor: COLORS.textLight,
   },
   buttonText: {
     fontSize: 12,
@@ -202,8 +234,11 @@ const styles = StyleSheet.create({
   defaultButtonText: {
     color: "#005bac",
   },
+  loginRequiredButtonText: {
+    color: "#005bac", // Màu xanh để dễ đọc, giống defaultButtonText
+  },
   savedButtonText: {
-    color: COLORS.lightGray, 
+    color: COLORS.lightGray,
   },
   noVoucherText: {
     color: COLORS.textGray,

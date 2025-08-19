@@ -86,7 +86,7 @@ export default function Body({ navigation }) {
       case 'all':
         return allTrips.filter(
           (trip) =>
-            normalizeStatus(trip.status) !== 'cancelled' &&
+            normalizeStatus(trip.status) !== 'canceled' &&
             normalizeStatus(trip.status) !== 'canceled'
         );
       case 'pending':

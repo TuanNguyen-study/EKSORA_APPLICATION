@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -9,121 +9,130 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
-} from 'react-native';
+  View,
+} from "react-native";
 
-import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Location from "expo-location";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // API Services
-import { getCategories, getToursByLocation } from '../../API/services/serverCategories';
+import {
+  getCategories,
+  getToursByLocation,
+  getTours,
+} from "../../API/services/serverCategories";
 // Components
-import CurrentLocationMap from './CurrentLocationMap';
+import CurrentLocationMap from "./CurrentLocationMap";
 // Constants
-import { COLORS } from '../../constants/colors';
+import { COLORS } from "../../constants/colors";
 
 // Dữ liệu style bản đồ không đổi
 const mapStyle = [
   {
-    "elementType": "geometry",
-    "stylers": [ { "color": "#f8f9fa" } ]
+    elementType: "geometry",
+    stylers: [{ color: "#f8f9fa" }],
   },
   {
-    "elementType": "labels.icon",
-    "stylers": [ { "visibility": "off" } ]
+    elementType: "labels.icon",
+    stylers: [{ visibility: "off" }],
   },
   {
-    "elementType": "labels.text.fill",
-    "stylers": [ { "color": "#555555" } ]
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#555555" }],
   },
   {
-    "elementType": "labels.text.stroke",
-    "stylers": [ { "color": "#ffffff" } ]
+    elementType: "labels.text.stroke",
+    stylers: [{ color: "#ffffff" }],
   },
   {
-    "featureType": "administrative.land_parcel",
-    "stylers": [ { "visibility": "off" } ]
+    featureType: "administrative.land_parcel",
+    stylers: [{ visibility: "off" }],
   },
   {
-    "featureType": "administrative.locality",
-    "elementType": "labels.text.fill",
-    "stylers": [ { "color": "#7a7a7a" } ]
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#7a7a7a" }],
   },
   {
-    "featureType": "poi",
-    "elementType": "geometry",
-    "stylers": [ { "color": "#eeeeee" } ]
+    featureType: "poi",
+    elementType: "geometry",
+    stylers: [{ color: "#eeeeee" }],
   },
   {
-    "featureType": "poi",
-    "elementType": "labels.text.fill",
-    "stylers": [ { "color": "#757575" } ]
+    featureType: "poi",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#757575" }],
   },
   {
-    "featureType": "poi.park",
-    "elementType": "geometry",
-    "stylers": [ { "color": "#e0e9d8" } ] // Màu công viên xanh lá cây nhạt
+    featureType: "poi.park",
+    elementType: "geometry",
+    stylers: [{ color: "#e0e9d8" }], // Màu công viên xanh lá cây nhạt
   },
   {
-    "featureType": "poi.park",
-    "elementType": "labels.text.fill",
-    "stylers": [ { "color": "#9e9e9e" } ]
+    featureType: "poi.park",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9e9e9e" }],
   },
   {
-    "featureType": "road",
-    "elementType": "geometry",
-    "stylers": [ { "color": "#ffffff" } ]
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#ffffff" }],
   },
   {
-    "featureType": "road.arterial",
-    "elementType": "geometry",
-    "stylers": [ { "color": "#fdfdfd" } ]
+    featureType: "road.arterial",
+    elementType: "geometry",
+    stylers: [{ color: "#fdfdfd" }],
   },
   {
-    "featureType": "road.highway",
-    "elementType": "geometry",
-    "stylers": [ { "color": "#e9ecef" } ] // Màu đường cao tốc xám nhạt
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#e9ecef" }], // Màu đường cao tốc xám nhạt
   },
   {
-    "featureType": "road.highway",
-    "elementType": "geometry.stroke",
-    "stylers": [ { "color": "#ced4da" } ]
+    featureType: "road.highway",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#ced4da" }],
   },
   {
-    "featureType": "road.highway",
-    "elementType": "labels.text.fill",
-    "stylers": [ { "color": "#616161" } ]
+    featureType: "road.highway",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#616161" }],
   },
   {
-    "featureType": "road.local",
-    "stylers": [ { "visibility": "off" } ] // Ẩn đường nhỏ để đỡ rối
+    featureType: "road.local",
+    stylers: [{ visibility: "off" }], // Ẩn đường nhỏ để đỡ rối
   },
   {
-    "featureType": "transit",
-    "elementType": "geometry",
-    "stylers": [ { "color": "#f2f2f2" } ]
+    featureType: "transit",
+    elementType: "geometry",
+    stylers: [{ color: "#f2f2f2" }],
   },
   {
-    "featureType": "water",
-    "elementType": "geometry",
-    "stylers": [ { "color": "#cce0e9" } ] // Màu nước xanh pastel
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#cce0e9" }], // Màu nước xanh pastel
   },
   {
-    "featureType": "water",
-    "elementType": "labels.text.fill",
-    "stylers": [ { "color": "#9e9e9e" } ]
-  }
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9e9e9e" }],
+  },
 ];
 
 const TourResultCard = ({ item, onPress }) => (
   <TouchableOpacity style={styles.cardContainer} onPress={onPress}>
     <Image source={{ uri: item.image }} style={styles.cardImage} />
     <View style={styles.cardInfo}>
-      <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>
+      <Text style={styles.cardTitle} numberOfLines={2}>
+        {item.name}
+      </Text>
       <Text style={styles.cardPrice}>
-        {item.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+        {item.price.toLocaleString("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        })}
       </Text>
     </View>
   </TouchableOpacity>
@@ -162,26 +171,64 @@ export default function NearbyScreen() {
     setError(null);
     try {
       const categoriesData = await getCategories();
-      const allCategories = Array.isArray(categoriesData) ? categoriesData : categoriesData.data || [];
-      const geocodedAddresses = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-      if (!geocodedAddresses?.length) throw new Error("Không thể xác định địa chỉ của bạn.");
+      const allCategories = Array.isArray(categoriesData)
+        ? categoriesData
+        : categoriesData.data || [];
+
+      // Thêm try-catch riêng cho reverseGeocodeAsync
+      let geocodedAddresses;
+      try {
+        geocodedAddresses = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      } catch (geocodeError) {
+        console.log("Geocoding error:", geocodeError);
+        // Fallback với thông tin mặc định
+        setLocationName("Việt Nam");
+        const allToursData = await getTours(); // Lấy tất cả tour làm fallback
+        const processedTours = (
+          Array.isArray(allToursData) ? allToursData : allToursData.data || []
+        )
+          .filter((tour) => tour && tour.price > 0) // Lọc bỏ tour có giá 0 đồng
+          .slice(0, 10) // Giới hạn 10 tours
+          .map((tour) => ({
+            ...tour,
+            image: tour.image?.[0] || "https://via.placeholder.com/300",
+          }));
+        setNearbyTours(processedTours);
+        setIsFinding(false);
+        return;
+      }
+
+      if (!geocodedAddresses?.length)
+        throw new Error("Không thể xác định địa chỉ của bạn.");
       const regionName = geocodedAddresses[0].region;
       if (!regionName) throw new Error("Không nhận diện được tỉnh/thành phố.");
-      const cleanedLocationName = regionName.replace(/Thành phố|Tỉnh/i, '').trim();
+      const cleanedLocationName = regionName
+        .replace(/Thành phố|Tỉnh/i, "")
+        .trim();
       setLocationName(cleanedLocationName);
       const foundCategory = allCategories.find(
         (cat) => cat.name.toLowerCase() === cleanedLocationName.toLowerCase()
       );
-      if (!foundCategory) throw new Error(`Rất tiếc, chúng tôi chưa có tour nào tại ${cleanedLocationName}.`);
+      if (!foundCategory)
+        throw new Error(
+          `Rất tiếc, chúng tôi chưa có tour nào tại ${cleanedLocationName}.`
+        );
       const toursData = await getToursByLocation(foundCategory._id);
-      const processedTours = (Array.isArray(toursData) ? toursData : toursData.data || []).map(tour => ({
-        ...tour,
-        image: tour.image?.[0] || 'https://via.placeholder.com/300',
-      }));
-      if (processedTours.length === 0) throw new Error(`Không tìm thấy tour nào ở gần ${cleanedLocationName}.`);
+      const processedTours = (
+        Array.isArray(toursData) ? toursData : toursData.data || []
+      )
+        .filter((tour) => tour && tour.price > 0) // Lọc bỏ tour có giá 0 đồng
+        .map((tour) => ({
+          ...tour,
+          image: tour.image?.[0] || "https://via.placeholder.com/300",
+        }));
+      if (processedTours.length === 0)
+        throw new Error(
+          `Không tìm thấy tour nào ở gần ${cleanedLocationName}.`
+        );
       setNearbyTours(processedTours);
     } catch (err) {
       setError(err.message || "Đã xảy ra lỗi không xác định.");
@@ -220,12 +267,12 @@ export default function NearbyScreen() {
       <TouchableOpacity style={styles.exitButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={24} color={COLORS.text} />
       </TouchableOpacity>
-      
+
       {/* 
         Container của panel được đặt tuyệt đối ở dưới cùng.
         Nó sẽ cho phép touch "xuyên qua" các vùng trống của nó.
       */}
-      <Animated.View 
+      <Animated.View
         style={[styles.resultsContainer, { height: panelHeight }]}
         pointerEvents="box-none"
       >
@@ -236,28 +283,50 @@ export default function NearbyScreen() {
         <View style={styles.panelContentWrapper}>
           <View style={styles.resultsHeader}>
             <Text style={styles.resultsTitle} numberOfLines={1}>
-              {isFinding ? "Đang tìm kiếm..." : `Kết quả tại ${locationName || 'vị trí của bạn'}`}
+              {isFinding
+                ? "Đang tìm kiếm..."
+                : `Kết quả tại ${locationName || "vị trí của bạn"}`}
             </Text>
             <TouchableOpacity onPress={togglePanel} style={styles.toggleButton}>
-              <Ionicons name={isPanelExpanded ? "chevron-down-outline" : "chevron-up-outline"} size={28} color={COLORS.textSecondary} />
+              <Ionicons
+                name={
+                  isPanelExpanded
+                    ? "chevron-down-outline"
+                    : "chevron-up-outline"
+                }
+                size={28}
+                color={COLORS.textSecondary}
+              />
             </TouchableOpacity>
           </View>
-          
+
           {isPanelExpanded && (
             <View style={styles.listContainer}>
               {isFinding && nearbyTours.length === 0 ? (
-                <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }}/>
+                <ActivityIndicator
+                  size="large"
+                  color={COLORS.primary}
+                  style={{ marginTop: 40 }}
+                />
               ) : (
                 <FlatList
                   data={nearbyTours}
                   renderItem={({ item }) => (
-                    <TourResultCard item={item} onPress={() => handlePressSuggestion(item._id)} />
+                    <TourResultCard
+                      item={item}
+                      onPress={() => handlePressSuggestion(item._id)}
+                    />
                   )}
                   keyExtractor={(item) => item._id.toString()}
-                  contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+                  contentContainerStyle={{
+                    paddingHorizontal: 20,
+                    paddingBottom: 20,
+                  }}
                   ListEmptyComponent={() => (
                     <View style={styles.emptyContainer}>
-                      <Text style={styles.emptyText}>{error || "Không có tour nào được tìm thấy."}</Text>
+                      <Text style={styles.emptyText}>
+                        {error || "Không có tour nào được tìm thấy."}
+                      </Text>
                     </View>
                   )}
                 />
@@ -277,15 +346,15 @@ const styles = StyleSheet.create({
   },
   exitButton: {
     // Đặt nút thoát ở góc trên cùng bên trái, nằm trên tất cả
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 60 : 40,
+    position: "absolute",
+    top: Platform.OS === "ios" ? 60 : 40,
     left: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     width: 44,
     height: 44,
     borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 10, // Đảm bảo nó nổi lên trên
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -295,7 +364,7 @@ const styles = StyleSheet.create({
   },
   // Container cho panel, đặt ở dưới cùng màn hình
   resultsContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -312,12 +381,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 20,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   resultsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 15,
@@ -330,18 +399,18 @@ const styles = StyleSheet.create({
   },
   resultsTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.text,
     flex: 1, // Cho phép title co giãn và tránh đẩy nút toggle ra ngoài
     marginRight: 10,
   },
   cardContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: COLORS.lightGray,
     borderRadius: 12,
     padding: 10,
     marginBottom: 15,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cardImage: {
     width: 80,
@@ -351,27 +420,27 @@ const styles = StyleSheet.create({
   cardInfo: {
     flex: 1,
     marginLeft: 15,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text,
   },
   cardPrice: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.primary,
     marginTop: 8,
   },
   emptyContainer: {
     height: 150,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 16,
     color: COLORS.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

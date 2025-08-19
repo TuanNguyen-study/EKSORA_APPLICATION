@@ -58,7 +58,7 @@ const BookingDetailScreen = () => {
           text: "Chờ thanh toán",
           icon: "clock-time-nine",
         };
-      case "cancelled":
+      case "canceled":
         return {
           style: { backgroundColor: "#E74C3C" },
           text: "Đã hủy",
@@ -294,9 +294,9 @@ const BookingDetailScreen = () => {
         </ScrollView>
 
         {/* --- THAY ĐỔI LOGIC  --- */}
-        {/* NÚT HỦY ĐƠN HÀNG - Chỉ hiển thị khi trạng thái không phải là 'paid' hoặc 'cancelled' */}
+        {/* NÚT HỦY ĐƠN HÀNG - Chỉ hiển thị khi trạng thái không phải là 'paid' hoặc 'canceled' */}
         {status.toLowerCase() !== "paid" &&
-          status.toLowerCase() !== "cancelled" && (
+          status.toLowerCase() !== "canceled" && (
             <View style={styles.cancelButtonContainer}>
               <TouchableOpacity
                 style={styles.cancelButton}

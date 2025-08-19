@@ -55,6 +55,8 @@ const CouponModal = ({ visible, onClose }) => {
           status={item.isSaved ? "saved" : "available"}
           onToggleStatus={() => handleToggleStatus(item)}
           loading={savingVoucherId === item.id}
+          requiresLogin={item.requiresLogin}
+          buttonText={item.buttonText}
         />
       );
     },

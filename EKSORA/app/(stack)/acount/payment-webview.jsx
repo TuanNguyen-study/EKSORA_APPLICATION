@@ -42,7 +42,7 @@ export default function PaymentWebview() {
 
       if (response.ok) {
         console.log(
-          ">>> [PAYMENT_WEBVIEW] Payment link cancelled successfully"
+          ">>> [PAYMENT_WEBVIEW] Payment link canceled successfully"
         );
       } else {
         console.warn(
