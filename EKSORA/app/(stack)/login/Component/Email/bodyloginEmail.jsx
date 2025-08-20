@@ -165,8 +165,6 @@ function BodyLoginEmail() {
           </Text>
         </TouchableOpacity>
       </View>
-
-      <Toast />
     </View>
   );
 };
