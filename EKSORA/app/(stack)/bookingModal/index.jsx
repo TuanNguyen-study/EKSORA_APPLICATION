@@ -16,6 +16,7 @@ import DateSelector from "./components/DateSelector";
 import QuantitySelector from "./components/QuantitySelector";
 import styles from "./components/styles";
 import VoucherModal from "../Voucher/components/VoucherModal";
+import Toast from "react-native-toast-message";
 
 export default function BookingModal({ onClose, bookingDetails }) {
   const {
@@ -63,6 +64,46 @@ export default function BookingModal({ onClose, bookingDetails }) {
     setTimeout(() => {
       handleBooking();
     }, 300);
+  };
+
+  const handleAddToCartAndClose = async () => {
+    // Kiểm tra xem đã chọn đủ yêu cầu chưa
+    if (!selectedDate || (quantityAdult === 0 && quantityChild === 0)) {
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Vui lòng chọn ngày sử dụng và số lượng người.',
+        position: 'top',
+        visibilityTime: 2000,
+        topOffset: 50, // Đảm bảo toast hiển thị trong modal
+      });
+      return; // Không đóng modal
+    }
+
+    try {
+      await handleAddToCart(); // Gọi hàm gốc để thêm vào giỏ hàng
+      onClose(); // Đóng modal
+      setTimeout(() => {
+        Toast.show({
+          type: 'success',
+          text1: 'Thành công',
+          text2: 'Đã thêm vào giỏ hàng',
+          position: 'top',
+          visibilityTime: 2000,
+        });
+      }, 300); // Delay để đảm bảo modal đóng xong trước khi hiển thị toast
+    } catch (error) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", error.message || error);
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: error.message || 'Không thể thêm vào giỏ hàng. Vui lòng thử lại.',
+        position: 'top',
+        visibilityTime: 2000,
+        topOffset: 50, // Hiển thị trong modal nếu có lỗi
+      });
+      return; // Không đóng modal nếu có lỗi
+    }
   };
 
   return (
@@ -205,7 +246,7 @@ export default function BookingModal({ onClose, bookingDetails }) {
 
       <BookingFooter
         totalPrice={formatPrice(finalPrice)}
-        onAddToCart={handleAddToCart}
+        onAddToCart={handleAddToCartAndClose}
         onBookNow={handleBookNowAndClose}
       />
 
@@ -215,6 +256,8 @@ export default function BookingModal({ onClose, bookingDetails }) {
         onApplyVoucher={handleApplyVoucher}
         selectedVoucher={appliedVoucher}
       />
+
+      <Toast />
     </SafeAreaView>
   );
 }
