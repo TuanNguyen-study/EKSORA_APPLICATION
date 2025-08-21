@@ -70,10 +70,10 @@ export default function BookingModal({ onClose, bookingDetails }) {
     // Kiểm tra xem đã chọn đủ yêu cầu chưa
     if (!selectedDate || (quantityAdult === 0 && quantityChild === 0)) {
       Toast.show({
-        type: 'error',
-        text1: 'Lỗi',
-        text2: 'Vui lòng chọn ngày sử dụng và số lượng người.',
-        position: 'top',
+        type: "error",
+        text1: "Lỗi",
+        text2: "Vui lòng chọn ngày sử dụng và số lượng người.",
+        position: "top",
         visibilityTime: 2000,
         topOffset: 50, // Đảm bảo toast hiển thị trong modal
       });
@@ -85,20 +85,21 @@ export default function BookingModal({ onClose, bookingDetails }) {
       onClose(); // Đóng modal
       setTimeout(() => {
         Toast.show({
-          type: 'success',
-          text1: 'Thành công',
-          text2: 'Đã thêm vào giỏ hàng',
-          position: 'top',
+          type: "success",
+          text1: "Thành công",
+          text2: "Đã thêm vào giỏ hàng",
+          position: "top",
           visibilityTime: 2000,
         });
       }, 300); // Delay để đảm bảo modal đóng xong trước khi hiển thị toast
     } catch (error) {
       console.error("Lỗi khi thêm vào giỏ hàng:", error.message || error);
       Toast.show({
-        type: 'error',
-        text1: 'Lỗi',
-        text2: error.message || 'Không thể thêm vào giỏ hàng. Vui lòng thử lại.',
-        position: 'top',
+        type: "error",
+        text1: "Lỗi",
+        text2:
+          error.message || "Không thể thêm vào giỏ hàng. Vui lòng thử lại.",
+        position: "top",
         visibilityTime: 2000,
         topOffset: 50, // Hiển thị trong modal nếu có lỗi
       });
@@ -214,34 +215,9 @@ export default function BookingModal({ onClose, bookingDetails }) {
         </View>
 
         <View style={styles.sectionBox}>
-          <Text style={styles.sectionTitle}>Ưu đãi</Text>
-          <TouchableOpacity
-            style={styles.voucherButton}
-            onPress={() => setVoucherModalVisible(true)}
-          >
-            {appliedVoucher ? (
-              <Text style={styles.voucherSelectedText}>
-                {appliedVoucher.voucher_id.code}
-              </Text>
-            ) : (
-              <Text style={styles.voucherPlaceholder}>Chọn hoặc nhập mã</Text>
-            )}
-            <Ionicons
-              name="chevron-forward-outline"
-              size={20}
-              color={COLORS.darkGray}
-            />
-          </TouchableOpacity>
+          {/* Đã xoá phần chọn voucher và chiết khấu khỏi modal */}
+          {/* Đóng thẻ View bị thiếu sau khi xoá các section */}
         </View>
-
-        {discount > 0 && (
-          <View style={styles.sectionBox}>
-            <Text style={styles.sectionTitle}>Chiết khấu</Text>
-            <Text style={styles.discountText}>
-              Đã giảm: {formatPrice(discount)}
-            </Text>
-          </View>
-        )}
       </ScrollView>
 
       <BookingFooter
@@ -250,12 +226,7 @@ export default function BookingModal({ onClose, bookingDetails }) {
         onBookNow={handleBookNowAndClose}
       />
 
-      <VoucherModal
-        visible={isVoucherModalVisible}
-        onClose={() => setVoucherModalVisible(false)}
-        onApplyVoucher={handleApplyVoucher}
-        selectedVoucher={appliedVoucher}
-      />
+      {/* Đã xoá VoucherModal khỏi modal */}
 
       <Toast />
     </SafeAreaView>

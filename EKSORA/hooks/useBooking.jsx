@@ -100,9 +100,9 @@ export const useBooking = (initialDetails) => {
       if (!voucher) {
         setAppliedVoucher(null);
         Toast.show({
-          type: 'success',
-          text1: 'Đã bỏ áp dụng',
-          text2: 'Voucher đã được gỡ bỏ.'
+          type: "success",
+          text1: "Đã bỏ áp dụng",
+          text2: "Voucher đã được gỡ bỏ.",
         });
         return;
       }
@@ -110,9 +110,9 @@ export const useBooking = (initialDetails) => {
       // 2. Kiểm tra voucher có hợp lệ không
       if (!voucher?.voucher_id?.min_order_value) {
         Toast.show({
-          type: 'error',
-          text1: 'Lỗi voucher',
-          text2: 'Voucher này không hợp lệ hoặc thiếu thông tin quan trọng.'
+          type: "error",
+          text1: "Lỗi voucher",
+          text2: "Voucher này không hợp lệ hoặc thiếu thông tin quan trọng.",
         });
         return;
       }
@@ -127,9 +127,9 @@ export const useBooking = (initialDetails) => {
       // 4. Kiểm tra xem đơn hàng có đủ điều kiện giá trị tối thiểu không
       if (totalBeforeDiscount < minOrderValue) {
         Toast.show({
-          type: 'error',
-          text1: 'Không đủ điều kiện',
-          text2: `Rất tiếc, voucher này chỉ áp dụng cho đơn hàng có giá trị từ ${formatPrice(minOrderValue)} trở lên.`
+          type: "error",
+          text1: "Không đủ điều kiện",
+          text2: `Rất tiếc, voucher này chỉ áp dụng cho đơn hàng có giá trị từ ${formatPrice(minOrderValue)} trở lên.`,
         });
         return;
       }
@@ -137,9 +137,9 @@ export const useBooking = (initialDetails) => {
       // 5. Nếu mọi thứ OK, lưu voucher vào state
       setAppliedVoucher(voucher);
       Toast.show({
-        type: 'success',
-        text1: 'Thành công',
-        text2: 'Đã áp dụng voucher!'
+        type: "success",
+        text1: "Thành công",
+        text2: "Đã áp dụng voucher!",
       });
     },
     [originalPrices, quantityAdult, quantityChild]
@@ -240,9 +240,10 @@ export const useBooking = (initialDetails) => {
     // Không cho phép chọn ngày trong quá khứ
     if (date < today) {
       Toast.show({
-        type: 'error',
-        text1: 'Ngày không hợp lệ',
-        text2: 'Bạn không thể đặt lịch cho một ngày trong quá khứ. Vui lòng chọn lại.'
+        type: "error",
+        text1: "Ngày không hợp lệ",
+        text2:
+          "Bạn không thể đặt lịch cho một ngày trong quá khứ. Vui lòng chọn lại.",
       });
       return;
     }
@@ -263,9 +264,9 @@ export const useBooking = (initialDetails) => {
     // Kiểm tra số lượng
     if (quantityAdult === 0 && quantityChild === 0) {
       Toast.show({
-        type: 'error',
-        text1: 'Thông báo',
-        text2: 'Vui lòng chọn số lượng người lớn hoặc trẻ em.'
+        type: "error",
+        text1: "Thông báo",
+        text2: "Vui lòng chọn số lượng người lớn hoặc trẻ em.",
       });
       return;
     }
@@ -275,9 +276,9 @@ export const useBooking = (initialDetails) => {
     const cartItemId = `${tourData.tour_id}_${selectedDate}`;
     if (cartItems.find((item) => item.id === cartItemId)) {
       Toast.show({
-        type: 'error',
-        text1: 'Thông báo',
-        text2: 'Tour này với ngày đã chọn đã có trong giỏ hàng.'
+        type: "error",
+        text1: "Thông báo",
+        text2: "Tour này với ngày đã chọn đã có trong giỏ hàng.",
       });
       return;
     }
@@ -315,9 +316,9 @@ export const useBooking = (initialDetails) => {
 
     addToCart(cartItem); // Gọi hàm từ CartContext với dữ liệu ĐẦY ĐỦ
     Toast.show({
-      type: 'success',
-      text1: 'Thành công',
-      text2: `Đã thêm "${tourData.tour_title}" vào giỏ hàng!`
+      type: "success",
+      text1: "Thành công",
+      text2: `Đã thêm "${tourData.tour_title}" vào giỏ hàng!`,
     });
   };
 
@@ -326,73 +327,115 @@ export const useBooking = (initialDetails) => {
     // Kiểm tra các điều kiện cần thiết
     if (quantityAdult === 0 && quantityChild === 0) {
       Toast.show({
-        type: 'error',
-        text1: 'Thông báo',
-        text2: 'Vui lòng chọn số lượng người lớn hoặc trẻ em để đặt tour.'
+        type: "error",
+        text1: "Thông báo",
+        text2: "Vui lòng chọn số lượng người lớn hoặc trẻ em để đặt tour.",
       });
       return;
     }
     if (!tourData || !selectedDate || !userId) {
       Toast.show({
-        type: 'error',
-        text1: 'Lỗi',
-        text2: 'Dữ liệu không hợp lệ hoặc bạn chưa đăng nhập. Vui lòng thử lại.'
+        type: "error",
+        text1: "Lỗi",
+        text2:
+          "Dữ liệu không hợp lệ hoặc bạn chưa đăng nhập. Vui lòng thử lại.",
       });
       return;
     }
 
-    // THAY ĐỔI: Không tạo booking ngay, chỉ chuẩn bị dữ liệu và đi thẳng đến BookingCompleted
-    console.log("[BOOKING] Chuẩn bị dữ liệu để đi đến BookingCompleted...");
+    // Tạo một đối tượng chứa thông tin booking hoàn chỉnh
+    const [day, month, year] = selectedDate.split("/");
+    const formattedDate = `${year}-${String(month).padStart(2, "0")}-${String(
+      day
+    ).padStart(2, "0")}`;
 
-    // Điều hướng trực tiếp tới màn hình "BookingCompleted" với dữ liệu cần thiết
-    // Booking sẽ được tạo sau khi chọn hình thức thanh toán
+    const bookingData = {
+      user_id: userId,
+      tour_id: tourData.tour_id,
+      travel_date: formattedDate,
+      // Thông tin đặt chỗ
+      quantity_nguoiLon: quantityAdult,
+      price_nguoiLon: originalPrices.adult,
+      quantity_treEm: quantityChild,
+      price_treEm: originalPrices.child,
+      totalPrice: finalPrice,
+      // Thông tin khách hàng
+      fullName,
+      email,
+      phone,
+      // Thông tin giảm giá
+      discount: discountAmount,
+      coin: 0,
+      voucher_id: appliedVoucher ? appliedVoucher.voucher_id._id : null,
+      // Thông tin về dịch vụ và trạng thái
+      optionServices: tourData.selectedOptionsDetails.map((option) => ({
+        option_service_id: option.optionId,
+      })),
+      status: "pending",
+    };
+
+    console.log("[BOOKING] Navigating to BookingCompleted with data:", {
+      bookingData,
+    });
+
+    // Điều hướng tới màn hình BookingCompleted với đầy đủ thông tin
+    const bookingItemData = {
+      user_id: userId,
+      tour_id: tourData.tour_id,
+      name: tourData.tour_title,
+      travel_date: formattedDate,
+      travelDate: selectedDate,
+      quantity_nguoiLon: quantityAdult,
+      quantity_treEm: quantityChild,
+      price_nguoiLon: originalPrices.adult,
+      price_treEm: originalPrices.child,
+      totalPrice: finalPrice,
+      optionServices: tourData.selectedOptionsDetails.map((option) => ({
+        option_service_id: option.optionId,
+      })),
+      coin: 0,
+      discount: discountAmount,
+      voucher_id: appliedVoucher ? appliedVoucher.voucher_id._id : null,
+      voucherCode: appliedVoucher ? appliedVoucher.voucher_id.code : null,
+      originalPrice:
+        originalPrices.adult * quantityAdult +
+        originalPrices.child * quantityChild,
+      status: "pending",
+      fullName,
+      email,
+      phone,
+      image: tourData.image || "",
+      bookingData: {
+        user_id: userId,
+        tour_id: tourData.tour_id,
+        travel_date: formattedDate,
+        quantity_nguoiLon: quantityAdult,
+        quantity_treEm: quantityChild,
+        price_nguoiLon: originalPrices.adult,
+        price_treEm: originalPrices.child,
+        totalPrice: finalPrice,
+        status: "pending",
+        fullName,
+        email,
+        phone,
+        optionServices: tourData.selectedOptionsDetails.map((option) => ({
+          option_service_id: option.optionId,
+        })),
+        coin: 0,
+        voucher_id: appliedVoucher ? appliedVoucher.voucher_id._id : null,
+        discount: discountAmount,
+      },
+    };
+
+    // Navigate với toàn bộ thông tin booking trong một object
     router.push({
-      pathname: "/BookingCompleted",
+      pathname: "/(stack)/BookingCompleted",
       params: {
-        // Không có bookingId vì chưa tạo
-        title: tourData.tour_title,
-        quantityAdult: quantityAdult.toString(),
-        quantityChild: quantityChild.toString(),
+        items: JSON.stringify([bookingItemData]),
         totalPrice: finalPrice.toString(),
-        originalPrice: originalPrices
-          ? (
-              originalPrices.adult * quantityAdult +
-              originalPrices.child * quantityChild
-            ).toString()
-          : finalPrice.toString(),
-        discountAmount: discountAmount.toString(),
-        voucherCode: appliedVoucher ? appliedVoucher.voucher_id.code : null,
-        travelDate: selectedDate,
-        image: tourData.image || "",
-        // Thêm flag để biết đây là luồng "Đặt ngay" cần tạo booking sau
+        needCreateBooking: "true",
         fromDirectBooking: "true",
-        // Thêm dữ liệu booking để tạo sau
-        bookingData: JSON.stringify({
-          user_id: userId,
-          tour_id: tourData.tour_id,
-          travel_date: (() => {
-            const [day, month, year] = selectedDate.split("/");
-            return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          })(),
-          // Thông tin đặt chỗ
-          quantity_nguoiLon: quantityAdult,
-          quantity_treEm: quantityChild,
-          totalPrice: finalPrice,
-          // Thông tin khách hàng
-          fullName: `${firstName || ""} ${lastName || ""}`.trim(),
-          email,
-          phone,
-          // Các thông tin khác
-          coin: 0,
-          voucher_id: appliedVoucher ? appliedVoucher.voucher_id._id : null,
-          status: "pending",
-          selected_options: Object.values(tourData.selectedOptions || {}).map(id => ({
-            option_service_id: id
-          })),
-          booking_date: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          last_update: new Date().toISOString(),
-        }),
+        bookingData: JSON.stringify(bookingItemData.bookingData), // Thêm bookingData riêng
       },
     });
   };
