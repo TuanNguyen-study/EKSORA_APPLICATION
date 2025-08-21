@@ -36,16 +36,16 @@ export default function PaymentWebview() {
       if (response.ok) {
         console.log(">>> [PAYMENT_WEBVIEW] Payment link canceled successfully");
       } else {
-        console.warn(
-          ">>> [PAYMENT_WEBVIEW] Failed to cancel payment link:",
-          response.statusText
-        );
+        // console.warn(
+        //   ">>> [PAYMENT_WEBVIEW] Failed to cancel payment link:",
+        //   response.statusText
+        // );
       }
     } catch (error) {
-      console.error(
-        ">>> [PAYMENT_WEBVIEW] Error cancelling payment link:",
-        error
-      );
+      // console.error(
+      //   ">>> [PAYMENT_WEBVIEW] Error cancelling payment link:",
+      //   error
+      // );
     }
   };
 
@@ -113,13 +113,13 @@ export default function PaymentWebview() {
   const handleSuccessPayment = async () => {
     // Prevent duplicate success handling
     if (isProcessingSuccess || hasProcessedSuccess.current) {
-      console.log(
-        ">>> [PAYMENT_WEBVIEW] Success already processed, ignoring duplicate call"
-      );
+      // console.log(
+      //   ">>> [PAYMENT_WEBVIEW] Success already processed, ignoring duplicate call"
+      // );
       return;
     }
 
-    console.log(">>> [PAYMENT_WEBVIEW] Processing payment success...");
+    // console.log(">>> [PAYMENT_WEBVIEW] Processing payment success...");
     setIsProcessingSuccess(true);
     hasProcessedSuccess.current = true;
 
@@ -129,52 +129,52 @@ export default function PaymentWebview() {
       const alreadyProcessed = await AsyncStorage.getItem(processedKey);
 
       if (alreadyProcessed) {
-        console.log(
-          ">>> [PAYMENT_WEBVIEW] Payment already processed in AsyncStorage, skipping"
-        );
+        // console.log(
+        //   // ">>> [PAYMENT_WEBVIEW] Payment already processed in AsyncStorage, skipping"
+        // );
         router.replace("return");
         return;
       }
 
       // Mark as processed
       await AsyncStorage.setItem(processedKey, "true");
-      console.log(">>> [PAYMENT_WEBVIEW] Marked payment as processed");
+      // console.log(">>> [PAYMENT_WEBVIEW] Marked payment as processed");
 
       // Clear giỏ hàng nếu thanh toán thành công từ giỏ hàng
       if (needCreateBooking === "true") {
         await clearCart();
-        console.log(
-          ">>> [PAYMENT_WEBVIEW] Cleared cart after successful payment"
-        );
+        // console.log(
+        //   ">>> [PAYMENT_WEBVIEW] Cleared cart after successful payment"
+        // );
       }
 
       // Xóa tất cả payment IDs khỏi AsyncStorage vì đã thanh toán thành công
       await AsyncStorage.removeItem("PENDING_BOOKING_ID");
       await AsyncStorage.removeItem("CURRENT_PAYMENT_ID");
-      console.log(
-        ">>> [PAYMENT_WEBVIEW] Removed payment IDs after successful payment"
-      );
+      // console.log(
+      //   ">>> [PAYMENT_WEBVIEW] Removed payment IDs after successful payment"
+      // );
 
       // Clean up the processed marker after a delay (to prevent immediate re-processing)
       setTimeout(async () => {
         try {
           await AsyncStorage.removeItem(processedKey);
-          console.log(">>> [PAYMENT_WEBVIEW] Cleaned up processed marker");
+          // console.log(">>> [PAYMENT_WEBVIEW] Cleaned up processed marker");
         } catch (error) {
-          console.error(
-            ">>> [PAYMENT_WEBVIEW] Error cleaning up processed marker:",
-            error
-          );
+          // console.error(
+          //   ">>> [PAYMENT_WEBVIEW] Error cleaning up processed marker:",
+          //   error
+          // );
         }
       }, 5000); // 5 seconds delay
 
       // Navigate to success page
       router.replace("return");
     } catch (error) {
-      console.error(
-        ">>> [PAYMENT_WEBVIEW] Error processing successful payment:",
-        error
-      );
+      // console.error(
+      //   ">>> [PAYMENT_WEBVIEW] Error processing successful payment:",
+      //   error
+      // );
       // Reset processing state on error
       setIsProcessingSuccess(false);
       hasProcessedSuccess.current = false;

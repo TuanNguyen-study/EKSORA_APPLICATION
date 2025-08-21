@@ -8,10 +8,10 @@ export const getUserProfile = async (token) => {
       },
     });
 
-    console.log('Lấy thông tin người dùng thành công:', response.data);
+    // console.log('Lấy thông tin người dùng thành công:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi lấy thông tin người dùng:', error.response?.data || error.message);
+    // console.error('Lỗi khi lấy thông tin người dùng:', error.response?.data || error.message);
     throw error;
   }
 };
@@ -24,10 +24,10 @@ export const updateUserProfile = async (token, profileData) => {
       },
     });
 
-    console.log('Cập nhật thông tin người dùng thành công:', response.data);
+    // console.log('Cập nhật thông tin người dùng thành công:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi cập nhật thông tin người dùng:', error.response?.data || error.message);
+    // console.error('Lỗi khi cập nhật thông tin người dùng:', error.response?.data || error.message);
     throw error;
   }
 };

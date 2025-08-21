@@ -52,7 +52,7 @@ export const getAllToursByLocation = async (cateID) => {
     //console.log('Data từ API:', response);
     return response;
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách tour theo cateID:', error);
+    // console.error('Lỗi khi lấy danh sách tour theo cateID:', error);
     throw error;
   }
 };

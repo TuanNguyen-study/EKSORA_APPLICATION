@@ -11,7 +11,7 @@ export const getUser = async () => {
       throw new Error("Dữ liệu trả về không hợp lệ");
     }
   } catch (error) {
-    console.error("Lỗi khi hiển thị User:", error.message || error);
+    // console.error("Lỗi khi hiển thị User:", error.message || error);
     throw error; 
   }
 };
@@ -68,7 +68,7 @@ export const postReview = async (userId, tourId, rating, comment, images, token)
 
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi gửi đánh giá (từ Axios):', error.response ? error.response.data : error.message);
+    // console.error('Lỗi khi gửi đánh giá (từ Axios):', error.response ? error.response.data : error.message);
     throw error;
   }
 };
