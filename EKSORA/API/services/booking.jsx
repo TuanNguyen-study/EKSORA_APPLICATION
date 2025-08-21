@@ -5,8 +5,8 @@ import AxiosInstance from './AxiosInstance';
 export const createBooking = async (bookingData) => {
   try {
     // Log complete request details
-    console.log('>>> [BOOKING SERVICE] Creating booking with data:', JSON.stringify(bookingData, null, 2));
-    console.log('>>> [BOOKING SERVICE] API URL:', AxiosInstance.defaults.baseURL + '/api/bookings');
+    // console.log('>>> [BOOKING SERVICE] Creating booking with data:', JSON.stringify(bookingData, null, 2));
+    // console.log('>>> [BOOKING SERVICE] API URL:', AxiosInstance.defaults.baseURL + '/api/bookings');
 
     // Add error handling for missing required fields
     const requiredFields = ['user_id', 'tour_id', 'travel_date', 'quantity_nguoiLon', 'totalPrice'];
@@ -18,9 +18,9 @@ export const createBooking = async (bookingData) => {
     const response = await AxiosInstance.post('/api/bookings', bookingData);
     
     // Log complete response for debugging
-    console.log('>>> [BOOKING SERVICE] Raw server response:', response);
-    console.log('>>> [BOOKING SERVICE] Response data type:', typeof response.data);
-    console.log('>>> [BOOKING SERVICE] Response data:', JSON.stringify(response.data, null, 2));
+    // console.log('>>> [BOOKING SERVICE] Raw server response:', response);
+    // console.log('>>> [BOOKING SERVICE] Response data type:', typeof response.data);
+    // console.log('>>> [BOOKING SERVICE] Response data:', JSON.stringify(response.data, null, 2));
     
     if (!response.data) {
       throw new Error('Server không trả về dữ liệu');
@@ -31,9 +31,9 @@ export const createBooking = async (bookingData) => {
     if (typeof response.data === 'string') {
       try {
         bookingResponse = JSON.parse(response.data);
-        console.log('>>> [BOOKING SERVICE] Parsed response:', bookingResponse);
+        // console.log('>>> [BOOKING SERVICE] Parsed response:', bookingResponse);
       } catch (e) {
-        console.error('>>> [BOOKING SERVICE] Failed to parse response:', e);
+        // console.error('>>> [BOOKING SERVICE] Failed to parse response:', e);
       }
     }
     
@@ -44,7 +44,7 @@ export const createBooking = async (bookingData) => {
                      (bookingResponse.booking && bookingResponse.booking._id);
     
     if (!bookingId) {
-      console.error('>>> [BOOKING SERVICE] Response structure:', bookingResponse);
+      // console.error('>>> [BOOKING SERVICE] Response structure:', bookingResponse);
       throw new Error('Không tìm thấy mã đơn hàng trong phản hồi. Cấu trúc phản hồi: ' + 
         JSON.stringify(bookingResponse, null, 2));
     }
@@ -58,16 +58,16 @@ export const createBooking = async (bookingData) => {
     return standardizedResponse;
   } catch (error) {
     // Log detailed error information
-    console.error('>>> [BOOKING SERVICE] Error details:', {
-      name: error.name,
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      url: error.config?.url,
-      method: error.config?.method,
-      headers: error.config?.headers
-    });
+    // console.error('>>> [BOOKING SERVICE] Error details:', {
+    //   name: error.name,
+    //   message: error.message,
+    //   status: error.response?.status,
+    //   statusText: error.response?.statusText,
+    //   data: error.response?.data,
+    //   url: error.config?.url,
+    //   method: error.config?.method,
+    //   headers: error.config?.headers
+    // });
     
     // Handle different types of errors
     if (error.response) {
@@ -94,12 +94,12 @@ export const getBookingById = async (bookingId, token) => {
     });
     return response.data; 
   } catch (error) {
-    console.error('Lỗi khi lấy chi tiết booking:', {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data,
-      config: error.config,
-    });
+    // console.error('Lỗi khi lấy chi tiết booking:', {
+    //   message: error.message,
+    //   status: error.response?.status,
+    //   data: error.response?.data,
+    //   config: error.config,
+    // });
     throw error;
   }
 };
@@ -113,7 +113,7 @@ export const cancelBookingById = async (id, token) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi hủy đơn hàng:', error);
+    // console.error('Lỗi khi hủy đơn hàng:', error);
     throw new Error(error.response?.data?.message || 'Lỗi khi hủy đơn hàng');
   }
 };

@@ -10,7 +10,7 @@ export const getBookingDetailById = async (bookingId) => {
     const response = await AxiosInstance.get(`/api/bookings/${bookingId}`);
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi lấy chi tiết đơn hàng:', error);
+    // console.error('Lỗi khi lấy chi tiết đơn hàng:', error);
     throw error;
   }
 };

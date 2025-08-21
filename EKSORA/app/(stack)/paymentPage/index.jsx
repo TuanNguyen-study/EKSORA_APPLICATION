@@ -257,7 +257,7 @@ export default function PaymentPage() {
 
     // Kiểm tra xem có phải là direct booking không
     const isDirectBooking = params.needCreateBooking === "true";
-    
+
     let bookingId;
     if (isDirectBooking) {
       try {
@@ -275,7 +275,7 @@ export default function PaymentPage() {
             console.error(">>> [PAYMENT] Error parsing cart items:", parseError);
             throw new Error("Dữ liệu giỏ hàng không hợp lệ");
           }
-        } 
+        }
         // Handle direct booking data
         else if (params.bookingData) {
           try {
@@ -291,7 +291,7 @@ export default function PaymentPage() {
         // Validate required fields
         const requiredFields = ['user_id', 'tour_id', 'travel_date', 'quantity_nguoiLon', 'totalPrice'];
         const missingFields = requiredFields.filter(field => !bookingData[field]);
-        
+
         if (missingFields.length > 0) {
           console.error(">>> [PAYMENT] Missing fields in data:", bookingData);
           throw new Error(`Thiếu thông tin bắt buộc: ${missingFields.join(', ')}`);
@@ -307,36 +307,36 @@ export default function PaymentPage() {
         if (!bookingData.status) {
           bookingData.status = 'pending';
         }
-        
+
         console.log(">>> [PAYMENT] Creating booking with data:", bookingData);
-        
+
         // Đảm bảo có token cho request
         const token = await AsyncStorage.getItem("ACCESS_TOKEN");
         if (!token) {
           throw new Error("Phiên đăng nhập đã hết hạn");
         }
-        
+
         // Thêm headers vào request
         AxiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-        
+
         const response = await createBooking(bookingData);
         console.log(">>> [PAYMENT] Booking response:", response);
-        
+
         if (!response) {
           throw new Error("Không nhận được phản hồi từ server");
         }
-        
+
         if (!response._id) {
           console.error(">>> [PAYMENT] Invalid response structure:", response);
           throw new Error("Cấu trúc phản hồi không hợp lệ - thiếu _id");
         }
-        
+
         bookingId = response._id;
         console.log(">>> [PAYMENT] Created booking:", bookingId);
-        
+
         // Lưu bookingId tạm thời
         await AsyncStorage.setItem("PENDING_BOOKING_ID", bookingId);
-        
+
       } catch (error) {
         console.error(">>> [PAYMENT] Error creating booking:", error);
         Alert.alert("Lỗi", error.message || "Không thể tạo đơn hàng. Vui lòng thử lại.");
@@ -379,6 +379,10 @@ export default function PaymentPage() {
 
       const data = await response.json();
       console.log(">>> [PAYMENT RESPONSE] Data:", data);
+      console.log(">>> [PAYMENT RESPONSE] Full data:", data);
+      console.log(">>> [PAYMENT RESPONSE] app_trans_id:", data.app_trans_id);
+      console.log(">>> [PAYMENT RESPONSE] order_code:", data.order_code);
+      console.log("📌 [FE][CREATE] Nhận được app_trans_id từ BE:", data.app_trans_id);
 
       // Gom tất cả các khả năng URL trả về (PayOS, ZaloPay)
       const checkoutUrl =
@@ -387,33 +391,44 @@ export default function PaymentPage() {
         data.zalo_url ||
         data.raw?.order_url;
 
+      const appTransId = data.order_code;
+
       if (!response.ok) {
         throw new Error(data.message || data.error || 'Lỗi không xác định từ server.');
       }
 
       if (checkoutUrl) {
-        // Clear cart items after successful payment if items came from cart
+        // Clear cart nếu cần
         if (params.fromCart === "true" && params.items) {
           try {
             await clearCart();
             console.log(">>> [PAYMENT] Successfully cleared cart after payment");
           } catch (clearError) {
-            console.error(">>> [PAYMENT] Error clearing cart:", {
-              error: clearError.message || clearError,
-              stack: clearError.stack
-            });
-            // Continue with payment even if cart clearing fails
+            console.error(">>> [PAYMENT] Error clearing cart:", clearError);
           }
         }
 
-        // 🚀 Luôn mở trong WebView cho cả PayOS & ZaloPay
-        router.push({
-          pathname: "/acount/payment-webview",
-          params: { checkoutUrl },
-        });
+        if (selectedMethod === "Payos") {
+          // 🚀 PayOS: mở WebView
+          router.push({
+            pathname: "/acount/payment-webview",
+            params: { checkoutUrl },
+          });
+        } else if (selectedMethod === "ZaloPay") {
+          // 🚀 ZaloPay: mở trang QR
+          router.push({
+            pathname: "/paymentPage/components/zalopay-qr",
+            params: {
+              checkoutUrl,
+              appTransId: appTransId, // 👈 nhớ truyền khi push
+            },
+          });
+
+        }
       } else {
         throw new Error("Không nhận được URL thanh toán từ server.");
       }
+
     } catch (err) {
       console.error(">>> [PAYMENT ERROR]:", err);
       Alert.alert('Lỗi tạo thanh toán', err.message);

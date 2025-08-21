@@ -72,7 +72,7 @@ export default function Body({ navigation }) {
           }
           setAllTrips(allTripsFromApi);
         } catch (error) {
-          console.error('Lỗi khi tải chuyến đi:', error);
+          // console.error('Lỗi khi tải chuyến đi:', error);
           setAllTrips([]);
         } finally {
           setLoading(false);
