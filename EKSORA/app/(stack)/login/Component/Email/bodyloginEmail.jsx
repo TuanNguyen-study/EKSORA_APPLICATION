@@ -5,7 +5,6 @@ import {
   TextInput, 
   TouchableOpacity, 
   View, 
-  Alert,
   ActivityIndicator 
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -14,6 +13,7 @@ import { useDispatch } from 'react-redux';
 
 import { loginUser } from '../../../../../API/services/AxiosInstance';
 import { useVoucher } from '../../../../../store/VoucherContext';
+import Toast from 'react-native-toast-message';
 
 function BodyLoginEmail() {
   // State quản lý form input
@@ -75,10 +75,8 @@ function BodyLoginEmail() {
   
   // Hàm xử lý đăng nhập
   const handleLogin = async () => {
-    // Nếu đang trong quá trình đăng nhập thì không cho nhấn lại
     if (isLoading) return;
 
-    // Kiểm tra dữ liệu, nếu không hợp lệ thì dừng lại
     if (!validateForm()) {
       return;
     }
@@ -86,21 +84,24 @@ function BodyLoginEmail() {
     setIsLoading(true);
     try {
       await dispatch(loginUser(form)).unwrap();
-      //    Hàm này sẽ đọc `USER_ID` mới lưu và tải danh sách voucher tương ứng.
-      console.log('Đăng nhập Redux thành công, bắt đầu tải voucher...');
       await fetchPromotions();
-      console.log('Tải voucher hoàn tất.');
 
-      // 3. Thông báo và chuyển trang
-      Alert.alert('Thành công', 'Đăng nhập thành công!');
-      router.replace('/(tabs)/home'); 
+      Toast.show({
+        type: 'success',
+        text1: 'Thành công',
+        text2: 'Đăng nhập thành công!',
+      });
+
+      setTimeout(() => {
+        router.replace('/(tabs)/home'); 
+      }, 1500);
 
     } catch (error) {
-      console.log('Đăng nhập thất bại:', error);
-      Alert.alert(
-        'Đăng nhập thất bại',
-        error?.message || 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.'
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Đăng nhập thất bại',
+        text2: error?.message || 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +122,6 @@ function BodyLoginEmail() {
           autoCapitalize="none"
         />
       </View>
-      {/* Hiển thị lỗi nếu có */}
       {!!errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
       {/* Input Mật khẩu */}
@@ -139,9 +139,7 @@ function BodyLoginEmail() {
           <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={18} style={styles.icon} />
         </TouchableOpacity>
       </View>
-      {/* Hiển thị lỗi nếu có */}
       {!!errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
-
 
       {/* Nút Đăng nhập */}
       <TouchableOpacity 

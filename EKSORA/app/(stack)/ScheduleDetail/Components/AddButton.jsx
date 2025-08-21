@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import {COLORS} from '../../../../constants/colors'
 
 export default function AddButton({ onPress }) {

@@ -3,7 +3,13 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../../../constants/colors";
 
-const OrderSummaryCard = ({ items, contactInfo, styles }) => {
+const OrderSummaryCard = ({
+  items,
+  contactInfo,
+  styles,
+  discountAmount = 0,
+  totalToPay,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isCart = items.length > 1;
 
@@ -48,6 +54,34 @@ const OrderSummaryCard = ({ items, contactInfo, styles }) => {
           <Text style={styles.detailText}>{contactInfo.fullName}</Text>
           <Text style={styles.detailText}>{contactInfo.email}</Text>
           <Text style={styles.detailText}>{contactInfo.phone}</Text>
+          {/* Hiển thị giá đã chiết khấu nếu có */}
+          {discountAmount > 0 && (
+            <View style={{ marginTop: 12 }}>
+              <Text style={styles.detailTitle}>Chiết khấu</Text>
+              <Text
+                style={[
+                  styles.detailText,
+                  { color: "#28A745", fontWeight: "bold" },
+                ]}
+              >
+                - {discountAmount.toLocaleString("vi-VN")} đ
+              </Text>
+            </View>
+          )}
+          {/* Hiển thị tổng cộng sau khi áp dụng mã */}
+          {typeof totalToPay === "number" && (
+            <View style={{ marginTop: 8 }}>
+              <Text style={styles.detailTitle}>Tổng cộng sau ưu đãi</Text>
+              <Text
+                style={[
+                  styles.detailText,
+                  { color: "#00639B", fontWeight: "bold", fontSize: 16 },
+                ]}
+              >
+                {totalToPay.toLocaleString("vi-VN")} đ
+              </Text>
+            </View>
+          )}
         </View>
       )}
     </View>

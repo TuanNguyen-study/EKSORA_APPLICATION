@@ -1,5 +1,3 @@
-// ShoppingCartScreen.js
-
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
@@ -18,6 +16,7 @@ import {
 import { useSelector } from "react-redux";
 import { useCart } from "../../../store/CartContext";
 import CartItem from "./components/CartItem";
+import Toast from "react-native-toast-message"; // Thêm import này
 
 const formatCurrency = (amount) => {
   if (typeof amount !== "number") return "0 đ";
@@ -68,6 +67,12 @@ const ShoppingCartScreen = () => {
             setSelectedIds((prevIds) =>
               prevIds.filter((id) => id !== idToDelete)
             );
+            Toast.show({
+              type: 'success',
+              text1: 'Thành công',
+              text2: 'Sản phẩm đã được xóa khỏi giỏ hàng',
+              position: 'top',
+            });
           },
           style: "destructive",
         },
@@ -84,12 +89,8 @@ const ShoppingCartScreen = () => {
     }
   };
 
-  //  TẠO HÀM ĐIỀU HƯỚNG ĐẾN TRANG CHI TIẾT
   const handleNavigateToDetail = (item) => {
-    // Đảm bảo rằng item và tour_id tồn tại trước khi điều hướng
     if (item && item.tour_id) {
-      // Sử dụng đường dẫn đến trang chi tiết tour của bạn.
-      // Ví dụ: '/tour-detail/[id]' hoặc '/tours/[id]'
       router.push(`/trip-detail/${item.tour_id}`);
     } else {
       console.error("Lỗi: Không tìm thấy tour_id để điều hướng.");
@@ -123,18 +124,15 @@ const ShoppingCartScreen = () => {
     setIsLoading(true);
 
     try {
-      // THAY ĐỔI: Không tạo booking ở đây nữa, chỉ chuẩn bị dữ liệu
       const itemsForBooking = selectedItems.map((item) => {
         const [day, month, year] = item.travelDate.split("/");
         const formattedDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-        // Calculate prices and quantities
         const quantity_nguoiLon = Number(item.adults) || 0;
         const quantity_treEm = Number(item.children) || 0;
         const price_nguoiLon = Number(item.originalAdultPrice) || 0;
         const price_treEm = Number(item.originalChildPrice) || 0;
         
-        // Calculate total price for this item
         const itemTotalPrice = (quantity_nguoiLon * price_nguoiLon) + 
                              (quantity_treEm * price_treEm);
 
@@ -153,22 +151,19 @@ const ShoppingCartScreen = () => {
           coin: 0,
           voucher_id: item.voucherId || null,
           discount: Number(item.discount) || 0,
-          // Add required contact fields
           fullName: `${loggedInUser.lastName || ""} ${loggedInUser.firstName || ""}`.trim(),
           email: loggedInUser.email || "",
           phone: loggedInUser.phone || "",
         };
       });
 
-      // Chuyển đến trang hoàn tất đơn hàng trước khi thanh toán
       router.push({
         pathname: "/(stack)/BookingCompleted",
         params: {
           items: JSON.stringify(itemsForBooking),
           totalPrice: total.toString(),
           isPendingBooking: "true",
-          fromCart: "true", // Đánh dấu là từ giỏ hàng
-          // Thêm thông tin người dùng để hiển thị
+          fromCart: "true",
           lastName: loggedInUser.lastName || "",
           firstName: loggedInUser.firstName || "",
           email: loggedInUser.email || "",
@@ -208,13 +203,11 @@ const ShoppingCartScreen = () => {
       <FlatList
         data={cartItems}
         renderItem={({ item }) => (
-          // TRUYỀN HÀM ĐIỀU HƯỚNG VÀO CARTITEM
           <CartItem
             item={item}
             isSelected={selectedIds.includes(item.id)}
             onToggleSelect={() => handleToggleSelect(item.id)}
             onDelete={() => handleDeleteItem(item.id)}
-            // Prop mới để xử lý sự kiện nhấn vào item
             onPressItem={() => handleNavigateToDetail(item)}
           />
         )}

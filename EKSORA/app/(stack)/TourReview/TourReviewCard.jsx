@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-    Alert,
     Image,
     StyleSheet,
     Text,
@@ -12,6 +11,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
+import Toast from 'react-native-toast-message';
 
 // --- CÁC HÀM TIỆN ÍCH ---
 const formatCurrency = (amount) => {
@@ -59,7 +59,11 @@ const TourReviewCard = ({ tourBooking, onSubmitReview, isSubmitting }) => {
     const handleChoosePhoto = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-            Alert.alert('Cần cấp quyền', 'Vui lòng cấp quyền truy cập thư viện ảnh để sử dụng tính năng này.');
+            Toast.show({
+                type: 'error',
+                text1: 'Cần cấp quyền',
+                text2: 'Vui lòng cấp quyền truy cập thư viện ảnh để sử dụng tính năng này.'
+            });
             return;
         }
 
@@ -81,11 +85,19 @@ const TourReviewCard = ({ tourBooking, onSubmitReview, isSubmitting }) => {
 
     const handleSubmit = () => {
         if (rating === 0) {
-            Alert.alert('Chưa hoàn tất', 'Vui lòng chọn số sao để đánh giá.');
+            Toast.show({
+                type: 'error',
+                text1: 'Chưa hoàn tất',
+                text2: 'Vui lòng chọn số sao để đánh giá.'
+            });
             return;
         }
         if (comment.trim() === '') {
-            Alert.alert('Chưa hoàn tất', 'Bạn hãy viết một vài cảm nhận về chuyến đi nhé.');
+            Toast.show({
+                type: 'error',
+                text1: 'Chưa hoàn tất',
+                text2: 'Bạn hãy viết một vài cảm nhận về chuyến đi nhé.'
+            });
             return;
         }
 

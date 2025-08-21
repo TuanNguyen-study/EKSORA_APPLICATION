@@ -3,7 +3,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -14,11 +13,12 @@ import {
   View,
 } from "react-native";
 import { useSelector } from "react-redux";
-
 import { updateUserProfile } from "../../../API/services/servicesProfile";
 import { COLORS } from "../../../constants/colors";
 import BookingSummaryCard from "./components/BookingCard";
 import ContactInfoSection from "./components/ContactInfoSection";
+import Toast from "react-native-toast-message";
+// import Toast from "react-native-toast-message";
 
 export default function BookingCompleted() {
   const router = useRouter();
@@ -28,15 +28,21 @@ export default function BookingCompleted() {
   const loggedInUser = useSelector((state) => state.auth.user);
 
   // Xử lý và chuẩn hóa dữ liệu booking từ params bằng useMemo để tối ưu hiệu năng
-  const { displayItems, finalTotalPrice } = useMemo(() => {
-    console.log('>>> [BOOKING_COMPLETED] Processing params:', params);
-    
+  const { displayItems, finalTotalPrice, voucherInfo } = useMemo(() => {
+    console.log(">>> [BOOKING_COMPLETED] Processing params:", params);
+    console.log(
+      ">>> [BOOKING_COMPLETED] DEBUG: params.totalPrice =",
+      params.totalPrice,
+      "type:",
+      typeof params.totalPrice
+    );
+
     // Trường hợp 1: Dữ liệu từ giỏ hàng
     if (params.items && typeof params.items === "string") {
       try {
         const parsedItems = JSON.parse(params.items);
-        console.log('>>> [BOOKING_COMPLETED] Parsed cart items:', parsedItems);
-        
+        console.log(">>> [BOOKING_COMPLETED] Parsed cart items:", parsedItems);
+
         const itemsForDisplay = parsedItems.map((item) => ({
           id: item.tour_id || item.id,
           title: item.name || "Tour du lịch",
@@ -48,18 +54,44 @@ export default function BookingCompleted() {
           discountAmount: item.discount || 0,
           originalPrice: item.originalPrice || item.price || 0,
           // Store original data for booking creation
-          originalData: item
+          originalData: item,
         }));
 
-        console.log('>>> [BOOKING_COMPLETED] Formatted items for display:', itemsForDisplay);
-        
+        // Tính tổng discount và lấy thông tin voucher
+        const totalDiscount = itemsForDisplay.reduce(
+          (sum, item) => sum + (item.discountAmount || 0),
+          0
+        );
+        const voucherCode = itemsForDisplay.find(
+          (item) => item.voucherCode
+        )?.voucherCode;
+        const originalTotal = itemsForDisplay.reduce(
+          (sum, item) => sum + (item.originalPrice || 0),
+          0
+        );
+
+        console.log(
+          ">>> [BOOKING_COMPLETED] Formatted items for display:",
+          itemsForDisplay
+        );
+
         return {
           displayItems: itemsForDisplay,
           finalTotalPrice: Number(params.totalPrice),
+          voucherInfo: {
+            hasVoucher: totalDiscount > 0 && voucherCode,
+            voucherCode: voucherCode,
+            discountAmount: totalDiscount,
+            originalTotal: originalTotal,
+          },
         };
       } catch (e) {
         console.error(">>> [BOOKING_COMPLETED] Error parsing cart items:", e);
-        return { displayItems: [], finalTotalPrice: 0 };
+        return {
+          displayItems: [],
+          finalTotalPrice: 0,
+          voucherInfo: { hasVoucher: false },
+        };
       }
     }
 
@@ -76,11 +108,22 @@ export default function BookingCompleted() {
       travelDate: params.travelDate,
     };
 
-    console.log('>>> [BOOKING_COMPLETED] Direct booking item:', singleItem);
-    
+    const directTotal = Number(params.totalPrice) || 0;
+
+    // Nếu fromTicketPage=true thì không hiển thị ưu đãi
+    const hideVoucher = params.fromTicketPage === "true";
+
     return {
       displayItems: [singleItem],
-      finalTotalPrice: Number(params.totalPrice),
+      finalTotalPrice: directTotal,
+      voucherInfo: hideVoucher
+        ? { hasVoucher: false }
+        : {
+            hasVoucher: singleItem.discountAmount > 0 && singleItem.voucherCode,
+            voucherCode: singleItem.voucherCode,
+            discountAmount: singleItem.discountAmount,
+            originalTotal: singleItem.originalPrice,
+          },
     };
   }, [params]);
 
@@ -90,7 +133,7 @@ export default function BookingCompleted() {
   const [isUsingSavedInfo, setIsUsingSavedInfo] = useState(true);
 
   // State chứa dữ liệu để *hiển thị* cho người dùng trong tab "Thông tin của tôi"
-const [contactToDisplay, setContactToDisplay] = useState(loggedInUser || {});
+  const [contactToDisplay, setContactToDisplay] = useState(loggedInUser || {});
 
   // State chứa dữ liệu của form nhập liệu (khi chỉnh sửa hoặc nhập mới)
   const [formInfo, setFormInfo] = useState({
@@ -159,7 +202,11 @@ const [contactToDisplay, setContactToDisplay] = useState(loggedInUser || {});
   const handleConfirmNewContact = async () => {
     const { firstName, lastName, phone, email } = formInfo;
     if (!firstName || !lastName || !phone || !email) {
-      Alert.alert("Thiếu thông tin", "Vui lòng điền đầy đủ tất cả các trường.");
+      Toast.show({
+        type: "error",
+        text1: "Thiếu thông tin",
+        text2: "Vui lòng điền đầy đủ tất cả các trường.",
+      });
       return;
     }
 
@@ -175,12 +222,19 @@ const [contactToDisplay, setContactToDisplay] = useState(loggedInUser || {});
       setContactToDisplay(formInfo);
 
       // 3. Chuyển về lại tab "Thông tin của tôi"
-setIsUsingSavedInfo(true);
-
-      Alert.alert("Thành công", "Thông tin của bạn đã được cập nhật!");
+      setIsUsingSavedInfo(true);
+      Toast.show({
+        type: "success",
+        text1: "Thành công",
+        text2: "Thông tin của bạn được cập nhật !",
+      });
     } catch (error) {
       console.error("Lỗi khi cập nhật thông tin:", error);
-      Alert.alert("Lỗi", "Không thể cập nhật thông tin. Vui lòng thử lại sau.");
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Không thể cập nhật thông tin. Vui lòng thử lại sau.",
+      });
     } finally {
       setLoading(false);
     }
@@ -192,19 +246,23 @@ setIsUsingSavedInfo(true);
   const isFromTicketPage = params.fromTicketPage === "true";
   const isFromDirectBooking = params.fromDirectBooking === "true";
 
-  // Chỉ auto-redirect cho ticket page không phải direct booking
-  const shouldAutoRedirect = isFromTicketPage && !isFromDirectBooking;
-  
+  // Tắt auto-redirect để user có thể xem và chỉnh sửa thông tin trước khi thanh toán
+  // const shouldAutoRedirect = isFromTicketPage && !isFromDirectBooking;
+  const shouldAutoRedirect = false; // Bắt buộc user phải nhấn nút "Tiếp tục thanh toán"
+
   // Text cho nút thanh toán dựa vào nguồn
   const getPaymentButtonText = () => {
     if (shouldAutoRedirect) return "Đang chuyển đến thanh toán...";
     if (isFromCart) return "Xác nhận";
     if (isFromDirectBooking) return "Xác nhận";
     if (isPendingBooking) return "Tiếp tục thanh toán";
+    if (isFromTicketPage) return "Tiếp tục thanh toán"; // Text mới cho ticket page
     return "Hoàn tất đơn hàng";
   };
 
+  // TẮT AUTO-REDIRECT: User phải manually nhấn "Tiếp tục thanh toán"
   // Auto-redirect đến paymentPage nếu là booking từ trang vé
+  /*
   useEffect(() => {
     if (shouldAutoRedirect) {
       console.log(
@@ -254,15 +312,17 @@ setIsUsingSavedInfo(true);
     params,
     router,
   ]);
+  */
 
   // Xử lý khi nhấn nút "Thanh toán"
   const handlePayment = () => {
     // 1. Kiểm tra xem có thông tin liên lạc hay không
     if (!contactToDisplay.firstName || !contactToDisplay.phone) {
-      Alert.alert(
-        "Thiếu thông tin",
-        "Vui lòng xác nhận thông tin liên lạc của bạn để tiếp tục."
-      );
+      Toast.show({
+        type: "error",
+        text1: "Thiếu thông tin",
+        text2: "Vui lòng xác nhận thông tin liên lạc của bạn để tiếp tục.",
+      });
       handleEditContact();
       return;
     }
@@ -278,17 +338,22 @@ setIsUsingSavedInfo(true);
         const cartItems = JSON.parse(params.items);
         // Convert the first cart item to booking data format
         const item = cartItems[0]; // For now, handle one item at a time
-        console.log('>>> [BOOKING_COMPLETED] Processing cart item:', item);
-        
+        console.log(">>> [BOOKING_COMPLETED] Processing cart item:", item);
+
         // Make sure we have contact info
-        if (!contactToDisplay.firstName || !contactToDisplay.phone || !contactToDisplay.email) {
-          throw new Error('Vui lòng cập nhật đầy đủ thông tin liên hệ');
+        if (
+          !contactToDisplay.firstName ||
+          !contactToDisplay.phone ||
+          !contactToDisplay.email
+        ) {
+          throw new Error("Vui lòng cập nhật đầy đủ thông tin liên hệ");
         }
 
         // Calculate total price based on adult and child quantities
-        const itemTotalPrice = (item.quantity_nguoiLon * item.price_nguoiLon) + 
-                             ((item.quantity_treEm || 0) * (item.price_treEm || 0));
-        
+        const itemTotalPrice =
+          item.quantity_nguoiLon * item.price_nguoiLon +
+          (item.quantity_treEm || 0) * (item.price_treEm || 0);
+
         bookingData = {
           user_id: item.user_id,
           tour_id: item.tour_id,
@@ -302,36 +367,68 @@ setIsUsingSavedInfo(true);
           coin: item.coin || 0,
           voucher_id: item.voucher_id || null,
           discount: item.discount || 0,
-          status: 'pending',
+          status: "pending",
           // Add required contact fields
-          fullName: `${contactToDisplay.lastName || ""} ${contactToDisplay.firstName}`.trim(),
+          fullName:
+            `${contactToDisplay.lastName || ""} ${contactToDisplay.firstName}`.trim(),
           email: contactToDisplay.email,
           phone: contactToDisplay.phone,
         };
-        
-        console.log('>>> [BOOKING_COMPLETED] Prepared booking data:', bookingData);
+
+        console.log(
+          ">>> [BOOKING_COMPLETED] Prepared booking data:",
+          bookingData
+        );
       } catch (error) {
-        console.error('Error preparing booking data:', error);
-        Alert.alert('Lỗi', 'Không thể xử lý dữ liệu đơn hàng');
+        console.error("Error preparing booking data:", error);
+        Toast.show({
+          type: "error",
+          text1: "Lỗi",
+          text2: "Không thể xử lý được đơn hàng .",
+        });
         return;
       }
     }
 
     const paymentParams = {
       ...params, // Keep original params
-      fullName: `${contactToDisplay.lastName || ""} ${contactToDisplay.firstName}`.trim(),
+      fullName:
+        `${contactToDisplay.lastName || ""} ${contactToDisplay.firstName}`.trim(),
       phone: contactToDisplay.phone,
       email: contactToDisplay.email,
       buyerAddress: loggedInUser?.address || "Chưa có địa chỉ",
-      totalPrice: finalTotalPrice.toString(),
+      totalPrice: finalTotalPrice.toString(), // Use final total price
+      originalPrice: voucherInfo.originalTotal.toString(), // Original price before voucher
+      discountAmount: voucherInfo.discountAmount.toString(), // Discount amount
+      voucherCode: voucherInfo.voucherCode || "", // Voucher code
       needCreateBooking: "true",
       // Add prepared booking data if from cart
-      ...(isFromCart && { bookingData: JSON.stringify(bookingData) })
+      ...(isFromCart && { bookingData: JSON.stringify(bookingData) }),
     };
+
+    console.log(">>> [BOOKING_COMPLETED] PAYMENT PARAMS VALIDATION:");
+    console.log(
+      ">>> [BOOKING_COMPLETED] finalTotalPrice before convert:",
+      finalTotalPrice
+    );
+    console.log(">>> [BOOKING_COMPLETED] voucherInfo:", voucherInfo);
+    console.log(
+      ">>> [BOOKING_COMPLETED] totalPrice being passed:",
+      paymentParams.totalPrice
+    );
+
+    if (!finalTotalPrice || finalTotalPrice <= 0) {
+      Toast.show({
+        type: "error",
+        text1: "Lỗi tổng tiền",
+        text2: `Tổng tiền không hợp lệ: ${finalTotalPrice}. Vui lòng thử lại.`,
+      });
+      return;
+    }
 
     router.push({
       pathname: "/(stack)/paymentPage",
-      params: paymentParams
+      params: paymentParams,
     });
   };
 
@@ -378,14 +475,52 @@ setIsUsingSavedInfo(true);
               key={item.id}
               title={item.title}
               travelDate={item.travelDate}
-quantityAdult={item.quantityAdult}
+              quantityAdult={item.quantityAdult}
               quantityChild={item.quantityChild}
               totalPrice={item.totalPrice}
-              voucherCode={item.voucherCode}
-              discountAmount={item.discountAmount}
-              originalPrice={item.originalPrice}
             />
           ))}
+
+          {/* Hiển thị thông tin voucher đã sử dụng */}
+          {voucherInfo.hasVoucher && (
+            <View style={styles.voucherDisplaySection}>
+              <Text style={styles.voucherDisplayTitle}>
+                Mã ưu đãi đã áp dụng
+              </Text>
+              <View style={styles.voucherDisplayCard}>
+                <View style={styles.voucherDisplayHeader}>
+                  <Ionicons name="ticket" size={24} color="#16A34A" />
+                  <View style={styles.voucherDisplayInfo}>
+                    <Text style={styles.voucherCode}>
+                      {voucherInfo.voucherCode}
+                    </Text>
+                    <Text style={styles.voucherDiscountText}>
+                      Giảm {voucherInfo.discountAmount.toLocaleString("vi-VN")}{" "}
+                      VND
+                    </Text>
+                  </View>
+                  <Ionicons name="checkmark-circle" size={20} color="#16A34A" />
+                </View>
+                {voucherInfo.originalTotal > finalTotalPrice && (
+                  <View style={styles.priceBreakdown}>
+                    <View style={styles.priceRow}>
+                      <Text style={styles.priceLabel}>Giá gốc:</Text>
+                      <Text style={styles.originalPrice}>
+                        {voucherInfo.originalTotal.toLocaleString("vi-VN")} VND
+                      </Text>
+                    </View>
+                    <View style={styles.priceRow}>
+                      <Text style={styles.priceLabel}>Giảm giá:</Text>
+                      <Text style={styles.discountPrice}>
+                        -{voucherInfo.discountAmount.toLocaleString("vi-VN")}{" "}
+                        VND
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
         </ScrollView>
 
         {/* Footer */}
@@ -487,7 +622,69 @@ const styles = StyleSheet.create({
   },
   payButtonText: {
     color: COLORS.white,
-fontWeight: "bold",
+    fontWeight: "bold",
     fontSize: 16,
+  },
+  // Voucher Display Styles
+  voucherDisplaySection: {
+    marginHorizontal: 24,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  voucherDisplayTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: COLORS.textPrimary,
+    marginBottom: 12,
+  },
+  voucherDisplayCard: {
+    backgroundColor: "#F0FDF4",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+  },
+  voucherDisplayHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  voucherDisplayInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  voucherCode: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#16A34A",
+  },
+  voucherDiscountText: {
+    fontSize: 12,
+    color: "#059669",
+    marginTop: 2,
+  },
+  priceBreakdown: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#BBF7D0",
+  },
+  priceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  priceLabel: {
+    fontSize: 14,
+    color: "#374151",
+  },
+  originalPrice: {
+    fontSize: 14,
+    color: "#6B7280",
+    textDecorationLine: "line-through",
+  },
+  discountPrice: {
+    fontSize: 14,
+    color: "#DC2626",
+    fontWeight: "600",
   },
 });

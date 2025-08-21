@@ -5,13 +5,13 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import QRCode from "react-native-qrcode-svg";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector } from "react-redux";
+import Toast from "react-native-toast-message";
 
 // --- CÁC HÀM HỖ TRỢ ---
 
@@ -27,11 +27,14 @@ const formatCurrency = (value) => {
 
 // Component hiển thị một dòng chi tiết với icon, nhãn và giá trị.
 
-const DetailItem = ({ icon, label, value }) => (
+const DetailItem = ({ icon, label, value, restored }) => (
   <View style={styles.detailItem}>
     <MaterialCommunityIcons name={icon} size={24} color="#4A90E2" />
     <View style={styles.detailTextContainer}>
-      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailLabel}>
+        {label}
+        {restored && <Text style={styles.restoredIndicator}> ⚡</Text>}
+      </Text>
       <Text style={styles.detailValue}>{value}</Text>
     </View>
   </View>
@@ -41,6 +44,20 @@ const DetailItem = ({ icon, label, value }) => (
 
 export default function TripItem({ item }) {
   const [isPaying, setIsPaying] = useState(false);
+
+  // Debug: Log key item data
+  const itemId = item?._id || item?.id || "Unknown";
+  const tourId = item?.tour_id?._id || item?.tour_id || "Unknown";
+  console.log(
+    `>>> [TRIP ITEM] Booking ${itemId}: Tour=${tourId}, totalPrice=${item.totalPrice}, finalTotalPrice=${item.finalTotalPrice}, status=${item.status}`
+  );
+
+  // Tổng chi phí lấy trực tiếp từ API Booking
+  const displayPrice = Number(item.totalPrice) || 0;
+
+  console.log(
+    `>>> [TRIP ITEM] Final display price for booking ${itemId}: ${displayPrice}`
+  );
 
   // Lấy thông tin người dùng đã đăng nhập từ Redux store
   const loggedInUser = useSelector((state) => state.auth.user);
@@ -84,33 +101,38 @@ export default function TripItem({ item }) {
     if (isPaying) return;
 
     if (!loggedInUser || !loggedInUser.id) {
-      Alert.alert(
-        "Chưa đăng nhập",
-        "Vui lòng đăng nhập để tiếp tục thanh toán."
-      );
+      Toast.show({
+        type: "error",
+        text1: "Chưa đăng nhập",
+        text2: "Vui lòng đăng nhập để tiếp tục thanh toán.",
+      });
       return;
     }
 
     setIsPaying(true);
 
     try {
-      console.log("Chuẩn bị thanh toán cho booking đã có ID:", item._id);
+      console.log(`>>> [TRIP ITEM] Preparing payment for booking: ${item._id}`);
 
       // Tạo một đối tượng item để truyền đi, đảm bảo cấu trúc nhất quán
       // với những gì màn hình BookingCompleted mong đợi.
       const checkoutItem = {
         id: item._id, // booking id
-        name: item.tour_id.name,
-        adults: item.quantity_nguoiLon,
-        children: item.quantity_treEm,
+        name: item.tour_id.name, // BookingCompleted sẽ map name -> title
+        adults: item.quantity_nguoiLon, // BookingCompleted sẽ map adults -> quantityAdult
+        children: item.quantity_treEm, // BookingCompleted sẽ map children -> quantityChild
         travelDate: new Date(item.travel_date).toLocaleDateString("vi-VN"),
         bookingId: item._id,
-        price: item.totalPrice,
+        price: displayPrice, // Luôn dùng giá đã tính toán
+        voucherCode: item.voucherCode || item.voucher_id?.code || null,
+        discountAmount: item.discountAmount || item.discount || 0,
+        originalPrice:
+          item.originalPrice || item.price || item.totalPrice || displayPrice,
       };
 
       // Chuẩn bị các tham số để điều hướng đến màn hình thanh toán
       const checkoutParams = {
-        totalPrice: item.totalPrice.toString(),
+        totalPrice: displayPrice.toString(), // Luôn dùng giá đã tính toán
         items: JSON.stringify([checkoutItem]), // Luôn gửi dưới dạng một mảng
         bookingId: item._id,
         fullName:
@@ -119,18 +141,25 @@ export default function TripItem({ item }) {
         phone: item.phone || loggedInUser.phone,
         buyerAddress: loggedInUser.address || "Chưa có địa chỉ",
         fromTicketPage: "true", // Flag để biết đây là booking từ trang vé
+        voucherCode: checkoutItem.voucherCode,
+        discountAmount: checkoutItem.discountAmount,
+        originalPrice: checkoutItem.originalPrice,
       };
 
+      console.log(">>> [TRIP ITEM] Checkout item prepared:", checkoutItem);
+      console.log(">>> [TRIP ITEM] Checkout params:", checkoutParams);
+
       router.push({
-        pathname: "/BookingCompleted",
+        pathname: "/(stack)/BookingCompleted",
         params: checkoutParams,
       });
     } catch (error) {
       console.error("Lỗi khi chuẩn bị thanh toán:", error);
-      Alert.alert(
-        "Đã xảy ra lỗi",
-        "Không thể tiến hành thanh toán. Vui lòng thử lại."
-      );
+      Toast.show({
+        type: "error",
+        text1: "Đã xảy ra lỗi",
+        text2: "Không thể tiến hành thanh toán. Vui lòng thử lại.",
+      });
     } finally {
       setIsPaying(false);
     }
@@ -145,6 +174,11 @@ export default function TripItem({ item }) {
       icon: "clock-outline",
     },
     paid: { text: "VÉ HỢP LỆ", color: "#7ED321", icon: "check-circle-outline" },
+    canceled: {
+      text: "ĐÃ HỦY",
+      color: "#EF4444",
+      icon: "close-circle-outline",
+    },
   };
 
   const currentStatus = statusMap[item.status] || {
@@ -208,7 +242,8 @@ export default function TripItem({ item }) {
           <DetailItem
             icon="cash-multiple"
             label="Tổng chi phí"
-            value={formatCurrency(item.totalPrice)}
+            value={formatCurrency(displayPrice)}
+            restored={item.restoredPrice || item.calculatedPrice} // Indicator if price was restored or calculated
           />
         </View>
 
@@ -232,8 +267,27 @@ export default function TripItem({ item }) {
               </Text>
               <Ionicons name="card-outline" size={22} color="#fff" />
             </TouchableOpacity>
+          ) : item.status === "canceled" ? (
+            // Nếu đã hủy: Hiện nút "Đặt lại" và điều hướng sang chi tiết tour
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                { backgroundColor: currentStatus.color },
+              ]}
+              onPress={() => {
+                router.push({
+                  pathname: "/(stack)/trip-detail/[id]",
+                  params: {
+                    id: item?.tour_id?._id || item?.tour_id,
+                  },
+                });
+              }}
+            >
+              <Text style={styles.actionButtonText}>Đặt lại</Text>
+              <Ionicons name="refresh" size={22} color="#fff" />
+            </TouchableOpacity>
           ) : (
-            // TRƯỜNG HỢP KHÁC: Hiển thị nút "Gợi ý lịch trình" và mã QR
+            // Trường hợp khác: Hiển thị nút "Gợi ý lịch trình" và mã QR
             <>
               <TouchableOpacity
                 style={[
@@ -370,5 +424,10 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.7,
+  },
+  restoredIndicator: {
+    color: "#4A90E2",
+    fontSize: 14,
+    fontWeight: "bold",
   },
 });

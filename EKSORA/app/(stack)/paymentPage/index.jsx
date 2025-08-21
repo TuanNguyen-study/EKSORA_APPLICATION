@@ -1,8 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Alert,
   Dimensions,
   FlatList,
   PanResponder,
@@ -14,10 +13,13 @@ import {
   View,
 } from "react-native";
 import { useSelector } from "react-redux";
+import { Ionicons } from "@expo/vector-icons";
+import VoucherModal from "../Voucher/components/VoucherModal";
 import AxiosInstance from "../../../API/services/AxiosInstance";
-import { createBooking } from "../../../API/services/booking";
+import { createBooking, getBookingById } from "../../../API/services/booking";
 import { COLORS } from "../../../constants/colors";
 import { useCart } from "../../../store/CartContext";
+import Toast from "react-native-toast-message";
 
 // --- IMPORT CÁC COMPONENT CON ---
 import OrderSummaryCard from "./components/OrderSummaryCard";
@@ -28,7 +30,6 @@ import PaymentMethodItem from "./components/PaymentMethodItem";
 const paymentMethods = [
   { id: "Payos", label: "Ví PayOS", icon: "wallet-outline" },
   { id: "ZaloPay", label: "Ví ZaloPay", icon: "bank-outline" },
-
 ];
 
 // --- COMPONENT FOOTER  ---
@@ -68,14 +69,23 @@ const PaymentFooter = ({ totalAmount, onPayPress, isProcessing, styles }) => {
 
 // --- COMPONENT CHÍNH ---
 export default function PaymentPage() {
+  // Voucher state
+  const [isVoucherModalVisible, setVoucherModalVisible] = useState(false);
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
   const router = useRouter();
   const params = useLocalSearchParams();
   const loggedInUser = useSelector((state) => state.auth.user);
   const { clearCart } = useCart();
 
-  // Mặc định chọn PayOS
+  // States for payment
   const [selectedMethod, setSelectedMethod] = useState(paymentMethods[0].id);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // States for booking data
+  const [displayItems, setDisplayItems] = useState([]);
+  const [finalTotalPrice, setFinalTotalPrice] = useState(0);
+  const [orderDescription, setOrderDescription] = useState("EKSORA thanh toán");
 
   const needCreateBooking = params.needCreateBooking === "true";
 
@@ -154,45 +164,41 @@ export default function PaymentPage() {
   const handleBackPress = async () => {
     // If user is processing payment, show confirmation
     if (isProcessing) {
-      Alert.alert(
-        "Hủy thanh toán?",
-        "Bạn có chắc chắn muốn hủy quá trình thanh toán hiện tại không?",
-        [
-          { text: "Tiếp tục thanh toán", style: "cancel" },
-          {
-            text: "Hủy thanh toán",
-            style: "destructive",
-            onPress: async () => {
-              try {
-                // Try to get the current payment ID to cancel it
-                const currentPaymentId =
-                  await AsyncStorage.getItem("CURRENT_PAYMENT_ID");
-                const pendingBookingId =
-                  await AsyncStorage.getItem("PENDING_BOOKING_ID");
+      Toast.show({
+        type: "info",
+        text1: "Hủy thanh toán?",
+        text2: "Bạn có chắc chắn muốn hủy quá trình thanh toán hiện tại không?",
+        onPress: async () => {
+          try {
+            // Try to get the current payment ID to cancel it
+            const currentPaymentId =
+              await AsyncStorage.getItem("CURRENT_PAYMENT_ID");
+            const pendingBookingId =
+              await AsyncStorage.getItem("PENDING_BOOKING_ID");
 
-                const paymentIdToCancel = currentPaymentId || pendingBookingId;
-                if (paymentIdToCancel) {
-                  await cancelPaymentLink(paymentIdToCancel);
-                  // Clean up stored payment IDs
-                  await AsyncStorage.removeItem("CURRENT_PAYMENT_ID");
-                  await AsyncStorage.removeItem("PENDING_BOOKING_ID");
-                }
+            const paymentIdToCancel = currentPaymentId || pendingBookingId;
+            if (paymentIdToCancel) {
+              await cancelPaymentLink(paymentIdToCancel);
+              // Clean up stored payment IDs
+              await AsyncStorage.removeItem("CURRENT_PAYMENT_ID");
+              await AsyncStorage.removeItem("PENDING_BOOKING_ID");
+            }
 
-                // Reset processing state and go back
-                setIsProcessing(false);
-                router.back();
-              } catch (error) {
-                console.error(
-                  ">>> [PAYMENT] Error during cancellation:",
-                  error
-                );
-                setIsProcessing(false);
-                router.back();
-              }
-            },
-          },
-        ]
-      );
+            // Reset processing state and go back
+            setIsProcessing(false);
+            router.back();
+          } catch (error) {
+            console.error(">>> [PAYMENT] Error during cancellation:", error);
+            setIsProcessing(false);
+            router.back();
+          }
+        },
+        autoHide: false,
+        props: {
+          confirmText: "Hủy thanh toán",
+          cancelText: "Tiếp tục thanh toán",
+        },
+      });
       return;
     }
 
@@ -200,47 +206,138 @@ export default function PaymentPage() {
     router.back();
   };
 
-  // --- LOGIC VÀ STATE  ---
-  const { displayItems, finalTotalPrice, orderDescription } = useMemo(() => {
-    // TRƯỜNG HỢP 1: Dữ liệu từ Giỏ hàng
-    if (params.items && typeof params.items === "string") {
+  // --- FETCH BOOKING DATA  ---
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchBookingDetail = async () => {
+      setIsLoading(true);
       try {
-        const parsedItems = JSON.parse(params.items);
-        return {
-          displayItems: parsedItems,
-          finalTotalPrice: Number(params.totalPrice),
-          orderDescription: `EKSORA thanh toán`,
-        };
-      } catch (e) {
-        console.error("Lỗi parse JSON từ giỏ hàng:", e);
-        return {
-          displayItems: [],
-          finalTotalPrice: 0,
-          orderDescription: "Lỗi đơn hàng",
-        };
+        if (params.fromTicketPage === "true" && params.bookingId) {
+          console.log(
+            ">>> [PAYMENT] Fetching booking details for ID:",
+            params.bookingId
+          );
+          const token = await AsyncStorage.getItem("ACCESS_TOKEN");
+          const bookingRes = await getBookingById(params.bookingId, token);
+
+          if (!isMounted) return;
+
+          console.log(">>> [PAYMENT] Booking response:", bookingRes);
+          const bookingDetail = bookingRes.booking || bookingRes;
+
+          if (bookingDetail) {
+            // Ensure we have the tour data
+            if (
+              !bookingDetail.tour_id ||
+              typeof bookingDetail.tour_id === "string"
+            ) {
+              throw new Error("Booking data missing tour details");
+            }
+
+            // Format the booking data for display
+            const formattedItem = {
+              id: bookingDetail._id || bookingDetail.id,
+              title: bookingDetail.tour_id.name,
+              tourId: bookingDetail.tour_id._id,
+              travelDate: new Date(
+                bookingDetail.travel_date
+              ).toLocaleDateString("vi-VN"),
+              quantityAdult: bookingDetail.quantity_nguoiLon,
+              quantityChild: bookingDetail.quantity_treEm || 0,
+              totalPrice: bookingDetail.totalPrice,
+              // Add additional fields that might be needed for payment
+              tour_id: bookingDetail.tour_id,
+              status: bookingDetail.status,
+              booking_date: bookingDetail.booking_date,
+              user_id: bookingDetail.user_id,
+              fullName: bookingDetail.fullName,
+              email: bookingDetail.email,
+              phone: bookingDetail.phone,
+            };
+
+            console.log(">>> [PAYMENT] Formatted booking item:", formattedItem);
+            setDisplayItems([formattedItem]);
+            setFinalTotalPrice(Number(bookingDetail.totalPrice));
+            setOrderDescription("EKSORA thanh toán");
+          } else {
+            throw new Error("Không tìm thấy thông tin đặt vé");
+          }
+        } else if (params.items && typeof params.items === "string") {
+          // Direct booking từ cart hoặc booking thường
+          try {
+            const parsedItems = JSON.parse(params.items);
+            const calculatedTotal = Number(params.totalPrice) || 0;
+            setDisplayItems(parsedItems);
+            setFinalTotalPrice(calculatedTotal);
+            setOrderDescription("EKSORA thanh toán");
+          } catch (e) {
+            console.error(">>> [PAYMENT] Error parsing items:", e);
+            throw new Error("Lỗi xử lý thông tin đơn hàng");
+          }
+        } else {
+          // Single item booking
+          const singleItem = {
+            id: params.bookingId,
+            title: params.title,
+            travelDate: params.travelDate,
+            quantityAdult: Number(params.quantityAdult) || 0,
+            quantityChild: Number(params.quantityChild) || 0,
+          };
+          setDisplayItems([singleItem]);
+          setFinalTotalPrice(Number(params.totalPrice) || 0);
+          setOrderDescription("EKSORA thanh toán");
+        }
+      } catch (error) {
+        console.error(">>> [PAYMENT] Error in fetchBookingDetail:", error);
+        Toast.show({
+          type: "error",
+          text1: "Lỗi",
+          text2: error.message || "Không thể lấy thông tin đơn hàng",
+        });
+        setDisplayItems([]);
+        setFinalTotalPrice(0);
+        setOrderDescription("Lỗi đơn hàng");
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
-    }
-    // TRƯỜNG HỢP 2: Dữ liệu từ Đặt ngay
-    const singleItem = {
-      id: params.bookingId,
-      title: params.title,
-      travelDate: params.travelDate,
-      quantityAdult: params.quantityAdult,
-      quantityChild: params.quantityChild,
     };
-    return {
-      displayItems: [singleItem],
-      finalTotalPrice: Number(params.totalPrice),
-      orderDescription: `EKSORA thanh toán  '}`,
-    }
-  }, [params]);
+
+    fetchBookingDetail();
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    params.fromTicketPage,
+    params.bookingId,
+    params.items,
+    params.title,
+    params.totalPrice,
+  ]);
+
+  // Tính lại tổng tiền nếu có voucher
+  // Tính chiết khấu theo phần trăm hoặc số tiền cố định
+  let discountAmount = 0;
+  if (
+    appliedVoucher &&
+    appliedVoucher.voucher_id &&
+    appliedVoucher.voucher_id.discount
+  ) {
+    // discount là phần trăm giảm giá
+    discountAmount = Math.round(
+      (finalTotalPrice * appliedVoucher.voucher_id.discount) / 100
+    );
+  }
+  const totalToPay = Math.max(0, finalTotalPrice - discountAmount);
 
   useEffect(() => {
     if (!params.fullName || !params.email || !params.phone) {
-      Alert.alert(
-        "Thiếu thông tin",
-        "Không tìm thấy thông tin liên lạc. Vui lòng quay lại và thử lại."
-      );
+      Toast.show({
+        type: "error",
+        text1: "Thiếu thông tin",
+        text2:
+          "Không tìm thấy thông tin liên lạc. Vui lòng quay lại và thử lại.",
+      });
     }
   }, [params]);
 
@@ -251,64 +348,127 @@ export default function PaymentPage() {
 
   const handlePayment = async () => {
     if (!params.fullName || !params.email || !params.phone) {
-      Alert.alert("Lỗi", "Thiếu thông tin liên lạc. Vui lòng thử lại.");
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Thiếu thông tin liên lạc. Vui lòng thử lại.",
+      });
       return;
     }
 
     // Kiểm tra xem có phải là direct booking không
     const isDirectBooking = params.needCreateBooking === "true";
 
-    let bookingId;
+    let bookingId = null;
+    let bookingData = null;
     if (isDirectBooking) {
       try {
-        // Tạo booking trước khi tạo link thanh toán
-        let bookingData;
+        // Xử lý payment cho booking đã tồn tại (từ TripItem)
+        if (params.fromTicketPage === "true") {
+          console.log(">>> [PAYMENT] Processing existing booking payment");
+          bookingId = params.bookingId;
+          if (!bookingId) {
+            throw new Error("Không tìm thấy mã đơn hàng");
+          }
+          console.log(">>> [PAYMENT] Using existing booking:", bookingId);
 
-        // Handle cart items
-        if (params.fromCart === "true" && params.items) {
+          // Không cần tạo booking mới, lấy thông tin từ displayItems đã có
+          const currentBooking = displayItems[0];
+          if (!currentBooking) {
+            throw new Error("Không tìm thấy thông tin đơn hàng");
+          }
+          bookingData = currentBooking;
+        }
+        // Xử lý payment từ giỏ hàng
+        else if (params.fromCart === "true" && params.items) {
           try {
             const cartItems = JSON.parse(params.items);
-            // Assuming cartItems is an array, take the first item for now
-            // In the future, you might want to create multiple bookings
             bookingData = cartItems[0];
           } catch (parseError) {
-            console.error(">>> [PAYMENT] Error parsing cart items:", parseError);
+            console.error(
+              ">>> [PAYMENT] Error parsing cart items:",
+              parseError
+            );
             throw new Error("Dữ liệu giỏ hàng không hợp lệ");
           }
         }
-        // Handle direct booking data
+        // Xử lý direct booking
         else if (params.bookingData) {
           try {
             bookingData = JSON.parse(params.bookingData);
           } catch (parseError) {
-            console.error(">>> [PAYMENT] Error parsing bookingData:", parseError);
+            console.error(
+              ">>> [PAYMENT] Error parsing bookingData:",
+              parseError
+            );
             throw new Error("Dữ liệu đơn hàng không hợp lệ");
           }
         } else {
           throw new Error("Không tìm thấy dữ liệu đơn hàng");
         }
 
-        // Validate required fields
-        const requiredFields = ['user_id', 'tour_id', 'travel_date', 'quantity_nguoiLon', 'totalPrice'];
-        const missingFields = requiredFields.filter(field => !bookingData[field]);
+        // Chỉ validate required fields khi không phải fromTicketPage
+        if (!params.fromTicketPage) {
+          console.log(">>> [PAYMENT] Validating new booking data");
+          const requiredFields = [
+            "user_id",
+            "tour_id",
+            "travel_date",
+            "quantity_nguoiLon",
+            "totalPrice",
+          ];
+          const missingFields = requiredFields.filter(
+            (field) => !bookingData[field]
+          );
 
-        if (missingFields.length > 0) {
-          console.error(">>> [PAYMENT] Missing fields in data:", bookingData);
-          throw new Error(`Thiếu thông tin bắt buộc: ${missingFields.join(', ')}`);
+          if (missingFields.length > 0) {
+            console.error(">>> [PAYMENT] Missing fields in data:", bookingData);
+            throw new Error(
+              `Thiếu thông tin bắt buộc: ${missingFields.join(", ")}`
+            );
+          }
+
+          // Ensure numeric fields are numbers
+          bookingData.quantity_nguoiLon = Number(bookingData.quantity_nguoiLon);
+          bookingData.quantity_treEm = bookingData.quantity_treEm
+            ? Number(bookingData.quantity_treEm)
+            : 0;
+          bookingData.totalPrice = Number(totalToPay);
+        } else {
+          // Với fromTicketPage, chỉ cần validate booking_id và totalPrice
+          console.log(
+            ">>> [PAYMENT] Processing existing booking:",
+            params.bookingId
+          );
+          if (!params.bookingId) {
+            throw new Error("Thiếu mã đơn hàng");
+          }
+          if (!params.totalPrice) {
+            throw new Error("Thiếu thông tin tổng tiền");
+          }
+        }
+        if (appliedVoucher && appliedVoucher._id) {
+          bookingData.voucher_id = appliedVoucher._id;
         }
 
-        // Ensure numeric fields are numbers
-        bookingData.quantity_nguoiLon = Number(bookingData.quantity_nguoiLon);
-        // Make quantity_treEm optional, default to 0 if not provided
-        bookingData.quantity_treEm = bookingData.quantity_treEm ? Number(bookingData.quantity_treEm) : 0;
-        bookingData.totalPrice = Number(bookingData.totalPrice);
-
-        // Add default status if not present
-        if (!bookingData.status) {
-          bookingData.status = 'pending';
+        // CRITICAL: Validate finalTotalPrice before saving
+        if (!finalTotalPrice || finalTotalPrice <= 0) {
+          console.error(
+            ">>> [PAYMENT] CRITICAL ERROR: Invalid finalTotalPrice:",
+            finalTotalPrice,
+            "from params.totalPrice:",
+            params.totalPrice
+          );
+          throw new Error(
+            `Tổng tiền không hợp lệ: ${finalTotalPrice}. Vui lòng thử lại.`
+          );
         }
 
-        console.log(">>> [PAYMENT] Creating booking with data:", bookingData);
+        const tourId = bookingData.tour_id || "Unknown";
+        const userId = bookingData.user_id || "Unknown";
+        console.log(
+          `>>> [PAYMENT] Saving booking: User=${userId}, Tour=${tourId}, totalPrice=${finalTotalPrice}`
+        );
 
         // Đảm bảo có token cho request
         const token = await AsyncStorage.getItem("ACCESS_TOKEN");
@@ -317,49 +477,109 @@ export default function PaymentPage() {
         }
 
         // Thêm headers vào request
-        AxiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        AxiosInstance.defaults.headers.common["Authorization"] =
+          `Bearer ${token}`;
 
-        const response = await createBooking(bookingData);
-        console.log(">>> [PAYMENT] Booking response:", response);
+        // Tạo booking mới nếu không phải fromTicketPage
+        if (!params.fromTicketPage) {
+          // Add default status if not present
+          if (!bookingData.status) {
+            bookingData.status = "pending";
+          }
 
-        if (!response) {
-          throw new Error("Không nhận được phản hồi từ server");
+          console.log(
+            ">>> [PAYMENT] Creating new booking with data:",
+            bookingData
+          );
+          const response = await createBooking(bookingData);
+          console.log(">>> [PAYMENT] Booking response:", response);
+
+          if (!response) {
+            throw new Error("Không nhận được phản hồi từ server");
+          }
+
+          if (!response.booking || !response.booking._id) {
+            console.error(
+              ">>> [PAYMENT] Invalid response structure:",
+              response
+            );
+            throw new Error(
+              "Cấu trúc phản hồi không hợp lệ - thiếu booking._id"
+            );
+          }
+
+          bookingId = response.booking._id;
+          console.log(">>> [PAYMENT] Created new booking:", bookingId);
+        } else {
+          // Sử dụng bookingId từ params cho fromTicketPage
+          bookingId = params.bookingId;
+          console.log(">>> [PAYMENT] Using existing booking:", bookingId);
         }
 
-        if (!response._id) {
-          console.error(">>> [PAYMENT] Invalid response structure:", response);
-          throw new Error("Cấu trúc phản hồi không hợp lệ - thiếu _id");
+        // CRITICAL: Create backup with bookingId after successful booking creation
+        try {
+          await AsyncStorage.setItem(
+            `BACKUP_TOTALPRICE_${bookingId}`,
+            finalTotalPrice.toString()
+          );
+          console.log(
+            `>>> [PAYMENT] Created backup totalPrice for booking ${bookingId}: ${finalTotalPrice}`
+          );
+        } catch (backupError) {
+          console.warn(
+            `>>> [PAYMENT] Failed to create backup for booking ${bookingId}:`,
+            backupError
+          );
         }
-
-        bookingId = response._id;
-        console.log(">>> [PAYMENT] Created booking:", bookingId);
 
         // Lưu bookingId tạm thời
         await AsyncStorage.setItem("PENDING_BOOKING_ID", bookingId);
-
       } catch (error) {
         console.error(">>> [PAYMENT] Error creating booking:", error);
-        Alert.alert("Lỗi", error.message || "Không thể tạo đơn hàng. Vui lòng thử lại.");
+        Toast.show({
+          type: "error",
+          text1: "Lỗi",
+          text2: error.message || "Không thể tạo đơn hàng. Vui lòng thử lại.",
+        });
         return;
       }
+    } else if (params.fromTicketPage === "true") {
+      // Luồng thanh toán từ trang TripItem
+      console.log(">>> [PAYMENT] Processing payment from TripItem");
+      bookingId = params.bookingId;
+      if (!bookingId) {
+        Toast.show({
+          type: "error",
+          text1: "Lỗi",
+          text2: "Không tìm thấy mã đơn hàng",
+        });
+        return;
+      }
+      console.log(">>> [PAYMENT] Using existing booking:", bookingId);
     } else {
       // Lấy bookingId từ params hoặc displayItems cho các luồng khác
       bookingId = params.bookingId || displayItems[0]?.id;
       if (!bookingId) {
-        Alert.alert('Lỗi', 'Không tìm thấy mã đơn hàng.');
+        Toast.show({
+          type: "error",
+          text1: "Lỗi",
+          text2: "Không tìm thấy mã đơn hàng.",
+        });
         return;
       }
     }
 
     const payload = {
-      amount: finalTotalPrice,
+      amount:
+        params.fromTicketPage === "true"
+          ? Number(params.totalPrice)
+          : totalToPay,
       description: orderDescription,
       buyerName: params.fullName,
       buyerEmail: params.email,
       buyerPhone: params.phone,
-      booking_id: bookingId,
+      booking_id: bookingId, // Use the bookingId that was either created or retrieved
     };
-
     try {
       let endpoint = "";
       if (selectedMethod === "Payos") {
@@ -372,8 +592,8 @@ export default function PaymentPage() {
       console.log(">>> [PAYMENT REQUEST] Payload:", payload);
 
       const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -386,23 +606,25 @@ export default function PaymentPage() {
 
       // Gom tất cả các khả năng URL trả về (PayOS, ZaloPay)
       const checkoutUrl =
-        data.url ||
-        data.order_url ||
-        data.zalo_url ||
-        data.raw?.order_url;
+        data.url || data.order_url || data.zalo_url || data.raw?.order_url;
 
       const appTransId = data.order_code;
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || 'Lỗi không xác định từ server.');
+        throw new Error(
+          data.message || data.error || "Lỗi không xác định từ server."
+        );
       }
 
       if (checkoutUrl) {
         // Clear cart nếu cần
         if (params.fromCart === "true" && params.items) {
           try {
+            console.log(">>> [PAYMENT] Attempting to clear cart...");
             await clearCart();
-            console.log(">>> [PAYMENT] Successfully cleared cart after payment");
+            console.log(
+              ">>> [PAYMENT] Successfully cleared cart after payment"
+            );
           } catch (clearError) {
             console.error(">>> [PAYMENT] Error clearing cart:", clearError);
           }
@@ -431,12 +653,13 @@ export default function PaymentPage() {
 
     } catch (err) {
       console.error(">>> [PAYMENT ERROR]:", err);
-      Alert.alert('Lỗi tạo thanh toán', err.message);
+      Toast.show({
+        type: "error",
+        text1: "Lỗi tạo thanh toán",
+        text2: err.message,
+      });
     }
   };
-
-
-
 
   const contactInfo = {
     fullName: params.fullName,
@@ -458,8 +681,44 @@ export default function PaymentPage() {
             items={displayItems}
             contactInfo={contactInfo}
             styles={styles}
+            discountAmount={discountAmount}
+            totalToPay={totalToPay}
           />
 
+          {/* Ẩn phần chọn ưu đãi nếu fromTicketPage=true */}
+          {params.fromTicketPage !== "true" && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Ưu đãi</Text>
+              <TouchableOpacity
+                style={{
+                  padding: 12,
+                  borderRadius: 8,
+                  backgroundColor: "#F1F3F5",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginTop: 8,
+                }}
+                onPress={() => setVoucherModalVisible(true)}
+              >
+                {appliedVoucher ? (
+                  <Text
+                    style={{ color: "#00639B", fontWeight: "bold", flex: 1 }}
+                  >
+                    {appliedVoucher.voucher_id.code} - Giảm{" "}
+                    {appliedVoucher.voucher_id.discount.toLocaleString("vi-VN")}
+                    %
+                  </Text>
+                ) : (
+                  <Text style={{ color: "#888", flex: 1 }}>
+                    Chọn hoặc nhập mã ưu đãi
+                  </Text>
+                )}
+                <Ionicons name="pricetag-outline" size={20} color="#00639B" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Payment method section */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Chọn phương thức thanh toán</Text>
             <FlatList
@@ -468,7 +727,6 @@ export default function PaymentPage() {
                 <PaymentMethodItem
                   item={item}
                   isSelected={selectedMethod === item.id}
-                  // --- THAY ĐỔI: Sử dụng hàm xử lý mới ---
                   onSelect={() => handleSelectMethod(item.id)}
                   styles={styles}
                 />
@@ -480,14 +738,23 @@ export default function PaymentPage() {
         </ScrollView>
       </View>
       <PaymentFooter
-        totalAmount={finalTotalPrice}
+        totalAmount={totalToPay}
         onPayPress={handlePayment}
         isProcessing={isProcessing}
         styles={styles}
       />
+      {/* VoucherModal */}
+      <VoucherModal
+        visible={isVoucherModalVisible}
+        onClose={() => setVoucherModalVisible(false)}
+        onApplyVoucher={setAppliedVoucher}
+        selectedVoucher={appliedVoucher}
+      />
     </SafeAreaView>
   );
-} // --- STYLESHEET ĐÃ CẬP NHẬT ---
+}
+
+// --- STYLESHEET ĐÃ CẬP NHẬT ---
 const styles = StyleSheet.create({
   // --- Layout chung ---
   safeArea: {

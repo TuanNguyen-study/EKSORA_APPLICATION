@@ -2,7 +2,6 @@ import { FontAwesome } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
 import {
   StyleSheet,
-  Alert,
   Platform,
   Text,
   TouchableOpacity,
@@ -14,11 +13,12 @@ import { auth } from "../../../login/Component/facebooklogin/firebaseConfig";
 import * as Facebook from "expo-auth-session/providers/facebook";
 import { useRouter } from "expo-router";
 import useGoogleLogin from "../../../login/Component/googleLogin/GoogleLoginButton";
+import Toast from "react-native-toast-message";
 
 const BottomLoginPhone = () => {
   const [isChecked, setChecked] = useState(false);
-
   const router = useRouter();
+
   // Thiết lập Google Auth Request
   const { promptAsync: googleLogin, request: googleRequest } = useGoogleLogin();
   // Thiết lập Facebook Auth Request cho mobile
@@ -34,20 +34,31 @@ const BottomLoginPhone = () => {
         response.authentication?.access_token;
 
       if (!accessToken) {
-        console.error("Không lấy được token");
-        Alert.alert("Lỗi", "Không lấy được token Facebook");
+        Toast.show({
+          type: "error",
+          text1: "Lỗi",
+          text2: "Không lấy được token Facebook",
+        });
         return;
       }
 
       const credential = FacebookAuthProvider.credential(accessToken);
       signInWithCredential(auth, credential)
         .then(() => {
-          Alert.alert("Thành công", "Đăng nhập Facebook thành công!");
+          Toast.show({
+            type: "success",
+            text1: "Thành công",
+            text2: "Đăng nhập Facebook thành công!",
+          });
           router.replace("/(tabs)/home");
         })
         .catch((error) => {
           console.error("Lỗi đăng nhập Firebase:", error);
-          Alert.alert("Lỗi", `Đăng nhập thất bại: ${error.message}`);
+          Toast.show({
+            type: "error",
+            text1: "Lỗi",
+            text2: `Đăng nhập thất bại: ${error.message}`,
+          });
         });
     }
   }, [response]);
@@ -56,20 +67,22 @@ const BottomLoginPhone = () => {
   const handleFacebookLogin = async () => {
     try {
       if (Platform.OS === "web") {
-        // Sử dụng phương thức web
-        // await loginWithFacebook();
         const result = await promptAsync();
         if (result?.type === "success") {
           router.replace("/(tabs)/home");
         } else {
-          console.log("đăng nhập Facebook.");
+          console.log("Người dùng huỷ đăng nhập Facebook");
         }
       } else {
         promptAsync();
       }
     } catch (error) {
       console.error("Lỗi đăng nhập Facebook:", error);
-      Alert.alert("Lỗi", `Đăng nhập thất bại: ${error.message}`);
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: `Đăng nhập thất bại: ${error.message}`,
+      });
     }
   };
 
@@ -82,7 +95,11 @@ const BottomLoginPhone = () => {
       }
     } catch (error) {
       console.error("Lỗi đăng nhập Google:", error);
-      Alert.alert("Lỗi", "Đăng nhập Google thất bại");
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Đăng nhập Google thất bại",
+      });
     }
   };
 
@@ -97,7 +114,7 @@ const BottomLoginPhone = () => {
 
       <View style={styles.iconRow}>
         <TouchableOpacity
-          style={[styles.iconButton, { backgroundColor: "#ea4335" }]} 
+          style={[styles.iconButton, { backgroundColor: "#ea4335" }]}
           onPress={handleGoogleLogin}
           disabled={!googleRequest}
         >
@@ -119,16 +136,17 @@ const BottomLoginPhone = () => {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.otherOption}>Lựa chọn khác</Text>
+      {/* <Text style={styles.otherOption}>Lựa chọn khác</Text> */}
 
       <View style={styles.checkboxRow}>
-        {/* <CheckBox checked={isChecked} onChange={setChecked} /> */}
         <Text style={styles.terms}>
-          {" "}
           Bằng cách đăng ký hoặc đăng nhập, bạn đã hiểu và đồng ý với Điều Khoản
           Sử Dụng Chung và Chính Sách Bảo Mật của EKSORA
         </Text>
       </View>
+
+      {/* Toast để hiển thị thông báo */}
+      <Toast />
     </View>
   );
 };
@@ -161,12 +179,12 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   iconButton: {
-  width: 56,
-  height: 56,
-  borderRadius: 10,
-  justifyContent: 'center',
-  alignItems: 'center',
-},
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   otherOption: {
     textAlign: "center",
     marginVertical: 10,

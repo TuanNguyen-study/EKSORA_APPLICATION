@@ -1,17 +1,10 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  ActivityIndicator,
-  Text,
-  View,
-  BackHandler,
-  Alert,
-  PanResponder,
-  Dimensions,
-} from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
 import { useCart } from "../../../store/CartContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState, useRef } from "react";
+import Toast from "react-native-toast-message";
 
 export default function PaymentWebview() {
   const { checkoutUrl, needCreateBooking, paymentId } = useLocalSearchParams();
@@ -23,12 +16,12 @@ export default function PaymentWebview() {
   const hasProcessedSuccess = useRef(false);
   const webViewRef = useRef(null);
 
-  // Get screen width for swipe detection
-  const screenWidth = Dimensions.get("window").width;
-  const swipeThreshold = screenWidth * 0.25; // 25% of screen width
-  const swipeVelocityThreshold = 0.3;
+  console.log(
+    ">>> [PAYMENT_WEBVIEW] Starting payment webview for paymentId:",
+    paymentId
+  );
 
-  // Function to cancel payment link
+  // Function to cancel payment link - kept for potential manual use, but removed auto-triggers
   const cancelPaymentLink = async (paymentId) => {
     try {
       const response = await fetch(
@@ -41,9 +34,7 @@ export default function PaymentWebview() {
       );
 
       if (response.ok) {
-        // console.log(
-        //   ">>> [PAYMENT_WEBVIEW] Payment link canceled successfully"
-        // );
+        console.log(">>> [PAYMENT_WEBVIEW] Payment link canceled successfully");
       } else {
         // console.warn(
         //   ">>> [PAYMENT_WEBVIEW] Failed to cancel payment link:",
@@ -58,96 +49,58 @@ export default function PaymentWebview() {
     }
   };
 
-  // Handle cancel payment action
+  // DISABLED: Handle cancel payment action - removed to prevent totalPrice reset issues
+  // Auto-cancellation on back/swipe gestures was causing booking data to be lost
+  /*
   const handleCancelPayment = async () => {
-    Alert.alert(
-      "Hủy thanh toán?",
-      "Bạn có chắc chắn muốn hủy thanh toán và quay lại không?",
-      [
-        { text: "Tiếp tục thanh toán", style: "cancel", onPress: () => null },
-        {
-          text: "Hủy thanh toán",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // Try to cancel the current payment
-              const currentPaymentId =
-                await AsyncStorage.getItem("CURRENT_PAYMENT_ID");
-              const pendingBookingId =
-                await AsyncStorage.getItem("PENDING_BOOKING_ID");
+    // Show toast hỏi người dùng trước khi hủy
+    Toast.show({
+      type: "info", 
+      text1: "Hủy thanh toán?",
+      text2: "Vuốt sang phải hoặc bấm nút Back để xác nhận",
+    });
 
-              const paymentIdToCancel =
-                paymentId || currentPaymentId || pendingBookingId;
-              if (paymentIdToCancel) {
-                await cancelPaymentLink(paymentIdToCancel);
-                // Clean up stored payment IDs
-                await AsyncStorage.removeItem("CURRENT_PAYMENT_ID");
-                await AsyncStorage.removeItem("PENDING_BOOKING_ID");
-              }
-              router.replace("cancel");
-            } catch (error) {
-              // console.error(
-              //   ">>> [PAYMENT_WEBVIEW] Error during cancellation:",
-              //   error
-              // );
-              router.replace("cancel");
-            }
-          },
-        },
-      ]
-    );
-  };
+    try {
+      // ta xử lý trực tiếp (nếu chắc chắn hủy luôn)
+      const currentPaymentId = await AsyncStorage.getItem("CURRENT_PAYMENT_ID");
+      const pendingBookingId = await AsyncStorage.getItem("PENDING_BOOKING_ID");
 
-  // PanResponder for swipe gesture detection
-  const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (evt, gestureState) => {
-      // Only handle horizontal swipes that are significant
-      const isHorizontalSwipe =
-        Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-      const isSignificantDistance = Math.abs(gestureState.dx) > 30;
-      return isHorizontalSwipe && isSignificantDistance;
-    },
-    onPanResponderRelease: (evt, gestureState) => {
-      const { dx, dy, vx } = gestureState;
-      // console.log(
-      //   ">>> [PAYMENT_WEBVIEW] Swipe ended - dx:",
-      //   dx,
-      //   "dy:",
-      //   dy,
-      //   "vx:",
-      //   vx
-      // );
-
-      // Check for left-to-right swipe (going back)
-      const isRightSwipe = dx > 0;
-      const hasMinimumDistance = Math.abs(dx) > swipeThreshold;
-      const hasGoodVelocity = Math.abs(vx) > swipeVelocityThreshold;
-      const isMainlyHorizontal = Math.abs(dy) < Math.abs(dx) * 0.5;
-
-      if (
-        isRightSwipe &&
-        (hasMinimumDistance || hasGoodVelocity) &&
-        isMainlyHorizontal
-      ) {
-        // console.log(">>> [PAYMENT_WEBVIEW] Valid swipe back gesture detected");
-        handleCancelPayment();
+      const paymentIdToCancel = paymentId || currentPaymentId || pendingBookingId;
+      if (paymentIdToCancel) {
+        await cancelPaymentLink(paymentIdToCancel);
+        // Clean up stored payment IDs
+        await AsyncStorage.removeItem("CURRENT_PAYMENT_ID");
+        await AsyncStorage.removeItem("PENDING_BOOKING_ID");
       }
-    },
-  });
 
-  // Handle hardware back button on Android
+      Toast.show({
+        type: "success",
+        text1: "Đã hủy thanh toán",
+      });
+
+      router.replace("cancel");
+    } catch (error) {
+      console.error(">>> [PAYMENT_WEBVIEW] Error during cancellation:", error);
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Không thể hủy thanh toán",
+      });
+      router.replace("cancel");
+    }
+  };
+  */
+
+  // Removed PanResponder swipe gesture cancellation to prevent totalPrice reset issues
+  // Users can still cancel via webview interface if needed
+
+  // Handle hardware back button on Android - Allow normal navigation
   useEffect(() => {
-    const backAction = () => {
-      handleCancelPayment();
-      return true; // Prevent default back action
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      backAction
+    // Removed automatic cancellation logic to prevent totalPrice reset issues
+    console.log(
+      ">>> [PAYMENT_WEBVIEW] Back button handler removed to preserve booking data"
     );
-    return () => backHandler.remove();
-  }, [router]);
+  }, []);
 
   if (!checkoutUrl) {
     return (
@@ -232,7 +185,7 @@ export default function PaymentWebview() {
   };
 
   return (
-    <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+    <View style={{ flex: 1 }}>
       <WebView
         ref={webViewRef}
         source={{ uri: checkoutUrl }}

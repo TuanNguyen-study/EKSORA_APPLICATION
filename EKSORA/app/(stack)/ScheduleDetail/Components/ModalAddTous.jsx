@@ -7,11 +7,11 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getAllToursByLocation } from '../../../../API/services/serverCategories';
+import Toast from 'react-native-toast-message';
 
 const ModalAddTour = ({ visible, onClose, cateID, onAddTour, existingTourIds = [] }) => {
   const [tourList, setTourList] = useState([]);
@@ -30,7 +30,11 @@ const ModalAddTour = ({ visible, onClose, cateID, onAddTour, existingTourIds = [
       setTourList(filtered);
     } catch (err) {
       console.error('Lỗi khi gọi getToursByLocation:', err);
-      Alert.alert('Lỗi', 'Không thể tải danh sách tour.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể tải danh sách tour.',
+      }); 
     } finally {
       setLoading(false);
     }
@@ -52,7 +56,11 @@ const ModalAddTour = ({ visible, onClose, cateID, onAddTour, existingTourIds = [
       <TouchableOpacity
         onPress={() => {
           onAddTour({ ...item, isAdded: true });
-          Alert.alert('Thành công', 'Thêm tour vào lịch trình thành công!');
+          Toast.show({
+            type: 'success',
+            text1: 'Thành công',
+            text2: 'Thêm tour vào lịch trình thành công!',
+          });
         }}
         style={styles.addButton}
       >

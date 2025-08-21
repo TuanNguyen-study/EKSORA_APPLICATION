@@ -11,12 +11,12 @@ import {
   RefreshControl,
   Platform,
   Linking,
-  Alert,
 } from "react-native";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import QRCode from "react-native-qrcode-svg";
+import Toast from "react-native-toast-message";
 
 // --- Imports ---
 import {
@@ -75,14 +75,22 @@ const BookingDetailScreen = () => {
 
   const handleGetDirections = (location) => {
     if (!location) {
-      Alert.alert("Lỗi", "Không có thông tin địa điểm để chỉ đường.");
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Không có thông tin để chỉ đường.",
+      });
       return;
     }
     const encodedLocation = encodeURIComponent(location);
     const url = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
     Linking.openURL(url).catch((err) => {
       console.error("Không thể mở bản đồ:", err);
-      Alert.alert("Lỗi", "Không thể mở ứng dụng bản đồ.");
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Không thể mở ứng dụng bản đồ.",
+      });
     });
   };
 
@@ -99,6 +107,16 @@ const BookingDetailScreen = () => {
 
       const response = await getBookingById(bookingId, token);
       if (response?.booking) {
+        const bookingId =
+          response.booking.id || response.booking._id || "Unknown";
+        const tourId =
+          response.booking.tour_id?._id ||
+          response.booking.tour_id ||
+          "Unknown";
+        console.log(
+          `>>> [BOOKING_DETAIL] Loaded booking: ID=${bookingId}, Tour=${tourId}, totalPrice=${response.booking.totalPrice}, status=${response.booking.status}`
+        );
+
         setBooking(response.booking);
         setError(null);
       } else {
@@ -128,21 +146,22 @@ const BookingDetailScreen = () => {
       const token = await AsyncStorage.getItem("ACCESS_TOKEN");
       if (!token) throw new Error("Không tìm thấy token xác thực.");
       await cancelBookingById(bookingId, token);
-      Alert.alert("Thành công", "Đơn hàng của bạn đã được hủy.", [
-        {
-          text: "OK",
-          onPress: () => {
-            // Navigate back to trips page after successful cancellation
-            router.push("/(tabs)/trips");
-          },
-        },
-      ]);
+
+      Toast.show({
+        type: "success",
+        text1: "Thành công",
+        text2: "Đơn hàng của bạn đã được hủy.",
+      });
+
+      // Điều hướng về trang trips sau khi hủy thành công
+      router.replace("/(tabs)/trips");
     } catch (err) {
       console.error("Lỗi khi hủy đơn hàng:", err);
-      Alert.alert(
-        "Lỗi",
-        err.message || "Không thể hủy đơn hàng. Vui lòng thử lại."
-      );
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: err.message || "Không thể hủy đơn hàng. Vui lòng thử lại.",
+      });
     } finally {
       setIsCancelling(false);
       setCancelModalVisible(false);
@@ -187,10 +206,17 @@ const BookingDetailScreen = () => {
     quantity_nguoiLon,
     quantity_treEm,
     totalPrice,
+    discount,
+    voucherCode,
+    originalPrice,
     _id,
   } = booking;
   const statusInfo = getStatusInfo(status);
   const qrValue = _id;
+
+  // Calculate originalPrice if not available (for voucher display)
+  const calculatedOriginalPrice = originalPrice || totalPrice + (discount || 0);
+  const hasVoucherInfo = voucherCode && discount && discount > 0;
 
   return (
     <>
@@ -284,7 +310,37 @@ const BookingDetailScreen = () => {
                   value={formatPrice(tour.price_child * quantity_treEm)}
                 />
               )}
+
+              {/* Hiển thị thông tin voucher nếu có */}
+              {voucherCode && (
+                <InfoRow
+                  icon="ticket-percent-outline"
+                  label="Mã ưu đãi"
+                  value={voucherCode}
+                />
+              )}
+
               <View style={styles.divider} />
+
+              {/* Hiển thị giá gốc và chiết khấu nếu có voucher */}
+              {hasVoucherInfo && (
+                <>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.priceLabel}>Tạm tính</Text>
+                    <Text style={styles.priceValue}>
+                      {formatPrice(calculatedOriginalPrice)}
+                    </Text>
+                  </View>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.discountLabel}>Chiết khấu</Text>
+                    <Text style={styles.discountValue}>
+                      -{formatPrice(discount)}
+                    </Text>
+                  </View>
+                  <View style={styles.divider} />
+                </>
+              )}
+
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Tổng cộng</Text>
                 <Text style={styles.totalValue}>{formatPrice(totalPrice)}</Text>
@@ -294,7 +350,6 @@ const BookingDetailScreen = () => {
         </ScrollView>
 
         {/* --- THAY ĐỔI LOGIC  --- */}
-        {/* NÚT HỦY ĐƠN HÀNG - Chỉ hiển thị khi trạng thái không phải là 'paid' hoặc 'canceled' */}
         {status.toLowerCase() !== "paid" &&
           status.toLowerCase() !== "canceled" && (
             <View style={styles.cancelButtonContainer}>
@@ -551,6 +606,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginLeft: 10,
+  },
+  // Styles for price breakdown with voucher/discount info
+  priceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  priceLabel: {
+    fontSize: 14,
+    color: "#666",
+  },
+  priceValue: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
+  },
+  discountLabel: {
+    fontSize: 14,
+    color: "#E74C3C",
+  },
+  discountValue: {
+    fontSize: 14,
+    color: "#E74C3C",
+    fontWeight: "500",
   },
 });
 

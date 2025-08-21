@@ -4,8 +4,12 @@ import React from "react";
 import Header from "../../../components/offers/components/header";
 import Offer from "../../../components/offers/Offer";
 import Promotions from "../../../components/offers/components/Promotion";
+import { useBackToHome } from "../../../hooks/useBackToHome";
 
 const IndexScreen = () => {
+  // Sử dụng hook để xử lý back gesture về home
+  useBackToHome("offers");
+
   // Tạo một mảng chứa các "phần" của màn hình (không bao gồm header).
   const SCREEN_COMPONENTS = [
     { id: "offer", Component: Offer },

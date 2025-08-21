@@ -2,7 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { getAllToursByLocation, getToursByLocation } from '../../../API/services/serverCategories';
 import { getUserBookings } from '../../../API/services/servicesUser';
 import ModalAddTour from '../ScheduleDetail/Components/ModalAddTous';
@@ -119,7 +120,11 @@ const Index = () => {
   const handleRemovePlace = async (index) => {
     const item = data[index];
     if (item.isBooked) {
-      Alert.alert('Thông báo', 'Không thể xóa tour đã đặt!');
+      Toast.show({
+        type: 'info',
+        text1: 'Thông báo',
+        text2: 'Không thể xóa tour đã đặt!'
+      });
       return;
     }
 
@@ -202,7 +207,11 @@ const Index = () => {
         try {
           const userId = await AsyncStorage.getItem('USER_ID');
           if (!userId) {
-            Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng');
+            Toast.show({
+              type: 'error',
+              text1: 'Lỗi',
+              text2: 'Không tìm thấy thông tin người dùng'
+            });
             setLoading(false);
             return;
           }

@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   Image,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import PromotionItem from "./PromotionItem";
+import Toast from "react-native-toast-message";
 
 // API và Context
 import { getPromotion } from "../../../API/services/servicesPromotion";
@@ -56,7 +56,11 @@ export default function Promotions() {
       }
     } catch (error) {
       console.error("Lỗi khi toggle like:", error);
-      Alert.alert("Lỗi", "Không thể thay đổi trạng thái yêu thích.");
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể thay đổi trạng thái yêu thích.'
+      });
     }
   };
 

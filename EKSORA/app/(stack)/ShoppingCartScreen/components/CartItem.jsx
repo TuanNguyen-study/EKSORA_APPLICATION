@@ -133,14 +133,12 @@ const CartItem = ({
               price={item.adultPrice}
               onUpdate={(amount) => handleUpdateQuantity("adults", amount)}
             />
-            {item.children > 0 && (
-              <QuantitySelector
-                label="Trẻ em"
-                quantity={item.children}
-                price={item.childPrice}
-                onUpdate={(amount) => handleUpdateQuantity("children", amount)}
-              />
-            )}
+            <QuantitySelector
+              label="Trẻ em"
+              quantity={item.children}
+              price={item.childPrice}
+              onUpdate={(amount) => handleUpdateQuantity("children", amount)}
+            />
           </View>
 
           {item.selectedOptions && item.selectedOptions.length > 0 && (
