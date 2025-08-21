@@ -137,7 +137,7 @@ const BottomLoginEmail = () => {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.otherOption}>Lựa chọn khác</Text>
+      {/* <Text style={styles.otherOption}>Lựa chọn khác</Text> */}
 
       <View style={styles.checkboxRow}>
         {/* <CheckBox checked={isChecked} onChange={setChecked} /> */}

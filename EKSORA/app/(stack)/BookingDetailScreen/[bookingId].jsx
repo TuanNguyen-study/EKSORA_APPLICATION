@@ -107,6 +107,16 @@ const BookingDetailScreen = () => {
 
       const response = await getBookingById(bookingId, token);
       if (response?.booking) {
+        const bookingId =
+          response.booking.id || response.booking._id || "Unknown";
+        const tourId =
+          response.booking.tour_id?._id ||
+          response.booking.tour_id ||
+          "Unknown";
+        console.log(
+          `>>> [BOOKING_DETAIL] Loaded booking: ID=${bookingId}, Tour=${tourId}, totalPrice=${response.booking.totalPrice}, status=${response.booking.status}`
+        );
+
         setBooking(response.booking);
         setError(null);
       } else {
@@ -144,7 +154,7 @@ const BookingDetailScreen = () => {
       });
 
       // Điều hướng về trang trips sau khi hủy thành công
-     router.replace("/(tabs)/trips");
+      router.replace("/(tabs)/trips");
     } catch (err) {
       console.error("Lỗi khi hủy đơn hàng:", err);
       Toast.show({
@@ -196,10 +206,17 @@ const BookingDetailScreen = () => {
     quantity_nguoiLon,
     quantity_treEm,
     totalPrice,
+    discount,
+    voucherCode,
+    originalPrice,
     _id,
   } = booking;
   const statusInfo = getStatusInfo(status);
   const qrValue = _id;
+
+  // Calculate originalPrice if not available (for voucher display)
+  const calculatedOriginalPrice = originalPrice || totalPrice + (discount || 0);
+  const hasVoucherInfo = voucherCode && discount && discount > 0;
 
   return (
     <>
@@ -293,7 +310,37 @@ const BookingDetailScreen = () => {
                   value={formatPrice(tour.price_child * quantity_treEm)}
                 />
               )}
+
+              {/* Hiển thị thông tin voucher nếu có */}
+              {voucherCode && (
+                <InfoRow
+                  icon="ticket-percent-outline"
+                  label="Mã ưu đãi"
+                  value={voucherCode}
+                />
+              )}
+
               <View style={styles.divider} />
+
+              {/* Hiển thị giá gốc và chiết khấu nếu có voucher */}
+              {hasVoucherInfo && (
+                <>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.priceLabel}>Tạm tính</Text>
+                    <Text style={styles.priceValue}>
+                      {formatPrice(calculatedOriginalPrice)}
+                    </Text>
+                  </View>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.discountLabel}>Chiết khấu</Text>
+                    <Text style={styles.discountValue}>
+                      -{formatPrice(discount)}
+                    </Text>
+                  </View>
+                  <View style={styles.divider} />
+                </>
+              )}
+
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Tổng cộng</Text>
                 <Text style={styles.totalValue}>{formatPrice(totalPrice)}</Text>
@@ -559,6 +606,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginLeft: 10,
+  },
+  // Styles for price breakdown with voucher/discount info
+  priceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  priceLabel: {
+    fontSize: 14,
+    color: "#666",
+  },
+  priceValue: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
+  },
+  discountLabel: {
+    fontSize: 14,
+    color: "#E74C3C",
+  },
+  discountValue: {
+    fontSize: 14,
+    color: "#E74C3C",
+    fontWeight: "500",
   },
 });
 
