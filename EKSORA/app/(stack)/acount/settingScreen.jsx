@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
   ActivityIndicator,
   Modal,
-  ScrollView,
-  SafeAreaView,
   Platform,
+  SafeAreaView,
+  ScrollView,
   StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useNavigation } from "expo-router";
 import { getUser } from "../../../API/services/servicesUser";
 import { COLORS } from "../../../constants/colors";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 // Import hook `useVoucher` nếu bạn có VoucherContext
 // import { useVoucher } from "../../../store/VoucherContext"; 
 
@@ -37,7 +37,7 @@ export default function SettingScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  
+
   // Dòng này chỉ cần nếu bạn có VoucherContext và muốn dọn dẹp nó
   // const { handleLogout: clearVoucherState } = useVoucher();
 
@@ -79,26 +79,20 @@ export default function SettingScreen() {
   // === HÀM ĐĂNG XUẤT ĐÃ ĐƯỢC CẬP NHẬT HOÀN CHỈNH ===
   const handleLogout = useCallback(async () => {
     try {
-      // DANH SÁCH CÁC KEY CẦN XÓA KHI ĐĂNG XUẤT
-      const keysToRemove = [
-        "ACCESS_TOKEN",
-        "USER_ID",
-      ];
-
-      // 1. Xóa tất cả các key đã định nghĩa khỏi AsyncStorage
+      const keysToRemove = ["ACCESS_TOKEN", "USER_ID", "LOCAL_AVATAR_URI"];
       await AsyncStorage.multiRemove(keysToRemove);
 
-      router.replace("/(stack)/login/loginEmail"); 
+      setError(null);
 
+      // 👉 Điều hướng về tab Account (chính là AccountScreen)
+      router.replace("/(tabs)/account");
     } catch (e) {
       console.error("Đăng xuất thất bại:", e);
       setError("Đã có lỗi xảy ra. Vui lòng thử lại.");
     } finally {
-      // Đóng modal dù thành công hay thất bại
       setModalVisible(false);
     }
-  }, [router]); // Bỏ clearVoucherState nếu không dùng
-
+  }, []);
   const handleCancel = useCallback(() => setModalVisible(false), []);
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
@@ -126,7 +120,7 @@ export default function SettingScreen() {
 
   const renderContent = () => {
     if (loading) {
-      return <ActivityIndicator style={{marginTop: 50}} size="large" color={COLORS.primary} />;
+      return <ActivityIndicator style={{ marginTop: 50 }} size="large" color={COLORS.primary} />;
     }
     return (
       <View>
