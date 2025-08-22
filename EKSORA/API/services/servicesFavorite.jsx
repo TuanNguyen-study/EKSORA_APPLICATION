@@ -20,10 +20,10 @@ export const addFavoriteTour = async (userId, tourId) => {
       tour_id: tourId,
     });
 
-    console.log(' Thêm tour yêu thích thành công:', response);
+    // console.log(' Thêm tour yêu thích thành công:', response);
     return response;
   } catch (error) {
-    console.error(' Lỗi khi thêm tour yêu thích:', error.response?.data || error.message);
+    // console.error(' Lỗi khi thêm tour yêu thích:', error.response?.data || error.message);
     throw error;
   }
 };
@@ -40,10 +40,10 @@ export const deleteFavoriteTour = async (userId, tourId, token) => {
       },
     });
 
-    console.log('Xoá tour yêu thích thành công:', response.data);
+    // console.log('Xoá tour yêu thích thành công:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi xoá tour yêu thích:', error.response?.data || error.message);
+    // console.error('Lỗi khi xoá tour yêu thích:', error.response?.data || error.message);
     throw error;
   }
 };

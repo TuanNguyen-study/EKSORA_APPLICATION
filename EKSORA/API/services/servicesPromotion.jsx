@@ -7,7 +7,7 @@ export const getPromotion = async () => {
     const response = await AxiosInstance().get('/api/vouchers');
     return response;
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách Promotion:', error);
+    // console.error('Lỗi khi lấy danh sách Promotion:', error);
     throw error;
   }
 };
@@ -20,7 +20,7 @@ export const saveUserVoucher = async (userId, voucherId) => {
     });
     return response;
   } catch (error) {
-    console.error('Lỗi khi lưu voucher:', error);
+    // console.error('Lỗi khi lưu voucher:', error);
     throw error;
   }
 };
@@ -30,7 +30,7 @@ export const getUserSavedVouchers = async (userId) => {
     const response = await AxiosInstance().get(`/api/user-vouchers/user/${userId}`);
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi lấy voucher đã lưu của người dùng:', error?.response?.data || error.message);
+    // console.error('Lỗi khi lấy voucher đã lưu của người dùng:', error?.response?.data || error.message);
     return [];
   }
 };
@@ -45,11 +45,11 @@ export const getVouchersByUserId = async (userId) => {
     }
     return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách voucher theo userId:', {
-      message: error.message,
-      status: error?.response?.status,
-      data: error?.response?.data,
-    });
+    // console.error('Lỗi khi lấy danh sách voucher theo userId:', {
+    //   message: error.message,
+    //   status: error?.response?.status,
+    //   data: error?.response?.data,
+    // });
     return [];
   }
 };

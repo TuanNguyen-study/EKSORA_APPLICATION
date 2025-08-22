@@ -1,6 +1,7 @@
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -12,14 +13,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
-import { Ionicons } from "@expo/vector-icons";
-import VoucherModal from "../Voucher/components/VoucherModal";
 import AxiosInstance from "../../../API/services/AxiosInstance";
 import { createBooking, getBookingById } from "../../../API/services/booking";
 import { COLORS } from "../../../constants/colors";
 import { useCart } from "../../../store/CartContext";
-import Toast from "react-native-toast-message";
+import VoucherModal from "../Voucher/components/VoucherModal";
 
 // --- IMPORT CÁC COMPONENT CON ---
 import OrderSummaryCard from "./components/OrderSummaryCard";
@@ -599,10 +599,16 @@ export default function PaymentPage() {
 
       const data = await response.json();
       console.log(">>> [PAYMENT RESPONSE] Data:", data);
+      console.log(">>> [PAYMENT RESPONSE] Full data:", data);
+      console.log(">>> [PAYMENT RESPONSE] app_trans_id:", data.app_trans_id);
+      console.log(">>> [PAYMENT RESPONSE] order_code:", data.order_code);
+      console.log("📌 [FE][CREATE] Nhận được app_trans_id từ BE:", data.app_trans_id);
 
       // Gom tất cả các khả năng URL trả về (PayOS, ZaloPay)
       const checkoutUrl =
         data.url || data.order_url || data.zalo_url || data.raw?.order_url;
+
+      const appTransId = data.order_code;
 
       if (!response.ok) {
         throw new Error(
@@ -611,7 +617,7 @@ export default function PaymentPage() {
       }
 
       if (checkoutUrl) {
-        // Clear cart items after successful payment if items came from cart
+        // Clear cart nếu cần
         if (params.fromCart === "true" && params.items) {
           try {
             console.log(">>> [PAYMENT] Attempting to clear cart...");
@@ -620,39 +626,35 @@ export default function PaymentPage() {
               ">>> [PAYMENT] Successfully cleared cart after payment"
             );
           } catch (clearError) {
-            // Log detailed error information
-            const errorDetails = {
-              message: clearError.message || clearError,
-              status: clearError.response?.status,
-              statusText: clearError.response?.statusText,
-              stack: clearError.stack,
-            };
-
-            console.error(">>> [PAYMENT] Error clearing cart:", errorDetails);
-
-            // For 403 errors, provide specific handling
-            if (
-              errorDetails.status === 403 ||
-              errorDetails.message?.includes("403")
-            ) {
-              console.warn(
-                ">>> [PAYMENT] Cart clear failed due to permission issue (403). This may be due to expired token during cart cleanup, but payment was successful."
-              );
-            }
-
-            // Continue with payment navigation even if cart clearing fails
-            // Cart will be cleaned up next time user opens the app
+            console.error(">>> [PAYMENT] Error clearing cart:", clearError);
           }
         }
 
-        // Luôn mở trong WebView cho cả PayOS & ZaloPay
-        router.push({
-          pathname: "/acount/payment-webview",
-          params: { checkoutUrl },
-        });
+        if (selectedMethod === "Payos") {
+          // 🚀 PayOS: mở WebView
+          router.push({
+            pathname: "/acount/payment-webview",
+            params: { checkoutUrl },
+          });
+        } else if (selectedMethod === "ZaloPay") {
+          // 🚀 ZaloPay: mở trang QR
+          router.push({
+  pathname: "/paymentPage/components/zalopay-qr",
+  params: {
+    checkoutUrl,
+    appTransId: data.app_trans_id,  // lấy đúng key BE trả về
+    orderCode: data.order_code,     // ✅ dùng từ BE
+    amount: payload.amount,
+    description: payload.description,
+    expireAt: data.expireAt || "",  // nếu BE trả về hạn thanh toán
+  },
+});
+
+        }
       } else {
         throw new Error("Không nhận được URL thanh toán từ server.");
       }
+
     } catch (err) {
       console.error(">>> [PAYMENT ERROR]:", err);
       Toast.show({

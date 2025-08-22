@@ -46,7 +46,9 @@ export default function SuccessScreen() {
 
       <TouchableOpacity
         style={styles.secondaryButton}
-        onPress={() => router.push("/home")}
+        onPress={() => router.push("/home")
+        
+        }
       >
         <Text style={styles.secondaryButtonText}>Quay về trang chủ</Text>
       </TouchableOpacity>

@@ -17,7 +17,7 @@ const AxiosInstance = (contentType = 'application/json') => {
     axiosInstance.interceptors.response.use(
         res => res.data,
         err => {
-            console.log('Lỗi API:', err.response?.data || err.message);
+            // console.log('Lỗi API:', err.response?.data || err.message);
             return Promise.reject(err);
         }
     );
