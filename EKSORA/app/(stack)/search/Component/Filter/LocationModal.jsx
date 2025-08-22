@@ -97,7 +97,6 @@ export default function LocationModal({ visible, onClose, selectedLocation, setS
                     style={[
                       styles.locationRow,
                       isSelected && styles.locationRowActive,
-                      isSelected && styles.locationRowBorder,
                     ]}
                     onPress={() =>
                       isSelected ? setSelectedLocation(null) : setSelectedLocation(item)
@@ -140,8 +139,8 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
     maxHeight: "90%", // tối đa 90% màn hình
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 20, // Bo góc phần đầu container
+    borderTopRightRadius: 20, // Bo góc phần đầu container
     overflow: "hidden",
   },
   subHeader: {
@@ -167,7 +166,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 12, // Bo góc cho ô tìm kiếm
   },
   searchInput: {
     flex: 1,
@@ -183,9 +182,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
     backgroundColor: "#fff",
+    marginHorizontal: 8, // Thêm margin ngang để tránh đè
+    marginVertical: 4, // Thêm margin dọc để tạo khoảng cách rõ ràng
+    borderRadius: 10, // Bo góc cho từng khung địa điểm
   },
   locationRowActive: {
-    backgroundColor: "#e8f0fe",
+    backgroundColor: "#e8f0fe", // Thay đổi màu nền khi chọn, không ảnh hưởng kích thước
   },
   locationRowText: {
     fontSize: 16,
@@ -195,15 +197,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#007AFF",
   },
-  locationRowBorder: {
-    borderWidth: 1.5,
-    borderColor: "#007AFF",
-    borderRadius: 10,
-  },
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: 4,
+    borderRadius: 6, // Bo góc cho checkbox
     borderWidth: 1.5,
     borderColor: "#ccc",
     marginRight: 12,

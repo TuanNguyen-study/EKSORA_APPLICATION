@@ -18,6 +18,7 @@ import TourCard from "../SearchResult/components/TourCard";
 import EmptyResult from "../SearchResult/components/EmptyResult";
 import { COLORS } from "../../../constants/colors";
 
+// 👉 Hàm bỏ dấu tiếng Việt
 const removeDiacritics = (str) => {
   return str
     .normalize("NFD")
@@ -36,7 +37,7 @@ export default function Index() {
   const [priceStarModalVisible, setPriceStarModalVisible] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 5000000]);
   const [minRating, setMinRating] = useState(null);
-  const [isFiltered, setIsFiltered] = useState(false); 
+  const [isFiltered, setIsFiltered] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,28 +60,35 @@ export default function Index() {
             all = await getAllToursByLocation();
           }
 
-
           const validTours = all.filter((tour) => tour.price > 0);
-
           const queryLower = removeDiacritics(queryTrimmed.toLowerCase());
+
+          // ✅ Tìm theo cả cateID.name và tour.name
           const matchedTours = validTours.filter((tour) => {
-            const nameMatch = removeDiacritics((tour.name || "").toLowerCase()).includes(queryLower);
-            const categoryMatch =
-              tour.cateID &&
-              removeDiacritics((tour.cateID.name || "").toLowerCase()).includes(queryLower);
-            return nameMatch || categoryMatch;
+            const cateWords = removeDiacritics(
+              (tour.cateID?.name || "").toLowerCase()
+            ).split(/\s+/);
+
+            const tourWords = (tour.name || "").toLowerCase().split(/\s+/); // giữ nguyên dấu
+
+            return (
+              cateWords.some((word) => word.startsWith(queryLower)) ||
+              tourWords.some((word) => word.startsWith(query.trim().toLowerCase()))
+            );
           });
 
           toursData = matchedTours;
         }
 
         const suggested = await getAllToursByLocation();
-        const validSuggested = suggested.filter((tour) => tour.price > 0).slice(0, 10);
+        const validSuggested = suggested
+          .filter((tour) => tour.price > 0)
+          .slice(0, 10);
 
         setAllTours(toursData);
         setFilteredTours(toursData);
         setSuggestedTours(validSuggested);
-        setIsFiltered(false); // Reset trạng thái lọc khi tìm kiếm mới
+        setIsFiltered(false); // reset khi tìm mới
       } catch (error) {
         console.error("Lỗi khi lấy tour:", error?.response?.data || error);
       } finally {
@@ -94,10 +102,15 @@ export default function Index() {
   const fetchSuggestedTours = async () => {
     try {
       const suggested = await getAllToursByLocation();
-      const validSuggested = suggested.filter((tour) => tour.price > 0).slice(0, 10);
+      const validSuggested = suggested
+        .filter((tour) => tour.price > 0)
+        .slice(0, 10);
       return validSuggested;
     } catch (error) {
-      console.error("Lỗi khi lấy suggested tours:", error?.response?.data || error);
+      console.error(
+        "Lỗi khi lấy suggested tours:",
+        error?.response?.data || error
+      );
       return [];
     }
   };
@@ -123,11 +136,15 @@ export default function Index() {
       </View>
     ) : null;
 
-  const handleApplyPriceStarFilters = async ({ priceRange, minRating, filteredTours }) => {
+  const handleApplyPriceStarFilters = async ({
+    priceRange,
+    minRating,
+    filteredTours,
+  }) => {
     setPriceRange(priceRange);
     setMinRating(minRating);
     setFilteredTours(filteredTours || []);
-    setIsFiltered(true); // Đặt trạng thái lọc thành true khi áp dụng bộ lọc
+    setIsFiltered(true);
 
     if (filteredTours.length === 0) {
       const newSuggestedTours = await fetchSuggestedTours();
