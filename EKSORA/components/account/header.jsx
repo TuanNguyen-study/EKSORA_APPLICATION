@@ -22,20 +22,24 @@ export default function Header() {
         if (!token) {
           setIsLoggedIn(false);
           setUser(null);
+          setAvatarUri(null);
           setLoading(false);
           return;
         }
 
-        setIsLoggedIn(true);
         try {
           const data = await getUser();
+          setIsLoggedIn(true);
           setUser(data);
+
           const localAvatar = await AsyncStorage.getItem('LOCAL_AVATAR_URI');
           setAvatarUri(localAvatar || (data ? data.avatar : null));
         } catch (err) {
-          // console.error('Không lấy được thông tin user:', err);
+          console.log("❌ Token không hợp lệ, xoá dữ liệu cũ:", err);
+          await AsyncStorage.multiRemove(["ACCESS_TOKEN", "LOCAL_AVATAR_URI", "USER_ID"]);
           setIsLoggedIn(false);
           setUser(null);
+          setAvatarUri(null);
         } finally {
           setLoading(false);
         }
@@ -43,6 +47,7 @@ export default function Header() {
       fetchUser();
     }, [])
   );
+
 
   // Giao diện loading
   if (loading) {
@@ -53,12 +58,12 @@ export default function Header() {
     );
   }
 
-  // --- PHẦN ĐƯỢC PHỤC HỒI CHO TÀI KHOẢN KHÁCH ---
+  // --- GIAO DIỆN KHÁCH ---
   if (!isLoggedIn) {
     return (
       <View style={[styles.container, styles.guestHeader]}>
         <Image
-          source={require('../../assets/images/Logo.png')} // Sử dụng logo nếu có
+          source={require('../../assets/images/Logo.png')}
           style={styles.guestAvatar}
         />
         <View>
@@ -75,7 +80,7 @@ export default function Header() {
     );
   }
 
-  // Giao diện khi lỗi nhưng đã đăng nhập
+  // Giao diện khi có token nhưng API lỗi
   if (!user) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', minHeight: 220 }]}>
@@ -84,10 +89,10 @@ export default function Header() {
     );
   }
 
-  // --- GIAO DIỆN CHO NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP (GIỮ NGUYÊN) ---
+  // --- GIAO DIỆN USER ---
   return (
     <View style={styles.container}>
-<TouchableOpacity style={styles.userInfoContainer} onPress={() => router.push('/(stack)/UpdateUser')}>
+      <TouchableOpacity style={styles.userInfoContainer} onPress={() => router.push('/(stack)/UpdateUser')}>
         <Image
           source={avatarUri ? { uri: avatarUri } : require('../../assets/images/favicon.png')}
           style={styles.avatar}
@@ -111,21 +116,17 @@ export default function Header() {
   );
 }
 
-
 const styles = StyleSheet.create({
-  // Container chính bao bọc toàn bộ header
   container: {
     paddingTop: 16,
     paddingBottom: 40,
-    paddingHorizontal: 16, // Thêm padding ngang cho nhất quán
+    paddingHorizontal: 16,
   },
-
-  // --- STYLES ĐÃ ĐƯỢC PHỤC HỒI CHO GIAO DIỆN KHÁCH ---
   guestHeader: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
-    backgroundColor: 'transparent' // để lộ gradient
+    backgroundColor: 'transparent',
   },
   guestAvatar: {
     width: 100,
@@ -162,8 +163,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-
-  // --- STYLES CHO GIAO DIỆN ĐÃ ĐĂNG NHẬP (GIỮ NGUYÊN) ---
   userInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',

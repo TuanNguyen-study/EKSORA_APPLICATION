@@ -50,15 +50,15 @@ const HeaderSearchBar = () => {
         <Text style={styles.searchInput}>Tìm kiếm tour...</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.iconButton} onPress={handleCartPress}>
+      {/* <TouchableOpacity style={styles.iconButton} onPress={handleCartPress}>
         <Ionicons name="cart-outline" size={26} color={COLORS.white} />
-      </TouchableOpacity>
-      <TouchableOpacity
+      </TouchableOpacity> */}
+      {/* <TouchableOpacity
         style={styles.iconButton}
         onPress={() => router.push("/(stack)/notification")}
       >
         <Ionicons name="notifications-outline" size={26} color={COLORS.white} />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <LoginRequestModal
         isVisible={isLoginModalVisible}
