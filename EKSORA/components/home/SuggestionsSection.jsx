@@ -61,6 +61,7 @@ const SuggestionsSection = ({
         numColumns={2}
         scrollEnabled={false} // Thường thì list này nằm trong một ScrollView lớn hơn
         contentContainerStyle={styles.suggestionListContent}
+        columnWrapperStyle={styles.columnWrapper}
         ListEmptyComponent={renderEmptyList}
       />
     </View>
@@ -89,7 +90,12 @@ const styles = StyleSheet.create({
   suggestionListContent: {
     paddingTop: 8,
     paddingBottom: 8,
-    paddingHorizontal: "auto",
+    paddingHorizontal: 0,
+  },
+  columnWrapper: {
+    justifyContent: "space-between", // Phân bố đều giữa các item
+    paddingHorizontal: 4, // Điều chỉnh lề để cân bằng với marginHorizontal của card
+    alignItems: "center", // Đảm bảo item thẳng hàng
   },
   emptyStateContainer: {
     justifyContent: "center",
