@@ -101,8 +101,9 @@ export default function Body() {
     </ScrollView>
   );
 
-  return (
+  return (  
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
+       <ScrollView>
       <View style={styles.tabContainer}>
         <TouchableOpacity onPress={() => setActiveTab("top")}>
           <Text style={[styles.tabText, activeTab === "top" && styles.activeTab]}>
@@ -122,6 +123,7 @@ export default function Body() {
       </View>
 
       {!loading && renderUnifiedItem()}
+      </ScrollView>
     </View>
   );
 }
