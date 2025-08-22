@@ -1,7 +1,15 @@
 import axios from "axios";
+import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, SafeAreaView, Text, View } from "react-native";
+import {
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View
+} from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
 export default function ZaloPayQRPage() {
@@ -9,126 +17,300 @@ export default function ZaloPayQRPage() {
   const params = useLocalSearchParams();
 
   const qrUrl = params.checkoutUrl;
-  // 👉 Nếu server trả appTransId thì lấy theo key appTransId, còn nếu bạn để order_code thì vẫn fallback được
   const appTransId = params.appTransId || params.order_code;
 
-  const [statusMessage, setStatusMessage] = useState("Chờ thanh toán...");
+  const [statusMessage, setStatusMessage] = useState();
+  const formatCurrency = (value) => {
+    if (!value) return "0 VND";
+    return Number(value).toLocaleString("vi-VN") + " VND";
+  };
 
-  // Log toàn bộ params khi vào màn hình
-  console.log("📦 Params nhận được:", params);
-  console.log("➡️ qrUrl:", qrUrl);
-  console.log("➡️ appTransId:", appTransId);
+  const shortenText = (text, start = 6, end = 4) => {
+    if (!text) return "";
+    if (text.length <= start + end) return text;
+    return text.substring(0, start) + "..." + text.substring(text.length - end);
+  };
 
+  const formatDateVN = (date) => {
+    return new Intl.DateTimeFormat("vi-VN", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date);
+  };
+
+  const formatTimeVN = (date) => {
+    return new Intl.DateTimeFormat("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).format(date);
+  };
+  // ✅ Lấy động dữ liệu từ params
+  const accountInfo = {
+    bankName: "Quét mã bằng ZaloPay",
+    owner: "VO HUYNH TUAN ANH",
+    amount: formatCurrency(params.amount),
+    content: params.description || "EKSORA thanh toán", // ✅ lấy description
+    orderCode: params.orderCode || "Không rõ mã đơn hàng", // ✅ camelCase
+    expireAt: params.expireAt || "Không rõ hạn thanh toán",
+  };
+
+  // Copy helper
+  const handleCopy = (text) => {
+    Clipboard.setString(text);
+    Alert.alert("Đã sao chép", text);
+  };
+
+  // --- Query trạng thái ---
   useEffect(() => {
     if (!qrUrl) {
-      console.log("⚠️ Không có qrUrl → quay lại trang trước");
       router.back();
       return;
     }
 
     let interval;
-
     if (appTransId) {
-      console.log("✅ Bắt đầu setInterval với appTransId:", appTransId);
-
       interval = setInterval(async () => {
-        console.log("🔄 Gọi API query ZaloPay với appTransId =", appTransId);
         try {
-          // 👉 gọi API query trạng thái
-          const res = await axios.get(
-            "http://160.250.246.76:3000/api/zalo-pay/query",
-            { params: { appTransId } }
-          );
-
-          // 👉 log nguyên response từ server
-          console.log("🔍 Kết quả query (raw):", res.data);
+          const res = await axios.get("http://160.250.246.76:3000/api/zalo-pay/query", {
+            params: { appTransId },
+          });
 
           const data = res.data;
           const returnCode = data.raw?.return_code ?? data.return_code;
           const subReturnCode = data.raw?.sub_return_code ?? data.sub_return_code;
-          const returnMessage = data.raw?.return_message ?? data.return_message;
-          const subReturnMessage = data.raw?.sub_return_message ?? data.sub_return_message;
 
-          console.log("➡️ return_code:", returnCode);
-          console.log("➡️ sub_return_code:", subReturnCode);
-          console.log("➡️ return_message:", returnMessage);
-          console.log("➡️ sub_return_message:", subReturnMessage);
-
-          // --- Xử lý kết quả ---
-          /**
-           *  return_code === 1 && sub_return_code === 1      => thành công
-           *  return_code === 2 && sub_return_code === -401   => đang chờ cập nhật
-           *  ngược lại                                        => thất bại
-           */
           if (returnCode === 1 && subReturnCode === 1) {
-            console.log("✅ Thanh toán ZaloPay thành công!");
             clearInterval(interval);
             setStatusMessage("✅ Thanh toán thành công!");
-            // Alert.alert("Thanh toán thành công!");
             router.replace("/return");
           } else if (returnCode === 2 && subReturnCode === -401) {
-            console.log("⏳ Giao dịch chưa cập nhật, chờ query tiếp theo...");
             setStatusMessage("⏳ Chờ thanh toán...");
           } else if (returnCode === 3) {
-            console.log("⌛ Giao dịch chưa khởi tạo (chưa quét QR)...");
             setStatusMessage("⌛ Vui lòng mở ZaloPay và quét QR");
-            // 👉 Không clear interval, tiếp tục chờ user quét
           } else {
-            console.log("❌ Thanh toán thất bại:", returnMessage, subReturnMessage);
             clearInterval(interval);
             setStatusMessage("❌ Thanh toán thất bại");
-            // Alert.alert("Thanh toán thất bại", returnMessage || subReturnMessage);
             router.replace("/cancel");
           }
         } catch (err) {
-          console.error("❌ Query error:", err);
           setStatusMessage("❌ Lỗi kết nối, thử lại sau");
         }
       }, 3000);
-    } else {
-      console.log("⚠️ Không có appTransId → không gọi API");
-      setStatusMessage("⚠️ Không tìm thấy mã giao dịch");
     }
 
-    // Cleanup interval
-    return () => {
-      if (interval) {
-        console.log("🧹 Dọn interval");
-        clearInterval(interval);
-      }
-    };
+    return () => interval && clearInterval(interval);
   }, [qrUrl, appTransId]);
 
   return (
-    <SafeAreaView
+
+    <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        {/* --- HEADER --- */}
+        <View
+          style={{
+            backgroundColor: "#fff",
+            padding: 16,
+            borderRadius: 0,
+            marginBottom: 20,
+            shadowColor: "#000",
+            shadowOpacity: 0.05,
+            shadowRadius: 5,
+            elevation: 2,
+          }}
+        >
+          {/* Logo row */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Image
+              source={require("../../../../assets/images/ChatGPT Image May 8, 2025, 01_51_11 PM.png")}
+              style={{ width: 40, height: 40, resizeMode: "contain" }}
+            />
+            <Image
+              source={require("../../../../assets/images/a4456c70a348cced98601a00e4050ca1.jpg")}
+              style={{ width: 60, height: 40, resizeMode: "contain" }}
+            />
+          </View>
+        </View>
+
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            paddingHorizontal: 30,
+            marginBottom: 20,
+          }}
+        >
+          <Text style={{ fontSize: 10, color: "#000" }}>
+            Thanh toán trước {formatDateVN(new Date())}
+          </Text>
+          <Text style={{ fontSize: 10, color: "#000" }}>
+            {formatTimeVN(new Date())}
+          </Text>
+        </View>
+
+        {/* --- BODY --- */}
+        <View style={{ paddingHorizontal: 12 }}>
+          <View
+            style={{
+              backgroundColor: "#fff",
+              padding: 16,
+              borderRadius: 0,
+              shadowColor: "#000",
+              shadowOpacity: 0.05,
+              shadowRadius: 5,
+              elevation: 2,
+            }}
+          >
+            {/* Hướng dẫn trước QR */}
+            <View style={{ paddingHorizontal: 10 }}>
+              <Text style={{ textAlign: "center", fontSize: 13, color: "#333" }}>
+                💡 Mở App ZaloPay để{" "}
+                <Text style={{ fontWeight: "700" }}>quét mã thanh toán</Text> hoặc{" "}
+                <Text style={{ fontWeight: "700" }}>chuyển khoản</Text> chính xác số tiền, nội dung bên dưới
+              </Text>
+            </View>
+
+            {/* QR */}
+            <View style={{ alignItems: "center", marginVertical: 20 }}>
+              <Image
+                source={require("../../../../assets/images/download.png")}
+                style={{
+                  width: 80,
+                  height: 80,
+                  resizeMode: "contain",
+                  marginBottom: 0, // khoảng cách nhỏ giữa logo và QR
+                }}
+              />
+              {qrUrl ? (
+                <QRCode value={qrUrl} size={180} />
+              ) : (
+                <Text>Không tìm thấy QR Code</Text>
+              )}
+            </View>
+
+            {/* Thông tin thanh toán */}
+            <RowCopy label="Mã thanh toán" value={accountInfo.orderCode} onCopy={handleCopy} />
+            <RowCopy label="Số tiền" value={accountInfo.amount} onCopy={handleCopy} />
+            <RowCopy label="Nội dung" value={accountInfo.content} onCopy={handleCopy} />
+
+            {/* Lưu ý */}
+            <Text
+              style={{
+                marginTop: 10,
+                fontSize: 14,
+                textAlign: "center",
+                color: "#333",
+              }}
+            >
+              Lưu ý: Nhập chính xác{" "}
+              <Text style={{ fontWeight: "700", color: "#000" }}>
+                số tiền {accountInfo.amount}
+              </Text>
+              ,{" "}
+              <Text style={{ fontWeight: "700", color: "#000" }}>
+                nội dung {accountInfo.content}
+              </Text>{" "}
+              khi chuyển khoản
+            </Text>
+
+            <View style={{ alignItems: "center", marginTop: 20 }}>
+              <TouchableOpacity
+                onPress={() => router.replace("/cancel")}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                  paddingVertical: 10,
+                  paddingHorizontal: 40,
+                  borderRadius: 8,
+                  backgroundColor: "#fff",
+                }}
+              >
+                <Text style={{ color: "#333", fontSize: 16, fontWeight: "600" }}>
+                  Hủy
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Trạng thái */}
+        <Text
+          style={{
+            marginTop: 20,
+            fontSize: 16,
+            fontWeight: "600",
+            textAlign: "center",
+          }}
+        >
+          {statusMessage}
+        </Text>
+      </ScrollView>
+
+    </View >
+
+  );
+
+}
+
+// Component row + copy
+function RowCopy({ label, value, fullValue, onCopy }) {
+  return (
+    <View
       style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
+        marginVertical: 0,
+        padding: 8,
         backgroundColor: "#fff",
-        paddingHorizontal: 20,
+        borderRadius: 8,
       }}
     >
-      <Text
-        style={{
-          fontSize: 18,
-          fontWeight: "600",
-          marginBottom: 20,
-          textAlign: "center",
-        }}
-      >
-        Quét mã QR bằng ZaloPay để thanh toán
+      {/* Label */}
+      <Text style={{ fontSize: 15, fontWeight: "500", marginBottom: 6 }}>
+        {label}
       </Text>
 
-      {qrUrl ? (
-        <QRCode value={qrUrl} size={260} />
-      ) : (
-        <Text>Không tìm thấy QR Code</Text>
-      )}
+      {/* Value + Nút copy cùng hàng */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 15,
+            fontWeight: "700",
+            color: "#000000",
+          }}
+        >
+          {value}
+        </Text>
 
-      <View style={{ marginTop: 20 }}>
-        <Text style={{ fontSize: 16, fontWeight: "500" }}>{statusMessage}</Text>
+        <TouchableOpacity
+          onPress={() => onCopy(fullValue || value)}
+          style={{
+            paddingHorizontal: 16,
+            paddingVertical: 6,
+            backgroundColor: "rgba(0,200,100,0.08)", // xanh nhạt như ảnh mẫu
+            borderRadius: 8,
+          }}
+        >
+          <Text style={{ color: "#444", fontWeight: "600", fontSize: 14 }}>
+            Sao chép
+          </Text>
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
+
+

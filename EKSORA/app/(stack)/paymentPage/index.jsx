@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -12,14 +13,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
-import { Ionicons } from "@expo/vector-icons";
-import VoucherModal from "../Voucher/components/VoucherModal";
 import AxiosInstance from "../../../API/services/AxiosInstance";
 import { createBooking, getBookingById } from "../../../API/services/booking";
 import { COLORS } from "../../../constants/colors";
 import { useCart } from "../../../store/CartContext";
-import Toast from "react-native-toast-message";
+import VoucherModal from "../Voucher/components/VoucherModal";
 
 // --- IMPORT CÁC COMPONENT CON ---
 import OrderSummaryCard from "./components/OrderSummaryCard";
@@ -639,12 +639,16 @@ export default function PaymentPage() {
         } else if (selectedMethod === "ZaloPay") {
           // 🚀 ZaloPay: mở trang QR
           router.push({
-            pathname: "/paymentPage/components/zalopay-qr",
-            params: {
-              checkoutUrl,
-              appTransId: appTransId, // 👈 nhớ truyền khi push
-            },
-          });
+  pathname: "/paymentPage/components/zalopay-qr",
+  params: {
+    checkoutUrl,
+    appTransId: data.app_trans_id,  // lấy đúng key BE trả về
+    orderCode: data.order_code,     // ✅ dùng từ BE
+    amount: payload.amount,
+    description: payload.description,
+    expireAt: data.expireAt || "",  // nếu BE trả về hạn thanh toán
+  },
+});
 
         }
       } else {
