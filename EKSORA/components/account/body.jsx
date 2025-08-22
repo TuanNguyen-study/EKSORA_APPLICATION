@@ -20,7 +20,7 @@ export default function Body() {
         </TouchableOpacity>
         <View style={styles.separator} />
 
-        <TouchableOpacity style={styles.touchableItemColumn} onPress={() => router.push('/MyOrder/UserInfoForm')}>
+        {/* <TouchableOpacity style={styles.touchableItemColumn} onPress={() => router.push('/MyOrder/UserInfoForm')}>
           <View style={styles.itemRow}>
             <Ionicons name="person-outline" size={24} color={COLORS.textDark} style={styles.icon} />
             <View style={styles.textContainer}>
@@ -31,7 +31,7 @@ export default function Body() {
             </View>
             <Ionicons name="chevron-forward-outline" size={20} color={COLORS.textGray} />
           </View>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <View style={styles.separator} />
 
         <TouchableOpacity style={styles.touchableItem} onPress={() => router.push('/TourReview/ReviewScreen')}>

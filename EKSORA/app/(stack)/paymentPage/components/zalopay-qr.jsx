@@ -16,8 +16,8 @@ export default function ZaloPayQRPage() {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  const qrUrl = params.checkoutUrl;
-  const appTransId = params.appTransId || params.order_code;
+  const qrUrl = params.checkoutUrl || params.zalo_url;
+  const appTransId = params.appTransId || params.orderCode || params.order_code;
 
   const [statusMessage, setStatusMessage] = useState();
   const formatCurrency = (value) => {
@@ -65,45 +65,68 @@ export default function ZaloPayQRPage() {
   };
 
   // --- Query trạng thái ---
-  useEffect(() => {
-    if (!qrUrl) {
-      router.back();
-      return;
-    }
+useEffect(() => {
+  console.log("📌 useEffect chạy với qrUrl:", qrUrl, " appTransId:", appTransId);
 
-    let interval;
-    if (appTransId) {
-      interval = setInterval(async () => {
-        try {
-          const res = await axios.get("http://160.250.246.76:3000/api/zalo-pay/query", {
-            params: { appTransId },
-          });
+  if (!qrUrl) {
+    console.warn("⚠️ Không có qrUrl => quay lại");
+    router.back();
+    return;
+  }
 
-          const data = res.data;
-          const returnCode = data.raw?.return_code ?? data.return_code;
-          const subReturnCode = data.raw?.sub_return_code ?? data.sub_return_code;
+  let interval;
+  if (appTransId) {
+    console.log("✅ Có appTransId, bắt đầu setInterval query...");
 
-          if (returnCode === 1 && subReturnCode === 1) {
-            clearInterval(interval);
-            setStatusMessage("✅ Thanh toán thành công!");
-            router.replace("/return");
-          } else if (returnCode === 2 && subReturnCode === -401) {
-            setStatusMessage("⏳ Chờ thanh toán...");
-          } else if (returnCode === 3) {
-            setStatusMessage("⌛ Vui lòng mở ZaloPay và quét QR");
-          } else {
-            clearInterval(interval);
-            setStatusMessage("❌ Thanh toán thất bại");
-            router.replace("/cancel");
-          }
-        } catch (err) {
-          setStatusMessage("❌ Lỗi kết nối, thử lại sau");
+    interval = setInterval(async () => {
+      try {
+        console.log("🔍 Gửi request query trạng thái:", appTransId);
+
+        const res = await axios.get("http://160.250.246.76:3000/api/zalo-pay/query", {
+          params: { appTransId },
+        });
+
+        console.log("📩 Response trả về:", res.data);
+
+        const data = res.data;
+        const returnCode = data.raw?.return_code ?? data.return_code;
+        const subReturnCode = data.raw?.sub_return_code ?? data.sub_return_code;
+
+        console.log("👉 returnCode:", returnCode, "| subReturnCode:", subReturnCode);
+
+        if (returnCode === 1 && subReturnCode === 1) {
+          clearInterval(interval);
+          console.log("🎉 Thanh toán thành công, điều hướng /return");
+          setStatusMessage("✅ Thanh toán thành công!");
+          router.replace("/return");
+        } else if (returnCode === 2 && subReturnCode === -401) {
+          console.log("⏳ Giao dịch đang chờ thanh toán...");
+          setStatusMessage("⏳ Chờ thanh toán...");
+        } else if (returnCode === 3) {
+          console.log("⌛ Vui lòng mở ZaloPay và quét QR");
+          setStatusMessage("⌛ Vui lòng mở ZaloPay và quét QR");
+        } else {
+          clearInterval(interval);
+          console.log("❌ Thanh toán thất bại, điều hướng /cancel");
+          setStatusMessage("❌ Thanh toán thất bại");
+          router.replace("/cancel");
         }
-      }, 3000);
-    }
+      } catch (err) {
+        console.error("❌ Lỗi query ZaloPay:", err.message);
+        setStatusMessage("❌ Lỗi kết nối, thử lại sau");
+      }
+    }, 3000);
+  } else {
+    console.warn("⚠️ Không có appTransId => không query được");
+  }
 
-    return () => interval && clearInterval(interval);
-  }, [qrUrl, appTransId]);
+  return () => {
+    console.log("🧹 Clear interval khi unmount");
+    interval && clearInterval(interval);
+  };
+}, [qrUrl, appTransId]);
+
+
 
   return (
 
