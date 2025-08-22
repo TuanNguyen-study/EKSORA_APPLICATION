@@ -182,6 +182,8 @@ export default function FilterModal({ visible, onClose }) {
               setSelectedLocation={setSelectedLocation}
             />
           )}
+          <Toast />
+
         </View>
       </View>
     </Modal>
