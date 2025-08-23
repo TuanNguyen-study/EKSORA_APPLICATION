@@ -1,9 +1,12 @@
+// File: store/VoucherContext.js
+
 import React, {
   createContext,
   useContext,
   useEffect,
   useState,
   useCallback,
+  useMemo,
 } from "react";
 import {
   getPromotion,
@@ -13,31 +16,31 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 
-// Tạo Context với các giá trị mặc định
 const VoucherContext = createContext({
   coupons: [],
   loading: false,
   fetchPromotions: () => {},
   saveVoucher: async () => {},
   handleLogout: () => {},
+  refetchPromotions: () => {},
 });
 
 export const VoucherProvider = ({ children }) => {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(false);
+  // State để lưu trữ ID người dùng mà context "biết", dùng để so sánh thay đổi
+  const [knownUserId, setKnownUserId] = useState(undefined); // undefined: chưa check, null: đã check & ko có, string: đã check & có
 
-  // Hàm lấy danh sách ưu đãi
-  const fetchPromotions = async () => {
+  // Dùng useCallback để "đóng băng" các hàm, tránh tạo lại không cần thiết
+  const fetchPromotions = useCallback(async () => {
     try {
       setLoading(true);
       const userId = await AsyncStorage.getItem("USER_ID");
 
-      // Luôn lấy danh sách tất cả voucher, bất kể có userId hay không
       const allPromotionsResponse = await getPromotion();
       const allPromotionsData =
         allPromotionsResponse?.data || allPromotionsResponse || [];
 
-      // Nếu có userId, lấy danh sách voucher đã lưu
       let savedIds = [];
       if (userId) {
         try {
@@ -46,22 +49,14 @@ export const VoucherProvider = ({ children }) => {
           savedIds = savedVoucherData
             .map((savedVoucher) => savedVoucher.voucher_id?._id)
             .filter(Boolean);
-          // console.log("Saved vouchers:", savedIds.length);
         } catch (error) {
-          // console.log("Error fetching saved vouchers:", error);
+          console.log("Error fetching saved vouchers:", error);
         }
-      } else {
-        // console.log(
-        //   "No userId found, showing all vouchers without saved status"
-        // );
       }
 
-      // console.log("All promotions:", allPromotionsData.length);
-
-      // Lọc ra những voucher còn hạn sử dụng (chưa qua ngày hôm nay)
       const now = new Date();
       const validPromotions = allPromotionsData.filter((item) => {
-        if (!item.end_date) return true; // Nếu không có ngày hết hạn thì vẫn hiển thị
+        if (!item.end_date) return true;
         return new Date(item.end_date) > now;
       });
 
@@ -70,15 +65,11 @@ export const VoucherProvider = ({ children }) => {
         title: "Mã giảm giá",
         discount: item.discount ? `Giảm ${item.discount}%` : "Ưu đãi",
         condition: item.condition || `Áp dụng đơn từ...`,
-        buttonText: userId ? "Lưu" : "Đăng nhập để lưu", // Thay đổi text button khi chưa đăng nhập
-        isSaved: userId ? savedIds.includes(item._id) : false, // Chỉ hiển thị saved status khi có userId
+        buttonText: userId ? "Lưu" : "Đăng nhập để lưu",
+        isSaved: userId ? savedIds.includes(item._id) : false,
         expiry: item.end_date,
-        requiresLogin: !userId, // Thêm flag để biết có cần đăng nhập không
+        requiresLogin: !userId,
       }));
-
-      // console.log("All promotions (before filter):", allPromotionsData.length);
-      // console.log("Valid promotions (after expiry filter):", promotions.length);
-      // console.log("User logged in:", !!userId);
 
       setCoupons(promotions);
     } catch (error) {
@@ -87,22 +78,19 @@ export const VoucherProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Hàm lưu voucher
-  const saveVoucher = async (voucherId) => {
+  const saveVoucher = useCallback(async (voucherId) => {
     try {
       const userId = await AsyncStorage.getItem("USER_ID");
       if (!userId) {
-        // Nếu chưa đăng nhập, hiển thị thông báo yêu cầu đăng nhập
         Toast.show({
-          type: 'error',
-          text1: 'Thông báo',
-          text2: 'Vui lòng đăng nhập để lưu voucher này!'
+          type: "error",
+          text1: "Thông báo",
+          text2: "Vui lòng đăng nhập để lưu voucher này!",
         });
         return;
       }
-      console.log("Saving voucher:", voucherId);
       await saveUserVoucher(userId, voucherId);
       setCoupons((prev) =>
         prev.map((coupon) =>
@@ -110,7 +98,6 @@ export const VoucherProvider = ({ children }) => {
         )
       );
     } catch (error) {
-      console.log("Error saving voucher:", error.response?.data);
       if (error.response?.status === 400) {
         setCoupons((prev) =>
           prev.map((coupon) =>
@@ -119,50 +106,67 @@ export const VoucherProvider = ({ children }) => {
         );
       } else {
         Toast.show({
-          type: 'error',
-          text1: 'Lỗi',
-          text2: 'Đã có lỗi xảy ra khi lưu voucher.'
+          type: "error",
+          text1: "Lỗi",
+          text2: "Đã có lỗi xảy ra khi lưu voucher.",
         });
       }
     }
-  };
-
-  // Hàm xử lý đăng xuất
-  const handleLogout = () => {
-    console.log("Đã đăng xuất, dọn dẹp voucher state...");
-    setCoupons([]);
-  };
-
-  // Tải danh sách ưu đãi khi khởi động
-  useEffect(() => {
-    fetchPromotions();
   }, []);
 
-  // Lắng nghe thay đổi trong AsyncStorage để update khi user login/logout
+  const handleLogout = useCallback(() => {
+    setCoupons([]);
+    setKnownUserId(null); // Khi logout, cập nhật knownUserId thành null
+  }, []);
+
+  // useEffect này chỉ chạy 1 lần khi Provider được mount
+  // Để lấy trạng thái đăng nhập ban đầu và fetch dữ liệu
+  useEffect(() => {
+    const initialize = async () => {
+      const initialUserId = await AsyncStorage.getItem("USER_ID");
+      setKnownUserId(initialUserId); // Cập nhật trạng thái ban đầu
+      fetchPromotions();
+    };
+    initialize();
+  }, [fetchPromotions]);
+
+  // useEffect này dùng để lắng nghe sự thay đổi trạng thái đăng nhập/đăng xuất
+  // bằng cách polling (kiểm tra định kỳ) AsyncStorage.
   useEffect(() => {
     const checkAuthChange = async () => {
-      const currentUserId = await AsyncStorage.getItem("USER_ID");
-      // Chỉ re-fetch nếu có thay đổi trong authentication state
-      if (currentUserId !== null) {
-        fetchPromotions();
+      const latestUserId = await AsyncStorage.getItem("USER_ID");
+
+      // **LOGIC QUAN TRỌNG ĐÃ SỬA LẠI:**
+      // Chỉ fetch lại dữ liệu khi trạng thái đăng nhập THỰC SỰ THAY ĐỔI
+      // (ví dụ: từ null -> có ID, hoặc từ có ID -> null)
+      if (latestUserId !== knownUserId) {
+        console.log(
+          `Phát hiện thay đổi đăng nhập: từ '${knownUserId}' sang '${latestUserId}'. Tải lại voucher...`
+        );
+        setKnownUserId(latestUserId); // Cập nhật trạng thái mới
+        fetchPromotions(); // Gọi fetch để lấy dữ liệu mới
       }
     };
 
-    // Thiết lập interval để kiểm tra thay đổi auth state
-    const authCheckInterval = setInterval(checkAuthChange, 2000);
+    // Thiết lập kiểm tra mỗi 3 giây (có thể điều chỉnh)
+    const authCheckInterval = setInterval(checkAuthChange, 3000);
 
+    // Dọn dẹp interval khi component unmount
     return () => clearInterval(authCheckInterval);
-  }, []);
+  }, [knownUserId, fetchPromotions]); // Chạy lại effect nếu knownUserId thay đổi
 
-  // Giá trị context
-  const contextValue = {
-    coupons,
-    loading,
-    saveVoucher,
-    handleLogout,
-    fetchPromotions,
-    refetchPromotions: fetchPromotions, // Alias để gọi từ bên ngoài
-  };
+  // Dùng useMemo để "đóng băng" object contextValue
+  const contextValue = useMemo(
+    () => ({
+      coupons,
+      loading,
+      saveVoucher,
+      handleLogout,
+      fetchPromotions,
+      refetchPromotions: fetchPromotions,
+    }),
+    [coupons, loading, saveVoucher, handleLogout, fetchPromotions]
+  );
 
   return (
     <VoucherContext.Provider value={contextValue}>

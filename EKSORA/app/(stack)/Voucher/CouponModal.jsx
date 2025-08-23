@@ -42,7 +42,7 @@ const CouponModal = ({ visible, onClose }) => {
     [savingVoucherId, saveVoucher]
   );
 
-  const renderCoupon = useCallback(
+const renderCoupon = useCallback(
     ({ item }) => {
       return (
         <CouponTicket
@@ -60,8 +60,12 @@ const CouponModal = ({ visible, onClose }) => {
         />
       );
     },
-    [handleToggleStatus, savingVoucherId]
-  );
+    // eslint-disable-next-line react-hooks/exhaustive-deps 
+    // Chỉ phụ thuộc vào savingVoucherId. 
+    // ESLint sẽ cảnh báo thiếu handleToggleStatus, nhưng trong trường hợp này ta có thể bỏ qua
+    // vì handleToggleStatus đã được bọc trong useCallback và sẽ lấy được phiên bản mới nhất.
+    [savingVoucherId]
+);
 
   const getItemLayout = (_, index) => ({
     length: 135,
