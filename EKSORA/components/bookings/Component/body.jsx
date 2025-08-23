@@ -1,7 +1,10 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LinearGradient } from "expo-linear-gradient";
-import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useCallback } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+
+
 import {
   ActivityIndicator,
   FlatList,
@@ -13,7 +16,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+
 } from "react-native";
+
 
 import { getTrips } from "../../../API/services/servicesBooking";
 import EmptyTrips from "../Component/EmptyTrips";
@@ -25,7 +30,7 @@ const Tab = ({ title, active, onPress }) => {
     return (
       <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
         <LinearGradient
-          colors={["#56CCF2", "#2F80ED"]}
+          colors={["#2a6ee4ff", "#0087CA"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.filterChip, styles.activeFilterChip]}
@@ -88,6 +93,7 @@ export default function Body({ navigation }) {
     switch (activeTab) {
       case "all":
         return allTrips.filter(
+
           (trip) => normalizeStatus(trip.status) !== "canceled"
         );
       case "pending":
@@ -98,6 +104,7 @@ export default function Body({ navigation }) {
       case "canceled":
         return allTrips.filter(
           (trip) => normalizeStatus(trip.status) === "canceled"
+
         );
       default:
         return [];
@@ -121,7 +128,15 @@ export default function Body({ navigation }) {
             Bạn cần đăng nhập để tiếp tục sử dụng tính năng này
           </Text>
           <TouchableOpacity
-            onPress={() => router.push("/(stack)/login/loginEmail")}
+
+
+            onPress={() => router.push({
+              pathname: '/(stack)/login/loginEmail',
+              params: { redirectTo: '/(tabs)/bookings' }
+            })}
+
+
+
             style={[styles.exploreButton, { marginTop: 24 }]}
           >
             <Text style={styles.exploreButtonText}>Đăng nhập / Đăng ký</Text>
@@ -137,7 +152,7 @@ export default function Body({ navigation }) {
     if (loading && allTrips.length === 0) {
       return (
         <View style={styles.contentCenter}>
-          <ActivityIndicator size="large" color="#2F80ED" />
+          <ActivityIndicator size="large" color="#2a6ee4ff" />
         </View>
       );
     }
@@ -217,7 +232,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   activeFilterChip: {
-    shadowColor: "#2F80ED",
+    shadowColor: "#2a6ee4ff",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -252,8 +267,10 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 
+
   exploreButton: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#2a6ee4ff",
+
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

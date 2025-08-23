@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 // --- Bảng màu để dễ dàng tùy chỉnh ---
 const COLORS = {
-  primary: '#0087CA',      // Màu xanh dương chủ đạo
+  primary: '#2a6ee4ff',      // Màu xanh dương chủ đạo
   primaryLight: '#E0F2FE', // Màu xanh dương nhạt cho nền
   white: '#FFFFFF',
   text: '#1F2937',        // Màu chữ chính (gần đen)

@@ -1,33 +1,40 @@
-import React, { useState } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  View, 
-  ActivityIndicator 
-} from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import { useDispatch } from 'react-redux';
+import Toast from 'react-native-toast-message';
 
 import { loginUser } from '../../../../../API/services/AxiosInstance';
 import { useVoucher } from '../../../../../store/VoucherContext';
-import Toast from 'react-native-toast-message';
+
+import { clearRedirectPath, logout } from '../../../../../API/services/authSlice';
+
+
 
 function BodyLoginEmail() {
   // State quản lý form input
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ emailOrPhone: '', password: '' });
   // State quản lý các lỗi của form
-  const [errors, setErrors] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState({ emailOrPhone: '', password: '' });
+
   // State quản lý trạng thái loading
   const [isLoading, setIsLoading] = useState(false);
   // State quản lý việc hiển thị mật khẩu
   const [showPassword, setShowPassword] = useState(false);
+   const [phoneError, setPhoneError] = useState(false);
 
   const dispatch = useDispatch();
   const router = useRouter();
-  
+  const { redirectTo } = useLocalSearchParams();
+
   // Lấy hàm fetchPromotions từ VoucherContext
   const { fetchPromotions } = useVoucher();
 
@@ -48,17 +55,18 @@ function BodyLoginEmail() {
 
   // Hàm kiểm tra dữ liệu form
   const validateForm = () => {
-    const newErrors = { email: '', password: '' };
+    const newErrors = { emailOrPhone: '', password: '' };
     let isValid = true;
 
-    // Kiểm tra email
-    if (!form.email.trim()) {
-      newErrors.email = 'Vui lòng nhập địa chỉ email';
+    // Kiểm tra email hoặc số điện thoại
+    if (!form.emailOrPhone.trim()) {
+      newErrors.emailOrPhone = 'Vui lòng nhập email hoặc số điện thoại';
       isValid = false;
     } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(form.email)) {
-        newErrors.email = 'Địa chỉ email không hợp lệ';
+      const phoneRegex = /^(\+?\d{1,3}[- ]?)?\d{9,12}$/;
+      if (!emailRegex.test(form.emailOrPhone.trim()) && !phoneRegex.test(form.emailOrPhone.trim())) {
+        newErrors.emailOrPhone = 'Email hoặc số điện thoại không hợp lệ';
         isValid = false;
       }
     }
@@ -66,6 +74,9 @@ function BodyLoginEmail() {
     // Kiểm tra mật khẩu
     if (!form.password.trim()) {
       newErrors.password = 'Vui lòng nhập mật khẩu';
+      isValid = false;
+    } else if (form.password.length < 6) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
       isValid = false;
     }
     
@@ -77,31 +88,63 @@ function BodyLoginEmail() {
   const handleLogin = async () => {
     if (isLoading) return;
 
-    if (!validateForm()) {
-      return;
-    }
-    
+    if (!validateForm()) return;
+
     setIsLoading(true);
     try {
-      await dispatch(loginUser(form)).unwrap();
-      await fetchPromotions();
+      // Thêm delay nhỏ để tránh submit quá nhanh
+      await new Promise(resolve => setTimeout(resolve, 300));
 
+      const response = await dispatch(loginUser(form)).unwrap();
+      
+      if (!response || !response.token) {
+        throw new Error('Invalid login response');
+      }
+
+      // Fetch promotions sau khi đăng nhập thành công
+      await fetchPromotions();
+      dispatch(clearRedirectPath());
+
+      // Xử lý chuyển hướng
+      let targetRoute = '/(tabs)/home';
+      if (redirectTo && typeof redirectTo === 'string') {
+        if (redirectTo.includes('bookings')) {
+          targetRoute = '/(tabs)/trips';
+        } else if (redirectTo.includes('trip-detail')) {
+          targetRoute = redirectTo;
+        } else if (redirectTo === '/(stack)/acount/settingScreen') {
+          targetRoute = '/(tabs)/account';
+        } else if (redirectTo === '/(tabs)/favorites') {
+          targetRoute = '/(tabs)/favorites';
+        } else {
+          // Sử dụng redirectTo trực tiếp nếu nó là một route hợp lệ
+          targetRoute = redirectTo;
+        }
+      }
+      
       Toast.show({
         type: 'success',
-        text1: 'Thành công',
-        text2: 'Đăng nhập thành công!',
+        text1: 'Đăng nhập thành công',
+        text2: 'Chào mừng bạn quay trở lại!'
       });
 
-      setTimeout(() => {
-        router.replace('/(tabs)/home'); 
-      }, 1500);
+      router.replace(targetRoute);
 
     } catch (error) {
+      console.error('Login error:', error);
+      
+      // Hiển thị thông báo lỗi cụ thể
       Toast.show({
         type: 'error',
         text1: 'Đăng nhập thất bại',
-        text2: error?.message || 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.',
+        text2: error?.message || 'Vui lòng kiểm tra lại thông tin đăng nhập'
       });
+
+      // Clear form nếu có lỗi xác thực
+      if (error?.message?.includes('không chính xác')) {
+        setForm(prev => ({ ...prev, password: '' }));
+      }
+
     } finally {
       setIsLoading(false);
     }
@@ -109,20 +152,22 @@ function BodyLoginEmail() {
 
   return (
     <View style={styles.container}>
-      {/* Input Email */}
-      <View style={[styles.inputContainer, !!errors.email && styles.errorBorder]}>
+      {/* Input Email hoặc Số điện thoại */}
+      <View style={[styles.inputContainer, !!errors.emailOrPhone && styles.errorBorder]}>
         <FontAwesome name="envelope" size={18} style={styles.icon} />
         <TextInput
-          placeholder="Địa chỉ email"
+          placeholder="Email hoặc số điện thoại"
           placeholderTextColor="#666"
-          value={form.email}
-          onChangeText={(text) => handleInputChange('email', text)}
+          value={form.emailOrPhone}
+          onChangeText={(text) => handleInputChange('emailOrPhone', text)}
           style={styles.input}
-          keyboardType="email-address"
+          keyboardType="default"
           autoCapitalize="none"
+          autoComplete="off"
+          textContentType="username"
         />
       </View>
-      {!!errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+      {!!errors.emailOrPhone && <Text style={styles.errorText}>{errors.emailOrPhone}</Text>}
 
       {/* Input Mật khẩu */}
       <View style={[styles.inputContainer, !!errors.password && styles.errorBorder]}>
@@ -134,9 +179,18 @@ function BodyLoginEmail() {
           value={form.password}
           onChangeText={(text) => handleInputChange('password', text)}
           style={styles.input}
+          autoComplete="password"
+          textContentType="password"
         />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={18} style={styles.icon} />
+        <TouchableOpacity 
+          onPress={() => setShowPassword(!showPassword)}
+          accessibilityLabel={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+        >
+          <FontAwesome 
+            name={showPassword ? 'eye-slash' : 'eye'} 
+            size={18} 
+            style={styles.icon} 
+          />
         </TouchableOpacity>
       </View>
       {!!errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
@@ -146,6 +200,7 @@ function BodyLoginEmail() {
         style={[styles.loginButton, isLoading && styles.disabledButton]} 
         onPress={handleLogin}
         disabled={isLoading}
+        accessibilityLabel="Đăng nhập"
       >
         {isLoading ? (
           <ActivityIndicator size="small" color="#fff" />
@@ -156,10 +211,10 @@ function BodyLoginEmail() {
 
       {/* Các liên kết khác */}
       <View style={styles.linksContainer}>
-        <TouchableOpacity onPress={() => router.push('/(stack)/signup/Repassword')}>
+        <TouchableOpacity onPress={() => router.replace('/(stack)/signup/Repassword')}>
           <Text style={styles.link}>Quên mật khẩu</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/(stack)/signup')}>
+        <TouchableOpacity onPress={() => router.replace('/(stack)/signup')}>
           <Text style={styles.link}>
             Chưa có tài khoản? <Text style={styles.bold}>Đăng ký</Text>
           </Text>
@@ -167,7 +222,7 @@ function BodyLoginEmail() {
       </View>
     </View>
   );
-};
+}
 
 export default BodyLoginEmail;
 
@@ -205,7 +260,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   loginButton: {
-    backgroundColor: '#009DFF',
+    backgroundColor: '#2a6ee4ff',
     paddingVertical: 14,
     borderRadius: 100,
     alignItems: 'center',
@@ -231,6 +286,6 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontWeight: 'bold',
-    color: '#009DFF',
+    color: '#2a6ee4ff',
   },
 });

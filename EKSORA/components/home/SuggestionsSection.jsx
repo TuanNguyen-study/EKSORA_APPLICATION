@@ -26,7 +26,7 @@ const SuggestionsSection = ({
     if (isLoading) {
       return (
         <View style={styles.emptyStateContainer}>
-          <ActivityIndicator size="large" color="#007bff" />
+          <ActivityIndicator size="large" color="#2a6ee4ff" />
         </View>
       );
     }
@@ -69,14 +69,26 @@ const SuggestionsSection = ({
 };
 
 const styles = StyleSheet.create({
-  sectionWrapper: {
-    backgroundColor: "#f8f9fa",
-    marginHorizontal: 15,
-    marginBottom: 15,
-    borderRadius: 16,
-    borderWidth: 0.8,
-    borderColor: "#EAEAEA",
+sectionWrapper: {
+  backgroundColor: "#f3f3f3ff",
+  width: "98%",
+  alignSelf: "center",
+  marginBottom: 15,
+  borderRadius: 16,
+  borderWidth: 0.8,
+  borderColor: "#f5f5f5ff",
+  shadowColor: "#000",
+  shadowOffset: {
+    width: 0,
+    height: 2,
   },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.84,
+
+  
+  elevation: 5,
+},
+
   sectionHeader: {
     paddingHorizontal: 15,
     paddingTop: 15,
@@ -90,12 +102,14 @@ const styles = StyleSheet.create({
   suggestionListContent: {
     paddingTop: 8,
     paddingBottom: 8,
+
     paddingHorizontal: 0,
   },
   columnWrapper: {
     justifyContent: "space-between", // Phân bố đều giữa các item
     paddingHorizontal: 4, // Điều chỉnh lề để cân bằng với marginHorizontal của card
     alignItems: "center", // Đảm bảo item thẳng hàng
+
   },
   emptyStateContainer: {
     justifyContent: "center",

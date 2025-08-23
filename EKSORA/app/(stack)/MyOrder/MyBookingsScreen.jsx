@@ -24,6 +24,31 @@ const filterTabs = [
   { status: 'canceled', title: 'Đã hủy' },
 ];
 
+// Helper lấy tên user từ AsyncStorage
+const getCurrentUserName = async () => {
+  try {
+    const profileStr = await AsyncStorage.getItem('USER_PROFILE');
+    if (!profileStr) return '';
+    const profile = JSON.parse(profileStr);
+    // Ưu tiên trường name, nếu không có thì ghép first_name + last_name
+    return profile.name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+  } catch (e) {
+    return '';
+  }
+};
+
+// Helper lấy email user từ AsyncStorage
+const getCurrentUserEmail = async () => {
+  try {
+    const profileStr = await AsyncStorage.getItem('USER_PROFILE');
+    if (!profileStr) return '';
+    const profile = JSON.parse(profileStr);
+    return profile.email || '';
+  } catch (e) {
+    return '';
+  }
+};
+
 export default function MyBookingsScreen() {
   const router = useRouter();
   const [bookings, setBookings] = useState([]);
@@ -31,6 +56,8 @@ export default function MyBookingsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
 
   const fetchBookings = async () => {
     try {
@@ -79,6 +106,12 @@ export default function MyBookingsScreen() {
       savePaidBookingsToStorage();
     }
   }, [bookings]);
+
+  useEffect(() => {
+    // Lấy tên user và email khi vào màn hình
+    getCurrentUserName().then(setUserName);
+    getCurrentUserEmail().then(setUserEmail);
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -153,6 +186,8 @@ export default function MyBookingsScreen() {
             renderItem={({ item }) => (
               <BookingItem
                 item={item}
+                userName={userName} // Truyền userName vào BookingItem
+                userEmail={userEmail} // Nếu cần hiển thị email
                 onPress={() => router.push(`/BookingDetailScreen/${item._id}`)}
               />
             )}

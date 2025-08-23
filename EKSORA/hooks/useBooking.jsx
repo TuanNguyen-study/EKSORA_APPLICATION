@@ -324,7 +324,9 @@ export const useBooking = (initialDetails) => {
 
   // Xử lý khi người dùng nhấn nút "Đặt ngay"
   const handleBooking = async () => {
+
     // Kiểm tra các điều kiện cần thiết
+
     if (quantityAdult === 0 && quantityChild === 0) {
       Toast.show({
         type: "error",
@@ -343,11 +345,13 @@ export const useBooking = (initialDetails) => {
       return;
     }
 
+
     // Tạo một đối tượng chứa thông tin booking hoàn chỉnh
     const [day, month, year] = selectedDate.split("/");
     const formattedDate = `${year}-${String(month).padStart(2, "0")}-${String(
       day
     ).padStart(2, "0")}`;
+
 
     const bookingData = {
       user_id: userId,

@@ -1,13 +1,13 @@
 export const COLORS = {
-  primary: '#0087CA',
-  primaryDark: '#00639B',
+  primary: '#2a6ee4ff',
+  primaryDark: '#2a6ee4ff',
   primaryLight: '#E6F3FA',
   primaryUltraLight: '#F0F8FF',
 
   secondary: '#FF9800',
   background: '#F4F7F9',
   cardBackground: '#FFFFFF',
-  bannerBackground: '#2AA7E8',
+  bannerBackground: '#2a6ee4ff',
 
   text: '#212121',
   textSecondary: '#757575',
@@ -31,9 +31,9 @@ export const COLORS = {
   lightGray: '#f3f6fcff',
 
   inactiveTab: '#B0BEC5',
-  activeTabDot: '#0087CA',
+  activeTabDot: '#2a6ee4ff',
   inactiveTabDot: '#BDBDBD',
-  activePaginationDotExtended: '#0087CA',
+  activePaginationDotExtended: '#2a6ee4ff',
 
   iconBackground: '#E0F2FE',
   categoryBorder: '#E0E0E0',
@@ -44,16 +44,16 @@ export const COLORS = {
   },
 
   gradientBlueWhite: {
-    colors: ['#00639B', '#0087CA', '#E6F3FA', '#FFFFFF'],
+    colors: ['#2a6ee4ff', '#0087CA', '#E6F3FA', '#FFFFFF'],
     locations: [0, 0.3, 0.6, 1],
   },
 
-  primaryGradientStart: '#00639B',
+  primaryGradientStart: '#2a6ee4ff',
   primaryGradientMid: '#0087CA',
   lightGradientMid: '#E6F3FA',
   gradientEnd: '#FFFFFF',
 
-  primaryAction: '#007BFF',
+  primaryAction: '#2a6ee4ff',
 
   separator: '#ccc',
   separatorLight: '#eee',
@@ -64,7 +64,7 @@ export const COLORS = {
   grey: '#6c757d',
   success: '#28a745',
 
-  primaryBlue: '#00639B',
+  primaryBlue: '#2a6ee4ff',
   secondaryBlue: '#0087CA',
   lightBlue: '#E6F3FA',
   grayText: '#666666',

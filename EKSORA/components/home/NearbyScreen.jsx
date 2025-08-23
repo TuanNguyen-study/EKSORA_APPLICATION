@@ -28,99 +28,6 @@ import CurrentLocationMap from "./CurrentLocationMap";
 // Constants
 import { COLORS } from "../../constants/colors";
 
-// Dữ liệu style bản đồ không đổi
-const mapStyle = [
-  {
-    elementType: "geometry",
-    stylers: [{ color: "#f8f9fa" }],
-  },
-  {
-    elementType: "labels.icon",
-    stylers: [{ visibility: "off" }],
-  },
-  {
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#555555" }],
-  },
-  {
-    elementType: "labels.text.stroke",
-    stylers: [{ color: "#ffffff" }],
-  },
-  {
-    featureType: "administrative.land_parcel",
-    stylers: [{ visibility: "off" }],
-  },
-  {
-    featureType: "administrative.locality",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#7a7a7a" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "geometry",
-    stylers: [{ color: "#eeeeee" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#757575" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "geometry",
-    stylers: [{ color: "#e0e9d8" }], // Màu công viên xanh lá cây nhạt
-  },
-  {
-    featureType: "poi.park",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#9e9e9e" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#ffffff" }],
-  },
-  {
-    featureType: "road.arterial",
-    elementType: "geometry",
-    stylers: [{ color: "#fdfdfd" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [{ color: "#e9ecef" }], // Màu đường cao tốc xám nhạt
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#ced4da" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#616161" }],
-  },
-  {
-    featureType: "road.local",
-    stylers: [{ visibility: "off" }], // Ẩn đường nhỏ để đỡ rối
-  },
-  {
-    featureType: "transit",
-    elementType: "geometry",
-    stylers: [{ color: "#f2f2f2" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#cce0e9" }], // Màu nước xanh pastel
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#9e9e9e" }],
-  },
-];
-
 const TourResultCard = ({ item, onPress }) => (
   <TouchableOpacity style={styles.cardContainer} onPress={onPress}>
     <Image source={{ uri: item.image }} style={styles.cardImage} />
@@ -148,11 +55,10 @@ export default function NearbyScreen() {
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   // Thay đổi cách hoạt động của Animated:
-  // Giờ nó sẽ điều khiển chiều cao (height) của panel
-  const panelHeight = useRef(new Animated.Value(350)).current; // Chiều cao ban đầu
+  const panelHeight = useRef(new Animated.Value(350)).current;
 
   const togglePanel = () => {
-    const toValue = isPanelExpanded ? 100 : 350; // Chiều cao khi thu gọn và mở rộng
+    const toValue = isPanelExpanded ? 100 : 350;
     Animated.timing(panelHeight, {
       toValue,
       duration: 300,
@@ -169,13 +75,18 @@ export default function NearbyScreen() {
   const findTours = async (location) => {
     setIsFinding(true);
     setError(null);
+    
     try {
+      // Validate location object
+      if (!location || !location.coords) {
+        throw new Error('Invalid location data');
+      }
+
       const categoriesData = await getCategories();
       const allCategories = Array.isArray(categoriesData)
         ? categoriesData
         : categoriesData.data || [];
 
-      // Thêm try-catch riêng cho reverseGeocodeAsync
       let geocodedAddresses;
       try {
         geocodedAddresses = await Location.reverseGeocodeAsync({
@@ -184,53 +95,68 @@ export default function NearbyScreen() {
         });
       } catch (geocodeError) {
         console.log("Geocoding error:", geocodeError);
-        // Fallback với thông tin mặc định
         setLocationName("Việt Nam");
-        const allToursData = await getTours(); // Lấy tất cả tour làm fallback
+        
+        // Fallback với thông tin mặc định
+        const allToursData = await getTours();
         const processedTours = (
           Array.isArray(allToursData) ? allToursData : allToursData.data || []
         )
-          .filter((tour) => tour && tour.price > 0) // Lọc bỏ tour có giá 0 đồng
-          .slice(0, 10) // Giới hạn 10 tours
+          .filter((tour) => tour && tour.price > 0)
+          .slice(0, 10)
           .map((tour) => ({
             ...tour,
-            image: tour.image?.[0] || "https://via.placeholder.com/300",
+            image: Array.isArray(tour.image) ? tour.image[0] : tour.image || "https://via.placeholder.com/300",
           }));
+        
         setNearbyTours(processedTours);
         setIsFinding(false);
         return;
       }
 
-      if (!geocodedAddresses?.length)
+      if (!geocodedAddresses?.length) {
         throw new Error("Không thể xác định địa chỉ của bạn.");
+      }
+      
       const regionName = geocodedAddresses[0].region;
-      if (!regionName) throw new Error("Không nhận diện được tỉnh/thành phố.");
+      if (!regionName) {
+        throw new Error("Không nhận diện được tỉnh/thành phố.");
+      }
+      
       const cleanedLocationName = regionName
         .replace(/Thành phố|Tỉnh/i, "")
         .trim();
       setLocationName(cleanedLocationName);
+      
       const foundCategory = allCategories.find(
         (cat) => cat.name.toLowerCase() === cleanedLocationName.toLowerCase()
       );
-      if (!foundCategory)
+      
+      if (!foundCategory) {
         throw new Error(
           `Rất tiếc, chúng tôi chưa có tour nào tại ${cleanedLocationName}.`
         );
+      }
+      
       const toursData = await getToursByLocation(foundCategory._id);
       const processedTours = (
         Array.isArray(toursData) ? toursData : toursData.data || []
       )
-        .filter((tour) => tour && tour.price > 0) // Lọc bỏ tour có giá 0 đồng
+        .filter((tour) => tour && tour.price > 0)
         .map((tour) => ({
           ...tour,
-          image: tour.image?.[0] || "https://via.placeholder.com/300",
+          image: Array.isArray(tour.image) ? tour.image[0] : tour.image || "https://via.placeholder.com/300",
         }));
-      if (processedTours.length === 0)
+      
+      if (processedTours.length === 0) {
         throw new Error(
           `Không tìm thấy tour nào ở gần ${cleanedLocationName}.`
         );
+      }
+      
       setNearbyTours(processedTours);
     } catch (err) {
+      console.error('Find tours error:', err);
       setError(err.message || "Đã xảy ra lỗi không xác định.");
     } finally {
       setIsFinding(false);
@@ -245,41 +171,34 @@ export default function NearbyScreen() {
   };
 
   const handleLocationError = (errorMessage) => {
+    console.error('Location error:', errorMessage);
     setError(errorMessage);
     setIsFinding(false);
   };
 
   return (
-    // Sử dụng View thay cho SafeAreaView để kiểm soát toàn bộ màn hình
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Bản đồ sẽ nằm ở lớp dưới cùng */}
+      {/* Bản đồ - LOẠI BỎ customMapStyle prop */}
       <CurrentLocationMap
         onLocationFound={handleLocationFound}
         onLocationError={handleLocationError}
-        tourData={nearbyTours}
+        tourData={nearbyTours} // Đảm bảo luôn là array
         onMarkerPress={handlePressSuggestion}
-        customMapStyle={mapStyle}
+        // Loại bỏ customMapStyle prop vì không được sử dụng
       />
 
-      {/* Nút thoát giờ nằm riêng biệt và có zIndex cao */}
+      {/* Nút thoát */}
       <TouchableOpacity style={styles.exitButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={24} color={COLORS.text} />
       </TouchableOpacity>
 
-      {/* 
-        Container của panel được đặt tuyệt đối ở dưới cùng.
-        Nó sẽ cho phép touch "xuyên qua" các vùng trống của nó.
-      */}
+      {/* Panel kết quả */}
       <Animated.View
         style={[styles.resultsContainer, { height: panelHeight }]}
         pointerEvents="box-none"
       >
-        {/* 
-          Wrapper này chứa giao diện panel và sẽ bắt các sự kiện chạm.
-          Nó có pointerEvents="auto" (mặc định)
-        */}
         <View style={styles.panelContentWrapper}>
           <View style={styles.resultsHeader}>
             <Text style={styles.resultsTitle} numberOfLines={1}>
@@ -317,7 +236,7 @@ export default function NearbyScreen() {
                       onPress={() => handlePressSuggestion(item._id)}
                     />
                   )}
-                  keyExtractor={(item) => item._id.toString()}
+                  keyExtractor={(item, index) => item._id ? item._id.toString() : index.toString()}
                   contentContainerStyle={{
                     paddingHorizontal: 20,
                     paddingBottom: 20,
@@ -345,7 +264,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   exitButton: {
-    // Đặt nút thoát ở góc trên cùng bên trái, nằm trên tất cả
     position: "absolute",
     top: Platform.OS === "ios" ? 60 : 40,
     left: 20,
@@ -355,22 +273,19 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 10, // Đảm bảo nó nổi lên trên
+    zIndex: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 10,
   },
-  // Container cho panel, đặt ở dưới cùng màn hình
   resultsContainer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    // Chiều cao được điều khiển bằng Animated.Value
   },
-  // Wrapper cho nội dung panel để bắt sự kiện chạm
   panelContentWrapper: {
     flex: 1,
     backgroundColor: COLORS.white,
@@ -395,13 +310,13 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   listContainer: {
-    flex: 1, // Để FlatList chiếm hết không gian còn lại
+    flex: 1,
   },
   resultsTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: COLORS.text,
-    flex: 1, // Cho phép title co giãn và tránh đẩy nút toggle ra ngoài
+    flex: 1,
     marginRight: 10,
   },
   cardContainer: {

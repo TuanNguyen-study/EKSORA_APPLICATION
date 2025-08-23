@@ -55,7 +55,7 @@ export default function SuggestionModal({ isVisible, onClose }) {
 
   const renderContent = () => {
     if (loading) {
-      return <ActivityIndicator size="large" color="#007bff" style={{ marginVertical: 40 }} />;
+      return <ActivityIndicator size="large" color="#2a6ee4ff" style={{ marginVertical: 40 }} />;
     }
     if (error) {
       return (
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 16, color: '#d9534f', textAlign: 'center' },
   retryButton: {
     marginTop: 16,
-    backgroundColor: '#007bff',
+    backgroundColor: '#2a6ee4ff',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,

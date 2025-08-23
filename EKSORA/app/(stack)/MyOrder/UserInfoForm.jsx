@@ -15,7 +15,6 @@ import {
     View,
 } from 'react-native';
 import { updateUserProfile } from '../../../API/services/servicesProfile';
-import { getUser } from '../../../API/services/servicesUser';
 import { COLORS } from '../../../constants/colors';
 import Toast from 'react-native-toast-message'; // ✅ thêm Toast
 
@@ -57,6 +56,20 @@ const InputRow = ({
     </TouchableOpacity>
 );
 
+const getUserProfile = async () => {
+    try {
+        const userProfileStr = await AsyncStorage.getItem('USER_PROFILE');
+        console.log('Raw user profile:', userProfileStr);
+        if (!userProfileStr) {
+            throw new Error('Không tìm thấy thông tin người dùng');
+        }
+        return JSON.parse(userProfileStr);
+    } catch (error) {
+        console.error('Error getting user profile:', error);
+        throw error;
+    }
+};
+
 export default function UserInfoScreen() {
     const navigation = useNavigation();
 
@@ -72,40 +85,54 @@ export default function UserInfoScreen() {
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchUserData = async () => {
             try {
-                const user = await getUser();
-                setFullName(user.first_name || '');
-                setPhone(user.phone || '');
-                setEmail(user.email || '');
-                setAddress(user.address || '');
+                const userProfile = await getUserProfile();
+                console.log('Fetched user profile:', userProfile);
 
-                if (user.city) {
-                    setCity(user.city);
-                } else {
-                    const cityFromStorage = await AsyncStorage.getItem('city');
-                    if (cityFromStorage) setCity(cityFromStorage);
+                // Ưu tiên trường name, nếu không có thì ghép first_name + last_name
+                let displayName = userProfile.name;
+                if (!displayName || displayName.trim() === '') {
+                    displayName = `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim();
                 }
+                setFullName(displayName);
 
-                const cardName = await AsyncStorage.getItem('cardName');
-                const cardNumber = await AsyncStorage.getItem('cardNumber');
-                const expiryDate = await AsyncStorage.getItem('expiryDate');
-                const cvv = await AsyncStorage.getItem('cvv');
+                setPhone(userProfile.phone || '');
+                setEmail(userProfile.email || '');
+                setAddress(userProfile.address || '');
+                setCity(userProfile.city || '');
 
-                if (cardName) setCardName(cardName);
-                if (cardNumber) setCardNumber(cardNumber);
-                if (expiryDate) setExpiryDate(expiryDate);
-                if (cvv) setCvv(cvv);
+                // Lấy thông tin thanh toán từ AsyncStorage
+                const paymentInfo = await AsyncStorage.multiGet([
+                    'cardName',
+                    'cardNumber',
+                    'expiryDate',
+                    'cvv'
+                ]);
+
+                const [
+                    [, savedCardName],
+                    [, savedCardNumber],
+                    [, savedExpiryDate],
+                    [, savedCvv]
+                ] = paymentInfo;
+
+                if (savedCardName) setCardName(savedCardName);
+                if (savedCardNumber) setCardNumber(savedCardNumber);
+                if (savedExpiryDate) setExpiryDate(savedExpiryDate);
+                if (savedCvv) setCvv(savedCvv);
+
             } catch (error) {
+                console.error('Error fetching user data:', error);
                 Toast.show({
-                    type: "error",
-                    text1: "Lỗi",
-                    text2: "Không thể tải thông tin người dùng.",
+                  type: "error",
+                  text1: "Lỗi",
+                  text2: "Không thể tải thông tin người dùng",
                 });
             }
         };
 
-        fetchData();
+        fetchUserData();
     }, []);
 
     const handleDateChange = (event, selectedDate) => {
@@ -118,41 +145,55 @@ export default function UserInfoScreen() {
     };
 
     const handleSaveChanges = async () => {
-        if (!fullName || !phone || !email || !address || !city) {
+        if (!fullName || !phone || !email) {
             Toast.show({
                 type: "error",
                 text1: "Lỗi",
-                text2: "Vui lòng điền đầy đủ thông tin.",
+                text2: "Vui lòng điền đầy đủ thông tin cần thiết",
             });
             return;
         }
 
         try {
             const token = await AsyncStorage.getItem("ACCESS_TOKEN");
-            await updateUserProfile(token, {
-                first_name: fullName,
+            const currentProfile = await getUserProfile();
+
+            // Cập nhật thông tin người dùng
+            const updatedProfile = {
+                ...currentProfile,
+                name: fullName,
                 phone,
                 email,
                 address,
                 city,
-            });
+            };
 
-            await AsyncStorage.setItem('city', city);
-            await AsyncStorage.setItem('cardName', cardName);
-            await AsyncStorage.setItem('cardNumber', cardNumber);
-            await AsyncStorage.setItem('expiryDate', expiryDate);
-            await AsyncStorage.setItem('cvv', cvv);
+            // Lưu vào AsyncStorage
+            await AsyncStorage.setItem('USER_PROFILE', JSON.stringify(updatedProfile));
+
+            // Lưu thông tin thanh toán
+            await AsyncStorage.multiSet([
+                ['cardName', cardName],
+                ['cardNumber', cardNumber],
+                ['expiryDate', expiryDate],
+                ['cvv', cvv],
+            ]);
+
+            // Gọi API cập nhật
+            await updateUserProfile(token, updatedProfile);
 
             Toast.show({
                 type: "success",
                 text1: "Thành công",
-                text2: "Thông tin của bạn đã được cập nhật.",
+                text2: "Thông tin đã được cập nhật",
             });
+
         } catch (error) {
+            console.error('Error saving changes:', error);
             Toast.show({
                 type: "error",
                 text1: "Lỗi",
-                text2: "Không thể cập nhật thông tin.",
+                text2: "Không thể cập nhật thông tin",
             });
         }
     };

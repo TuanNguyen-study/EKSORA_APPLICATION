@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Image,
   SafeAreaView,
@@ -17,6 +17,8 @@ import QuantitySelector from "./components/QuantitySelector";
 import styles from "./components/styles";
 import VoucherModal from "../Voucher/components/VoucherModal";
 import Toast from "react-native-toast-message";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 export default function BookingModal({ onClose, bookingDetails }) {
   const {
@@ -47,6 +49,66 @@ export default function BookingModal({ onClose, bookingDetails }) {
   } = useBooking(bookingDetails);
 
   const [isVoucherModalVisible, setVoucherModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Debug loading state
+  useEffect(() => {
+    console.log('Loading state changed:', loading);
+  }, [loading]);
+
+  // Lưu booking state khi component mount và khi có thay đổi
+  useEffect(() => {
+    if (bookingDetails) {
+      saveBookingState();
+    }
+  }, [selectedOptionsDetails, selectedDate, quantityAdult, quantityChild, appliedVoucher]);
+
+  // Lưu trạng thái booking vào AsyncStorage
+  const saveBookingState = async () => {
+    try {
+      const bookingState = {
+        bookingDetails,
+        selectedOptionsDetails,
+        selectedDate,
+        quantityAdult,
+        quantityChild,
+        appliedVoucher,
+        timestamp: Date.now(),
+      };
+      await AsyncStorage.setItem('tempBookingData', JSON.stringify(bookingState));
+    } catch (error) {
+      console.log('Error saving booking state:', error);
+    }
+  };
+
+  // Lưu dữ liệu
+  const saveData = async (key, value) => {
+    try {
+      await AsyncStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      // Xử lý lỗi
+    }
+  };
+
+  // Lấy dữ liệu
+  const getData = async (key) => {
+    try {
+      const value = await AsyncStorage.getItem(key);
+      return value ? JSON.parse(value) : null;
+    } catch (e) {
+      // Xử lý lỗi
+      return null;
+    }
+  };
+
+  // Xóa dữ liệu
+  const removeData = async (key) => {
+    try {
+      await AsyncStorage.removeItem(key);
+    } catch (e) {
+      // Xử lý lỗi
+    }
+  };
 
   if (!bookingDetails) {
     return null;
@@ -59,11 +121,43 @@ export default function BookingModal({ onClose, bookingDetails }) {
     setVoucherModalVisible(false);
   };
 
-  const handleBookNowAndClose = () => {
-    onClose();
-    setTimeout(() => {
-      handleBooking();
-    }, 300);
+  const handleBookNowAndClose = async () => {
+    console.log('handleBookNowAndClose called - setting loading to true');
+    setLoading(true);
+    
+    try {
+      // Xóa temp data trước khi booking
+      await AsyncStorage.removeItem('tempBookingData');
+      
+      // Thực hiện booking TRƯỚC KHI đóng modal
+      await handleBooking();
+      
+      // Giả lập thời gian xử lý để user thấy được loading
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      console.log('Booking completed, closing modal');
+      
+      // Sau khi hoàn thành mới đóng modal
+      onClose();
+      
+    } catch (error) {
+      console.error('Booking error:', error);
+      // Nếu có lỗi, vẫn đóng modal sau một thời gian
+      setTimeout(() => {
+        onClose();
+      }, 500);
+    } finally {
+      // Tắt loading
+      setLoading(false);
+      console.log('Loading set to false');
+    }
+  };
+
+  const handleCloseModal = () => {
+    // Không cho đóng modal khi đang loading
+    if (!loading) {
+      onClose();
+    }
   };
 
   const handleAddToCartAndClose = async () => {
@@ -108,14 +202,10 @@ export default function BookingModal({ onClose, bookingDetails }) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { height: "100%" }]}>
+    <SafeAreaView style={[styles.container, { height: '100%' }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons
-            name="chevron-back-outline"
-            size={24}
-            color={COLORS.black}
-          />
+          <Ionicons name="chevron-back-outline" size={24} color={COLORS.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tùy chọn đơn hàng</Text>
         <View style={{ width: 24 }} />
@@ -127,48 +217,27 @@ export default function BookingModal({ onClose, bookingDetails }) {
         showsVerticalScrollIndicator={false}
       >
         {image && (
-          <View style={{ alignItems: "center", marginBottom: 16 }}>
-            <Image
-              source={{ uri: image }}
-              style={{ width: "100%", height: 180, borderRadius: 12 }}
-              resizeMode="cover"
-            />
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <Image source={{ uri: image }} style={{ width: '100%', height: 180, borderRadius: 12 }} resizeMode="cover" />
           </View>
         )}
         <View style={styles.comboTitleContainer}>
-          <Text style={styles.comboTitle} numberOfLines={2}>
-            {tour_title}
-          </Text>
+          <Text style={styles.comboTitle} numberOfLines={2}>{tour_title}</Text>
         </View>
 
         <View style={styles.badgesContainer}>
-          <TouchableOpacity style={styles.badge}>
-            <Text style={styles.badgeText}>Hủy miễn phí 24 giờ</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.badge}>
-            <Text style={styles.badgeText}>Xác nhận tức thời</Text>
-          </TouchableOpacity>
+          <TouchableOpacity style={styles.badge}><Text style={styles.badgeText}>Hủy miễn phí 24 giờ</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.badge}><Text style={styles.badgeText}>Xác nhận tức thời</Text></TouchableOpacity>
         </View>
 
         {selectedOptionsDetails.length > 0 && (
           <View style={styles.sectionBox}>
             <Text style={styles.sectionTitle}>Tùy chọn dịch vụ đã chọn</Text>
             {selectedOptionsDetails.map((option, index) => (
-              <View
-                key={`${option.packageId}-${option.optionId}`}
-                style={styles.optionItem}
-              >
-                <Text style={styles.optionTitle}>
-                  {option.title}: {option.optionName}
-                </Text>
-                {option.optionDescription && (
-                  <Text style={styles.optionDescription}>
-                    {option.optionDescription}
-                  </Text>
-                )}
-                <Text style={styles.optionPrice}>
-                  {formatPrice(option.optionPrice)}
-                </Text>
+              <View key={index} style={styles.optionItem}>
+                <Text style={styles.optionTitle}>{option.title}: {option.optionName}</Text>
+                {option.optionDescription && (<Text style={styles.optionDescription}>{option.optionDescription}</Text>)}
+                <Text style={styles.optionPrice}>{formatPrice(option.optionPrice)}</Text>
               </View>
             ))}
           </View>
@@ -176,59 +245,43 @@ export default function BookingModal({ onClose, bookingDetails }) {
 
         <View style={styles.sectionBox}>
           <Text style={styles.sectionTitle}>Vui lòng chọn ngày sử dụng</Text>
-          <DateSelector
-            availableDates={availableDates}
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-            onOpenCalendar={() => setDatePickerVisible(true)}
-          />
+          <DateSelector availableDates={availableDates} selectedDate={selectedDate} onSelectDate={setSelectedDate} onOpenCalendar={() => setDatePickerVisible(true)} />
         </View>
 
-        <DateTimePickerModal
-          isVisible={isDatePickerVisible}
-          mode="date"
-          onConfirm={handleConfirmDate}
-          onCancel={() => setDatePickerVisible(false)}
-          locale="vi_VN"
-          confirmTextIOS="Xác nhận"
-          cancelTextIOS="Hủy"
-          date={new Date()}
-        />
+        <DateTimePickerModal isVisible={isDatePickerVisible} mode="date" onConfirm={handleConfirmDate} onCancel={() => setDatePickerVisible(false)} locale="vi_VN" confirmTextIOS="Xác nhận" cancelTextIOS="Hủy" date={new Date()} />
 
         <View style={styles.sectionBox}>
           <Text style={styles.sectionTitle}>Chọn số lượng</Text>
-          <QuantitySelector
-            label="Người lớn"
-            priceText={formatPrice(adultPrice)}
-            quantity={quantityAdult}
-            onDecrement={decrementAdult}
-            onIncrement={incrementAdult}
-          />
+          <QuantitySelector label="Người lớn" priceText={formatPrice(adultPrice)} quantity={quantityAdult} onDecrement={decrementAdult} onIncrement={incrementAdult} />
           <View style={styles.divider} />
-          <QuantitySelector
-            label="Trẻ em (5-8 tuổi)"
-            priceText={formatPrice(childPrice)}
-            quantity={quantityChild}
-            onDecrement={decrementChild}
-            onIncrement={incrementChild}
-          />
+          <QuantitySelector label="Trẻ em (5-8 tuổi)" priceText={formatPrice(childPrice)} quantity={quantityChild} onDecrement={decrementChild} onIncrement={incrementChild} />
         </View>
 
         <View style={styles.sectionBox}>
-          {/* Đã xoá phần chọn voucher và chiết khấu khỏi modal */}
-          {/* Đóng thẻ View bị thiếu sau khi xoá các section */}
+
+          <Text style={styles.sectionTitle}>Ưu đãi</Text>
+          <TouchableOpacity style={styles.voucherButton} onPress={() => setVoucherModalVisible(true)}>
+            {appliedVoucher ? (
+              <Text style={styles.voucherSelectedText}>{appliedVoucher.voucher_id.code}</Text>
+            ) : (
+              <Text style={styles.voucherPlaceholder}>Chọn hoặc nhập mã</Text>
+            )}
+            <Ionicons name="chevron-forward-outline" size={20} color={COLORS.darkGray} />
+          </TouchableOpacity>
         </View>
+
+        {discount > 0 && (
+          <View style={styles.sectionBox}>
+            <Text style={styles.sectionTitle}>Chiết khấu</Text>
+            <Text style={styles.discountText}>Đã giảm: {formatPrice(discount)}</Text>
+          </View>
+        )}
       </ScrollView>
 
-      <BookingFooter
-        totalPrice={formatPrice(finalPrice)}
-        onAddToCart={handleAddToCartAndClose}
-        onBookNow={handleBookNowAndClose}
-      />
+      <BookingFooter totalPrice={formatPrice(finalPrice)} onAddToCart={handleAddToCart} onBookNow={handleBookNowAndClose} />
 
-      {/* Đã xoá VoucherModal khỏi modal */}
+      <VoucherModal visible={isVoucherModalVisible} onClose={() => setVoucherModalVisible(false)} onApplyVoucher={handleApplyVoucher} selectedVoucher={appliedVoucher} />
 
-      <Toast />
     </SafeAreaView>
   );
 }
