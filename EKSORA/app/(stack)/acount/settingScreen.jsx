@@ -16,6 +16,11 @@ import {
 } from "react-native";
 import { getUser } from "../../../API/services/servicesUser";
 import { COLORS } from "../../../constants/colors";
+import { useDispatch } from "react-redux";
+// import { logout } from "../../../store/authSlice"; // <-- Đảm bảo import đúng action logout
+
+
+
 // Import hook `useVoucher` nếu bạn có VoucherContext
 // import { useVoucher } from "../../../store/VoucherContext"; 
 
@@ -34,6 +39,7 @@ const cardShadow = Platform.select({
 export default function SettingScreen() {
   const router = useRouter();
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -79,20 +85,26 @@ export default function SettingScreen() {
   // === HÀM ĐĂNG XUẤT ĐÃ ĐƯỢC CẬP NHẬT HOÀN CHỈNH ===
   const handleLogout = useCallback(async () => {
     try {
+
       const keysToRemove = ["ACCESS_TOKEN", "USER_ID", "LOCAL_AVATAR_URI"];
       await AsyncStorage.multiRemove(keysToRemove);
 
       setError(null);
 
       // 👉 Điều hướng về tab Account (chính là AccountScreen)
-      router.replace("/(tabs)/account");
+      router.replace("/(tabs)/home");
+
     } catch (e) {
       console.error("Đăng xuất thất bại:", e);
       setError("Đã có lỗi xảy ra. Vui lòng thử lại.");
     } finally {
       setModalVisible(false);
     }
-  }, []);
+
+  }, [router, dispatch]); // <-- thêm dispatch vào dependency
+
+
+
   const handleCancel = useCallback(() => setModalVisible(false), []);
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 

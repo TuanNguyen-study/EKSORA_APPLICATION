@@ -12,6 +12,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+ 
 } from "react-native";
 import { useSelector } from "react-redux";
 import { useCart } from "../../../store/CartContext";
@@ -79,6 +80,7 @@ const ShoppingCartScreen = () => {
       ]
     );
   };
+
 
   const handleSelectAll = () => {
     const allItemIds = cartItems.map((item) => item.id);

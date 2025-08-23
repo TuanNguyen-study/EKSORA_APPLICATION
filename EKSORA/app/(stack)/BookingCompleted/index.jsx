@@ -470,9 +470,9 @@ export default function BookingCompleted() {
           />
 
           {/* Render danh sách Card booking */}
-          {displayItems.map((item) => (
+          {displayItems.map((item, idx) => (
             <BookingSummaryCard
-              key={item.id}
+              key={item.id || `${item.title}-${item.travelDate}-${idx}`}
               title={item.title}
               travelDate={item.travelDate}
               quantityAdult={item.quantityAdult}

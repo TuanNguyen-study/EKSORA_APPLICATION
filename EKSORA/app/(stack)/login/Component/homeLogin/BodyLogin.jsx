@@ -2,7 +2,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { router } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View, onPress } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function BodyLogin() {
 
@@ -43,7 +43,7 @@ export default function BodyLogin() {
 
 
             <View>
-                <Text style={styles.text1} onPress={(onPress)}>Lựa chọn khác</Text>
+                <Text style={styles.text1}>Lựa chọn khác</Text>
             </View>
 
         </View>

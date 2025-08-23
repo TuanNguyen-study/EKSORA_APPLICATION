@@ -24,11 +24,14 @@ import {
 import { provinces } from "./provinces";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-// import * as validators from '../../../utils/validators';
-import * as validators from "../../../utils/validators";
+import * as validators from '../../../utils/validators';
+import { useDispatch } from 'react-redux';
+import { updateUser } from '../../../API/services/authSlice';
+
 
 // ===== COMPONENT CHÍNH =====
 export default function PersonalInfoScreen() {
+  const dispatch = useDispatch();
   // --- States ---
   const [userInfo, setUserInfo] = useState({
     name: "",
@@ -166,6 +169,7 @@ export default function PersonalInfoScreen() {
     }
 
     if (Object.keys(payload).length > 0) {
+
       try {
         await updateUserProfile(token, payload);
         // Bạn có thể bỏ comment dòng này để có thông báo thành công thực sự
@@ -176,6 +180,7 @@ export default function PersonalInfoScreen() {
         // Rollback lại thông tin cũ nếu API lỗi
         setUserInfo(userInfo);
       }
+
     }
   };
 

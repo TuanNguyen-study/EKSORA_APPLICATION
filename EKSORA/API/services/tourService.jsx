@@ -1,5 +1,5 @@
 // API/services/tourService.js
-import axios from './AxiosInstance'; 
+import axios from './AxiosInstance';
 
 export const fetchTourDetail = async (tourId) => {
   if (!tourId) throw new Error('Tour ID không được cung cấp.');

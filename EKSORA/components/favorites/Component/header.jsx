@@ -21,8 +21,8 @@ export default function Header({ setFilterData }) {
     <SafeAreaView style={styles.safeArea}>
       <View>
         <LinearGradient
-          colors={["#2F80ED", "#479DEB", "#56CCF2"]}
-          locations={[0, 0.3, 0.8, 1]}
+         colors={["#2a6ee4ff", "#2a6ee4ff", "#0087CA"]}
+          locations={[0, 0.3, 0.7, 0,9]}
           style={styles.headerContainer}
         >
           {/* ---- Nhóm các thành phần phụ ---- */}
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   confirmButton: {
-    backgroundColor: "#0088dc",
+    backgroundColor: "#2a6ee4ff",
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 10,

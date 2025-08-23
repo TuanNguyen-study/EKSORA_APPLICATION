@@ -1,21 +1,29 @@
+
+import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
-import BodyloginEmail from '../Component/Email/bodyloginEmail';
-import BottomloginEmail from '../Component/Email/bottomloginEmail';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from '../../../../hooks/toastConfig'; // Thay bằng đường dẫn thực tế đến toastConfig
+import BodyloginEmail from '../Component/Emailorphone/bodyloginEmailorphone';
+import BottomloginEmail from '../Component/Emailorphone/bottomloginEmailorphone';
 
-const index = () => {
+
+const LoginEmailScreen = () => {
+    const { redirectTo } = useLocalSearchParams();
     return (
         <View style={styles.container1}>
             <Text style={styles.header}>Đăng nhập</Text>
+
             <BodyloginEmail />
             <BottomloginEmail />
             <Toast config={toastConfig} />
+
         </View>
     );
 };
 
-export default index;
+
+export default LoginEmailScreen
+
 
 const styles = StyleSheet.create({
     container1: {

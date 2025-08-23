@@ -10,7 +10,7 @@ const PromoBanner = () => {
     <>
       <View style={styles.container}>
         {/* Icon bên trái */}
-        <Ionicons name="flame" size={32} color="#0087CA" style={styles.icon} />
+        <Ionicons name="flame" size={32} color="#2a6ee4ff" style={styles.icon} />
 
         {/* Khối văn bản ở giữa */}
         <View style={styles.textContainer}>
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   button: {
-    backgroundColor: '#0087CA',
+    backgroundColor: '#2a6ee4ff',
     borderRadius: 20,
     paddingVertical: 8,
     paddingHorizontal: 16,

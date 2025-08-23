@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   discountTag: {
-    backgroundColor: '#FF6B00',
+    backgroundColor: '#f95656ff',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,

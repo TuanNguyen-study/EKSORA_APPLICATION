@@ -55,7 +55,7 @@ export default function FavoriteItem({
             <Ionicons
               name={isSelected ? "checkbox" : "checkbox-outline"}
               size={24}
-              color={isSelected ? "#007bff" : "#ccc"}
+              color={isSelected ? "#2a6ee4ff" : "#ccc"}
             />
           </TouchableOpacity>
         )}
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f8ff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#007bff",
+    borderColor: "#2a6ee4ff",
   },
   checkboxContainer: {
     marginRight: 12,

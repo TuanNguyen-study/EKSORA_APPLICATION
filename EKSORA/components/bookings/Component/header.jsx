@@ -34,8 +34,8 @@ export default function Header({ scrollY }) {
     <SafeAreaView style={styles.safeArea}>
       <Animated.View>
         <LinearGradient
-          colors={['#2F80ED', '#479DEB', '#56CCF2']}
-          locations={[0, 0.3, 0.8, 1]}
+          colors={["#2a6ee4ff", "#2a6ee4ff", "#0087CA"]}
+                 locations={[0, 0.4, 0.9, 0.1]}
           style={styles.headerContainer}
         >
 

@@ -169,7 +169,7 @@ const TourReviewCard = ({ tourBooking, onSubmitReview, isSubmitting }) => {
                 
                 <View style={styles.imagePickerSection}>
                     <TouchableOpacity style={styles.imagePickerButton} onPress={handleChoosePhoto} disabled={isSubmitting}>
-                        <Icon name="camera-outline" size={22} color="#007BFF" />
+                        <Icon name="camera-outline" size={22} color="#2a6ee4ff" />
                         <Text style={styles.imagePickerButtonText}>Thêm hình ảnh</Text>
                     </TouchableOpacity>
                     
@@ -286,13 +286,13 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#007BFF',
+        borderColor: '#2a6ee4ff',
         borderStyle: 'dashed',
         backgroundColor: '#f0f8ff',
     },
     imagePickerButtonText: {
         marginLeft: 8,
-        color: '#007BFF',
+        color: '#2a6ee4ff',
         fontSize: 16,
         fontWeight: '600',
     },
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     submitButton: {
-        backgroundColor: '#007BFF',
+        backgroundColor: '#2a6ee4ff',
         paddingVertical: 15,
         borderRadius: 25,
         alignItems: 'center',

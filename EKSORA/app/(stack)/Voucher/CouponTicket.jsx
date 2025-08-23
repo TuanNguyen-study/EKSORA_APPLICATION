@@ -10,7 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 // --- Bảng màu ---
 const COLORS = {
-  primaryBlue: "#0087CA", // Màu xanh dương chủ đạo (giống Modal)
+  primaryBlue: "#2a6ee4ff", // Màu xanh dương chủ đạo (giống Modal)
   lightBlue: "#E6F3F9", // Nền xanh dương rất nhạt
   white: "#FFFFFF",
   textPrimary: "#1F2937", // Màu chữ chính (đen đậm)
