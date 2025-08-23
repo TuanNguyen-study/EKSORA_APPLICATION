@@ -1,6 +1,8 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '../../../constants/colors';
+import { useEffect, useState } from 'react';
 
 const formatPrice = (price) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -36,6 +38,37 @@ const BookingItem = ({ item, onPress }) => {
   };
 
   const currentStatus = statusConfig[status?.toLowerCase()] || statusConfig.default;
+
+  // State lưu thông tin user từ AsyncStorage
+  const [userInfo, setUserInfo] = useState({ name: '', email: '', phone: '' });
+  const [missingFields, setMissingFields] = useState([]);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const profileStr = await AsyncStorage.getItem('USER_PROFILE');
+        let missing = [];
+        if (profileStr) {
+          const profile = JSON.parse(profileStr);
+          const name = profile.name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+          const email = profile.email || '';
+          const phone = profile.phone || '';
+          if (!name) missing.push('Họ tên');
+          if (!email) missing.push('Email');
+          if (!phone) missing.push('Số điện thoại');
+          setUserInfo({ name, email, phone });
+          setMissingFields(missing);
+        } else {
+          setUserInfo({ name: '', email: '', phone: '' });
+          setMissingFields(['Họ tên', 'Email', 'Số điện thoại']);
+        }
+      } catch (e) {
+        setUserInfo({ name: '', email: '', phone: '' });
+        setMissingFields(['Họ tên', 'Email', 'Số điện thoại']);
+      }
+    };
+    fetchUserInfo();
+  }, []);
 
   return (
     <Pressable style={styles.card} onPress={onPress}>
@@ -73,6 +106,35 @@ const BookingItem = ({ item, onPress }) => {
             Người lớn: {quantity_nguoiLon} | Trẻ em: {quantity_treEm}
           </Text>
         </View>
+
+        {/* Hiển thị thông tin liên lạc từ AsyncStorage */}
+        {userInfo.name && (
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons name="account" size={18} color={COLORS.primary} />
+            <Text style={styles.infoText}>Khách hàng: {userInfo.name}</Text>
+          </View>
+        )}
+        {userInfo.email && (
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons name="email" size={18} color={COLORS.primary} />
+            <Text style={styles.infoText}>Email: {userInfo.email}</Text>
+          </View>
+        )}
+        {userInfo.phone && (
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons name="phone" size={18} color={COLORS.primary} />
+            <Text style={styles.infoText}>SĐT: {userInfo.phone}</Text>
+          </View>
+        )}
+        {/* Nếu thiếu thông tin, yêu cầu nhập bổ sung */}
+        {missingFields.length > 0 && (
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons name="alert-circle" size={18} color={COLORS.danger} />
+            <Text style={[styles.infoText, { color: COLORS.danger }]}>
+              Vui lòng bổ sung: {missingFields.join(', ')} trong phần Cài đặt tài khoản!
+            </Text>
+          </View>
+        )}
 
         <View style={styles.divider} />
 

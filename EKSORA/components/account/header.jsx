@@ -18,6 +18,7 @@ export default function Header() {
       const fetchUser = async () => {
         setLoading(true);
         const token = await AsyncStorage.getItem('ACCESS_TOKEN');
+        const loginType = await AsyncStorage.getItem('LOGIN_TYPE');
 
         if (!token) {
           setIsLoggedIn(false);
@@ -27,19 +28,53 @@ export default function Header() {
           return;
         }
 
-        try {
-          const data = await getUser();
-          setIsLoggedIn(true);
-          setUser(data);
+        setIsLoggedIn(true);
 
+        try {
+          let userData = null;
+
+          // Nếu là Google login, lấy từ AsyncStorage trước
+          if (loginType === 'google') {
+            const storedProfile = await AsyncStorage.getItem('USER_PROFILE');
+            if (storedProfile) {
+              userData = JSON.parse(storedProfile);
+              console.log('[Header] Loaded Google user from AsyncStorage:', userData);
+            }
+          }
+
+          // Nếu không phải Google hoặc không có data trong storage, gọi API
+          if (!userData) {
+            userData = await getUser();
+            console.log('[Header] Loaded user from API:', userData);
+          }
+
+          setUser(userData);
+
+          // Xử lý avatar
           const localAvatar = await AsyncStorage.getItem('LOCAL_AVATAR_URI');
-          setAvatarUri(localAvatar || (data ? data.avatar : null));
+          setAvatarUri(localAvatar || (userData ? userData.avatar : null));
+
         } catch (err) {
-          console.log("❌ Token không hợp lệ, xoá dữ liệu cũ:", err);
-          await AsyncStorage.multiRemove(["ACCESS_TOKEN", "LOCAL_AVATAR_URI", "USER_ID"]);
-          setIsLoggedIn(false);
-          setUser(null);
-          setAvatarUri(null);
+          console.error('Không lấy được thông tin user:', err);
+          
+          // Fallback: thử lấy từ AsyncStorage nếu API fail
+          try {
+            const storedProfile = await AsyncStorage.getItem('USER_PROFILE');
+            if (storedProfile) {
+              const userData = JSON.parse(storedProfile);
+              setUser(userData);
+              setAvatarUri(userData.avatar);
+              console.log('[Header] Fallback to stored profile:', userData);
+            } else {
+              setIsLoggedIn(false);
+              setUser(null);
+              setAvatarUri(null);
+            }
+          } catch (storageError) {
+            console.error('Storage fallback failed:', storageError);
+            setIsLoggedIn(false);
+            setUser(null);
+          }
         } finally {
           setLoading(false);
         }
@@ -47,7 +82,6 @@ export default function Header() {
       fetchUser();
     }, [])
   );
-
 
   // Giao diện loading
   if (loading) {
@@ -72,7 +106,10 @@ export default function Header() {
         </View>
         <TouchableOpacity
           style={styles.loginButton}
-          onPress={() => router.push('/(stack)/login/loginEmail')}
+          onPress={() => router.push({
+            pathname: '/(stack)/login/loginEmail',
+            params: { redirectTo: '/(stack)/acount/settingScreen' }
+          })}
         >
           <Text style={styles.loginButtonText}>Đăng nhập / Đăng ký</Text>
         </TouchableOpacity>
@@ -89,7 +126,7 @@ export default function Header() {
     );
   }
 
-  // --- GIAO DIỆN USER ---
+  // --- GIAO DIỆN CHO NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP ---
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.userInfoContainer} onPress={() => router.push('/(stack)/UpdateUser')}>
@@ -98,7 +135,7 @@ export default function Header() {
           style={styles.avatar}
         />
         <View style={styles.textGroup}>
-          <Text style={styles.username}>{user.first_name || 'Xin chào'}</Text>
+          <Text style={styles.username}>{user.first_name || user.name || 'Xin chào'}</Text>
           <Text style={styles.update}>Xem & cập nhật thông tin cá nhân</Text>
         </View>
       </TouchableOpacity>
@@ -109,7 +146,7 @@ export default function Header() {
           <Ionicons name="shield-checkmark" size={20} color="white" />
         </View>
         <Text style={styles.cardNumber}>
-          {(user._id.slice(-12) || '------------').toUpperCase().replace(/(.{4})/g, '$1 ').trim()}
+          {((user._id || user.id)?.slice(-12) || '------------').toUpperCase().replace(/(.{4})/g, '$1 ').trim()}
         </Text>
       </View>
     </View>

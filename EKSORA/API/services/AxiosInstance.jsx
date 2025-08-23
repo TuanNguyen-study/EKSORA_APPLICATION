@@ -5,6 +5,7 @@ import axios from 'axios';
 // Tạo instance Axios
 const AxiosInstance = axios.create({
   baseURL: 'http://160.250.246.76:3000',
+
   headers: {
     'Content-Type': 'application/json',
   },
@@ -38,30 +39,59 @@ export const registerUser = createAsyncThunk(
 export const loginUser = createAsyncThunk(
   'auth/login',
   async (userData, { rejectWithValue }) => {
-    // console.log('[Login Email] Sending data:', userData);
+    console.log('[Login] Attempting login with:', userData);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^(\+?\d{1,3}[- ]?)?\d{9,12}$/;
+    
+    let endpoint;
+    let payload;
+
+    // Xác định loại đăng nhập và validate
+    if (emailRegex.test(userData.emailOrPhone)) {
+      endpoint = '/api/login-email';
+      payload = {
+        email: userData.emailOrPhone,
+        password: userData.password
+      };
+      console.log('[Login] Using email endpoint');
+    } else if (phoneRegex.test(userData.emailOrPhone)) {
+      endpoint = '/api/login-phone';
+      payload = {
+        phone: userData.emailOrPhone,
+        password: userData.password
+      };
+      console.log('[Login] Using phone endpoint');
+    } else {
+      return rejectWithValue('Email hoặc số điện thoại không hợp lệ');
+    }
+
     try {
-      const res = await AxiosInstance.post('/api/login-email', userData);
-      // console.log('[Login Email] Response:', res.data);
+      // Thêm delay 500ms để tránh race condition
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const res = await AxiosInstance.post(endpoint, payload);
+      console.log(`[Login] ${endpoint} response:`, res.data);
 
-      const token = res.data?.token;
-      const userId = res.data?.userId;
-      const user = res.data?.user;
+      if (!res.data || !res.data.token) {
+        throw new Error('Invalid response format');
+      }
 
-      if (token) {
-        await AsyncStorage.setItem('ACCESS_TOKEN', token);
-        // console.log('[Login Email] Token stored:', token);
+      // Lưu token và thông tin user
+      await AsyncStorage.setItem('ACCESS_TOKEN', res.data.token);
+      if (res.data.userId) {
+        await AsyncStorage.setItem('USER_ID', res.data.userId);
       }
-      if (userId) {
-        await AsyncStorage.setItem('USER_ID', userId);
-        // console.log('[Login Email] UserId stored:', userId);
-      }
-      if (user) {
-        await AsyncStorage.setItem('USER_PROFILE', JSON.stringify(user));
-        // console.log('[Login Email] User stored:', user);
+      if (res.data.user) {
+        await AsyncStorage.setItem('USER_PROFILE', JSON.stringify(res.data.user));
       }
 
       return res.data;
     } catch (err) {
+      console.error('[Login] Error:', err);
+      if (err.response?.status === 429) {
+        return rejectWithValue('Quá nhiều yêu cầu, vui lòng thử lại sau');
+      }
       return rejectWithValue(extractErrorMessage(err, 'Đăng nhập thất bại'));
     }
   }
@@ -78,6 +108,7 @@ export const loginphone = createAsyncThunk(
 
       const token = res.data?.token;
       const userId = res.data?.userId;
+      const user = res.data?.user; // Thêm dòng này
 
       if (token) {
         await AsyncStorage.setItem('ACCESS_TOKEN', token);
@@ -86,6 +117,9 @@ export const loginphone = createAsyncThunk(
       if (userId) {
         await AsyncStorage.setItem('USER_ID', userId);
         // console.log('[Login Phone] UserId stored:', userId);
+      }
+      if (user) {
+        await AsyncStorage.setItem('USER_PROFILE', JSON.stringify(user));
       }
 
       return res.data;
@@ -165,16 +199,25 @@ export const resetPassword = createAsyncThunk(
 // Interceptor
 AxiosInstance.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('ACCESS_TOKEN');
-    // console.log('[Interceptor] ACCESS_TOKEN:', token);
+    try {
+      const [token, loginType] = await Promise.all([
+        AsyncStorage.getItem('ACCESS_TOKEN'),
+        AsyncStorage.getItem('LOGIN_TYPE')
+      ]);
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+        // Thêm header để xác định loại đăng nhập
+        if (loginType) {
+          config.headers['X-Login-Type'] = loginType;
+        }
+      }
+
+      return config;
+    } catch (error) {
+      console.error('[Interceptor] Error:', error);
+      return config;
     }
-
-    // console.log('[Interceptor] Request Headers:', config.headers);
-    // console.log('[Interceptor] Request URL:', config.baseURL + config.url);
-    return config;
   },
   (error) => Promise.reject(error)
 );

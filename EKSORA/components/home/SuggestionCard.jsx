@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../constants/colors";
 
 const { width } = Dimensions.get("window");
-const CARD_WIDTH = width * 0.42;
+const CARD_WIDTH = width * 0.46;
 const IMAGE_HEIGHT = CARD_WIDTH * (2.5 / 4);
 
 const PLACEHOLDER_IMAGE = "https://via.placeholder.com/300";
@@ -63,8 +63,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardBackground,
     borderRadius: 16,
     borderWidth: 0.1,
-    marginBottom: 20,
-    marginHorizontal: 7,
+    marginBottom: 10,
+    marginHorizontal: 2,
     shadowColor: "#a19b9bff",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

@@ -44,7 +44,7 @@ export default function Offer() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#0087CA", "#0087CA"]}
+        colors={["#2a6ee4ff", "#0087CA"]}
         style={styles.headerContainer}
       >
         <View style={styles.headerContent}>
@@ -64,7 +64,8 @@ export default function Offer() {
           coupons.slice(0, 10).map((offer) => (
             <View key={offer.id} style={styles.cardWrapper}>
               <LinearGradient
-                colors={["#5f889cff", "#0087CA"]}
+                colors={["#2a6ee4ff", "#2a6ee4ff", "#0087CA"]}
+                 locations={[0, 0.4, 0.9, 0.1]}
                 style={styles.codeBox}
               >
                 <View style={styles.boxHeader}>
@@ -180,7 +181,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   boxHeader: {
-    backgroundColor: "#0090d0",
+    backgroundColor: "#f95656ff",
     paddingVertical: 6,
     alignItems: "center",
   },
@@ -232,10 +233,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   defaultButtonText: {
-    color: "#005bac",
+    color: "#2a6ee4ff",
   },
   loginRequiredButtonText: {
-    color: "#005bac", // Màu xanh để dễ đọc, giống defaultButtonText
+    color: "#2a6ee4ff", // Màu xanh để dễ đọc, giống defaultButtonText
   },
   savedButtonText: {
     color: COLORS.lightGray,

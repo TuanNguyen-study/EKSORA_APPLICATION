@@ -5,13 +5,19 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
+
+  Alert,
+  FlatList,
+
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import QRCode from "react-native-qrcode-svg";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector } from "react-redux";
+
 import Toast from "react-native-toast-message";
+
 
 // --- CÁC HÀM HỖ TRỢ ---
 
@@ -24,6 +30,14 @@ const formatCurrency = (value) => {
   if (typeof value !== "number") return "0đ";
   return `${value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}đ`;
 };
+
+
+// Định dạng giá với đơn vị tiền tệ và kiểu chữ phù hợp
+const formatPrice = (value) => {
+  if (typeof value !== "number") return "0đ";
+  return `${formatCurrency(value)} VNĐ`;
+};
+
 
 // Component hiển thị một dòng chi tiết với icon, nhãn và giá trị.
 
@@ -101,11 +115,13 @@ export default function TripItem({ item }) {
     if (isPaying) return;
 
     if (!loggedInUser || !loggedInUser.id) {
+
       Toast.show({
         type: "error",
         text1: "Chưa đăng nhập",
         text2: "Vui lòng đăng nhập để tiếp tục thanh toán.",
       });
+
       return;
     }
 
@@ -155,11 +171,13 @@ export default function TripItem({ item }) {
       });
     } catch (error) {
       console.error("Lỗi khi chuẩn bị thanh toán:", error);
+
       Toast.show({
         type: "error",
         text1: "Đã xảy ra lỗi",
         text2: "Không thể tiến hành thanh toán. Vui lòng thử lại.",
       });
+
     } finally {
       setIsPaying(false);
     }
@@ -246,6 +264,34 @@ export default function TripItem({ item }) {
             restored={item.restoredPrice || item.calculatedPrice} // Indicator if price was restored or calculated
           />
         </View>
+
+        <View style={styles.divider} />
+
+        {/* ===== PHẦN TÙY CHỌN ===== */}
+        {item.selectedOptionsDetails && item.selectedOptionsDetails.length > 0 && (
+          <View style={styles.optionsContainer}>
+            <Text style={styles.optionsTitle}>Tùy chọn đã chọn:</Text>
+            <FlatList
+              data={item.selectedOptionsDetails}
+              keyExtractor={(option) => `${option.packageId}-${option.optionId}`} // Ensure unique key
+              renderItem={({ item: option }) => (
+                <View style={styles.optionItem}>
+                  <Text style={styles.optionTitle}>
+                    {option.title}: {option.optionName}
+                  </Text>
+                  {option.optionDescription && (
+                    <Text style={styles.optionDescription}>
+                      {option.optionDescription}
+                    </Text>
+                  )}
+                  <Text style={styles.optionPrice}>
+                    {formatPrice(option.optionPrice)}
+                  </Text>
+                </View>
+              )}
+            />
+          </View>
+        )}
 
         <View style={styles.divider} />
 
@@ -425,9 +471,39 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.7,
   },
-  restoredIndicator: {
-    color: "#4A90E2",
+
+  optionsContainer: {
+    marginTop: 16,
+  },
+  optionsTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 8,
+  },
+  optionItem: {
+    marginBottom: 12,
+  },
+  optionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+  },
+  optionDescription: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4,
+  },
+  optionPrice: {
     fontSize: 14,
     fontWeight: "bold",
+    color: "#4CAF50",
+    marginTop: 4,
+
+/**   restoredIndicator: {
+    color: "#4A90E2",
+    fontSize: 14,
+    fontWeight: "bold",**/
+
   },
 });

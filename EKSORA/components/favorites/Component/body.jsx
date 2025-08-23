@@ -221,14 +221,22 @@ export default function Body() {
           style={styles.emptyImage}
           resizeMode="contain"
         />
-        <Text style={styles.noResults}>
-          Hãy đăng nhập để khám phá nhiều hơn
-        </Text>
+
+        <Text style={styles.noResults}>Hãy đăng nhập để khám phá nhiều hơn</Text>
         <Text style={styles.explore}>
           bạn cần đăng nhập để thực hiện chức năng này
         </Text>
-        <TouchableOpacity
-          onPress={() => router.push("/(stack)/login/loginEmail")}
+        <TouchableOpacity 
+          onPress={() => {
+            router.push({
+              pathname: '/(stack)/login/loginEmail',
+              params: {
+                redirectTo: '/(tabs)/favorites',
+                fromScreen: 'favorites'  // Đánh dấu đến từ màn hình favorites
+              }
+            });
+          }}
+
           style={[styles.exploreButton, { marginTop: 24 }]}
         >
           <Text style={styles.exploreButtonText}>Đăng nhập / Đăng ký</Text>
@@ -301,7 +309,7 @@ export default function Body() {
           <Ionicons
             name={isSelectionMode ? "close" : "checkmark-circle-outline"}
             size={24}
-            color="#007bff"
+            color="#2a6ee4ff"
           />
           <Text style={styles.headerButtonText}>
             {isSelectionMode ? "Hủy" : "Chọn"}
@@ -321,7 +329,7 @@ export default function Body() {
                     : "checkbox-outline"
                 }
                 size={24}
-                color="#007bff"
+                color="#2a6ee4ff"
               />
               <Text style={styles.headerButtonText}>
                 {selectedItems.size === tours.length
@@ -394,13 +402,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#007bff",
+    borderColor: "#2a6ee4ff",
   },
   headerButtonText: {
     marginLeft: 6,
     fontSize: 14,
     fontWeight: "600",
-    color: "#007bff",
+    color: "#2a6ee4ff",
   },
   selectionActions: {
     flexDirection: "row",
@@ -431,19 +439,23 @@ const styles = StyleSheet.create({
   },
   noResults: {
     fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#333",
+
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#333',
+
     marginBottom: 8,
   },
   explore: {
     fontSize: 15,
-    textAlign: "center",
-    color: "#666",
+
+    textAlign: 'center',
+    color: '#666',
+
     lineHeight: 24,
   },
   exploreButton: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#2a6ee4ff",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

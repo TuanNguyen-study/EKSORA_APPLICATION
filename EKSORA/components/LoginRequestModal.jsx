@@ -1,25 +1,23 @@
-import React, { useEffect } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-} from "react-native";
-import { useRouter } from "expo-router";
-import { COLORS } from "../constants/colors";
-import { BlurView } from "expo-blur"; // Hiệu ứng mờ
+
+import { BlurView } from 'expo-blur'; // Hiệu ứng mờ 
+import { LinearGradient } from 'expo-linear-gradient'; //  Tạo dải màu cho nút
+import { usePathname, useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { Image, Modal, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
-  withTiming,
-  withSpring,
+  useSharedValue,
   withDelay,
-} from "react-native-reanimated"; //  Thư viện cho animation mượt mà
-import { LinearGradient } from "expo-linear-gradient"; //  Tạo dải màu cho nút
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated'; //  Thư viện cho animation mượt mà
+import { useDispatch } from 'react-redux';
+import { COLORS } from '../constants/colors';
+
 export default function LoginRequestModal({ isVisible, onClose }) {
   const router = useRouter();
+  const pathname = usePathname(); // Lấy route hiện tại
+  const dispatch = useDispatch();
 
   //  --- Khởi tạo các giá trị cho animation ---
   const modalOpacity = useSharedValue(0);
@@ -60,9 +58,27 @@ export default function LoginRequestModal({ isVisible, onClose }) {
     }
   }, [isVisible]);
 
-  const handleNavigateToLogin = () => {
+  const handleClose = () => {
     onClose();
-    router.push("/(stack)/login/loginEmail");
+
+    // Sử dụng setTimeout để đợi modal đóng hoàn toàn
+    setTimeout(() => {
+      router.replace('/(tabs)/home');
+      // Xóa history ngay sau khi chuyển trang để tránh quay lại
+      router.setParams({});
+      router.canGoBack() && router.back();
+    }, 100);
+  };
+
+  const handleNavigateToLogin = () => {
+    const currentPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
+    onClose();
+    // Chuyển đến trang login và lưu đường dẫn hiện tại
+    router.replace({
+      pathname: '/(stack)/login/loginEmail',
+      params: { redirectTo: currentPath }
+    });
+
   };
 
   if (!isVisible) return null;
@@ -71,16 +87,19 @@ export default function LoginRequestModal({ isVisible, onClose }) {
     <Modal
       transparent
       visible={isVisible}
-      animationType="none" // Tắt animation mặc định để dùng reanimated
-      onRequestClose={onClose}
+      animationType="none" 
+      onRequestClose={handleClose}  // Xử lý nút back của thiết bị
+      hardwareAccelerated={true}    // Tăng performance
+      statusBarTranslucent={true}   // Hiển thị trong suốt status bar 
     >
       <BlurView intensity={30} tint="dark" style={styles.overlay}>
         <Animated.View style={[styles.modalContainer, animatedModalStyle]}>
-          <Animated.View
-            style={[styles.contentContainer, animatedContentStyle]}
-          >
-            <Image
-              source={require("../assets/images/Logo.png")}
+
+          <Animated.View style={[styles.contentContainer, animatedContentStyle]}>
+            
+            <Image 
+                 source={require('../assets/images/Logo.png')} 
+
               style={styles.illustration}
             />
 
@@ -98,7 +117,7 @@ export default function LoginRequestModal({ isVisible, onClose }) {
             >
               {/*  Dải màu Gradient cho nút bấm nổi bật */}
               <LinearGradient
-                colors={["#6eddfcff", COLORS.primary]}
+                colors={["#2a6ee4ff", COLORS.primary]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.gradient}
@@ -107,7 +126,12 @@ export default function LoginRequestModal({ isVisible, onClose }) {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+
+            <TouchableOpacity 
+              style={styles.cancelButton} 
+              onPress={handleClose}  // Thay đổi từ onClose sang handleClose
+            >
+
               <Text style={styles.cancelButtonText}>Lúc khác</Text>
             </TouchableOpacity>
           </Animated.View>

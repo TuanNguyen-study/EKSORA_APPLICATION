@@ -9,42 +9,47 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator, // thêm ActivityIndicator
 } from "react-native";
-import Toast from 'react-native-toast-message';
-import { getToursByLocation } from "../../../../../API/services/serverCategories";
+import Toast from "react-native-toast-message";
+import { getToursByLocation, getAllToursByLocation } from "../../../../../API/services/serverCategories";
 import LocationModal from "./LocationModal";
 import { router } from "expo-router";
 
 const screenWidth = Dimensions.get("window").width;
 
 export default function FilterModal({ visible, onClose }) {
-  const [priceRange, setPriceRange] = useState([0, 5000000]); // Đổi giá trị khởi tạo thành [0, 5000000]
+  const [priceRange, setPriceRange] = useState([0, 5000000]);
   const [selectedStars, setSelectedStars] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false); // trạng thái loading
 
   const applyFilter = async () => {
     try {
-      if (!selectedLocation?.id) {
-        Toast.show({
-          type: 'error',
-          text1: 'Lỗi',
-          text2: 'Vui lòng chọn địa điểm trước khi áp dụng'
-        });
-        return;
+      setLoading(true); // bật loading khi nhấn áp dụng
+      let tours = [];
+
+      if (selectedLocation?.id) {
+        // Có chọn địa điểm → lọc theo location
+        const cateID = selectedLocation.id;
+        tours = await getToursByLocation(cateID);
+      } else {
+        // Không chọn địa điểm → lấy tất cả tour
+        tours = await getAllToursByLocation();
       }
 
-      const cateID = selectedLocation.id;
-      let tours = await getToursByLocation(cateID);
+      // Chỉ lấy tour có giá > 0 và status active
+      tours = tours.filter((tour) => tour.price > 0 && tour.status === "active");
 
-      // Lọc theo khoảng giá nếu không phải giá trị mặc định
+      // Lọc theo khoảng giá
       if (priceRange[0] !== 0 || priceRange[1] !== 5000000) {
         tours = tours.filter(
           (tour) => tour.price >= priceRange[0] && tour.price <= priceRange[1]
         );
       }
 
-      // Lọc theo số sao nếu đã chọn
+      // Lọc theo số sao
       if (selectedStars) {
         tours = tours.filter(
           (tour) => Math.round(tour.rating) === selectedStars
@@ -61,10 +66,12 @@ export default function FilterModal({ visible, onClose }) {
     } catch (error) {
       console.error("Lỗi khi lọc tour:", error);
       Toast.show({
-        type: 'error',
-        text1: 'Lỗi',
-        text2: 'Không thể lọc tour, vui lòng thử lại sau'
+        type: "error",
+        text1: "Lỗi",
+        text2: "Không thể lọc tour, vui lòng thử lại sau",
       });
+    } finally {
+      setLoading(false); // tắt loading sau khi xử lý xong
     }
   };
 
@@ -168,8 +175,16 @@ export default function FilterModal({ visible, onClose }) {
             >
               <Text style={styles.resetText}>Đặt lại</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.applyBtn} onPress={applyFilter}>
-              <Text style={styles.applyText}>Áp dụng</Text>
+            <TouchableOpacity
+              style={styles.applyBtn}
+              onPress={applyFilter}
+              disabled={loading} // vô hiệu nút khi loading
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.applyText}>Áp dụng</Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -183,7 +198,6 @@ export default function FilterModal({ visible, onClose }) {
             />
           )}
           <Toast />
-
         </View>
       </View>
     </Modal>

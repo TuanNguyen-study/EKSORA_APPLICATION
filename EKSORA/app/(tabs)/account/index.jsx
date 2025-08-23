@@ -40,11 +40,11 @@ export default function AccountScreen() {
       <View style={styles.gradientContainer}>
         <LinearGradient
           colors={[
-            "#2F80ED",
-            "#479DEB",
-            "#56CCF2",
-            "#A3DFF7",
-            "#FFFFFF",
+            "#2a6ee4ff",
+            "#2a6ee4ff",
+            "#3b74d7ff",
+            "#81a7eaff",
+            "#cfdbf1ff",
             "#FFFFFF",
           ]}
           locations={[0, 0.2, 0.4, 0.65, 0.8, 1]}

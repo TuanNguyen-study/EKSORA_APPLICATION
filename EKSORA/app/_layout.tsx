@@ -1,15 +1,15 @@
-import { Stack } from 'expo-router';
-import { Provider } from 'react-redux';
-import store from '../store';
+import { Stack, useSegments } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { AppProviders } from '../store/AppProviders'; 
-import useDeepLink from '../hooks/useDeepLink';
 import Toast from "react-native-toast-message";
+import { Provider } from 'react-redux';
 import { toastConfig } from "../hooks/toastConfig";
+import store from '../store';
+import { AppProviders } from '../store/AppProviders';
+import FixedFloatingChatBotButton from './(stack)/chax-AI/screens/FFixedFloatingChatBotButton';
 
 export default function Layout() {
-  // Handle deeplink navigation
-  useDeepLink();
+  const segments = useSegments();
+  const isHomeScreen = segments[0] === '(tabs)' && segments[1] === 'home';
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -17,22 +17,16 @@ export default function Layout() {
         <AppProviders>
           <Stack
             screenOptions={{
-              headerStyle: { backgroundColor: '#1e90ff' },
-              headerTintColor: 'white',
-              headerTitleStyle: { fontWeight: 'bold' },
               headerShown: false,
+              animation: 'none',
             }}
           >
-            <Stack.Screen name="(stack)" options={{ headerShown: false }} />
-            <Stack.Screen name="trip-detail" options={{ title: 'Trip Details' }} />
-            <Stack.Screen name="loginEmail" options={{ title: 'login Email' }} />
-            <Stack.Screen name="loginPhone" options={{ title: 'login Phone' }} />
-            <Stack.Screen name="editFavorite" options={{ title: 'Edit Favorite', headerShown: false }} />
-            <Stack.Screen name="setting" options={{ title: 'Setting', headerShown: false }} />
-            <Stack.Screen name="booking" options={{ title: 'Booking Screen', headerShown: false }} />
-            <Stack.Screen name="ShowReview" options={{ title: 'ShoReview Screen', headerShown: false }} />
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(stack)" />
+            <Stack.Screen name="(tabs)" />
           </Stack>
-
+          {/* Chỉ hiện ở home */}
+          {isHomeScreen && <FixedFloatingChatBotButton />}
           <Toast config={toastConfig} />
         </AppProviders>
       </Provider>

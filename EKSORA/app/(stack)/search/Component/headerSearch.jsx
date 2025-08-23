@@ -19,9 +19,9 @@ export default function HeaderSearch() {
 
   const popularSearch = [
     "Hà Nội",
-    "đà nẵng",
-    "Quảng Ninh",
-    "hồ chí minh",
+    "Đà nẵng",
+    "Hồ chí minh",
+    "Hà giang"
   ];
 
   useEffect(() => {

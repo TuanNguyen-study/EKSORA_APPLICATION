@@ -8,7 +8,7 @@ const CheckBox = ({ label, checked, onChange }) => {
       <MaterialIcons
         name={checked ? 'check-box' : 'check-box-outline-blank'}
         size={20}
-        color={checked ? '#007AFF' : '#999'}
+        color={checked ? '#2a6ee4ff' : '#999'}
       />
       {label && <Text style={styles.label}>{label}</Text>}
     </TouchableOpacity>
