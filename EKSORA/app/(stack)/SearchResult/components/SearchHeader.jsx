@@ -26,9 +26,6 @@ export default function SearchHeader({ query, filteredTours = [], onOpenFilter, 
         <TouchableOpacity style={styles.iconWrapper} onPress={onOpenFilter}>
           <Ionicons name="options-outline" size={18} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/(stack)/ShoppingCartScreen')}>
-          <Ionicons name="cart-outline" size={20} color="#333" style={styles.iconRight} />
-        </TouchableOpacity>
       </View>
     </View>
   );
