@@ -1,10 +1,11 @@
-// components/ChatMessage.tsx
+// components/ChatMessage.tsx - FIXED VERSION FOR iOS
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image, Platform } from 'react-native';
 import { Message } from '../types/chat';
 import TourCards from '../components/TourCards';
 import VoucherCards from '../components/VoucherCards';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -17,8 +18,8 @@ interface ChatMessageProps {
   onVoucherSave?: (voucher: any) => Promise<void>;
   userInfo?: any;
   savingVoucherId?: string | null;
-  isLoggedIn?: boolean; // ✨ NEW: Add login status
-  onLoginRequired?: () => void; // ✨ NEW: Add login callback
+  isLoggedIn?: boolean;
+  onLoginRequired?: () => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -30,10 +31,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   onVoucherSave,
   userInfo,
   savingVoucherId,
-  isLoggedIn = false, // ✨ NEW: Default to false
-  onLoginRequired // ✨ NEW: Login callback
+  isLoggedIn = false,
+  onLoginRequired
 }) => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const isUser = item.from === 'user';
   const showAvatar = !isUser && (index === messages.length - 1 || messages[index + 1]?.from !== 'bot');
 
@@ -48,11 +50,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   // Handle tour press with auto-close logic
   const handleTourPress = (tour: any) => {
     console.log('🎯 Tour pressed in ChatMessage:', tour);
-    
+
     if (onTourPress) {
       onTourPress(tour);
     }
-    
+
     setTimeout(() => {
       router.push(`/trip-detail/${tour.id || tour._id}`);
     }, 200);
@@ -71,15 +73,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     throw new Error('onVoucherSave not provided');
   };
 
-  // ✨ NEW: Handle login required callback
   const handleLoginRequired = () => {
     if (onLoginRequired) {
       onLoginRequired();
     } else {
-      // Fallback - navigate to login screen
       console.log('🔐 Login required - no callback provided');
-      // You can add default navigation to login screen here
-      // router.push('/login');
     }
   };
 
@@ -98,13 +96,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     return hasReplyText && (hasTours || hasVouchers);
   };
 
-  const getTextStyle = (text: string) => {
-    if (text && text.trim() === 'undefined') {
-      return { maxHeight: 0, overflow: 'hidden' };
-    }
-    return {};
-  };
-
   const getHideStyle = (text: string) => {
     if (typeof text === 'string' && text.trim() === 'undefined') {
       return { height: 0, opacity: 0 };
@@ -118,8 +109,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         <View style={styles.avatarContainer}>
           {showAvatar ? (
             <View style={styles.botAvatar}>
-              <Image 
-source={require('../../../../assets/images/Logo.png')}
+              <Image
+                source={require('../../../../assets/images/Logo.png')}
                 style={styles.logoImage}
                 resizeMode="contain"
               />
@@ -148,7 +139,7 @@ source={require('../../../../assets/images/Logo.png')}
             >
               {item.text}
             </Text>
-        )}
+          )}
 
         {shouldShowTextWithCards() &&
           typeof item.text === 'string' &&
@@ -163,7 +154,7 @@ source={require('../../../../assets/images/Logo.png')}
             >
               {item.text}
             </Text>
-        )}
+          )}
 
         {/* Tour Cards */}
         {!isUser && item.tours && item.tours.length > 0 && (
@@ -172,7 +163,7 @@ source={require('../../../../assets/images/Logo.png')}
           </View>
         )}
 
-        {/* ✨ UPDATED: Voucher Cards with login support */}
+        {/* Voucher Cards */}
         {!isUser && item.vouchers && item.vouchers.length > 0 && (
           <View style={styles.cardsContainer}>
             <VoucherCards
@@ -181,8 +172,8 @@ source={require('../../../../assets/images/Logo.png')}
               onVoucherSave={handleVoucherSave}
               userInfo={userInfo}
               savingVoucherId={savingVoucherId}
-              isLoggedIn={isLoggedIn} // ✨ NEW: Pass login status
-              onLoginRequired={handleLoginRequired} // ✨ NEW: Pass login callback
+              isLoggedIn={isLoggedIn}
+              onLoginRequired={handleLoginRequired}
             />
           </View>
         )}
@@ -219,8 +210,8 @@ export const TypingIndicator: React.FC = () => {
     <View style={[styles.messageRow, styles.botRow]}>
       <View style={styles.avatarContainer}>
         <View style={styles.botAvatar}>
-          <Image 
-            source={require('../../../../assets/images/Logo.png')} 
+          <Image
+            source={require('../../../../assets/images/Logo.png')}
             style={styles.logoImage}
             resizeMode="contain"
           />
@@ -237,26 +228,30 @@ const styles = StyleSheet.create({
   messageRow: {
     flexDirection: 'row',
     marginVertical: 4,
-    paddingHorizontal: 16
+    paddingHorizontal: 16,
+    // FIX: Prevent overflow and ensure proper layout
+    maxWidth: screenWidth,
+    alignSelf: 'stretch',
   },
   userRow: {
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
   },
   botRow: {
-    justifyContent: 'flex-start'
+    justifyContent: 'flex-start',
   },
   avatarContainer: {
     width: 32,
     justifyContent: 'flex-end',
-    marginRight: 8
+    marginRight: 8,
+    flexShrink: 0, // FIX: Prevent avatar from shrinking
   },
   botAvatar: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#2a6ee4ff', // Nền xanh cho logo
+    backgroundColor: '#2a6ee4ff',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   logoImage: {
     width: 20,
@@ -264,12 +259,13 @@ const styles = StyleSheet.create({
   },
   avatarSpacer: {
     width: 28,
-    height: 28
+    height: 28,
   },
   userAvatarContainer: {
     width: 32,
     justifyContent: 'flex-end',
-    marginLeft: 8
+    marginLeft: 8,
+    flexShrink: 0, // FIX: Prevent avatar from shrinking
   },
   userAvatar: {
     width: 28,
@@ -277,61 +273,83 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: '#0084FF',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   avatarText: {
-    fontSize: 14
+    fontSize: 14,
+    color: '#fff',
   },
   messageContainer: {
-     maxWidth: screenWidth * 0.79,
+    // FIX: Better width calculation to prevent overflow
+    maxWidth: screenWidth - 32 - 32 - 16 - 16, // screenWidth - avatars - margins - padding
+    minWidth: 60, // Minimum width for very short messages
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
-      alignSelf: 'flex-start'
+    flex: 1, // FIX: Allow flexible sizing
+    // FIX: iOS specific shadow optimization
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   userMessage: {
     backgroundColor: '#0084FF',
-    borderBottomRightRadius: 4
+    borderBottomRightRadius: 4,
+    alignSelf: 'flex-end',
   },
   botMessage: {
     backgroundColor: '#e5e5e5ff',
     borderBottomLeftRadius: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2
+    alignSelf: 'flex-start',
   },
   messageText: {
     fontSize: 15,
-    lineHeight: 20
+    lineHeight: 20,
+    // FIX: Prevent text overflow
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
   userMessageText: {
-    color: '#fff'
+    color: '#fff',
   },
   botMessageText: {
-    color: '#050505'
+    color: '#050505',
   },
   textWithCards: {
-    marginBottom: 8
+    marginBottom: 8,
   },
   cardsContainer: {
     marginTop: 8,
     marginHorizontal: 0,
-    width: '100%'
+    width: '100%',
+    // FIX: Prevent cards from overflowing
+    maxWidth: '100%',
+    overflow: 'hidden',
   },
   messageFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 4
+    marginTop: 4,
+    // FIX: Prevent footer from breaking layout
+    flexWrap: 'nowrap',
   },
   timestamp: {
     fontSize: 11,
-    color: '#65676B'
+    color: '#65676B',
+    flexShrink: 1, // Allow timestamp to shrink if needed
   },
   readStatus: {
-    marginLeft: 8
+    marginLeft: 8,
+    flexShrink: 0, // Keep read status fixed size
   },
   readAvatar: {
     width: 14,
@@ -339,24 +357,24 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     backgroundColor: '#0084FF',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   miniAvatar: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
   },
   checkmark: {
     fontSize: 12,
-    color: '#0084FF'
+    color: '#0084FF',
   },
   typingContainer: {
-    paddingVertical: 12
+    paddingVertical: 12,
   },
   typingText: {
     fontSize: 14,
     color: '#65676B',
-    fontStyle: 'italic'
-  }
+    fontStyle: 'italic',
+  },
 });

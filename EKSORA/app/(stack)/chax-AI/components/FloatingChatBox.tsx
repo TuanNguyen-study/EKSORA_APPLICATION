@@ -1,4 +1,4 @@
-// FloatingChatBox.tsx - Enhanced with chat history storage
+// FloatingChatBox.tsx - Fixed iOS keyboard issue
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -57,6 +57,10 @@ const FloatingChatBox: React.FC<FloatingChatBoxProps> = ({
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [sessionId, setSessionId] = useState<string>('');
   const [menuVisible, setMenuVisible] = useState(false);
+  
+  // 🔹 NEW: iOS keyboard fix states
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [inputHeight, setInputHeight] = useState(36); // Track input height for multiline
   
   const flatListRef = useRef<FlatList>(null);
 
@@ -205,25 +209,33 @@ const FloatingChatBox: React.FC<FloatingChatBoxProps> = ({
     }
   };
 
-  // 🔹 ENHANCED: Initialize with history loading
+  // 🔹 ENHANCED: Initialize with history loading + iOS keyboard setup
   useEffect(() => {
     console.log('FloatingChatBox mounted');
     
     initializeWithHistory();
     checkConnection();
 
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      (e) => setKeyboardHeight(e.endCoordinates.height)
+    // 🔹 ENHANCED: Better iOS keyboard handling
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setIsKeyboardVisible(true);
+        setKeyboardHeight(e.endCoordinates.height);
+      }
     );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => setKeyboardHeight(0)
+    
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setIsKeyboardVisible(false);
+        setKeyboardHeight(0);
+      }
     );
 
     return () => {
-      keyboardDidHideListener?.remove();
-      keyboardDidShowListener?.remove();
+      keyboardWillHideListener?.remove();
+      keyboardWillShowListener?.remove();
       // Auto-save trước khi component unmount
       if (messages.length > 0) {
         saveChatHistory(messages);
@@ -374,8 +386,8 @@ const FloatingChatBox: React.FC<FloatingChatBoxProps> = ({
   };
 
   // 🔹 ENHANCED: Send message với session tracking
-const sendMessage = async () => {
-    console.log('📤 Sending message:', userInput); // Thêm log để kiểm tra đầu vào
+  const sendMessage = async () => {
+    console.log('📤 Sending message:', userInput);
     if (!userInput.trim()) return;
 
     const userMessage: Message = {
@@ -391,9 +403,10 @@ const sendMessage = async () => {
     setUserInput('');
     setIsTyping(true);
 
+    // 🔹 ENHANCED: Better scroll timing for iOS
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    }, Platform.OS === 'ios' ? 200 : 100);
 
     try {
       const baseURL = getBaseURL();
@@ -435,7 +448,7 @@ const sendMessage = async () => {
         const requestData = { 
           message: originalInput, 
           userId: isLoggedIn ? userId : null,
-          sessionId: sessionId // Thêm session tracking
+          sessionId: sessionId
         };
 
         console.log('📤 Sending chat request:', requestData);
@@ -450,14 +463,13 @@ const sendMessage = async () => {
 
         console.log('📥 Chat response:', data);
 
-        // Xử lý tránh undefined cho botMessage.text
         let botText = (typeof data.reply === 'string' && data.reply.trim() !== '' && data.reply !== 'undefined')
           ? data.reply
           : '';
 
         botMessage = {
           id: Date.now() + 1,
-          text: botText || undefined, // Nếu rỗng thì không truyền text
+          text: botText || undefined,
           from: 'bot',
           timestamp: new Date(),
           isRead: false,
@@ -484,9 +496,10 @@ const sendMessage = async () => {
       handleSendError(error, userMessage);
     }
 
+    // 🔹 ENHANCED: Better scroll timing for iOS
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    }, Platform.OS === 'ios' ? 300 : 100);
   };
 
   // Handle send message errors (giữ nguyên)
@@ -670,13 +683,27 @@ const sendMessage = async () => {
     }, 100);
   };
 
+  // 🔹 NEW: Handle text input focus with keyboard
+  const handleTextInputFocus = () => {
+    // Scroll to bottom with delay for iOS keyboard animation
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, Platform.OS === 'ios' ? 300 : 100);
+  };
+
+  // 🔹 NEW: Handle input content size change for multiline
+  const handleInputContentSizeChange = (event: any) => {
+    const newHeight = Math.min(Math.max(36, event.nativeEvent.contentSize.height), 100);
+    setInputHeight(newHeight);
+  };
+
   // Render functions (giữ nguyên)
   const renderMessage = ({ item, index }: { item: Message; index: number }) => (
     <ChatMessage 
       item={item} 
       index={index} 
       messages={messages}
-      onTourPress={handleTourPress} // 🔹 ENHANCED handler
+      onTourPress={handleTourPress}
       onVoucherPress={handleVoucherPress}
       onVoucherSave={handleVoucherSave}
       userInfo={{ id: userId, name: userDisplayName }}
@@ -688,10 +715,20 @@ const sendMessage = async () => {
 
   const renderFooter = () => isTyping ? <TypingIndicator /> : null;
 
-  // Calculate dynamic chat height
-  const dynamicChatHeight = keyboardHeight > 0 
-    ? screenHeight - keyboardHeight - 50
-    : screenHeight * 0.8;
+  // 🔹 ENHANCED: Calculate dynamic chat height for better iOS handling
+  const calculateChatHeight = () => {
+    const baseHeight = screenHeight * 0.8;
+    
+    if (Platform.OS === 'ios' && isKeyboardVisible) {
+      // On iOS, we need to account for keyboard height and safe areas
+      const availableHeight = screenHeight - keyboardHeight - 60; // 60 for status bar + padding
+      return Math.min(availableHeight, baseHeight);
+    }
+    
+    return keyboardHeight > 0 ? screenHeight - keyboardHeight - 50 : baseHeight;
+  };
+
+  const dynamicChatHeight = calculateChatHeight();
 
   // 🔹 LOADING STATE
   if (isLoadingHistory) {
@@ -717,7 +754,14 @@ const sendMessage = async () => {
   return (
     <View style={styles.overlay}>
       <TouchableOpacity style={styles.overlayBackground} onPress={closeChat} />
-      <View style={[styles.chatContainer, { height: dynamicChatHeight }]}>
+      <View style={[
+        styles.chatContainer, 
+        { 
+          height: dynamicChatHeight,
+          // 🔹 ENHANCED: Add bottom margin on iOS when keyboard is visible
+          marginBottom: Platform.OS === 'ios' && isKeyboardVisible ? 0 : 0
+        }
+      ]}>
         {/* Header + nút ba chấm */}
         <View style={styles.headerRow}>
           <ChatHeader
@@ -727,12 +771,12 @@ const sendMessage = async () => {
             userDisplayName={isLoggedIn ? userDisplayName : ''}
             isLoggedIn={isLoggedIn}
           />
-          {/* Nút ba chấm dọc nằm bên phải header */}
           <TouchableOpacity style={styles.menuButton} onPress={openMenu}>
             <Text style={styles.menuButtonText}>⋮</Text>
           </TouchableOpacity>
         </View>
-        {/* Menu modal nhỏ khi nhấn ba chấm */}
+
+        {/* Menu modal */}
         <Modal
           visible={menuVisible}
           transparent
@@ -749,7 +793,8 @@ const sendMessage = async () => {
             </TouchableOpacity>
           </View>
         </Modal>
-        {/* ...existing code... */}
+
+        {/* Messages Container */}
         <View style={styles.messagesContainer}>
           <FlatList
             ref={flatListRef}
@@ -766,15 +811,16 @@ const sendMessage = async () => {
               }
             }}
           />
-          {/* ...existing code... */}
         </View>
+
+        {/* 🔹 ENHANCED: iOS-friendly Input Container */}
         <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'position' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.inputContainer}
-          keyboardVerticalOffset={0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
           <View style={styles.inputRow}>
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, { minHeight: inputHeight }]}>
               <TextInput
                 placeholder={isLoggedIn && userDisplayName
                   ? `Aa (${userDisplayName})` 
@@ -782,26 +828,27 @@ const sendMessage = async () => {
                 }
                 value={userInput}
                 onChangeText={setUserInput}
-                style={styles.textInput}
+                style={[styles.textInput, { height: inputHeight }]}
                 multiline
                 maxLength={500}
                 placeholderTextColor="#65676B"
-                onFocus={() => {
-                  setTimeout(() => {
-                    flatListRef.current?.scrollToEnd({ animated: true });
-                  }, 100);
-                }}
+                onFocus={handleTextInputFocus}
+                onContentSizeChange={handleInputContentSizeChange}
+                // 🔹 iOS specific props
+                scrollEnabled={false}
+                textAlignVertical="top"
               />
             </View>
-            {/* Nút gửi luôn ở giữa input, dài hơn khi input nhỏ, cao hơn khi nhiều dòng */}
+            {/* 🔹 ENHANCED: Send button with better iOS positioning */}
             <TouchableOpacity
               onPress={sendMessage}
               style={[
                 styles.sendButton,
                 !userInput.trim() && styles.sendButtonDisabled,
-                userInput.split('\n').length > 1
-                  ? styles.sendButtonMultiLine
-                  : styles.sendButtonSingleLine
+                {
+                  height: Math.max(36, inputHeight), // Match input height
+                  alignSelf: 'flex-end' // Align to bottom of input
+                }
               ]}
               disabled={!userInput.trim()}
             >
@@ -838,10 +885,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 10,
     flexDirection: 'column',
+    // 🔹 ENHANCED: Ensure container doesn't overflow on iOS
+    maxHeight: '90%',
   },
   messagesContainer: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+    // 🔹 ENHANCED: Add minimum height to prevent keyboard issues
+    minHeight: 200,
   },
   messagesList: {
     flex: 1,
@@ -850,8 +901,10 @@ const styles = StyleSheet.create({
   messagesContent: {
     paddingVertical: 8,
     paddingBottom: 10,
+    // 🔹 ENHANCED: Ensure content doesn't get cut off
+    flexGrow: 1,
   },
-  // 🔹 NEW: Loading state styles
+  // 🔹 Loading state styles
   loadingContainer: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -861,7 +914,7 @@ const styles = StyleSheet.create({
     color: '#65676B',
     textAlign: 'center',
   },
-  // 🔹 NEW: Chat actions bar styles
+  // 🔹 Chat actions bar styles
   chatActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -883,17 +936,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
+  // 🔹 ENHANCED: iOS-friendly input container
   inputContainer: {
     borderTopWidth: 1,
     borderTopColor: '#E4E6EA',
     backgroundColor: '#fff',
+    // 🔹 Ensure input stays above keyboard on iOS
+    ...(Platform.OS === 'ios' && {
+      paddingBottom: 0,
+    }),
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    paddingBottom: 12,
+    paddingBottom: Platform.OS === 'ios' ? 12 : 12,
+    // 🔹 ENHANCED: Ensure proper spacing on iOS
+    minHeight: 52,
   },
   inputWrapper: {
     flex: 1,
@@ -903,41 +963,44 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginRight: 8,
     maxHeight: 100,
+    // 🔹 ENHANCED: Better iOS text input styling
+    justifyContent: 'center',
   },
   textInput: {
     fontSize: 15,
     color: '#050505',
-    textAlignVertical: 'center',
+    textAlignVertical: Platform.OS === 'ios' ? 'top' : 'center',
+    // 🔹 ENHANCED: iOS specific styling
+    ...(Platform.OS === 'ios' && {
+      paddingTop: 8,
+      paddingBottom: 8,
+    }),
+    // 🔹 Ensure consistent height
     minHeight: 20,
   },
+  // 🔹 ENHANCED: Improved send button for iOS
   sendButton: {
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#0084FF',
-    marginLeft: 0,
-    marginRight: 0,
-    alignSelf: 'center',
-  },
-  sendButtonSingleLine: {
-    width: 56,
-    height: 36,
-  },
-  sendButtonMultiLine: {
-    width: 44,
-    height: 44,
+    width: 36,
+    minHeight: 36,
+    // 🔹 Better positioning for iOS
+    marginBottom: Platform.OS === 'ios' ? 0 : 0,
   },
   sendButtonDisabled: {
     backgroundColor: '#BCC0C4',
   },
   sendText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#fff',
     fontWeight: 'bold',
   },
   sendTextDisabled: {
     color: '#fff',
   },
+  // 🔹 Header styles
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -947,8 +1010,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    // 🔹 ENHANCED: Ensure header doesn't interfere with safe area
+    ...(Platform.OS === 'ios' && {
+      paddingTop: 0,
+    }),
   },
- menuButton: {
+  menuButton: {
     padding: 8,
     marginLeft: 4,
     marginRight: 4,
@@ -962,6 +1029,7 @@ const styles = StyleSheet.create({
     color: '#65676B',
     fontWeight: 'bold',
   },
+  // 🔹 Menu styles
   menuOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.1)',
@@ -979,6 +1047,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     minWidth: 140,
+    // 🔹 iOS shadow
+    ...(Platform.OS === 'ios' && {
+      shadowOffset: { width: 0, height: 2 },
+    }),
   },
   menuItem: {
     paddingVertical: 10,
