@@ -61,7 +61,11 @@ const ImageCarouselCard = ({ item, isActive = false }) => {
           },
         ]}
       >
-        <Image source={item.image} style={styles.image} resizeMode="cover" />
+        <Image
+          source={item.image || require("../../assets/images/Logo.png")}
+          style={styles.image}
+          resizeMode="cover"
+        />
 
         {/* Overlay với thông tin category và "Xem thêm" */}
         <LinearGradient

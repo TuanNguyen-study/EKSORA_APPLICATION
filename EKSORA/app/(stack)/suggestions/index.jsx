@@ -266,6 +266,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background || "#F5F5F5",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
   header: {
     flexDirection: "row",
@@ -291,6 +292,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    justifyContent: "center",
   },
   headerInfo: {
     padding: 20,
@@ -350,13 +352,22 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingBottom: 20,
+    paddingHorizontal: 8,
   },
   row: {
     justifyContent: "space-between",
-    paddingHorizontal: 16,
+    // paddingHorizontal: 10,
   },
   cardContainer: {
-    flex: 0.48,
+    width: "48%", // width cố định cho mỗi item
+    marginHorizontal: 0, // bỏ margin ngang
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+    minHeight: 210,
   },
   leftCard: {
     marginRight: 8,
