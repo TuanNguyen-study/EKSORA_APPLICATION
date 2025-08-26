@@ -11,13 +11,13 @@ const BookingFooter = ({ totalPrice, onAddToCart, onBookNow, isLoading }) => {
         <Text style={styles.totalPrice}>{totalPrice}</Text>
       </View>
       <View style={styles.footerButtonContainer}>
-        <TouchableOpacity 
+        {/* <TouchableOpacity 
           style={[styles.addToCartButton, isLoading && { opacity: 0.5 }]} 
           onPress={onAddToCart}
           disabled={isLoading}
         >
           <Ionicons name="cart-outline" size={24} color={COLORS.primary} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity 
           style={[styles.bookNowButton, isLoading && { opacity: 0.8 }]} 
           onPress={onBookNow}

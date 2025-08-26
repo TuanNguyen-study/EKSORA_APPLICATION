@@ -127,14 +127,14 @@ const BookingItem = ({ item, onPress }) => {
           </View>
         )}
         {/* Nếu thiếu thông tin, yêu cầu nhập bổ sung */}
-        {missingFields.length > 0 && (
+        {/* {missingFields.length > 0 && (
           <View style={styles.infoRow}>
             <MaterialCommunityIcons name="alert-circle" size={18} color={COLORS.danger} />
             <Text style={[styles.infoText, { color: COLORS.danger }]}>
               Vui lòng bổ sung: {missingFields.join(', ')} trong phần Cài đặt tài khoản!
             </Text>
           </View>
-        )}
+        )} */}
 
         <View style={styles.divider} />
 

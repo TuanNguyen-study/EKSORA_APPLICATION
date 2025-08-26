@@ -257,7 +257,7 @@ export default function BookingModal({ onClose, bookingDetails }) {
           <QuantitySelector label="Trẻ em (5-8 tuổi)" priceText={formatPrice(childPrice)} quantity={quantityChild} onDecrement={decrementChild} onIncrement={incrementChild} />
         </View>
 
-        <View style={styles.sectionBox}>
+        {/* <View style={styles.sectionBox}>
 
           <Text style={styles.sectionTitle}>Ưu đãi</Text>
           <TouchableOpacity style={styles.voucherButton} onPress={() => setVoucherModalVisible(true)}>
@@ -268,7 +268,7 @@ export default function BookingModal({ onClose, bookingDetails }) {
             )}
             <Ionicons name="chevron-forward-outline" size={20} color={COLORS.darkGray} />
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         {discount > 0 && (
           <View style={styles.sectionBox}>
