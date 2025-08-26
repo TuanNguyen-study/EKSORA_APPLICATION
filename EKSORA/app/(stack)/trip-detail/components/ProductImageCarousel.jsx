@@ -186,12 +186,12 @@ const ProductImageCarousel = ({
             />
           </TouchableOpacity>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={handleCartPress} // Giữ nguyên vì không liên quan đến logic đăng nhập
             style={styles.iconButtonBase}
           >
             <Ionicons name="cart-outline" size={26} color={COLORS.white} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
 
