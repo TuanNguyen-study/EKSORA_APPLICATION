@@ -74,66 +74,66 @@ const ReviewScreen = () => {
     );
 
     // ---  HÀM GỬI ĐÁNH GIÁ ---
-    const handleSubmitReview = async (bookingId, tourData, rating, comment, localImageUris) => {
+    const handleSubmitReview = async (bookingId, tourData, rating, comment, localImageUris = []) => {
         setSubmittingId(bookingId);
-
         try {
             const userId = await AsyncStorage.getItem("USER_ID");
             const token = await AsyncStorage.getItem("ACCESS_TOKEN");
-            const tourId = (typeof tourData === 'object' && tourData !== null) ? tourData._id : tourData;
+            const tourId = (tourData && typeof tourData === 'object') ? tourData._id : tourData;
 
-            if (!userId || !token || !tourId || !rating || rating === 0) {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Thiếu thông tin',
-                    text2: 'Vui lòng chọn số sao để đánh giá.'
-                });
+            if (!userId || !token || !tourId || !rating) {
+                Toast.show({ type: 'error', text1: 'Thiếu thông tin', text2: 'Vui lòng chọn số sao.' });
                 setSubmittingId(null);
                 return;
             }
 
+            // 1) GIỚI HẠN SỐ ẢNH & NÉN MẠNH HƠN
+            const maxImages = 3;
+            const uris = (Array.isArray(localImageUris) ? localImageUris.slice(0, maxImages) : []);
+
+            // 2) XỬ LÝ THEO LƯỢT (CONCURRENCY = 2)
+            const concurrency = 2;
             let imagesPayload = [];
-            if (Array.isArray(localImageUris) && localImageUris.length > 0) {
-                imagesPayload = await Promise.all(
-                    localImageUris.map(async (uri) => {
-                        const manipResult = await ImageManipulator.manipulateAsync(
+            for (let i = 0; i < uris.length; i += concurrency) {
+                const batch = uris.slice(i, i + concurrency);
+                const results = await Promise.all(
+                    batch.map(async (uri) => {
+                        const m = await ImageManipulator.manipulateAsync(
                             uri,
-                            [{ resize: { width: 800 } }],
-                            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+                            [{ resize: { width: 600 } }],
+                            { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG, base64: true }
                         );
-                        return manipResult.base64;
+                        return m.base64;
                     })
                 );
+                imagesPayload = imagesPayload.concat(results);
+            }
+
+            // 3) CẢNH BÁO KHI PAYLOAD QUÁ LỚN (ước lượng size ~ (base64Len * 3/4) bytes)
+            const approxBytes = imagesPayload.reduce((sum, b64) => sum + Math.floor(b64.length * 0.75), 0);
+            const approxMB = (approxBytes / (1024 * 1024)).toFixed(2);
+            if (approxBytes > 8 * 1024 * 1024) {
+                Toast.show({ type: 'info', text1: 'Ảnh lớn', text2: `Tổng ~${approxMB}MB, đang gửi...` });
             }
 
             await postReview(userId, tourId, rating, comment, imagesPayload, token);
 
-            // Lưu booking đã review kèm userId
-            const key = getReviewKey(userId);
+            const key = `REVIEWED_BOOKINGS_${userId}`;
             const stored = await AsyncStorage.getItem(key);
-            const reviewedBookings = stored ? JSON.parse(stored) : [];
-            reviewedBookings.push(bookingId);
-            await AsyncStorage.setItem(key, JSON.stringify(reviewedBookings));
+            const reviewed = stored ? JSON.parse(stored) : [];
+            await AsyncStorage.setItem(key, JSON.stringify([...reviewed, bookingId]));
 
-            Toast.show({
-                type: 'success',
-                text1: 'Thành công',
-                text2: 'Cảm ơn bạn đã đánh giá chuyến đi!'
-            });
-            setBookings(prev => prev.filter(item => item._id !== bookingId));
-
+            Toast.show({ type: 'success', text1: 'Thành công', text2: 'Cảm ơn bạn đã đánh giá!' });
+            setBookings(prev => prev.filter(b => b._id !== bookingId));
         } catch (err) {
-            console.error("--- LỖI CHI TIẾT KHI GỬI ĐÁNH GIÁ ---", err);
-            const errorMessage = err.response?.data?.message || 'Không thể gửi đánh giá. Vui lòng thử lại sau.';
-            Toast.show({
-                type: 'error',
-                text1: 'Đã xảy ra lỗi',
-                text2: errorMessage
-            });
+            console.error('SUBMIT REVIEW ERROR', err);
+            const msg = err?.response?.data?.message || 'Không thể gửi đánh giá. Thử lại sau.';
+            Toast.show({ type: 'error', text1: 'Lỗi', text2: msg });
         } finally {
             setSubmittingId(null);
         }
     };
+
 
     const renderContent = () => {
         if (screenLoading) {
