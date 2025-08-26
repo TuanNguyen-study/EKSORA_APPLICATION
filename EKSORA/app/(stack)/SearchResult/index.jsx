@@ -18,7 +18,7 @@ import TourCard from "../SearchResult/components/TourCard";
 import EmptyResult from "../SearchResult/components/EmptyResult";
 import { COLORS } from "../../../constants/colors";
 
-//  Hàm bỏ dấu tiếng Việt
+// Hàm bỏ dấu tiếng Việt
 const removeDiacritics = (str) => {
   return str
     .normalize("NFD")
@@ -65,16 +65,14 @@ export default function Index() {
           );
 
 
-          // Lọc theo query (cateID.name → name → description)
-          const queryLower = queryTrimmed.toLowerCase();
+          // Lọc theo query với chuẩn hóa và bỏ description để chuẩn xác
+          const queryNormalized = removeDiacritics(queryTrimmed).toLowerCase();
           const matchedByCategory = validTours.filter((tour) =>
-            (tour.cateID?.name || "").toLowerCase().includes(queryLower)
+            removeDiacritics(tour.cateID?.name || "").toLowerCase().includes(queryNormalized)
           );
           const matchedByText = validTours.filter(
             (tour) =>
-              (tour.name || "").toLowerCase().includes(queryLower) ||
-              (tour.description || "").toLowerCase().includes(queryLower)
-
+              removeDiacritics(tour.name || "").toLowerCase().includes(queryNormalized)
           );
 
           toursData =
