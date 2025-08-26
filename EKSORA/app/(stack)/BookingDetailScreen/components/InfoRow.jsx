@@ -6,9 +6,10 @@ import { COLORS } from '../../../../constants/colors';
 const InfoRow = ({ icon, label, value }) => (
   <View style={styles.infoRow}>
     <MaterialCommunityIcons name={icon} size={22} color={COLORS.primary} style={styles.infoIcon} />
-    <View>
+    <View style={styles.textContainer}>
       <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue} numberOfLines={1}>{value || 'Chưa cập nhật'}</Text>
+      
+      <Text style={styles.infoValue} >{value || 'Chưa cập nhật'}</Text>
     </View>
   </View>
 );
@@ -22,6 +23,10 @@ const styles = StyleSheet.create({
   infoIcon: {
     marginRight: 12,
     marginTop: 2,
+  },
+  // Style quan trọng được thêm vào đây
+  textContainer: {
+    flex: 1, // Yêu cầu View này chiếm hết không gian còn lại
   },
   infoLabel: {
     fontSize: 13,

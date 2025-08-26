@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   },
   separator: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(58, 95, 200, 0.15)", // xanh mờ, hợp tông gradient
+    borderBottomColor: "rgba(58, 95, 200, 0.15)", 
     marginLeft: 16 + 24 + 15,
   },
 });
