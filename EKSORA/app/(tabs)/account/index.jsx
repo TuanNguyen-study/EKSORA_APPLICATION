@@ -26,7 +26,7 @@ export default function AccountScreen() {
     useCallback(() => {
       const checkLogin = async () => {
         const token = await AsyncStorage.getItem("ACCESS_TOKEN");
-        setIsLoggedIn(!!token); // true nếu có token, false nếu không
+        setIsLoggedIn(!!token); 
       };
       checkLogin();
     }, [])
